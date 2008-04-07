@@ -1,0 +1,16 @@
+##gff-version 2
+##Type DNA
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	337	2799	5.347931	+	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	2801	3733	11.448764	+	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	3734	5020	6.230648	+	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	5088	5237	3.815619	+	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	REANNCDS	5310	5741	-0.111382	-	.	shift -21 ; note "weak tis"
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	5310	5720	-0.111382	-	.	note "weak tis"
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	5683	6459	0.234908	-	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	6529	7959	19.75313	-	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	REANNCDS	8238	9191	19.169035	+	.	shift 63 ;
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	8175	9191	19.169035	+	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	REANNCDS	9306	9893	19.613488	+	.	shift 3 ;
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	9303	9893	19.613488	+	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	9928	10494	4.670315	-	.
+Escherichia_coli_K-12_complete_genome	glimmer/tico	CDS	10643	11356	13.285624	-	.

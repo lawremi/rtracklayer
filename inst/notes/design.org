@@ -1,0 +1,100 @@
+* Data integration
+** Track data structure
+*** Base trackSet class
+    * Contains eSet, location info in featureData, data in assayData.
+    * Accessors for "built-in" featureData columns and data values.
+    * Convertible to a data frame for e.g. plotting.
+*** Import/export
+**** Formats
+     * GFF: general feature format - widely used, three versions
+     * UCSC: meta format where lines are proceeded by 'track' lines
+       * Auto-detect line format when importing
+     * WIG: wiggle - for representing quantitative data (plots)
+       * Subset of UCSC (separated by special track lines)
+     * Unsupported:
+       * BED: browser extended display - UCSC-specific, too visual
+       * GTF: gene transfer format - gene specific (possible via gff)
+       * PSL: alignment specific
+**** Extensible driver-based framework
+     * S3-style dispatch using format parameter (exportTrack.gff)
+*** Subsetting
+    Supports the '[' syntax, for subsetting by:
+    * Conventional means (indices, logical, names, etc)
+    * Genome segment
+      * Chromosome ID (chrid)
+      * Start (chrstart)
+      * Stop (chrend)
+    The genomeSegment class is the natural fit here, but:
+    * What about the syntax? genomeSegment(chrom = ...) is long. 
+    * S4 object may be too heavy/clumsy.
+    Really, only the chromosome ID is useful, because specifying
+start and stop without a chromosome seems dangerous and is meaningless
+unless all chromosomes are the same.
+** Sequence data
+*** Retrieval
+    Browsers are clients to sequence data sources. Thus, R can use the
+browsers to retrieve sequences. There is no common interface defined
+in R for accessing sequence databases, though we could define one.
+*** Loading
+    Some browsers may support loading custom sequences. Should accept
+data from the Biostrings package.
+*** Integration with track data
+    Each track contains a set of features, each of which are
+associated with a sequence. The sequence name must match the name of
+the sequence in the database used by the browser. Often the sequence
+name exists within a larger context, such as a genome. The sequence
+IDs must be qualified by that context. Should this context be
+specified by:
+    * Each feature in a trackSet
+      - Often will be an annoyance / unneeded complication
+    * A slot in the trackSet
+      + Almost always, the features belong to same context
+A context slot should be provided for convenience. How that is
+interpreted will depend on the genome browser interface.
+* Software integration
+** Browsers
+*** UCSC
+    + popular
+    + easy to control
+    - web-based (slow)
+*** Argo
+    + runs on local machine (responsive)
+    + clean, intuitive interface
+    + actively maintained
+    - not that popular
+*** Apollo
+    + runs on local machine
+    + actively maintained
+    - interface not as intuitive as Argo
+    - not that popular
+*** IGB
+    + local machine (responsive)
+    - hard to control and query
+    - unmaintained
+*** Ensembl
+    + popular
+    - hard to query
+    - web-based (slow)
+    - requires DAS server or strange upload format
+ 
+** Classes
+*** View
+    A genome view, with a position and track visibility settings.
+    This could masquerade as a vector of 'browserTrackView's if that class existed. But would it be useful? It would hold properties like 'selected' and 'visible'. Right now those are just vectors (simpler).
+*** Session
+    Holds settings, tracks and views for a single session.
+    Should this masquerade as a vector of tracks?
+    - How often is a track retrieved?
+      * More often if it had more than just data, i.e. visual props
+        * This suggests a 'browserTrack' class with visual info
+
+Do we need a representation of a sequence data source? Probably, but
+that belongs in a separate package. We just need to tell a browser
+which sequence to retrieve from a given database. The browser is the
+client to the DB.
+
+But we are the client to the browser - could we not view the browser
+as a database? If such a structure existed, yes, we could have a
+method that extracts a data source from a browser. However, the genome
+should only be extracted when explicitly requested - most of the time
+we only need a light-weight handle.     

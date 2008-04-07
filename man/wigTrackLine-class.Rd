@@ -1,0 +1,71 @@
+\name{wigTrackLine-class}
+\docType{class}
+\alias{wigTrackLine-class}
+\alias{coerce,character,wigTrackLine-method}
+\alias{coerce,wigTrackLine,character-method}
+\alias{coerce,wigTrackLine,basicTrackLine-method}
+\alias{coerce,basicTrackLine,wigTrackLine-method}
+
+\title{Class "wigTrackLine"}
+\description{ A \acronym{UCSC} track line for Wiggle tracks. }
+\section{Objects from the Class}{
+  Objects can be created by calls of the form \code{new("wigTrackLine",
+    ...)} or parsed from a character vector track line with
+  \code{as(text, "wigTrackLine")} or converted from a
+  \code{\linkS4class{basicTrackLine}} using \code{as(basic, "wigTrackLine")}.
+}
+\section{Slots}{
+  \describe{
+    \item{\code{altColor}:}{Object of class \code{"integer"} giving an
+      alternate color, as from \code{\link{col2rgb}}.}
+    \item{\code{autoScale}:}{Object of class \code{"logical"} indicating
+      whether to automatically scale to min/max of the data.}
+    \item{\code{gridDefault}:}{Object of class \code{"logical"}
+      indicating whether a grid should be drawn. }
+    \item{\code{maxHeightPixels}:}{Object of class \code{"numeric"} of
+      length three (max, default, min), giving the allowable range for
+      the vertical height of the graph.}
+    \item{\code{graphType}:}{Object of class \code{"character"},
+      specifying the graph type, either "bar" or "points". }
+    \item{\code{viewLimits}:}{Object of class \code{"numeric"} and of
+      length two specifying the data range (min, max) shown in the graph.}
+    \item{\code{yLineMark}:}{Object of class \code{"numeric"} giving the
+      position of a horizontal line.}
+    \item{\code{yLineOnOff}:}{Object of class \code{"logical"}
+      indicating whether the \code{yLineMark} should be visible. }
+    \item{\code{windowingFunction}:}{Object of class \code{"character"},
+      one of "maximum", "mean", "minimum", for removing points when the
+      graph shrinks.}
+    \item{\code{smoothingWindow}:}{Object of class \code{"numeric"}
+      giving the window size of a smoother to pass over the graph. }
+    \item{\code{name}:}{Object of class \code{"character"} specifying
+      the name of the track. }
+    \item{\code{description}:}{Object of class \code{"character"}
+      describing the track. }
+    \item{\code{visibility}:}{Object of class \code{"character"}
+      indicating the default visible mode of the track, see
+      \code{\linkS4class{ucscTrackModes}}.}
+    \item{\code{color}:}{Object of class \code{"integer"} representing the
+      track color (as from \code{\link{col2rgb}}).
+    }
+    \item{\code{priority}:}{Object of class \code{"numeric"} specifying
+      the rank of this track. }
+  }
+}
+\section{Extends}{
+  Class \code{"\linkS4class{ucscTrackLine}"}, directly.
+}
+\section{Methods}{
+  \item{as(object, "character")}{Export line to its string
+    representation.}
+  \item{as(object, \code{"\linkS4class{basicTrackLine}"})}{Convert this
+    line to a basic UCSC track line, using defaults for slots not held
+    in common.}
+}
+\references{ Official documentation:
+  \url{http://genome.ucsc.edu/goldenPath/help/wiggle.html}. }
+\author{ Michael Lawrence }
+\seealso{
+  \code{\link{export.wig}} for exporting tracks in the Wiggle format.
+}
+\keyword{classes}

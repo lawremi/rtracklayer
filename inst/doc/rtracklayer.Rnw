@@ -1,0 +1,239 @@
+\documentclass{article}
+
+%\VignetteIndexEntry{rtracklayer}
+
+\title{The \textbf{rtracklayer} package}
+\author{Michael Lawrence}
+
+\begin{document}
+
+\maketitle
+
+<<initialize, echo=FALSE>>=
+options(width=40)
+@ 
+
+\section{Introduction}
+
+The \textbf{rtracklayer} package is an interface (or \emph{layer})
+between \textbf{R} and several genome browsers. Its main purpose is
+the visualization of genomic annotation \emph{tracks}, whether
+generated through experimental data analysis performed in R or loaded
+from a separate data source. The features of \textbf{rtracklayer} may
+be divided into two categories: 1) the representation and
+import/export of track data and 2) the control and querying of
+external genome browser sessions and views.
+
+For working with track data, the package defines a data structure
+named \textit{trackSet}, which extends the Bioconductor \textit{eSet}
+class. A \textit{trackSet} contains information on the features of a
+track, including their chromosome, start and end positions in the
+genome, as well as any associated experimental measurements. Track
+data may be read from or written to connections (e.g. files on the
+disk) in the following formats: Browser Extended Display (BED),
+versions 1, 2 and 3 of the General Feature Format (GFF), and Wiggle
+(WIG). Support for additional formats may be provided by other
+packages through a plugin system.
+
+The \textbf{rtracklayer} package currently interfaces with the
+\textbf{UCSC} web-based genome browser as well as the locally
+installed Java-based \textbf{Argo} browser. Other packages may provide
+drivers for other genome browsers through a plugin system. With
+\textbf{rtracklayer}, the user may start a genome browser session,
+create and manipulate genomic views, and import/export tracks and
+sequences to and from a browser. Please note that not all features are
+necessarily supported by every browser interface.
+
+The rest of this vignette will introduce these features
+through a demonstration.
+
+\section{Demonstration}
+
+In order to demonstrate the features of \textbf{rtracklayer}, we will
+import some track data from a file and visualize it in the
+\textbf{UCSC} genome browser.
+
+The first step is to attach the \textbf{rtracklayer} package, as in:
+<<attach>>=
+require(rtracklayer)
+@
+
+\subsection{Working with track data}
+
+Before we can demonstrate the features in \textbf{rtracklayer} for
+manipulating, analyzing and visualizing annotation track data, we must
+first load a track into the R session. The track information is stored
+in a \textit{trackSet} object. It is possible to construct a
+\textit{trackSet} directly from information within the R session, but
+for the purpose of this demonstration, we will import the track data
+from a file. 
+
+The \textit{import} function imports track data encoded in one of the
+supported standard formats (BED, GFF and WIG are built-in). The source
+of the data may be given as a connection, a filename or a character
+vector containing the data. In this case, we will import the data from
+a GFF-formatted file included with the \textbf{rtracklayer} package,
+as in the following code:
+<<import>>=
+track <- import(system.file("tests", "v1.gff", package =
+                            "rtracklayer"))
+@
+
+The track information is now stored in the R session as a
+\textit{trackSet} object. As the \textit{trackSet} class inherits from
+\textit{eSet} defined in the \textbf{Biobase} package, it has slots
+for storing feature information (\textit{featureData}), experimental
+design information (\textit{phenoData}) and experimental measurements
+(\textit{assayData}). 
+
+Most of the information for each feature in a track is stored in the
+\textit{featureData}. This includes the chromosome name, numeric start
+and end positions, the DNA strand (+/-/NA), and any other information
+available. There are methods for accessing the most commonly used
+fields. For example, the following code retrieves the chromosome names
+and then start positions for each feature in the track:
+<<feature-data-accessors>>=
+featChrom(track)
+featStart(track)
+@ 
+
+The data values for a track are stored as a numeric matrix under the
+name \textit{dataVals} within the \textit{assayData}. The values may
+be retrieved with the following code:
+<<datavals-accessor>>=
+dataVals(track)
+@ 
+
+Sometimes, it may be convenient to extract the track information as a
+\textit{data.frame}. The \textit{trackData} function does this by
+combining the \textit{featureData} matrix with the \textit{dataVals}.
+It also adds a column named \textit{featMid}, which gives the
+mid-points 
+(the mean of the start and end positions) of each feature
+in the track. Here is an example of using \textit{trackData} to plot
+the data values in the track vs. their mid-points.
+<<trackData, fig=TRUE>>=
+df <- trackData(track)
+plot(df$featMid, df$dataVals)
+@ 
+
+\subsection{Interacting with genome browsers}
+
+For the next step in our example, we will load the track into a genome
+browser for visualization with other genomic annotations. The
+\textbf{rtracklayer} package is capable of interfacing with any genome
+browser for which a driver exists. In this case, we will interact with
+the web-based \textbf{UCSC} browser, but the same code should work for
+any browser.
+
+\subsubsection{Starting a session}
+
+The first step towards interfacing with a browser is to start a
+browser session, represented in R as a \textit{browserSession} object. A \textit{browserSession} is primarily a container of tracks and
+genomic views. The following code creates a \textit{browserSession} for the \textbf{UCSC} browser:
+<<browserSession, eval=FALSE>>=
+session <- browserSession("ucsc")
+@ 
+Note that the name of any other supported browser could have been
+given here instead of ``ucsc''. To see the names of supported
+browsers, enter:
+<<genomeBrowsers>>=
+genomeBrowsers()
+@ 
+
+\subsubsection{Laying tracks}
+
+ Before a track can be viewed on the genome, it must be
+loaded into the session using the \textit{layTrack} function, as
+demonstrated below:
+<<layTrack, eval=FALSE>>=
+session <- layTrack(session, track, name = "Demo Track")
+@ 
+The \textit{name} argument should be a character vector that will
+identify the track within \textit{session}. 
+
+\subsubsection{Viewing tracks}
+
+By default, the \textit{layTrack} function creates a \textit{browserView}, an object that represents a view of a particular set of tracks along a particular region of the genome. For \textbf{UCSC}, this roughly corresponds to one tab or window in the web browser. To override the automatic creation of a view, pass \textit{view = FALSE} to the \textit{layTrack} function.
+
+The default view of the track attempts to show the entire track. The
+view region is determined by a call to \textit{genomeSegment} on the
+track object, as in:
+<<genomeSegment-track>>=
+genomeSegment(track)
+@ 
+The returned value from \textit{genomeSegment} is an instance of the
+\textit{genomeSegment} class, which specifies a segment of a genome by
+its genome name, chromosome name and start and end positions.
+
+In order to zoom in on the first two features of the track, one may
+subset the track and then create a browser view of the new region
+using the \textit{browserView} function, as demonstrated below:
+<<take-subset>>=
+subtrack <- track[1:2,] # get first two features
+@
+<<view-subset, eval=FALSE>>=
+view <- browserView(session, segment = genomeSegment(subtrack))
+@ 
+
+\subsubsection{A shortcut}
+
+There is also a shortcut to the above steps. The \textit{browseGenome}
+function creates a session for a specified browser, loads one or more
+tracks into the session and creates a view of a given genome segment.
+In the following code, we create a new \textbf{UCSC} session, load the
+track and view the first two features, all in one call:
+<<browseGenome, eval=FALSE>>=
+session <- browseGenome(tracks = track, browser = "ucsc", segment = 
+                        genomeSegment(subtrack))
+@
+It is even simpler to view the entire track in \textbf{UCSC} by
+relying on parameter defaults:
+<<browseGenome-simple, eval=FALSE>>=
+session <- browseGenome(track)
+@ 
+
+\subsubsection{Downloading tracks}
+
+It is possible to query the browser to obtain the names of the loaded
+tracks and to download the tracks into R. To list the tracks loaded in
+the browser, enter the following:
+<<get-track-names, eval=FALSE>>=
+loaded_tracks <- tracks(session)
+@ 
+One may download any of the tracks, such as the ``Demo Track'' that
+was loaded previously in this example, with the following code:
+<<get-track-data, eval=FALSE>>=
+demo_track <- trackSet(session, name = "Demo Track")
+@ 
+By default, the segment of the track downloaded is the current default genome segment associated with the session. One may download track data for any genome segment, such as that displayed by a particular view, as in this code:
+<<get-track-segment, eval=FALSE>>=
+view_track <- trackSet(session, genomeSegment(view), "Demo Track")
+@
+
+\subsubsection{Querying view state}
+
+The \textit{view} variable is an instance of \textit{browserView}. To
+programmatically query the segment displayed by a view, use the
+\textit{genomeSegment} method for a \textit{browserView}, as in:
+<<genomeSegment-view, eval=FALSE>>=
+segment <- genomeSegment(view)
+@ 
+Similarly, one may extract the names of the visible tracks in the view
+by entering:
+<<tracks-view, eval=FALSE>>=
+visible_tracks <- tracks(view)
+@ 
+
+\subsection{Conclusion}
+
+This short demonstration has explained a few of the most important
+features of \textbf{rtracklayer}, but many have been left unexplained.
+Please see the package documentation for more details.
+
+The following is the session info that generated this vignette:
+<<session-info>>=
+  sessionInfo()
+@ 
+
+\end{document}

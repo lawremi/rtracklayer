@@ -1,0 +1,28 @@
+import(Biobase, RCurl, XML, rJava)
+
+exportClasses("genomeSegment", "chrid",
+              "trackSet", "trackSets",
+              "browserSession", "browserView",
+              "ucscSession", "ucscView",
+              "argoSession", "argoView",
+              "ucscTrackSet", "ucscTrackLine", "basicTrackLine", "wigTrackLine",
+              "ucscTrackModes")
+
+exportMethods("activeView", "activeView<-", "browseGenome",
+              "browserSession", "browserView", "browserViews",
+              "chrid", "close", "dataVals", "export", "export.bed",
+              "export.gff", "export.gff1", "export.gff2",
+              "export.gff3", "export.ucsc", "export.wig",
+              "genomeSegment", "genomeSegment<-",
+              "genomeSequence", "import", "import.bed", "import.gff",
+              "import.gff1", "import.gff2", "import.gff3",
+              "import.ucsc", "import.wig", "laySequence", "layTrack",
+              "merge", "featChrom", "featStart", "featEnd", "featStrand",
+              "trackData", "trackSet",
+              "trackSets", "tracks", "tracks<-", "ucscTable",
+              "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",
+              "show", "[")
+
+export("genomeBrowsers")
+
+S3method(c, genomeSegment)
