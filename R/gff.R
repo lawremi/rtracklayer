@@ -134,7 +134,7 @@ setMethod("import.gff", "ANY",
     table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
   }
 
-  featureData <- data.frame(chrom = chrom,
+  featureData <- data.frame(chrom = table[,"seqname"],
                             start = as.numeric(table[,"start"]),
                             end = as.numeric(table[,"end"]),
                             strand = table[,"strand"],
@@ -142,7 +142,7 @@ setMethod("import.gff", "ANY",
                             type = table[,"feature"],
                             source = table[,"source"])
 
-  rownames(featureData) <- make.names(table[,"seqname"])
+  rownames(featureData) <- make.names(table[,"seqname"], TRUE)
 
   if (!is.null(table[,"attributes"])) {
     if (version == "1") {

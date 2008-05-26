@@ -93,8 +93,8 @@ available. There are methods for accessing the most commonly used
 fields. For example, the following code retrieves the chromosome names
 and then start positions for each feature in the track:
 <<feature-data-accessors>>=
-featChrom(track)
-featStart(track)
+chrom(track)
+start(track)
 @ 
 
 The data values for a track are stored as a numeric matrix under the
