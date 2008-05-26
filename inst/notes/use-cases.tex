@@ -1,0 +1,75 @@
+\documentclass{article}
+
+\title{\textbf{rtracklayer} and genomic microarray data}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+In this report we will consider possible use cases of rtracklayer in conjunction with experimental data analysis. This study will help us to design a framework for translating experimental data to annotation tracks (\textit{trackSet} instances) for display in a genome browser. Although virtually every type of biological data is tied to the genome at some level, we limit ourselves to genomic microarray data.  Each type of data is considered in turn and the findings are summarized as a set of design requirements.
+
+\section{Use cases}
+\label{sec:cases}
+
+\subsection{Gene expression arrays}
+\label{sec:expression}
+
+The probes measurements in gene expression arrays correspond to entire genes. In Affymetrix gene chips, the probes are grouped into probesets, each matching one or more genes at the 3' end of the transcript. Illumina bead arrays have larger probes that directly correspond to genes (i.e. no probesets). The critical difference is that preprocessed Illumina data can be mapped to the actual probe, while for Affymetrix that information is lost in the preprocessing.
+
+The simplest use case might be mapping the expression data to the corresponding genes (and also probes for Illumina). Even if the user is interested in a specific region within or adjacent to the gene, marking the gene would be a good first step. It is unlikely that the user would want to upload and browse through annotations for all of the genes. Rather, there would be a focus on a specific set of interesting genes, such as those with differential expression.
+
+For exploring the larger area around a probe, one could link to the cytogenetic band. This is facilitated for Affymetrix data by the \textbf{annaffy} package, which generates URLs to the NCBI Map Viewer.
+
+A specific use case can be taken from the \textbf{humanStemCell} data, where we are looking for genes that align with microRNA target sites. While we are specifically interested in the 5' UTR, the generic method of mapping to the gene region might be sufficient. It would be up to the user to focus the browser in the correct region. A more involved procedure would attempt to find the 5' UTR using sequence analysis and then translate that to a track.
+
+\subsection{Exon arrays}
+\label{sec:exon}
+
+Like gene expression arrays, exon arrays also generally measure expression, except at the exon level. Compared to traditional gene arrays, there seems to be more interest in analyzing exon array data in conjunction with genomic annotations. This is probably due to the data having a higher resolution with respect to the genome.
+
+The \textbf{exonmap} package addresses this problem by linking to the XMap database and browser and by providing various R graphics functions for plotting genomic information. The data is mapped to exons and the focus is on individual genes or sets of genes.
+
+\subsection{Tiling arrays}
+\label{sec:tiling}
+
+Tiling arrays give measurements at specific genomic regions that combine to span large portions of the genome. The sampling of the genome depends on the application. A common processing operation on tiling arrays is segmentation - cutting the genome into pieces depending on changes in the measured copy number or intensity.
+
+Use cases would generally involve plotting copy number and segment boundaries by their chromosome position.  A good example is the \textbf{tilingArray} package, which uses such plots to evaluate the segmentation of the data into transcripts and other regions.
+
+More specific use cases depend on the application.
+\begin{description}
+\item[ChIP-chip] As in the \textbf{Ringo} package, users will want to view intensities by position around transcription start sites.
+\item[MeDIP-chip] Similar to ChIP-chip, except looking at methylation.
+\item[Nucleosomes] Nucleosome localization studies will also likely focus on the TSS, as well as broader views.
+\item[Array CGH] See section below.
+\item[Transcription] As in \textbf{tilingArray}, focusing on segments.
+\end{description}
+
+\subsection{Array CGH}
+\label{sec:cgh}
+
+These arrays measure copy numbers of sequences in the genome. It is conventional to plot the copy number by genomic position. From this, one can usually see segments bounded by sharp changes in copy number.
+
+The most common use case, as indicated by the \textbf{snapCGH} and \textbf{GLAD} packages, will likely be showing the copy number and generated segments along the genome, often focusing on genes. This overlaps the \textbf{tilingArray} package and in fact \textbf{snapCGH} depends on \textbf{tilingArray}.
+
+\subsection{SNP arrays}
+\label{sec:snp}
+
+SNP chips measure the copy number of individual SNPs in the genome. From the \textbf{SNPChip} package, it seems that it is common to plot the copy number by SNP position. The user will often want to view the SNPs in certain genes and other regions of the genome.
+
+\section{Design implications}
+
+\label{sec:summary}
+
+From this analysis it seems that there are two modes by which data is mapped to the genome: direct and indirect. In the direct case, the experimental measurements correspond to specific sequences in the genome. Affymetrix is the best example of the indirect case, where the probeset measurements correspond to a gene, not a specific sequence. Indirect mappings require special mapping logic, so it is fortunate that they are rare. The specific case of Affymetrix expression chips might be fairly simple to handle (mapping to genes or exons).
+
+A separate issue is the display of analysis results (such as segmentations in CGH and transcription tiling data). These will require special logic, as well.
+
+From a technical standpoint, there does not seem to be any standard way of representing annotation data across platforms. The annotation packages for Affymetrix, Agilent and Illumina chips seem fairly compatible, but packages for other technologies, such as NimbleGen, all have their own particular way of representing e.g. the mapping from manufacturer identifiers to genomic positions. 
+
+The \textbf{rtracklayer} package should not be tied to any specific technology. High-level conversion of \textit{eSet} objects may only be feasible when a standard annotation package is available, and even then it probably will not perfectly meet the needs of the user. For other applications, we should provide a lower level interface for constructing \textit{trackSet} objects (but without doing everything ``from scratch''). These low level functions will also be helpful for displaying results from the analysis of high throughput sequence data (it is already possible to generate a \textit{trackSet} from a \textit{BStringViews} object).
+
+\end{document}

@@ -1,0 +1,300 @@
+\documentclass{article}
+
+\begin{document}
+
+\section*{Integration of Genome Browsing with R/Bioconductor}
+
+\subsection*{Overview}
+\label{sec:overview}
+
+This project aims to integrate the tools present in R and Bioconductor
+for manipulating and analyzing experimental data with genome browsing
+software. As there are many available genome browsers and data
+formats, the framework  will provide an abstract interface that links
+R to any browser for which a backend has been implemented. The
+framework will be extensible, so that third party packages may provide
+new backends.
+
+The integration has two major components:
+\begin{description}
+\item[Data integration] Moving data between systems; core component.
+\item[Software integration] Controlling the browser from R.
+\end{description}
+
+The project will address the above two aspects in a series of phases.
+\begin{enumerate}
+\item Provide abstractions around data structures and support writing
+data to the file system in specific formats for loading into browsers.
+\item Provide a high-level interface to interacting with genome
+browsers from R at run-time.
+\item Provide backends to the most popular browsers. 
+\end{enumerate}
+The first phase focuses on data integration, the core component.
+Writing data to the file system is somewhat clumsy, but it is simple.
+File export is a necessary feature anyway. Once the fundamental data
+structures are in place, more sophisticated integration will become
+possible. This will be addressed by the second phase, which will
+develop an interface for controlling browsers from R. For example, the
+user may command the browser to pan/zoom to a specific genomic region.
+The first two phases will be prototyped through a limited number (ie
+one) of backends. The final phase will round out the framework with
+backends for the most commonly used tools, which are surveyed in the
+next section.
+
+\subsection*{Survey of Genome Browsers}
+\label{sec:browsers}
+
+There are at least four major non-commercial genome browsers.
+\begin{itemize}
+\item UCSC Genome Browser
+\item Ensembl
+\item GBrowse
+\item Integrated Genome Browser (IGB)
+\end{itemize}
+The first three browsers are web-based. Of those, UCSC and Ensembl
+seem to be the most popular. The Integrated Genome Browser (IGB) is
+interesting as the only browser that is a local application, but its longevity is in question.
+Obviously, the browsers differ in their browsing features, but we are
+most interested in their support for integration with environments
+like R. The following matrix compares the above browsers in terms of
+their potential for data and software integration. \\
+
+\begin{tabular}{l|llll} \hline
+  Name & Type & File formats & DAS client & API \\ \hline
+  UCSC & Web & BED/GFF/PSL/WIG... & No & No \\
+  Ensembl & Web & LDAS & Yes & Retrieval only \\
+  GBrowse & Web & GFF & Yes (2.0) & No \\
+  IGB & Local (Java) & BED/GFF/PSL/WIG... & Yes (2.0) & HTTP \\ \hline
+\end{tabular} \newline
+
+The following sections give a more detailed comparison of the browsers
+and identify common themes with regard to data and software
+integration.
+
+\subsection*{Data Integration}
+\label{sec:data}
+
+Data integration is fundamental to the integration of genome browsing
+with R. Each annotation variable is called a \emph{track} and each
+segment is called a \emph{line} (probably because it is represented by
+a line in a data file).  The tracks need to be passed from R to the
+browser. A common data structure is necessary for representing
+a track and the lines with it. The structure should be serializable to
+a variety of formats, as there does not seem to be a dominant standard
+among the browsers. Besides format differences, the browsers also
+differ in how the data is delivered. Data may be loaded explicitly
+into the browser or retrieved by the browser via a protocol like DAS.
+The common annotation data structure should (indirectly) support both
+of these modes. This section continues by considering the existing
+work and then moves on to a high-level description of the data
+structure.
+
+\subsubsection*{Annotation Formats}
+\label{sec:formats}
+
+It would be efficient to borrow the design of the data structure from
+the design of the existing formats. Short descriptions of the most
+popular formats for specifying annotation lines are given below.
+\begin{description}
+\item[BED] Browser Extended Display. Start, stop, strand(+/-), name,
+score, color, blocks (exons), etc.
+\item[GFF] General Feature Format. Start, stop, strand, name, score,
+grouping attributes, etc. Several different versions and dialects. The
+XML version is used by the DAS/1 protocol.
+\item[PSL] Meant for describing sequence alignments. Irrelevant?
+\item[LDAS] Specified by the Light-weight DAS server. Similar to BED
+and GFF above. May be specific to Ensembl.
+\item[DAS2] XML feature description in the DAS/2 specification. Would
+not output this directly (only through DAS).
+\item[WIG] Wiggle. Designed for efficient representation of
+quantitative data. There are several ways of specifying the lines: BED
+(expressive but inefficient), variableStep (arbitrary start positions)
+and fixedStep. 
+\end{description}
+Of the above, BED and especially GFF seem to be in the most common use
+and are probably good targets for prototyping export functionality.
+WIG is also notable as it is designed for quantitative data.
+
+The line specifications are often preceeded by a header that contains
+the global track parameters. Each browser uses a different format for
+the header, if any, so a serialization routine separate from the lines
+will likely be necessary.
+
+\subsubsection*{Proposed Track Data Structure}
+\label{sec:proposed-structures}
+
+The primary data structure represents an annotation \emph{track}. The
+track structure will contain information on the lines. As there will
+often be a large number of lines, each line should probably be stored
+in a compressed manner - not as a first-class object.
+
+The following is a proposed list of formal elements (or slots in the
+S4 class) for the track data structure.
+\begin{description}
+\item[name] The identifier of the track.
+\item[lines] A matrix (or similar) with line information.
+\end{description}
+There should also be a list of extra parameters that will be utilized
+by the backends that support them. These are usually display tweaks
+specific to a genome browser.
+
+For the each line (e.g. a row in the lines matrix), the required data
+elements, listed below, specify the location of the feature.
+\begin{description}
+\item[chromosome] The name of the chromosome that holds the line.
+\item[start] The start position of the line.
+\end{description}
+Optional elements might include:
+\begin{description}
+\item[stop] The stop position of the line. If not specified, assumed
+to be the position immediately before the start of the next line.
+\item[name] Name of the line (e.g. a gene name).
+\item[value] A value (i.e. from the data) associated with the line.
+\item[strand] The DNA strand (+/-).
+\item[group] Some sort of factor that groups the lines.
+\end{description}
+
+It seems that all of this information would fit within an
+\texttt{eSet} subclass, as suggested by Vince Carey. In his
+class, the values are stored in the \texttt{assayData} and the other
+line information, including locations, in the \texttt{featureData}. 
+
+It may be better to define the data structure more formally. The line
+parameters could become slots in an extension of
+\texttt{eSet}. Alternatively, that information could remain
+in the \texttt{featureData}, and accessor methods could be defined for
+each parameter. By storing the data in a generic way, other packages
+could access it generically. The accessor methods would help the user
+avoid mistakes when manipulating the annotation metadata. In terms of
+validation, explicit slots would guarantee a specific data type.
+However, as the metadata naturally fits a matrix, the slots would need
+to be checked to have compatible dimensions. Thus, there does not seem
+to be any harm in storing the metadata in the \texttt{featureData}.
+
+\subsubsection*{Creating the Track Data Structure}
+\label{sec:creation}
+
+There needs to be a convenient means for creating the track structure
+from either an external track representation or an experimental
+dataset and its metadata. The former requires parsers for the various
+formats described above. The latter depends on the
+type and source of the data being mapped, and we consider the specific
+requirements of several prevalent types of data below. This is
+followed by a discussion of a general interface that maps experimental
+identifiers to chromosome locations.
+
+The following lists the relevant common types/sources of experimental
+data and outlines a mapping strategy for each.
+\begin{description}
+\item[Expression Arrays] Annotations via \textbf{annotate} and
+  \textbf{oligo} packages. \textbf{exonmap}
+  retrieves annotations from an online database.
+\item[SNP Arrays] Data stored in an \texttt{oligoSnpSet} (from 
+\textbf{oligoClasses}) or \texttt{SnpSetIllumina} (from
+\textbf{beadArraySNP}).
+\item[Tiling Arrays] Annotations via \textbf{oligo} and
+\textbf{Ringo}.
+\item[Array CGH] Data stored in structures provided by \textbf{aCGH}
+and \textbf{GLAD}.
+\item[Proteomics] Mapping protein data (e.g. from MS experiments) is
+more complex, as we need to consider alternative splicing and other
+regulatory events. We can address this later.
+\end{description}
+
+The identifier to location mapping API should be independent of the
+data type. Every type of data requires a specific and unique strategy
+for mapping its identifiers to chromosome locations. A generic
+function could be defined that creates a track object by dispatching
+on the input data structure.  Ideally, each data type would have a
+corresponding subclass of \texttt{ExpressionSet}. This is true for
+some cases but not all of them. However, as long as each data type has
+a corresponding class, S3/S4 dispatch will be a viable mechanism. For
+cases that do not meet this criterion, we could implement coercion
+functions and lobby for their inclusion in the appropriate
+infrastructure package for the given data type.
+
+\subsubsection*{Serialization}
+\label{sec:serialization}
+
+The serialization, as well as the deserialization, of the track data
+structure should support multiple formats. It should be convenient to
+extend the framework to handle new formats. This could be achieved
+using an S3-like mechanism, as in the \textbf{affy} package, where the
+top-level (de)serialization API dispatches to a function named
+\emph{[de]serialize.format}, where \emph{format} is a user-provided
+character vector. This is a simple mechanism and leverages the
+existing support in R for registration of methods.
+
+\subsection*{Software Integration}
+\label{sec:software-integration}
+
+Once a compatible data representation has been produced by R, the data
+needs to be passed to the genome browser. We would also like to send
+commands to the browser that would, for example, adjust the view of
+the browser to focus on a particular region of the genome or query the
+browser for its current view. We refer to this as software
+integration.
+
+There are several different channels through which this communication
+might occur, depending on the browser and the type of communication.
+For passing data, possible channels include:
+\begin{description}
+\item[Files] The data could be serialized to a standard format and
+then manually loaded into the browser by the user or pushed to a
+web-based browser via HTTP. This is easy, but we should avoid relying
+on the filesystem due to the inefficiency and undesirable side
+effects. Also, this may not be convenient for Ensembl, as it uses a
+non-standard format (LDAS).
+\item[DAS] User could source annotations from our embedded DAS server.
+This represents an inversion of control. DAS would not be an option
+for the UCSC browser, as it is unable to act as a DAS client (only as
+a server).
+\end{description}
+As every browser is capable of parsing serialized data in some format,
+the file mechanism should be the priority. Eventually, DAS should also
+be supported, as it seems to be a more elegant (though a bit heavier)
+mechanism.
+
+For passing action commands, such as for actually loading the
+data or changing the view, we might use one of the following channels:
+\begin{description}
+\item[HTTP] Passing commands as HTTP requests. The web-based browsers
+are obviously the most controllable via HTTP, but IGB also supports manipulation of its view and pushing annotations through an embedded HTTP server. A complication with the web-based browsers is that the web browser (e.g. Firefox) needs to be given the URL to display in the current window. This may be easier in some browsers than in others.
+\item[Java] The IGB tool is implemented in Java and thus could be
+embedded through an R to Java interface. However, IGB has not been
+designed for such use. It seems that the developers prefer
+manipulation through the (largely undocumented) HTTP interface. IGB is
+open-source, so it could always be forked.
+\end{description}
+HTTP seems to be the common demoninator for sending actions, so it
+should be the first implementation target.
+
+Querying the state of the browser may be more difficult than sending
+actions, since the state could be stored internally. Possible
+strategies include:
+\begin{description}
+\item[Cookies] The web-based browsers may store their state as
+cookies. As cookies are files, they would be easily accessible, but
+browsers may avoid them due to their complications (e.g. difficult to
+have concurrent sessions).
+\item[URL] The web-based browsers appear to encode much of their state
+in the URL. It is not clear, however, how we could retrieve the
+current URL from the web browser.
+\item[HTTP] The UCSC browser stores a ``session ID'' in its database and the corresponding state may be accessed through HTTP.
+\item[Java] IGB could be queried through an R to Java interface, but it would need to be modified. May be easier to add to HTTP interface.
+\end{description}
+There does not seem to be an ideal solution here, but UCSC seems the easiest right now.
+
+\subsection*{Next Steps}
+\label{sec:next-steps}
+
+As stated in the overview, the first step will be designing the track
+data structure and implementing at least one backend for serializing
+the track to a standard format. The prototype format should probably
+be GFF. After this is complete, We will investigate methods for
+controlling the browsers from R. This will hopefully allow data to be
+passed without user intervention and should also support automatic
+adjustment of the browser view. HTTP is the primary candidate for the
+communication channel.
+
+\end{document}
