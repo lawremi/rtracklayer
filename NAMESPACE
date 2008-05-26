@@ -1,4 +1,4 @@
-import(Biobase, RCurl, XML, rJava)
+import(Biobase, RCurl, XML, rJava, annotate, AnnotationDbi)
 
 exportClasses("genomeSegment", "chrid",
               "trackSet", "trackSets",
@@ -12,16 +12,16 @@ exportMethods("activeView", "activeView<-", "browseGenome",
               "browserSession", "browserView", "browserViews",
               "chrid", "close", "dataVals", "export", "export.bed",
               "export.gff", "export.gff1", "export.gff2",
-              "export.gff3", "export.ucsc", "export.wig",
+              "export.gff3", "export.ucsc", "export.wig", "genome", "genome<-",
               "genomeSegment", "genomeSegment<-",
               "genomeSequence", "import", "import.bed", "import.gff",
               "import.gff1", "import.gff2", "import.gff3",
               "import.ucsc", "import.wig", "laySequence", "layTrack",
-              "merge", "featChrom", "featStart", "featEnd", "featStrand",
+              "merge", "chrom", "chrom<-", "strand",
               "trackData", "trackSet",
               "trackSets", "tracks", "tracks<-", "ucscTable",
               "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",
-              "show", "[")
+              "show", "[", "start", "start<-", "end", "end<-", "*", "/")
 
 export("genomeBrowsers")
 

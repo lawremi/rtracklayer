@@ -17,7 +17,9 @@ setMethod("export.gff", "trackSet",
   gffComment(con, "date", format(Sys.time(), "%Y-%m-%d"))
   
   feat <- pData(featureData(object))
-  seqname <- feat$featChrom
+  seqname <- feat$chrom
+  if (is.null(feat$ID))
+    feat$ID <- rownames(feat)
   if (version == "3")
     seqname <- urlEncode(seqname, "a-zA-Z0-9.:^*$@!+_?|-")
   if (!is.null(feat$source))
@@ -34,21 +36,23 @@ setMethod("export.gff", "trackSet",
     else score <- NA
   }
   else score <- score[,1]
-  strand <- feat$featStrand
+  strand <- feat$strand
   if (is.null(strand))
     strand <- NA
   frame <- feat$phase
   if (is.null(frame))
     frame <- NA
   
-  table <- data.frame(seqname, source, feature, feat$featStart, feat$featEnd,
+  table <- data.frame(seqname, source, feature, feat$start, feat$end,
                       score, strand, frame)
 
   attrs <- NULL
   if (version == "1") {
     attrs <- feat$group
+    if (is.null(attrs))
+      attrs <- seqname
   } else {
-    builtin <- c("featChrom", "type", "featStart", "featEnd", "featStrand",
+    builtin <- c("chrom", "type", "start", "end", "strand",
                  "phase", "source")
     custom <- !(colnames(feat) %in% builtin)
     if (any(custom)) {
@@ -83,17 +87,17 @@ setMethod("export.gff", "trackSet",
 })
 
 setGeneric("import.gff",
-           function(con, version = c("1", "2", "3"))
+           function(con, version = c("1", "2", "3"), genome = "hg18")
            standardGeneric("import.gff"))
            
 setMethod("import.gff", "ANY",
-          function(con, version = c("1", "2", "3"))
+          function(con, version = c("1", "2", "3"), genome)
 {
   versionMissing <- missing(version)
   version <- match.arg(version)
-  
   lines <- readLines(con, warn = FALSE) # unfortunately, not a table
-
+  lines <- lines[nchar(lines) > 0]
+  
   # check our version
   versionLine <- lines[grep("^##gff-version [1-3]", lines)]
   if (length(versionLine)) {
@@ -104,10 +108,13 @@ setMethod("import.gff", "ANY",
     else version <- specVersion 
   }
 
-  # strip comments
-  lines <- lines[grep("^[^#]", lines)]
+  ## strip comments
+  notComments <- grep("^[^#]", lines)
+  lines <- lines[notComments]
+  
+### TODO: handle ontologies (store in trackSet)
 
-  # construct table
+  ## construct table
   fields <- c("seqname", "source", "feature", "start", "end", "score", "strand",
               "frame", "attributes")
   linesSplit <- strsplit(lines, "\t")
@@ -126,14 +133,16 @@ setMethod("import.gff", "ANY",
     tableDec <- urlDecode(as.vector(table))
     table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
   }
-  
-  featureData <- data.frame(featChrom = table[,"seqname"],
-                            featStart = as.numeric(table[,"start"]),
-                            featEnd = as.numeric(table[,"end"]),
-                            featStrand = table[,"strand"],
+
+  featureData <- data.frame(chrom = chrom,
+                            start = as.numeric(table[,"start"]),
+                            end = as.numeric(table[,"end"]),
+                            strand = table[,"strand"],
                             phase = table[,"frame"],
                             type = table[,"feature"],
                             source = table[,"source"])
+
+  rownames(featureData) <- make.names(table[,"seqname"])
 
   if (!is.null(table[,"attributes"])) {
     if (version == "1") {
@@ -163,11 +172,14 @@ setMethod("import.gff", "ANY",
                          })
     }
     featureData <- cbind(featureData, as.data.frame(attrList))
+    if (!is.null(featureData$ID))
+      rownames(featureData) <- featureData$ID
   }
 
   suppressWarnings(score <- as.numeric(table[,"score"]))
   
-  new("trackSet", featureData = featureData, dataVals = score)
+  new("trackSet", featureData = trackFeatureData(featureData),
+      dataVals = cbind(score = score), genome = genome)
 })
 
 setGeneric("export.gff1",

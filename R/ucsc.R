@@ -20,23 +20,25 @@ setMethod("initialize", "ucscSession",
           })
 
 setMethod("layTrack", c("ucscSession", "trackSets"),
-          function(object, track, name = names(track), view, format = "gff") {
+          function(object, track, name = names(track), view,
+                   format = c("auto", "bed", "wig", "gff1"), ...) {
+            format <- match.arg(format)
             if (length(track@.Data)) {
-              # upload tracks in blocks, one for each genome
+              ## upload tracks in blocks, one for each genome
               genomes <- lapply(track, slot, "genome")
               genomes[sapply(genomes, length) == 0] <- ""
               names(track) <- name
               tapply(track, unlist(genomes),
                      function(tracks)
                      {
-                       form <- ucscForm(trackSets(tracks))
+                       form <- ucscForm(trackSets(tracks), format, ...)
                        response <- ucscPost(object, "custom", form)
-                       # FIXME: need to check for error
+### FIXME: need to check for error
                      })
               args <- list()
               if (view) { # optionally view the track
                 args <- c(args, genomeSegment(tail(track, 1)[[1]]))
-                                        # update the view
+                ## update the view
                 do.call("browserView", c(object, args))
               }
             }
@@ -78,7 +80,8 @@ ucscExport <- function(object, segment, track, table, output, followup = NULL)
 
 ## download a trackSet by name
 setMethod("trackSet", "ucscSession",
-          function(object, segment, name, format = "bed", table = NULL)
+          function(object, name, segment = genomeSegment(object),
+                   format = "bed", table = NULL)
           {
             if (is.null(table))
               table <- name # default table is track id
@@ -134,15 +137,19 @@ setMethod("browserView", "ucscSession",
           {
             view <- new("ucscView", session = object)
             form <- list()
-                                        # figure out segment
-            if (length(list(...))) {
+            seg <- NULL                            # figure out segment
+            args <- list(...)
+            argsForSeg <- names(args) %in% slotNames("genomeSegment")
+            segArgs <- args[argsForSeg]
+            if (length(segArgs)) {
               if (missing(segment))
-                segment <- genomeSegment(...)
-              else segment <- genomeSegment(..., segment = segment)
-            }
-            if (!missing(segment)) # only need to pass it if specified
+                seg <- do.call("genomeSegment", segArgs)
+              else seg <- do.call("genomeSegment", c(segArgs, segment=segment))
+            } else if (!missing(segment))
+              seg <- segment
+            if (!is.null(seg)) # only need to pass it if specified
               form <- c(form, ucscForm(segment))
-                                        # figure out track modes
+            ## figure out track modes
             modes <- NULL
             if (!missing(track)) {
               if (is(track, "ucscTrackModes"))
@@ -151,18 +158,20 @@ setMethod("browserView", "ucscSession",
                 modes <- ucscTrackModes(object)
                 tracks(modes) <- track
               } else modes <- as(track, "ucscTrackModes")
-            } ##else if (length(list(...)))
-              ##modes <- ucscTrackModes(...)
-            if (!is.null(modes))
-              form <- c(form, ucscForm(modes))
-                                        # new hgsid for each browser launch
+            }
+            ## new hgsid for each browser launch
             doc <- ucscGet(object, "gateway")
             node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
             view@hgsid <- as.numeric(xmlValue(node))
-            form <- c(form, ucscForm(view))
-                                        # launch a web browser
+            browser()
+            if (is.null(modes))
+              modes <- ucscTrackModes(view)
+            argModes <- do.call("ucscTrackModes", args[!argsForSeg])
+            modes[names(argModes)] <- argModes
+            form <- c(form, ucscForm(modes), ucscForm(view))
+            ## launch a web browser
             ucscShow(object, "tracks", form)
-                                        # save this view
+            ## save this view
             object@views$instances <- c(object@views$instances, view)
             view
           })
@@ -269,6 +278,12 @@ setClass("ucscTrackLine",
                         visibility = "character", color = "integer",
                         priority = "numeric"),
          prototype(name = "R Track"))
+
+setMethod("show", "ucscTrackLine",
+          function(object)
+          {
+            cat(as(object, "character"), "\n")
+          })
 
 setClass("basicTrackLine",
          representation(itemRgb = "logical", useScore = "logical",
@@ -411,24 +426,63 @@ setClass("ucscTrackSet",
          prototype(trackLine = new("basicTrackLine")),
          "trackSet")
 
+setMethod("initialize", "ucscTrackSet",
+          function(.Object,
+                   assayData = assayDataNew(
+                     dataVals = as.matrix(dataVals), ...),
+                   phenoData = annotatedDataFrameFrom(assayData, byrow=FALSE),
+                   featureData = annotatedDataFrameFrom(assayData, byrow=TRUE),
+                   experimentData = new("MIAME"),
+                   annotation = character(),
+                   dataVals = matrix(nrow = ifelse(missing(featureData), 0,
+                                       nrow(pData(featureData))), ncol = 0),
+                   genome = "hg18",
+                   trackLine = new("basicTrackLine"),
+                   ...)
+          {
+            if (!missing(assayData) && !missing(dataVals))
+              stop("'assayData' and 'dataVals' cannot both be specified")
+            .Object@trackLine <- trackLine
+            callNextMethod(.Object,
+                           assayData = assayData,
+                           phenoData = phenoData,
+                           featureData = featureData,
+                           experimentData = experimentData,
+                           annotation = annotation,
+                           genome = genome)
+          })
+
+setMethod("show", "ucscTrackSet",
+          function(object)
+          {
+            callNextMethod()
+            cat("trackLine:", as(object@trackLine, "character"), "\n")
+          })
+
 # the 'ucsc' format is a meta format with a track line followed by
 # tracks formatted as 'wig', 'bed', 'gff', 'gtf', or 'psl'.
 # currently, only gff and wig are supported
 setGeneric("export.ucsc",
-           function(object, con, subformat = c("gff", "wig", "bed"),
-                    name = deparse(substitute(object)), ...)
+           function(object, con, subformat = c("auto", "gff1", "wig", "bed"),
+                    ...)
            standardGeneric("export.ucsc"))
 
 setMethod("export.ucsc", "trackSets",
-          function(object, con, subformat, name = names(object), ...)
+          function(object, con, subformat = c("auto", "gff1", "wig", "bed"),
+                   trackNames, ...)
           {
-            if (is.null(name)) {
-              if (all(sapply(object, is, "ucscTrackSet")))
-                name <- sapply(sapply(object, slot, "trackLine"), slot, "name")
-              else name <- paste("R Track", seq_along(object))
+            subformat <- match.arg(subformat)
+            if (missing(trackNames)) {
+              trackNames <- names(object)
+              if (is.null(trackNames))
+                trackNames <- paste("R Track", seq_along(object))
+              ucsc <- sapply(object, is, "ucscTrackSet")
+              lines <- sapply(object[ucsc], slot, "trackLine")
+              trackNames[ucsc] <- as.character(sapply(lines, slot, "name"))
             }
             for (i in seq_along(object))
-              export.ucsc(object[[i]], con, subformat, name[i], ...)
+              export.ucsc(object[[i]], con, subformat, name = trackNames[i],
+                          ...)
           })
 
 # wig is a special case (requires a special track line)
@@ -440,26 +494,40 @@ ucscTrackLineClass <- function(subformat)
 }
 
 setMethod("export.ucsc", "trackSet",
-          function(object, con, subformat = c("gff", "wig", "bed"), name, ...)
+          function(object, con, subformat, ...)
           {
             object <- as(object, "ucscTrackSet")
             subformat <- match.arg(subformat)
-            object@trackLine <- new(ucscTrackLineClass(subformat))
-            export.ucsc(object, con, subformat, name, ...)
+            export.ucsc(object, con, subformat, ...)
           })
 setMethod("export.ucsc", "ucscTrackSet",
-          function(object, con, subformat = c("gff", "wig", "bed"),
-                   name = object@trackLine@name, ...)
+          function(object, con, subformat, ...)
           {
-            object@trackLine@name <- name
             subformat <- match.arg(subformat)
             lineClass <- ucscTrackLineClass(subformat)
             if (!is(object@trackLine, lineClass))
               object@trackLine <- as(object@trackLine, lineClass)
-            if (subformat == "wig")
+            args <- list(...)
+            lineArgs <- names(args) %in% slotNames(lineClass)
+            for (argName in names(args)[lineArgs])
+              slot(object@trackLine, argName) <- args[[argName]]
+            if (subformat == "auto") {
+              subformat <- "bed"
+              if (is.numeric(dataVals(object)))
+                subformat <- "wig"
+            }
+            if (subformat == "wig") {
+              strand <- strand(object)
+              if (!all(strand[1] == strand)) {
+                export.ucsc(split(object, strand), con, subformat,
+                            paste(object@trackLine@name, levels(strand)), ...)
+                return()
+              }
               subformat <- "wigLines"
+            }
             writeLines(as(object@trackLine, "character"), con)
-            export(as(object, "trackSet"), con, subformat, ...)
+            do.call("export", c(list(as(object, "trackSet"), con, subformat),
+                                args[!lineArgs]))
           })
 
 # for GFF, the track line should go in a comment
@@ -471,12 +539,11 @@ setMethod("export.gff", "ucscTrackSet",
           })
 
 setGeneric("import.ucsc",
-           function(con, subformat = c("auto", "gff", "wig", "bed"),
+           function(con, subformat = c("auto", "gff1", "wig", "bed"),
                     drop = FALSE, ...)
            standardGeneric("import.ucsc"))
 setMethod("import.ucsc", "ANY",
-          function(con, subformat = c("auto", "gff", "wig", "bed"),
-                   drop = FALSE, ...)
+          function(con, subformat, drop = FALSE, ...)
           {
             subformat <- match.arg(subformat)
             lines <- readLines(con, warn = FALSE)
@@ -485,17 +552,16 @@ setMethod("import.ucsc", "ANY",
             starts <- tracks+1
             ends <- c(tail(tracks,-1)-1, length(lines))
             makeTrackSet <- function(i)
-              {
-                line <- as(trackLines[i], ucscTrackLineClass(subformat))
-                if (subformat == "wig")
-                  subformat <- "wigLines"
-                text <- lines[starts[i]:ends[i]]
-                trackSet <- import(format = subformat, text = text, ...)
-                ucsc <- new("ucscTrackSet")
-                as(ucsc, "ucscTrackSet") <- trackSet
-                ucsc@trackLine <- line
-                ucsc
-              }
+            {
+              line <- as(trackLines[i], ucscTrackLineClass(subformat))
+              if (subformat == "wig")
+                subformat <- "wigLines"
+              text <- lines[starts[i]:ends[i]]
+              trackSet <- import(format = subformat, text = text, ...)
+              ucsc <- as(trackSet, "ucscTrackSet", FALSE)
+              ucsc@trackLine <- line
+              ucsc
+            }
             trackSets <- lapply(seq_along(trackLines), makeTrackSet)
             if (drop && length(trackSets) == 1)
               trackSets <- trackSets[[1]]
@@ -578,7 +644,7 @@ setMethod("ucscTrackModes", "ucscTracks",
           function(object)
           {
             modes <- object@modes
-            names(modes) <- object@names
+            names(modes) <- object@ids
             ucscTrackModes(modes)
           })
 
@@ -615,10 +681,10 @@ setMethod("ucscForm", "ucscView",
             else list()
           })
 setMethod("ucscForm", "trackSets",
-          function(object, format = "gff")
-          {
-            gff <- export(object, format = "ucsc", subformat = format)
-            text <- paste(paste(gff, collapse = "\n"), "\n", sep = "")
+          function(object, format, ...)
+          {  
+            lines <- export(object, format = "ucsc", subformat = format, ...)
+            text <- paste(paste(lines, collapse = "\n"), "\n", sep = "")
             filename <- paste("track", format, sep = ".")
             upload <- fileUpload(filename, text, "text/plain")
             form <- list(Submit = "Submit", hgt.customFile = upload)

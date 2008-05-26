@@ -76,7 +76,7 @@ setMethod("tracks", "argoSession",
           })
 
 setMethod("trackSet", "argoSession",
-          function(object, segment = genomeSegment(object), name)
+          function(object, name, segment = genomeSegment(object))
           {
             registry <- .jcall("calhoun/gebo/db/TrackManagerRegistry",
                                "Lcalhoun/gebo/db/TrackManagerRegistry;",
@@ -95,16 +95,16 @@ setMethod("trackSet", "argoSession",
                                "getFeatures", jsegment)
             getFeatureRow <- function(feature)
               {
-                featStart <- .jcall(feature, "I", "getStart")
-                featEnd <- .jcall(feature, "I", "getStop")
+                start <- .jcall(feature, "I", "getStart")
+                end <- .jcall(feature, "I", "getStop")
                 strand <- .jcall(feature, "Lcalhoun/gebo/model/Strand;",
                                  "getStrand")
-                featStrand <- .jcall(strand, "S", "toString")
-                data.frame(featStart = featStart, featEnd = featEnd,
-                           featStrand = featStrand)
+                strand <- .jcall(strand, "S", "toString")
+                data.frame(start = start, end = end,
+                           strand = strand)
               }
             featureData <- do.call("rbind", lapply(features, getFeatureRow))
-            featureData <- cbind(featureData, featChrom = segment@chrom)
+            featureData <- cbind(featureData, chrom = segment@chrom)
             new("trackSet", featureData = featureData,
                 dataVals = rep(NA, nrow(featureData)),
                 genome = segment@genome)
@@ -380,15 +380,15 @@ setMethod("argoTrack", "trackSet",
                 .jnew("java/awt/Color", rgb[1], rgb[2], rgb[3])
               color <- apply(col2rgb(df$color), 2, jcolor)
             }
-            if (is.null(df$featStrand))
-              df$featStrand <- "+"
+            if (is.null(df$strand))
+              df$strand <- "+"
             for (i in seq_len(nrow(df))) {
 ### FIXME: how to add data values?
               strand <- .jcall("calhoun/gebo/model/Strand",
                                "Lcalhoun/gebo/model/Strand;", "parseStrand",
-                               df$featStrand[i]) # FIXME: inefficient
+                               df$strand[i]) # FIXME: inefficient
               segment <- .jnew("calhoun/gebo/model/SimpleSegment", sequence,
-                               strand, df$featStart[i], df$featEnd[i])
+                               strand, df$start[i], df$end[i])
               segment <- .jcast(segment, "calhoun/gebo/model/Segment")
               feature <- .jcall(manager, "Lcalhoun/gebo/model/Feature;",
                                 "createFeature", segment, color[[i]], name)

@@ -1,33 +1,39 @@
 # Import/export of Browser Extended Display (BED) data
 
 setGeneric("export.bed",
-           function(object, con, wig = FALSE, ...)
+           function(object, con, wig = FALSE, color = NULL, ...)
            standardGeneric("export.bed"))
 
 setMethod("export.bed", "trackSet",
-          function(object, con, wig)
+          function(object, con, wig, color)
           {
-            df <- trackData(object)
-            bed <- cbind(as.character(df$featChrom), df$featStart, df$featEnd)
-            if (!wig)
-              bed <- cbind(bed, featureNames(object))
+            df <- trackData(object) # BED start positions are 0-based
+            bed <- cbind(as.character(df$chrom), as.numeric(df$start) - 1,
+                         df$end)
+            if (!wig) {
+              name <- as.character(df$name)
+              if (is.null(name))
+                name <- featureNames(object)
+              bed <- cbind(bed, name)
+            }
             bed <- cbind(bed, df[[sampleNames(object)[1]]])
             if (!wig) {
               blockCount <- NULL
               if (!is.null(df$blockSizes))
                 blockCount <- length(strsplit(df$blockSizes, ",")[[1]])
-              color <- df$color
+              if (is.null(color))
+                color <- df$color
               if (is.null(color) && !is.null(blockCount))
                 color <- "black"
               if (!is.null(color))
-                color <- col2rgb(color)[,1]
+                color <- paste(as.vector(col2rgb(color)), collapse=",")
               thickStart <- df$thickStart
               thickEnd <- df$thickEnd
               if (is.null(thickStart) && !is.null(color)) {
-                thickStart <- df$featStart
-                thickEnd <- df$featEnd
+                thickStart <- df$start
+                thickEnd <- df$end
               }
-              bed <- cbind(bed, df$featStrand, thickStart, thickEnd, color,
+              bed <- cbind(bed, df$strand, thickStart, thickEnd, color,
                            blockCount, df$blockSizes, df$blockStarts)
             }
             write.table(bed, con, sep = "\t", col.names = FALSE,
@@ -35,19 +41,19 @@ setMethod("export.bed", "trackSet",
           })
 
 setMethod("export.bed", "ucscTrackSet",
-          function(object, con, wig, trackLine = !wig)
+          function(object, con, wig, trackLine = !wig, color, ...)
           {
-            if (!wig && trackLine)
-              export.ucsc(object, con, "bed", wig)
-            else export.wig(as(object, "trackSet"), con, wig)
+            if (!wig && trackLine) {
+              export.ucsc(object, con, "bed", wig, color, ...)
+            } else export.bed(as(object, "trackSet"), con, wig, color)
           })
           
 setGeneric("import.bed",
-           function(con, wig = FALSE, trackLine = !wig, ...)
+           function(con, wig = FALSE, trackLine = !wig, genome = "hg18", ...)
            standardGeneric("import.bed"))
 
 setMethod("import.bed", "ANY",
-          function(con, wig, trackLine)
+          function(con, wig, trackLine, genome)
           {
             if (!wig && trackLine) {
               # check for a track line
@@ -55,26 +61,29 @@ setMethod("import.bed", "ANY",
               if (length(grep("^track", lines)) > 0)
                 trackSet <- import(text = lines, format = "ucsc",
                                    subformat = "bed", drop = TRUE,
-                                   trackLine = FALSE)
+                                   trackLine = FALSE, genome = genome)
               else trackLine <- FALSE
             }
             if (wig || !trackLine) {
               bed <- read.table(con)
-              bedNames <- c("featChrom", "featStart", "featEnd", "name",
-                            "score", "featStrand", "thickStart",
+              bedNames <- c("chrom", "start", "end", "name",
+                            "score", "strand", "thickStart",
                             "thickEnd", "color", "blockCount", "blockSizes",
                             "blockStarts")
+              bed$start <- bed$start + 1 # BED has 0-based start positions
               colnames(bed) <- bedNames[seq_len(ncol(bed))]
-              featureData <- bed[,!(colnames(bed) %in% c("name", "score"))]
+              featureData <- bed[,!(colnames(bed) == "score")]
               if (!wig)
-                rownames(featureData) <- bed$name
+                rownames(featureData) <- make.names(bed$name, TRUE)
               score <- NA
-              if (wig)
+              if (wig) {
                 score <- bed$name
-              else if (!is.null(bed$score))
+                featureData$name <- NULL
+              } else if (!is.null(bed$score))
                 score <- bed$score
-              trackSet <- new("trackSet", featureData = featureData,
-                              dataVals = score)
+              trackSet <- new("trackSet",
+                              featureData = trackFeatureData(featureData),
+                              dataVals = cbind(score = score), genome = genome)
             }
             trackSet
           })

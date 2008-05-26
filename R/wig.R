@@ -9,79 +9,92 @@ setMethod("import.wig", "ANY",
 
 setGeneric("export.wig",
            function(object, con,
-                    dataFormat = c("bed", "variableStep", "fixedStep"), ...)
+                    dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
+                    ...)
            standardGeneric("export.wig"))
 setMethod("export.wig", "trackSet",
-          function(object, con, dataFormat)
+          function(object, con,
+                   dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
+                   ...)
           {
-            export.ucsc(object, con, "wig", dataFormat)
+            export.ucsc(object, con, "wig", dataFormat = match.arg(dataFormat),
+                        ...)
           })
 
 setGeneric("export.wigLines",
            function(object, con,
-                    dataFormat = c("bed", "variableStep", "fixedStep"), ...)
+                    dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
+                    ...)
            standardGeneric("export.wigLines"))
 setMethod("export.wigLines", "trackSet",
           function(object, con,
-                   dataFormat = c("bed", "variableStep", "fixedStep"))
+                   dataFormat = c("auto", "bed", "variableStep", "fixedStep"))
           {
-            formatMissing <- length(dataFormat) > 1
-            formatMatched <- match.arg(dataFormat)
             vals <- sampleNames(object)[1] # can only use a single condition
+            object <- object[!is.na(dataVals(object)[,1])]
+            object <- object[order(start(object))]
+            object <- object[order(chrom(object))]
             df <- trackData(object)
-            by(df, df$featChrom,
-               function(chromData)
-               {
-                 chromData <- chromData[!is.na(chromData[[vals]]),] # no NAs
-                 chromData <- chromData[order(chromData$featStart),]
-                 starts <- chromData$featStart
-                 ends <- chromData$featEnd
-                 spans <- ends - starts
-                 steps <- diff(starts)
-                 fixedSpan <- all(spans[1] == spans)
-                 fixedStep <- all(steps[1] == steps)
-                 # attempt to use most efficient format if not specified
-                 if (formatMissing && fixedSpan) { # fixed span
-                   dataFormat <- "variableStep"
-                   if (fixedStep) # and a fixed step
-                     dataFormat <- "fixedStep"
-                 } else dataFormat <- formatMatched
-                 if (dataFormat == "bed")
-                   export.bed(object, con, wig = TRUE)
-                 else {
-                   cat(dataFormat, file = con)
-                   cat(" chrom=", as.character(chromData$featChrom)[1],
-                       file = con, sep = "")
-                   data <- chromData[[vals]]
-                   if (dataFormat == "variableStep")
-                     data <- cbind(starts, data)
-                   else {
-                     if (!fixedStep)
-                       stop("Format 'fixedStep' invalid: step not uniform")
-                     cat(" start=", starts[1], file = con, sep = "")
-                     cat(" step=", steps[1], file = con, sep = "")
-                   }
-                   if (fixedSpan)
-                     cat(" span=", spans[1], file = con, sep = "")
-                   cat("\n", file = con, sep = "")
-                   write.table(data, con, sep = "\t", col.names = FALSE,
-                               row.names = FALSE, quote = FALSE)
-                 }
-               })
+            ## df <- df[!is.na(df[[vals]]),] # no NAs
+            ## df <- df[order(df$start),]
+            ## attempt to use most efficient format if not specified
+            byChrom <- function(chromData, formatOnly) {
+              starts <- chromData$start
+              ends <- chromData$end
+              if (!all(tail(starts, -1) - head(ends, -1) > 0))
+                stop("Features cannot overlap. ",
+                     "Note that WIG does not distinguish between strands - ",
+                     "try exporting two tracks, one for each strand.")
+              spans <- ends - starts + 1
+              steps <- diff(starts)
+              fixedSpan <- all(spans[1] == spans)
+              fixedStep <- all(steps[1] == steps)
+              dataFormat <- "bed"
+              if (fixedSpan) {
+                dataFormat <- "variableStep"
+                if (fixedStep)
+                  dataFormat <- "fixedStep"
+              }
+              if (formatOnly)
+                return(dataFormat)
+              cat(dataFormat, file = con)
+              cat(" chrom=", as.character(chromData$chrom)[1],
+                  file = con, sep = "")
+              data <- chromData[[vals]]
+              if (dataFormat == "variableStep")
+                data <- cbind(starts, data)
+              else {
+                if (!fixedStep)
+                  stop("Format 'fixedStep' invalid: step not uniform")
+                cat(" start=", starts[1], file = con, sep = "")
+                cat(" step=", steps[1], file = con, sep = "")
+              }
+              if (fixedSpan)
+                cat(" span=", spans[1], file = con, sep = "")
+              cat("\n", file = con, sep = "")
+              write.table(data, con, sep = "\t", col.names = FALSE,
+                          row.names = FALSE, quote = FALSE)
+            }
+            dataFormat <- match.arg(dataFormat)
+            if (dataFormat == "auto")
+              dataFormat <- by(df, df$chrom, byChrom, TRUE)
+            if (any(dataFormat == "bed")) # one BED, all BED
+              export.bed(object, con, wig = TRUE)
+            else by(df, df$chrom, byChrom, FALSE) # else, mix variable/fixed
           })
 
 setGeneric("import.wig",
-           function(con, ...) standardGeneric("import.wig"))
+           function(con, genome = "hg18", ...) standardGeneric("import.wig"))
 setMethod("import.wig", "ANY",
-          function(con)
+          function(con, genome)
           {
-            import.ucsc(con, "wig", TRUE)
+            import.ucsc(con, "wig", TRUE, genome = genome)
           })
 
 setGeneric("import.wigLines",
-           function(con, ...) standardGeneric("import.wigLines"))
+           function(con, genome = "hg18", ...) standardGeneric("import.wigLines"))
 setMethod("import.wigLines", "ANY",
-          function(con)
+          function(con, genome)
           {
             lines <- readLines(con, warn = FALSE)
             formatInds <- grep("^variableStep|^fixedStep", lines)
@@ -99,26 +112,26 @@ setMethod("import.wigLines", "ANY",
                 format <- gsub("^([^ ]*) .*", "\\1", formatLines[i])
                 formatVals <- ucscParsePairs(formatLines[i])
                 if (format == "variableStep") {
-                  featStart <- data[,1]
+                  start <- data[,1]
                   score <- data[,2]
                 } else {
-                  featStart <- seq(as.numeric(formatVals["start"]),
+                  start <- seq(as.numeric(formatVals["start"]),
                                   by = as.numeric(formatVals["step"]),
                                   length.out = nrow(data))
                   score <- data[,1]
                 }
-                featEnd <- c(tail(featStart,-1)-1, tail(featStart, 1))
+                end <- c(tail(start,-1)-1, tail(start, 1))
                 if (!is.na(formatVals["span"]))
-                  featEnd <- featStart + as.numeric(formatVals["span"])
-                data.frame(featChrom = formatVals[["chrom"]],
-                           featStart = featStart, featEnd = featEnd,
+                  end <- start + as.numeric(formatVals["span"])
+                data.frame(chrom = formatVals[["chrom"]],
+                           start = start, end = end,
                            score = score)
               }
               resultList <- lapply(seq_along(formatInds), parseData)
               resultMat <- do.call("rbind", resultList)
-              featureData <- resultMat[,c("featChrom", "featStart", "featEnd")]
-              new("trackSet", featureData = featureData,
-                  dataVals = resultMat[,"score"])
+              featureData <- resultMat[,c("chrom", "start", "end")]
+              new("trackSet", featureData = trackFeatureData(featureData),
+                  dataVals = resultMat[,"score",drop=FALSE], genome = genome)
             } else import(text = lines, format = "bed", wig = TRUE)
         })
 
@@ -140,8 +153,8 @@ setAs("wigTrackLine", "character",
         if (length(color))
           str <- paste(str, " altColor=", paste(color, collapse=","), sep="")
         autoScale <- from@autoScale
-        if (length(autoScale) && autoScale)
-          str <- paste(str, "autoScale=On")
+        if (length(autoScale) && !autoScale)
+          str <- paste(str, "autoScale=off")
         gridDefault <- from@gridDefault
         if (length(gridDefault) && gridDefault)
           str <- paste(str, "gridDefault=On")

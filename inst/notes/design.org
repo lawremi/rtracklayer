@@ -11,30 +11,96 @@
        * Auto-detect line format when importing
      * WIG: wiggle - for representing quantitative data (plots)
        * Subset of UCSC (separated by special track lines)
+     * BED: browser extended display - UCSC-specific, visuals
      * Unsupported:
-       * BED: browser extended display - UCSC-specific, too visual
-       * GTF: gene transfer format - gene specific (possible via gff)
        * PSL: alignment specific
 **** Extensible driver-based framework
-     * S3-style dispatch using format parameter (exportTrack.gff)
+  * S3-style dispatch using format parameter (export.gff)
 *** Subsetting
     Supports the '[' syntax, for subsetting by:
     * Conventional means (indices, logical, names, etc)
     * Genome segment
       * Chromosome ID (chrid)
-      * Start (chrstart)
-      * Stop (chrend)
-    The genomeSegment class is the natural fit here, but:
-    * What about the syntax? genomeSegment(chrom = ...) is long. 
-    * S4 object may be too heavy/clumsy.
-    Really, only the chromosome ID is useful, because specifying
-start and stop without a chromosome seems dangerous and is meaningless
-unless all chromosomes are the same.
+      * GenomeSegment
+*** Creation from experimental datasets
+At first glance, one wants to simply map the experimental dataset -
+e.g. the ExpressionSet. But genome visualizations are limited in
+capability - one may only be able to represent a small number of variables effectively. Experimental datasets often have extremely high
+dimensionality - may need to reduce information to high-level
+observations on the data. For example, in a gene expression
+experiment, color-code the genes that are overexpressed, unchanged,
+and underexpressed.
+
+Perhaps both modes should be facilitated: low-level data values and
+high-level findings. The user may choose based on needs of the
+analysis, as well as capabilities of the browser. Switching between
+browsers should thus be facilitated, as well.
+
+The bottom-line is that the user is trying to relate data/findings to
+other annotations (often qualitative annotations that are easily
+communicated via a browser). Different browsers have different levels
+of access to canonical annotations. UCSC and Ensembl are loaded but
+limited as they are web-based. GenomeGraphs has powerful
+visualizations but is (initially) empty of tracks. Need to
+facilitate/optimize the retrieval of tracks.
+
+**** Considering data type
+***** From categorical data (e.g. genes of interest)
+The browserSessions should recognize factors and handle them in an
+optimal way. This may require a special parameter for color scales
+(e.g. provide a color scheme).
+
+***** From quantitative data (e.g. expression values)
+A quantitative variable should be visualized appropriately (e.g. bars
+where feature lengths differ, else points).
+
+**** From ExpressionSet and possibly other eSets
+Simply take the fields from the other eSet, reorganizing the assayData
+and adding information from the annotation to the featureData. Need to
+figure out the details on a per-use-case basis, but the basic
+low-level mapping should prove useful.
+
+**** From other existing data structures
+Conversion routine should probably be provided by the package defining
+the data structure. The rtracklayer package exists at the
+infrastructure level - it is not specific to a data source.
+
+**** Direct from sequence analysis
+Data structures like those derived from eSet are normally generated as
+the result of preprocessing. When analyzing sequence data directly,
+however, one can calculate any arbitrary measure on the sequence. In
+this case, the trackSet is the natural data structure. How can this be
+facilitated?
+
+The hard part is the featureData and its required fields: chromosome,
+start and end. The start/end coordinates are known when working with a
+BStringViews object. If each feature corresponds to a view, the view
+coordinates could be translated directly to the featureData. There
+would need to be one additional parameter for the chromosome and
+(optionally) strand.
+
+At a lower level, there needs to be a systematic way of creating the
+featureData slot, to avoid typos for example in naming of the columns
+and to annotate the variables. This is somewhat inspired by the R
+seq() function.
+
+*** Storing
+Rather than constantly retrieve track information for display in local
+browsers, why not create a storage system. 
+Requirements:
+**** An efficient means of storing tabular data
+Formats:
+  * NetCDF (for storing large tabular data, good R support)
+  * DAS (possibly overkill)
+  * GFF files (not very efficient, but standard)
+**** A convenient interface to the database
+Should use the trackSet() generic as with browserSession. Arguments
+should support subsetting, because tracks will likely be large.
 ** Sequence data
 *** Retrieval
     Browsers are clients to sequence data sources. Thus, R can use the
 browsers to retrieve sequences. There is no common interface defined
-in R for accessing sequence databases, though we could define one.
+in R for accessing sequence databases, though we could define one. Retrieved sequences should be stored as DNAString instances.
 *** Loading
     Some browsers may support loading custom sequences. Should accept
 data from the Biostrings package.
@@ -51,12 +117,25 @@ specified by:
       + Almost always, the features belong to same context
 A context slot should be provided for convenience. How that is
 interpreted will depend on the genome browser interface.
+*** Storing
+Large sequences (i.e. genomes) need to be stored for use in local
+genome browsers. The bsGenome package should provide this.
 * Software integration
 ** Browsers
 *** UCSC
     + popular
     + easy to control
     - web-based (slow)
+*** GenomeGraphs
+    + R-based (simple interface)
+    + Local (fast)
+    + Could layer on additional information
+    + Could make interactive
+*** Hilbert curves
+    - Strange, unfamiliar
+    + Integrated with R/GTK+
+    + Fast (Local, C++/GTK+ based)
+    + High interactivity - generic callback to R
 *** Argo
     + runs on local machine (responsive)
     + clean, intuitive interface
@@ -75,12 +154,13 @@ interpreted will depend on the genome browser interface.
     + popular
     - hard to query
     - web-based (slow)
-    - requires DAS server or strange upload format
- 
+    - requires DAS server or strange upload format 
 ** Classes
 *** View
     A genome view, with a position and track visibility settings.
-    This could masquerade as a vector of 'browserTrackView's if that class existed. But would it be useful? It would hold properties like 'selected' and 'visible'. Right now those are just vectors (simpler).
+    This could masquerade as a vector of 'browserTrackView's if that
+class existed. But would it be useful? It would hold properties like
+'selected' and 'visible'. Right now those are just vectors (simpler).
 *** Session
     Holds settings, tracks and views for a single session.
     Should this masquerade as a vector of tracks?
@@ -97,4 +177,21 @@ But we are the client to the browser - could we not view the browser
 as a database? If such a structure existed, yes, we could have a
 method that extracts a data source from a browser. However, the genome
 should only be extracted when explicitly requested - most of the time
-we only need a light-weight handle.     
+we only need a light-weight handle.      
+** Using multiple browsers
+Users may want to:
+  * Pass track information between browsers
+  * Coordinate views between browsers
+Both of these are possible, but could they be made easier?
+  * Tracks are already easy - one simple line to get/set track
+  * Views by browserView() with sig c("someSession", "browserView")
+** Other packages
+*** Biostrings
+**** XString
+Sequence data accessed via genomeSequence()
+**** IRanges/BStringViews
+Ranges occur in two places in rtracklayer:
+  * genomeSegment (only a single range)
+    Use genomeSegment() and genomeViews() for coercion
+  * start/end in track feature data
+    Use trackViews() and trackFeatureData() for coercion  

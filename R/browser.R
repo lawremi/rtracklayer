@@ -64,13 +64,9 @@ setMethod("show", "browserView", function(object)
             show(tracks(object))
           })
 
-# retrieve a trackSet from a container
-setGeneric("trackSet", function(object, segment = genomeSegment(), ...)
-           standardGeneric("trackSet"))
-
 setGeneric("layTrack",
            function(object, track, name = deparse(substitute(track)),
-                    view = TRUE, ...)
+                    view = FALSE, ...)
            standardGeneric("layTrack"))
 # load a track into a browser
 setMethod("layTrack", c("browserSession", "trackSet"),
@@ -85,7 +81,7 @@ setMethod("layTrack", c("browserSession", "trackSets"),
           {
             for (i in seq_len(length(name) - 1))
             #for (t in head(track, -1))
-              object <- layTrack(object, track[[i]], name[i], FALSE, ...)
+              layTrack(object, name[i], FALSE, ...) <- track[[i]]
             last <- tail(track, 1)
             if (length(last))
               object <- layTrack(object, last[[1]], tail(name, 1), view, ...)
@@ -105,22 +101,26 @@ setMethod("genomeSegment", "browserSession",
 # high-level entry point
 setGeneric("browseGenome",
            function(tracks = trackSets(), browser = "ucsc",
-                    segment = genomeSegment(tracks), ...)
+                    segment = genomeSegment(tracks), view = TRUE,
+                    trackParams = list(), viewParams = list(), ...)
            standardGeneric("browseGenome"))
 
 setMethod("browseGenome", "ANY",
-          function(tracks, browser, segment, ...)
+          function(tracks, browser, segment, view, trackParams, viewParams, ...)
           {
             # initialize session of type identified by 'browser'
             session <- browserSession(browser)
             # load 'tracks'
-            session <- layTrack(session, tracks, view = FALSE)
+            trackParams <- c(list(session, tracks, view = FALSE), trackParams)
+            session <- do.call("layTrack", trackParams)
             # open view of 'segment'
-            if (is.null(segment))
-              segment <- genomeSegment(session)
-            if (length(list(...)))
-              segment <- genomeSegment(..., segment = segment)
-            browserView(session, segment)
+            if (view) {
+              segment <- merge(genomeSegment(session), segment)
+              if (length(list(...)))
+                segment <- genomeSegment(..., segment = segment)
+              viewParams <- c(list(session, segment), viewParams)
+              do.call("browserView", viewParams)
+            }
             session
           })
 
@@ -147,12 +147,15 @@ setMethod("browserSession", "character",
             new(class, ...)
           })
 
+setMethod("browserSession", "missing",
+          function(object, ...) browserSession("ucsc", ...))
+
 # get one from a view
 setMethod("browserSession", "browserView", function(object) object@session)
 
 # load a sequence into the browser
-setGeneric("laySequence",
-           function(object, sequence, name, ...) standardGeneric("laySequence"))
+setGeneric("laySequence", function(object, sequence, name, ...)
+           standardGeneric("laySequence"))
 
 # retrieve a segment of a genome sequence from a browser
 setGeneric("genomeSequence",
