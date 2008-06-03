@@ -163,7 +163,6 @@ setMethod("browserView", "ucscSession",
             doc <- ucscGet(object, "gateway")
             node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
             view@hgsid <- as.numeric(xmlValue(node))
-            browser()
             if (is.null(modes))
               modes <- ucscTrackModes(view)
             argModes <- do.call("ucscTrackModes", args[!argsForSeg])
@@ -519,8 +518,9 @@ setMethod("export.ucsc", "ucscTrackSet",
             if (subformat == "wig") {
               strand <- strand(object)
               if (!all(strand[1] == strand)) {
-                export.ucsc(split(object, strand), con, subformat,
-                            paste(object@trackLine@name, levels(strand)), ...)
+                nameMap <- c("+" = "plus", "-" = "minus")
+                name <- paste(object@trackLine@name, nameMap[levels(strand)])
+                export.ucsc(split(object, strand), con, subformat, name, ...)
                 return()
               }
               subformat <- "wigLines"
