@@ -172,7 +172,7 @@ setMethod("import.gff", "ANY",
                          })
     }
     featureData <- cbind(featureData, as.data.frame(attrList))
-    if (!is.null(featureData$ID))
+    if (!is.null(featureData$ID) && !any(is.na(featureData$ID)))
       rownames(featureData) <- featureData$ID
   }
 

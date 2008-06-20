@@ -38,6 +38,7 @@ setMethod("export.wigLines", "trackSet",
             ## df <- df[!is.na(df[[vals]]),] # no NAs
             ## df <- df[order(df$start),]
             ## attempt to use most efficient format if not specified
+### FIXME: If we need bed, use bedGraph format
             byChrom <- function(chromData, formatOnly) {
               starts <- chromData$start
               ends <- chromData$end

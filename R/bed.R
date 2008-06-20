@@ -70,8 +70,8 @@ setMethod("import.bed", "ANY",
                             "score", "strand", "thickStart",
                             "thickEnd", "color", "blockCount", "blockSizes",
                             "blockStarts")
-              bed$start <- bed$start + 1 # BED has 0-based start positions
               colnames(bed) <- bedNames[seq_len(ncol(bed))]
+              bed$start <- bed$start + 1 # BED has 0-based start positions
               featureData <- bed[,!(colnames(bed) == "score")]
               if (!wig)
                 rownames(featureData) <- make.names(bed$name, TRUE)

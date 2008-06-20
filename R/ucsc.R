@@ -517,7 +517,7 @@ setMethod("export.ucsc", "ucscTrackSet",
             }
             if (subformat == "wig") {
               strand <- strand(object)
-              if (!all(strand[1] == strand)) {
+              if (!any(is.na(strand)) && !all(strand[1] == strand)) {
                 nameMap <- c("+" = "plus", "-" = "minus")
                 name <- paste(object@trackLine@name, nameMap[levels(strand)])
                 export.ucsc(split(object, strand), con, subformat, name, ...)
