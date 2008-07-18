@@ -154,7 +154,12 @@ identify the track within \textit{session}.
 
 \subsubsection{Viewing tracks}
 
-By default, the \textit{layTrack} function creates a \textit{browserView}, an object that represents a view of a particular set of tracks along a particular region of the genome. For \textbf{UCSC}, this roughly corresponds to one tab or window in the web browser. To override the automatic creation of a view, pass \textit{view = FALSE} to the \textit{layTrack} function.
+By default, the \textit{layTrack} function creates a
+\textit{browserView}, an object that represents a view of a particular
+set of tracks along a particular region of the genome. For
+\textbf{UCSC}, this roughly corresponds to one tab or window in the
+web browser. To override the automatic creation of a view, pass
+\textit{view = FALSE} to the \textit{layTrack} function.
 
 The default view of the track attempts to show the entire track. The
 view region is determined by a call to \textit{genomeSegment} on the
@@ -204,11 +209,11 @@ loaded_tracks <- tracks(session)
 One may download any of the tracks, such as the ``Demo Track'' that
 was loaded previously in this example, with the following code:
 <<get-track-data, eval=FALSE>>=
-demo_track <- trackSet(session, name = "Demo Track")
+demo_track <- trackSet(session, name = "Demo Track p")
 @ 
 By default, the segment of the track downloaded is the current default genome segment associated with the session. One may download track data for any genome segment, such as that displayed by a particular view, as in this code:
 <<get-track-segment, eval=FALSE>>=
-view_track <- trackSet(session, genomeSegment(view), "Demo Track")
+view_track <- trackSet(session, genomeSegment(view), "Demo Track p")
 @
 
 \subsubsection{Querying view state}

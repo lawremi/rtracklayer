@@ -3,6 +3,18 @@
 \alias{genomeSegment-class}
 \alias{merge,genomeSegment,genomeSegment-method}
 
+\alias{genome}
+\alias{genome,genomeSegment-method}
+\alias{chrom,genomeSegment-method}
+\alias{start,genomeSegment-method}
+\alias{end,genomeSegment-method}
+\alias{genome<-}
+\alias{genome<-,genomeSegment-method}
+\alias{chrom<-}
+\alias{chrom<-,genomeSegment-method}
+\alias{start<-,genomeSegment-method}
+\alias{end<-,genomeSegment-method}
+
 \title{Class "genomeSegment"}
 \description{ An object representing a segment of a genome. }
 \section{Objects from the Class}{
@@ -28,10 +40,34 @@
 }
 \section{Methods}{
   \describe{
-    \item{\code{\link{merge}(x, y)}}{
+    \item{\code{merge(x, y)}}{
       Merges two instances. The result has the same
       slot values as \code{x}, except the non-empty slots in
       \code{y} override those from \code{x}.
+    }
+    \item{\code{genome(object)}}{
+      Gets the genome identifier.
+    }
+    \item{\code{genome(object) <- value}}{
+      Sets the genome identifier.
+    }
+    \item{\code{chrom(object)}}{
+      Gets the \code{chrom}osome identifier.
+    }
+    \item{\code{chrom(object) <- value}}{
+      Sets the \code{chrom}osome identifier.
+    }
+    \item{\code{start(object)}}{
+      Gets the start position.
+    }
+    \item{\code{start(object) <- value}}{
+      Sets the start position.
+    }
+    \item{\code{end(object)}}{
+      Gets the end position.
+    }
+    \item{\code{end(object) <- value}}{
+      Sets the end position.
     }
   }
 }

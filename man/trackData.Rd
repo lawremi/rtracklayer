@@ -22,7 +22,7 @@ trackData(object, ...)
   holds the mid-point of each feature (helpful for plotting).
 }
 \author{ Michael Lawrence }
-\seealso{ \code{\link{featChrom}}, \code{\link{featStart}},
+\seealso{ \code{\link{chrom}}, \code{\link{start}},
   \code{\link{dataVals}}, etc for accessing individual elements of the
   track.}
 \keyword{ manip }

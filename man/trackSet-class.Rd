@@ -6,6 +6,13 @@
 \alias{coerce,trackSet,data.frame-method}
 \alias{initialize,trackSet-method}
 
+\alias{chrom}
+\alias{strand}
+\alias{chrom,trackSet-method}
+\alias{start,trackSet-method}
+\alias{end,trackSet-method}
+\alias{strand,trackSet-method}
+
 \title{Class "trackSet"}
 \description{ An object representing a genome annotation track. Based on
   \code{\link[Biobase:eSet-class]{eSet}}, with feature information
@@ -41,10 +48,10 @@
       holding the experimental design matrix. }
     \item{\code{featureData}:}{Object of class
       \code{"AnnotatedDataFrame"} holding the feature information,
-      generally including columns \code{featChrom} (chromosome name),
-      \code{featStart} (numeric start position),
-      \code{featEnd} (numeric end position)
-      and \code{featStrand} (DNA strand: "+", "-" or \code{NA}).}
+      generally including columns \code{chrom} (chromosome name),
+      \code{start} (numeric start position),
+      \code{end} (numeric end position)
+      and \code{strand} (DNA strand: "+", "-" or \code{NA}).}
     \item{\code{experimentData}:}{Object of class \code{"MIAME"} with
       experimental metadata. }
     \item{\code{annotation}:}{Object of class \code{"character"}
@@ -70,13 +77,13 @@ Class \code{"\link[Biobase:Versioned-class]{Versioned}"}, by class "eSet", dista
       an element representing the chromosome for each feature in this track. }
     \item{\code{\link{dataVals}(object)}}{Retrieves the
       matrix containing the experimental data values.}
-    \item{\code{\link{featChrom}(object)}}{Retrieves
+    \item{\code{chrom(object)}}{Retrieves
       the chromosome identifiers of the features. }
-    \item{\code{\link{featStart}(object)}}{Retrieves
+    \item{\code{start(x)}}{Retrieves
       the start positions of the features. }
-    \item{\code{\link{featEnd}(object)}}{Retrieves the
+    \item{\code{end(x)}}{Retrieves the
       end positions of the features. }
-    \item{\code{\link{featStrand}(object)}}{Retrieves
+    \item{\code{strand(object)}}{Retrieves
       the strand ("+", "-" or \code{NA}) of the features. }
     \item{\code{\link{genomeSegment}(object)}}{
       obtain the genome segment spanned by this track (including gaps). }

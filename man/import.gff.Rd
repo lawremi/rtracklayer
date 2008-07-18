@@ -20,19 +20,20 @@
   instances from connections or text.
 }
 \usage{
-import.gff(con, version = c("1", "2", "3"))
+import.gff(con, version = c("1", "2", "3"), genome = "hg18")
 import.gff1(con, ...)
 import.gff2(con, ...)
 import.gff3(con, ...)
-import.bed(con, wig = FALSE, trackLine = !wig, ...)
-import.wig(con, ...)
-import.ucsc(con, subformat = c("auto", "gff", "wig", "bed"),
+import.bed(con, wig = FALSE, trackLine = !wig, genome = "hg18", ...)
+import.wig(con, genome = "hg18", ...)
+import.ucsc(con, subformat = c("auto", "gff1", "wig", "bed"),
             drop = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{con}{ The connection from which to receive the input. }
   \item{version}{ The version of \acronym{GFF} ("1", "2" or "3"). }
+  \item{genome}{ The genome to set on the imported track. }
   \item{wig}{ Whether the \acronym{BED} lines are expected to be
     \acronym{WIG} formatted (not for public use). }
   \item{trackLine}{ Whether the \acronym{BED} data has a track line (it

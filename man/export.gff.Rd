@@ -26,11 +26,10 @@ export.gff(object, con, version = c("1", "2", "3"), source =
 export.gff1(object, con, ...)
 export.gff2(object, con, ...)
 export.gff3(object, con, ...)
-export.bed(object, con, wig = FALSE, ...)
+export.bed(object, con, wig = FALSE, color = NULL, ...)
 export.wig(object, con,
-           dataFormat = c("bed", "variableStep", "fixedStep"), ...)
-export.ucsc(object, con, subformat = c("gff", "wig", "bed"),
-            name = deparse(substitute(object)), ...)
+           dataFormat = c("auto", "bed", "variableStep", "fixedStep"), ...)
+export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -46,13 +45,14 @@ export.ucsc(object, con, subformat = c("gff", "wig", "bed"),
   \item{source}{ The source of the GFF information, for \acronym{GFF}. }
   \item{wig}{ Whether to output the \acronym{WIG} variant of
     \acronym{BED} lines, not to be used directly. }
+  \item{color} { Recycled vector of colors, as interpreted by
+    \code{\link{col2rgb}} for BED features. If \code{NULL}, the
+    \code{color} column in the \code{featureData} is used, if any.}
   \item{dataFormat}{ The format of the data lines for \acronym{WIG}
-    tracks, see references. }
+    tracks, see references. The "auto" format uses the most efficient
+    format possible.}
   \item{subformat}{ The format of the tracks within the \acronym{UCSC}
-    container. }
-  \item{name}{The name of the track to output in the \acronym{UCSC}
-    track line. Not needed if \code{object} is a
-    \code{\linkS4class{ucscTrackSet}}.}
+    container. If "auto", "wig" is used for numeric data, else "bed". }
   \item{\dots}{For \code{export.gff1}, \code{export.gff2} and
     \code{export.gff3}: arguments to pass to \code{export.gff}. For
     \code{export.bed} and \code{export.wig} : arguments to pass to methods. For

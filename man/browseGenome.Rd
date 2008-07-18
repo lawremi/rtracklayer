@@ -6,7 +6,9 @@
   A generic function for launching a genome browser.
 }
 \usage{
-browseGenome(tracks = trackSets(), browser = "ucsc", segment = genomeSegment(tracks), ...)
+browseGenome(tracks = trackSets(), browser = "ucsc",
+             segment = genomeSegment(tracks), view = TRUE,
+             trackParams = list(), viewParams = list(), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -15,6 +17,11 @@ browseGenome(tracks = trackSets(), browser = "ucsc", segment = genomeSegment(tra
   \item{browser}{ The name of the genome browser. }
   \item{segment}{ The \code{\linkS4class{genomeSegment}} to display in
     the initial view. }
+  \item{view}{ Whether to open a view. }
+  \item{trackParams} { Named list of parameters to pass to
+    \code{\link{layTrack}}. }
+  \item{viewParams} { Named list of parameters to pass to
+    \code{\link{browserView}}. }
   \item{\dots}{ Arguments corresponding to slots in
     \code{\linkS4class{genomeSegment}} that override those in \code{segment}. }
 }

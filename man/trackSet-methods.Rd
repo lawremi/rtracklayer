@@ -8,10 +8,9 @@
 \description{
   Methods for getting a \code{\linkS4class{trackSet}}.
 }
-\usage{trackSet(object, segment = genomeSegment(), ...)}
+\usage{trackSet(object, ...)}
 \arguments{
   \item{object}{An object from which to obtain a \code{trackSet}.}
-  \item{segment}{The segment from which to obtain the features.}
   \item{\dots}{Arguments passed on to methods.}
 }
 \section{Methods}{
@@ -19,7 +18,7 @@
     The following methods are defined by \pkg{rtracklayer}.
     
     \item{object = "ucscSession"}{
-      \code{trackSet(object, segment = genomeSegment(object), name, format =
+      \code{trackSet(object, name, segment = genomeSegment(object), format =
         "bed", table = NULL)}:
       Get a track from the session by its \code{name} in format
       \code{format}. Some built-in tracks have multiple series, each
@@ -27,7 +26,7 @@
     }
     
     \item{object = "argoSession"}{
-      \code{trackSet(object, segment = genomeSegment(object), name)}:
+      \code{trackSet(object, name, segment = genomeSegment(object))}:
       Get a track from the session by its \code{name}.
     }
   }

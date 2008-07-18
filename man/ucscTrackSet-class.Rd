@@ -25,9 +25,9 @@
       holding the experimental design matrix. }
     \item{\code{featureData}:}{Object of class
       \code{"AnnotatedDataFrame"} holding feature information, generally
-      including columns \code{featChrom} (chromosome), \code{featStart}
-      (start position), \code{featEnd} (end position) and
-      \code{featSTrand} (strand on the DNA: "+", "-", or \code{NA}).}
+      including columns \code{chrom} (chromosome), \code{start}
+      (start position), \code{end} (end position) and
+      \code{strand} (strand on the DNA: "+", "-", or \code{NA}).}
     \item{\code{experimentData}:}{Object of class \code{"MIAME"} holding
     experimental metadata.} 
     \item{\code{annotation}:}{Object of class \code{"character"}

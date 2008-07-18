@@ -49,8 +49,8 @@ Class \code{"\linkS4class{browserSession}"}, directly.
         deparse(substitute(track)), view = TRUE)}}{ Stores \code{track}
       under \code{name}, opening a view of the track if \code{view} is
       \code{TRUE}.}
-    \item{\code{\link{trackSet}(object, segment = genomeSegment(object),
-        name)}}{
+    \item{\code{\link{trackSet}(object, name,
+        segment = genomeSegment(object))}}{
       Obtains a \code{\linkS4class{trackSet}} named \code{name} from
       \code{segment}.}
     \item{\code{\link{tracks}(object, segment = NULL, visible =

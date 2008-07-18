@@ -102,7 +102,7 @@ setReplaceMethod("end", "genomeSegment",
              x
            })
 
-setGeneric("chrom", function(object) standardGeneric("chrom"))
+setGeneric("chrom", function(object, ...) standardGeneric("chrom"))
 setMethod("chrom", "genomeSegment", function(object) object@chrom)
 
 setGeneric("chrom<-", function(object, value) standardGeneric("chrom<-"))

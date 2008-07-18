@@ -11,7 +11,7 @@
   Methods for loading \code{\linkS4class{trackSet}}s into genome browsers.
 }
 \usage{
-layTrack(object, track, name = deparse(substitute(track)), view = TRUE, ...)
+layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
 }
 \arguments{
   \item{object}{A \code{\linkS4class{browserSession}} into which the
@@ -37,7 +37,7 @@ layTrack(object, track, name = deparse(substitute(track)), view = TRUE, ...)
 
     \item{object = "ucscSession", track = "trackSets"}{
       \code{layTrack(object, track, name = deparse(substitute(track)),
-        view = TRUE, format = "gff")}:
+        view = FALSE, format = "gff")}:
       Load the tracks into the session using the specified
       \code{format}.
     }

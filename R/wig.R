@@ -47,7 +47,9 @@ setMethod("export.wigLines", "trackSet",
                      "Note that WIG does not distinguish between strands - ",
                      "try exporting two tracks, one for each strand.")
               spans <- ends - starts + 1
-              steps <- diff(starts)
+              if (length(starts) == 1)
+                steps <- 0
+              else steps <- diff(starts)
               fixedSpan <- all(spans[1] == spans)
               fixedStep <- all(steps[1] == steps)
               dataFormat <- "bed"

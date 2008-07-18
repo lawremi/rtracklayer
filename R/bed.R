@@ -62,7 +62,10 @@ setMethod("import.bed", "ANY",
                 trackSet <- import(text = lines, format = "ucsc",
                                    subformat = "bed", drop = TRUE,
                                    trackLine = FALSE, genome = genome)
-              else trackLine <- FALSE
+              else {
+                trackLine <- FALSE
+                writeLines(con, lines)
+              }
             }
             if (wig || !trackLine) {
               bed <- read.table(con)

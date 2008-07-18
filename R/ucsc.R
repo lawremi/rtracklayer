@@ -71,7 +71,8 @@ ucscExport <- function(object, segment, track, table, output, followup = NULL)
     output <- ucscGet(object, "tables", form, .parse = !is.null(followup))
     if (!is.null(followup)) {
       node <- getNodeSet(output, "//input[@name = 'hgsid']/@value")[[1]]
-      hgsid <- xmlValue(node)
+      ##hgsid <- xmlValue(node)
+      hgsid <- as.character(node)
       form <- c(followup, list(hgsid = hgsid))
       output <- ucscGet(object, "tables", form, .parse = FALSE)
     }
@@ -80,19 +81,29 @@ ucscExport <- function(object, segment, track, table, output, followup = NULL)
 
 ## download a trackSet by name
 setMethod("trackSet", "ucscSession",
-          function(object, name, segment = genomeSegment(object),
-                   format = "bed", table = NULL)
+          function(object, name, segment = genomeSegment(object), table = NULL)
           {
+            trackids <- tracks(object)
+            if (!(name %in% trackids))
+              name <- trackids[name]
+            if (is.na(name))
+              stop("Unknown track: ", name)
             if (is.null(table))
               table <- name # default table is track id
             followup <- NULL
-            output <- format
-            if (output == "wig")
+            browser()
+            tables <- ucscGet(object, "tables")
+            types_path <- "//select[@name = 'hgta_outputType']/option/@value"
+            types <- getNodeSet(tables, types_path)
+            if ("wigData" %in% types) { # track stored as wig
+              format <- "wig"
               output <- "wigData"
-            else if (output == "bed")
+            } else {
+              format <- output <- "bed"
               followup <- list(hgta_doGetBed = "get BED",
                                hgta_printCustomTrackHeaders = "on",
                                boolshad.hgta_printCustomTrackHeaders = "1")
+            }
             output <- ucscExport(object, segment, name, table, output, followup)
             import(text = output, format = format)
           })
@@ -162,7 +173,8 @@ setMethod("browserView", "ucscSession",
             ## new hgsid for each browser launch
             doc <- ucscGet(object, "gateway")
             node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
-            view@hgsid <- as.numeric(xmlValue(node))
+            hgsid <- as.character(node)
+            view@hgsid <- as.numeric(hgsid)
             if (is.null(modes))
               modes <- ucscTrackModes(view)
             argModes <- do.call("ucscTrackModes", args[!argsForSeg])
@@ -518,7 +530,7 @@ setMethod("export.ucsc", "ucscTrackSet",
             if (subformat == "wig") {
               strand <- strand(object)
               if (!any(is.na(strand)) && !all(strand[1] == strand)) {
-                nameMap <- c("+" = "plus", "-" = "minus")
+                nameMap <- c("+" = "p", "-" = "m")
                 name <- paste(object@trackLine@name, nameMap[levels(strand)])
                 export.ucsc(split(object, strand), con, subformat, name, ...)
                 return()
@@ -576,7 +588,7 @@ setClass("ucscCart", contains = "character")
 setGeneric("ucscCart", function(object, ...) standardGeneric("ucscCart"))
 
 setMethod("ucscCart", "ucscSession",
-          function(object, form = list())
+          function(object, form = ucscForm(activeView(object)))
           {
             node <- ucscGet(object, "cart", form)
             raw <- xmlValue(getNodeSet(node, "//pre/text()")[[1]])
@@ -628,7 +640,7 @@ setMethod("ucscTracks", "ucscSession",
             nodes <- getNodeSet(tracks, "//select/option[@selected]/text()")
             trackModes <- sapply(nodes, xmlValue)
             nodes <- getNodeSet(tracks, "//select/@name")
-            trackIds <- sapply(nodes, xmlValue)
+            trackIds <- as.character(nodes)
             nodes <- getNodeSet(tracks, "//select/../a/text()")
             names(trackIds) <- sub("^ ", "", sapply(nodes, xmlValue))
             new("ucscTracks", ids = trackIds, modes = trackModes)
@@ -693,6 +705,8 @@ setMethod("ucscForm", "trackSets",
               form <- c(form, db = genome)
             form
           })
+
+setMethod("ucscForm", "NULL", function(object) list())
 
 # Transforming to a cookie
 

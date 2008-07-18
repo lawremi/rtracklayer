@@ -61,7 +61,7 @@ setMethod("chrom", "trackSet", function(object) {
 })
 
 ## sequence strand (+/-/NA)
-setGeneric("strand", function(object)standardGeneric("strand"))
+setGeneric("strand", function(object, ...) standardGeneric("strand"))
 setMethod("strand", "trackSet", function(object) {
   pData(featureData(object))$strand
 })
