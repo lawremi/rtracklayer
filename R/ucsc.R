@@ -515,10 +515,28 @@ setMethod("export.ucsc", "ucscTrackSet",
           function(object, con, subformat, ...)
           {
             subformat <- match.arg(subformat)
+            auto <- FALSE
             if (subformat == "auto") {
+              auto <- TRUE
               subformat <- "bed"
               if (is.numeric(dataVals(object)))
                 subformat <- "wig"
+            }
+            if (subformat == "wig") {
+              strand <- as.character(strand(object))
+              strand[is.na(strand)] <- "NA"
+              isDisjoint <- function(track) {
+                starts <- start(track)
+                ends <- end(track)
+                startord <- order(starts)
+                all(tail(starts[startord], -1) - head(ends[startord], -1) > 0)
+              }
+              if (!all(sapply(split(object, strand), isDisjoint))) {
+                if (auto)
+                  subformat <- "bed"
+                else stop("Track not compatible with WIG format: ",
+                          "Overlapping features must be on separate strands")
+              }
             }
             lineClass <- ucscTrackLineClass(subformat)
             if (!is(object@trackLine, lineClass))
@@ -528,14 +546,17 @@ setMethod("export.ucsc", "ucscTrackSet",
             for (argName in names(args)[lineArgs])
               slot(object@trackLine, argName) <- args[[argName]]
             if (subformat == "wig") {
-              strand <- strand(object)
-              if (!any(is.na(strand)) && !all(strand[1] == strand)) {
-                nameMap <- c("+" = "p", "-" = "m")
+              subformat <- "wigLines"
+              strand <- as.character(strand(object))
+              strand[is.na(strand)] <- "NA"
+              if (!all(strand[1] == strand)) {
+                nameMap <- c("+" = "p", "-" = "m", "NA" = "NA")
+                strand <- factor(strand)
                 name <- paste(object@trackLine@name, nameMap[levels(strand)])
-                export.ucsc(split(object, strand), con, subformat, name, ...)
+                tracks <- split(object, strand)
+                export.ucsc(tracks, con, "wig", name, ...)
                 return()
               }
-              subformat <- "wigLines"
             }
             writeLines(as(object@trackLine, "character"), con)
             do.call("export", c(list(as(object, "trackSet"), con, subformat),
@@ -574,10 +595,10 @@ setMethod("import.ucsc", "ANY",
               ucsc@trackLine <- line
               ucsc
             }
-            trackSets <- lapply(seq_along(trackLines), makeTrackSet)
-            if (drop && length(trackSets) == 1)
-              trackSets <- trackSets[[1]]
-            trackSets
+            tsets <- lapply(seq_along(trackLines), makeTrackSet)
+            if (drop && length(tsets) == 1)
+              tsets[[1]]
+            else trackSets(tsets)
           })
 
 ############ INTERNAL API ############

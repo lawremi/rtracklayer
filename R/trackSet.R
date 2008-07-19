@@ -328,4 +328,8 @@ setMethod("trackSets", "list",
           })
 
 setMethod("genomeSegment", "trackSets",
-          function(object) do.call("c", lapply(object, genomeSegment)))
+          function(object) {
+            if (!length(object))
+              genomeSegment()
+            else do.call("c", lapply(object, genomeSegment))
+          })

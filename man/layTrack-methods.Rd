@@ -51,8 +51,8 @@ layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
   from a session.}
 \examples{
 \dontrun{
-  session <- browseGenome()
-  track <- import(system.file("tests", "v2.gff", package = "rtracklayer"))
+  session <- browserSession()
+  track <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
   layTrack(session, track, "My Track")
 }
 }

@@ -119,13 +119,14 @@ setMethod("import.wigLines", "ANY",
                   score <- data[,2]
                 } else {
                   start <- seq(as.numeric(formatVals["start"]),
-                                  by = as.numeric(formatVals["step"]),
-                                  length.out = nrow(data))
+                               by = as.numeric(formatVals["step"]),
+                               length.out = nrow(data))
                   score <- data[,1]
                 }
-                end <- c(tail(start,-1)-1, tail(start, 1))
-                if (!is.na(formatVals["span"]))
-                  end <- start + as.numeric(formatVals["span"])
+                span <- formatVals["span"]
+                if (is.na(span))
+                  span <- 1
+                end <- start + as.numeric(span) - 1
                 data.frame(chrom = formatVals[["chrom"]],
                            start = start, end = end,
                            score = score)

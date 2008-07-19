@@ -86,7 +86,7 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
   ## output as WIG string in variableStep format
   wig <- export.wig(track, dummy, dataFormat = "variableStep")
   ## output multiple tracks in UCSC meta-format
-  track2 <- import(system.file("tests", "v3.gff", package = "rtracklayer"), version = "3")
+  track2 <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
   ## output to WIG with BED line format
   export.ucsc(trackSets(track, track2), dummy, subformat = "wig", dataFormat = "bed") 
 }

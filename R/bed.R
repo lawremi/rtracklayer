@@ -12,7 +12,7 @@ setMethod("export.bed", "trackSet",
                          df$end)
             if (!wig) {
               name <- as.character(df$name)
-              if (is.null(name))
+              if (!length(name))
                 name <- featureNames(object)
               bed <- cbind(bed, name)
             }
@@ -33,11 +33,11 @@ setMethod("export.bed", "trackSet",
                 thickStart <- df$start
                 thickEnd <- df$end
               }
-              bed <- cbind(bed, df$strand, thickStart, thickEnd, color,
-                           blockCount, df$blockSizes, df$blockStarts)
+              bed <- cbind(bed, as.character(df$strand), thickStart, thickEnd,
+                           color, blockCount, df$blockSizes, df$blockStarts)
             }
             write.table(bed, con, sep = "\t", col.names = FALSE,
-                        row.names = FALSE, quote = FALSE)
+                        row.names = FALSE, quote = FALSE, na = ".")
           })
 
 setMethod("export.bed", "ucscTrackSet",
@@ -64,6 +64,7 @@ setMethod("import.bed", "ANY",
                                    trackLine = FALSE, genome = genome)
               else {
                 trackLine <- FALSE
+                con <- file()
                 writeLines(con, lines)
               }
             }
