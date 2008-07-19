@@ -46,13 +46,12 @@ Class \code{"\linkS4class{browserSession}"}, directly.
       \code{format}.
     }
     \item{\code{\link{trackSet}(object, segment = genomeSegment(), name =
-        deparse(substitute(object)), format = "bed", table = NULL)}}{
+        deparse(substitute(object)), table = NULL)}}{
       Retrieves a \code{\linkS4class{trackSet}} with features in
       \code{segment} from track named \code{name}. Some built-in tracks
       have multiple series, each stored in a separate database
       table. A specific table may be retrieved by passing its name in
-      the \code{table} parameter. The exported data is formatted
-      according to \code{format}.
+      the \code{table} parameter.
     }
     \item{\code{\link{tracks}}(object)}{ Gets the
       names of the tracks stored in the session. }
