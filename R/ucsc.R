@@ -71,8 +71,7 @@ ucscExport <- function(object, segment, track, table, output, followup = NULL)
     output <- ucscGet(object, "tables", form, .parse = !is.null(followup))
     if (!is.null(followup)) {
       node <- getNodeSet(output, "//input[@name = 'hgsid']/@value")[[1]]
-      ##hgsid <- xmlValue(node)
-      hgsid <- as.character(node)
+      hgsid <- xmlValue(node)
       form <- c(followup, list(hgsid = hgsid))
       output <- ucscGet(object, "tables", form, .parse = FALSE)
     }
@@ -91,10 +90,9 @@ setMethod("trackSet", "ucscSession",
             if (is.null(table))
               table <- name # default table is track id
             followup <- NULL
-            browser()
             tables <- ucscGet(object, "tables")
             types_path <- "//select[@name = 'hgta_outputType']/option/@value"
-            types <- getNodeSet(tables, types_path)
+            types <- sapply(getNodeSet(tables, types_path), xmlValue)
             if ("wigData" %in% types) { # track stored as wig
               format <- "wig"
               output <- "wigData"
@@ -173,7 +171,7 @@ setMethod("browserView", "ucscSession",
             ## new hgsid for each browser launch
             doc <- ucscGet(object, "gateway")
             node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
-            hgsid <- as.character(node)
+            hgsid <- xmlValue(node)
             view@hgsid <- as.numeric(hgsid)
             if (is.null(modes))
               modes <- ucscTrackModes(view)
@@ -661,7 +659,7 @@ setMethod("ucscTracks", "ucscSession",
             nodes <- getNodeSet(tracks, "//select/option[@selected]/text()")
             trackModes <- sapply(nodes, xmlValue)
             nodes <- getNodeSet(tracks, "//select/@name")
-            trackIds <- as.character(nodes)
+            trackIds <- sapply(nodes, xmlValue)
             nodes <- getNodeSet(tracks, "//select/../a/text()")
             names(trackIds) <- sub("^ ", "", sapply(nodes, xmlValue))
             new("ucscTracks", ids = trackIds, modes = trackModes)
