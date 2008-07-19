@@ -515,6 +515,11 @@ setMethod("export.ucsc", "ucscTrackSet",
           function(object, con, subformat, ...)
           {
             subformat <- match.arg(subformat)
+            if (subformat == "auto") {
+              subformat <- "bed"
+              if (is.numeric(dataVals(object)))
+                subformat <- "wig"
+            }
             lineClass <- ucscTrackLineClass(subformat)
             if (!is(object@trackLine, lineClass))
               object@trackLine <- as(object@trackLine, lineClass)
@@ -522,11 +527,6 @@ setMethod("export.ucsc", "ucscTrackSet",
             lineArgs <- names(args) %in% slotNames(lineClass)
             for (argName in names(args)[lineArgs])
               slot(object@trackLine, argName) <- args[[argName]]
-            if (subformat == "auto") {
-              subformat <- "bed"
-              if (is.numeric(dataVals(object)))
-                subformat <- "wig"
-            }
             if (subformat == "wig") {
               strand <- strand(object)
               if (!any(is.na(strand)) && !all(strand[1] == strand)) {

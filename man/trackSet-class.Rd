@@ -51,7 +51,8 @@
       generally including columns \code{chrom} (chromosome name),
       \code{start} (numeric start position),
       \code{end} (numeric end position)
-      and \code{strand} (DNA strand: "+", "-" or \code{NA}).}
+      and \code{strand} (DNA strand: "+", "-" or \code{NA}). Note that
+      the intervals are closed, i.e. the selected region is [start,stop].}
     \item{\code{experimentData}:}{Object of class \code{"MIAME"} with
       experimental metadata. }
     \item{\code{annotation}:}{Object of class \code{"character"}
@@ -82,7 +83,8 @@ Class \code{"\link[Biobase:Versioned-class]{Versioned}"}, by class "eSet", dista
     \item{\code{start(x)}}{Retrieves
       the start positions of the features. }
     \item{\code{end(x)}}{Retrieves the
-      end positions of the features. }
+      end positions of the features. Note that intervals are closed, so
+      this should be the index of the last base to include in the feature.}
     \item{\code{strand(object)}}{Retrieves
       the strand ("+", "-" or \code{NA}) of the features. }
     \item{\code{\link{genomeSegment}(object)}}{
