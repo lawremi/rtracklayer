@@ -16,10 +16,10 @@ options(width=40)
 \section{Introduction}
 
 The \textbf{rtracklayer} package is an interface (or \emph{layer})
-between \textbf{R} and several genome browsers. Its main purpose is
+between \textbf{R} and genome browsers. Its main purpose is
 the visualization of genomic annotation \emph{tracks}, whether
 generated through experimental data analysis performed in R or loaded
-from a separate data source. The features of \textbf{rtracklayer} may
+from an external data source. The features of \textbf{rtracklayer} may
 be divided into two categories: 1) the representation and
 import/export of track data and 2) the control and querying of
 external genome browser sessions and views.
@@ -28,12 +28,9 @@ For working with track data, the package defines a data structure
 named \textit{trackSet}, which extends the Bioconductor \textit{eSet}
 class. A \textit{trackSet} contains information on the features of a
 track, including their chromosome, start and end positions in the
-genome, as well as any associated experimental measurements. Track
-data may be read from or written to connections (e.g. files on the
-disk) in the following formats: Browser Extended Display (BED),
-versions 1, 2 and 3 of the General Feature Format (GFF), and Wiggle
-(WIG). Support for additional formats may be provided by other
-packages through a plugin system.
+genome, as well as any associated experimental measurements. Import
+and export from and to files is supported in various formats, see
+Section~\ref{sec:import-export}.
 
 The \textbf{rtracklayer} package currently interfaces with the
 \textbf{UCSC} web-based genome browser as well as the locally
@@ -44,40 +41,79 @@ create and manipulate genomic views, and import/export tracks and
 sequences to and from a browser. Please note that not all features are
 necessarily supported by every browser interface.
 
-The rest of this vignette will introduce these features
-through a demonstration.
+The rest of this vignette will consist of a number of case
+studies. First, we consider an experiment investigating microRNA
+regulation of gene expression, where the microRNA target sites are the
+primary genomic features of interest.
 
-\section{Demonstration}
+\section{Gene expression and microRNA target sites}
 
-In order to demonstrate the features of \textbf{rtracklayer}, we will
-import some track data from a file and visualize it in the
-\textbf{UCSC} genome browser.
+This section will demonstrate the features of
+\Rpackage{rtracklayer} on a microarray dataset from a larger
+experiment investigating the regulation of human stem cell
+differentiation by microRNAs. The transcriptome of the cells was
+measured before and after differentiation by HG-U133plus2 Affymetrix
+GeneChip arrays. We begin our demonstration by constructing an
+annotation dataset from the experimental data, and then illustrate the
+use of the genome browser interface to display interesting genomic
+regions in the UCSC browser.
 
-The first step is to attach the \textbf{rtracklayer} package, as in:
-<<attach>>=
-require(rtracklayer)
+\subsection{Creating a target site track}
+
+For the analysis of the stem cell microarray data, we are interested
+in the genomic regions corresponding to differentially expressed genes
+that are known to be targeted by a microRNA. We will represent this
+information as an annotation track, so that we may view it in the UCSC
+genome browser.
+
+\subsubsection{Constructing the \textit{trackSet}}
+
+In preparation for creating the microRNA target track, we first used
+\textbf{limma} \citep{limma} to detect the differentially expressed
+genes in the microarray experiment. The locations of the microRNA
+target sites were obtained from MiRBase \citep{MiRBase}. Information
+about the target sites on differentially expressed genes was stored in
+the \textit{data.frame} called \texttt{targets}.
+
+% 
+<<rtl-init, echo = FALSE, results = hide>>=
+library("humanStemCell")
+data(fhesc)
+library("genefilter")
+filtFhesc <- nsFilter(fhesc)[[1]]
+library("limma") 
+design <- model.matrix(~filtFhesc$Diff) 
+hesclim <- lmFit(filtFhesc, design) 
+hesceb <- eBayes(hesclim) 
+tab <- topTable(hesceb, coef = 2, 
+adjust.method = "BH", 
+n = 7676) 
+tab2 <- tab[(tab$logFC > 1) & (tab$adj.P.Val < 0.01),]
+affyIDs <- tab2$ID
+library("microRNA")
+data(hsTargets)
+library("hgu133plus2.db")
+entrezIDs <- mappedRkeys(hgu133plus2ENTREZID[affyIDs])
+library("org.Hs.eg.db")
+mappedEntrezIDs <- entrezIDs[entrezIDs %in% mappedkeys(org.Hs.egENSEMBLTRANS)]
+ensemblIDs <- mappedRkeys(org.Hs.egENSEMBLTRANS[mappedEntrezIDs])
+targetMatches <- match(ensemblIDs, hsTargets$target, 0)
+targets <- hsTargets[targetMatches,]
 @
+% 
 
-\subsection{Working with track data}
-
-Before we can demonstrate the features in \textbf{rtracklayer} for
-manipulating, analyzing and visualizing annotation track data, we must
-first load a track into the R session. The track information is stored
-in a \textit{trackSet} object. It is possible to construct a
-\textit{trackSet} directly from information within the R session, but
-for the purpose of this demonstration, we will import the track data
-from a file. 
-
-The \textit{import} function imports track data encoded in one of the
-supported standard formats (BED, GFF and WIG are built-in). The source
-of the data may be given as a connection, a filename or a character
-vector containing the data. In this case, we will import the data from
-a GFF-formatted file included with the \textbf{rtracklayer} package,
-as in the following code:
-<<import>>=
-track <- import(system.file("tests", "v1.gff", package =
-                            "rtracklayer"))
+The following code loads the \textbf{rtracklayer} package and creates
+the track from the \texttt{targets} dataset by passing it to the
+\texttt{trackSet} constructor. The columns of \texttt{targets} are
+named according to the convention expected by the constructor.
+% 
+<<rtl-miRNA-track>>=
+library("rtracklayer")
+targetTrack <- trackSet(targets)
 @
+%
+
+\subsubsection{Accessing track information}
 
 The track information is now stored in the R session as a
 \textit{trackSet} object. As the \textit{trackSet} class inherits from
@@ -91,33 +127,41 @@ Most of the information for each feature in a track is stored in the
 and end positions, the DNA strand (+/-/NA), and any other information
 available. There are methods for accessing the most commonly used
 fields. For example, the following code retrieves the chromosome names
-and then start positions for each feature in the track:
+and then start positions for each feature in the track.
 <<feature-data-accessors>>=
-chrom(track)
-start(track)
+head(chrom(targetTrack))
+head(start(targetTrack))
 @ 
 
-The data values for a track are stored as a numeric matrix under the
-name \textit{dataVals} within the \textit{assayData}. The values may
-be retrieved with the following code:
-<<datavals-accessor>>=
-dataVals(track)
-@ 
+\subsubsection{Exporting and importing tracks}
+\label{sec:import-export}
 
-Sometimes, it may be convenient to extract the track information as a
-\textit{data.frame}. The \textit{trackData} function does this by
-combining the \textit{featureData} matrix with the \textit{dataVals}.
-It also adds a column named \textit{featMid}, which gives the
-mid-points 
-(the mean of the start and end positions) of each feature
-in the track. Here is an example of using \textit{trackData} to plot
-the data values in the track vs. their mid-points.
-<<trackData, fig=TRUE>>=
-df <- trackData(track)
-plot(df$featMid, df$dataVals)
-@ 
+Import and export of \textit{trackSet} instances is supported in the
+following formats: Browser Extended Display (BED), versions 1, 2 and 3
+of the General Feature Format (GFF), and Wiggle (WIG). Support for
+additional formats may be provided by other packages through a plugin
+system.
 
-\subsection{Interacting with genome browsers}
+To save the microRNA target track created above in a format understood
+by other tools, we could export it as BED. This is done with the
+\texttt{export} function, which accepts a filename or any R connection
+object as its target. The desired format is derived, by default, from
+the extension of the filename.
+<<export, eval = FALSE>>=
+export(targetTrack, "targets.bed")
+@
+
+To read the data back in a future session, we could use the
+\texttt{import} function. The source
+of the data may be given as a connection, a filename or a character
+vector containing the data. Like the \texttt{export} function, the
+format is determined from the filename, by default. 
+<<import, eval = FALSE>>=
+restoredTrack <- import("targets.bed")
+@
+
+
+\subsection{Viewing the targets in a genome browser}
 
 For the next step in our example, we will load the track into a genome
 browser for visualization with other genomic annotations. The
@@ -129,8 +173,10 @@ any browser.
 \subsubsection{Starting a session}
 
 The first step towards interfacing with a browser is to start a
-browser session, represented in R as a \textit{browserSession} object. A \textit{browserSession} is primarily a container of tracks and
-genomic views. The following code creates a \textit{browserSession} for the \textbf{UCSC} browser:
+browser session, represented in R as a \textit{browserSession}
+object. A \textit{browserSession} is primarily a container of tracks
+and genomic views. The following code creates a
+\textit{browserSession} for the \textbf{UCSC} browser:
 <<browserSession, eval=FALSE>>=
 session <- browserSession("ucsc")
 @ 
@@ -141,49 +187,63 @@ browsers, enter:
 genomeBrowsers()
 @ 
 
-\subsubsection{Laying tracks}
+\subsubsection{Laying the track}
 
- Before a track can be viewed on the genome, it must be
-loaded into the session using the \textit{layTrack} function, as
+Before a track can be viewed on the genome, it must be
+loaded into the session using the \texttt{layTrack} function, as
 demonstrated below:
 <<layTrack, eval=FALSE>>=
-session <- layTrack(session, track, name = "Demo Track")
+session <- layTrack(session, track, name = "targets")
 @ 
 The \textit{name} argument should be a character vector that will
-identify the track within \textit{session}. 
+help identify the track within \texttt{session}. Note that the
+invocation of \texttt{layTrack} above does not specify an upload
+format. Thus, the default, ``auto'', is used. Since the track does not
+contain any data values, the track is uploaded as BED. To make this
+explicit, we could pass ``bed'' as the \textit{format} parameter.
 
-\subsubsection{Viewing tracks}
+\subsubsection{Viewing the track}
 
-By default, the \textit{layTrack} function creates a
+By default, the \texttt{layTrack} function creates a
 \textit{browserView}, an object that represents a view of a particular
 set of tracks along a particular region of the genome. For
 \textbf{UCSC}, this roughly corresponds to one tab or window in the
 web browser. To override the automatic creation of a view, pass
-\textit{view = FALSE} to the \textit{layTrack} function.
+\texttt{view = FALSE} to the \texttt{layTrack} function.
 
 The default view of the track attempts to show the entire track. The
-view region is determined by a call to \textit{genomeSegment} on the
+view region is determined by a call to \texttt{genomeSegment} on the
 track object, as in:
 <<genomeSegment-track>>=
 genomeSegment(track)
 @ 
-The returned value from \textit{genomeSegment} is an instance of the
+The returned value from \texttt{genomeSegment} is an instance of the
 \textit{genomeSegment} class, which specifies a segment of a genome by
 its genome name, chromosome name and start and end positions.
 
-In order to zoom in on the first two features of the track, one may
-subset the track and then create a browser view of the new region
-using the \textit{browserView} function, as demonstrated below:
+The target sites are distributed throughout the genome, so we will
+only be able to view a few features at a time. In this case, we will
+view only the first feature in the track. A convenient way to focus a
+view on a particular set of features is to subset the track and pass
+the range of the subtrack to the constructor of the view. 
+Below we take a track subset that contains only the first feature.
 <<take-subset>>=
-subtrack <- track[1:2,] # get first two features
+subTargetTrack <- targetTrack[1] # get first two features
 @
+
+Now we call the \texttt{browserView} function to construct the view
+and pass the \textit{genomeSegment} of the subtrack, zoomed out by a
+factor of 10, as the segment to view. By passing the name of the
+targets track in the \textit{pack} parameter, we instruct the browser
+to use the ``pack'' mode for viewing the track.
 <<view-subset, eval=FALSE>>=
-view <- browserView(session, segment = genomeSegment(subtrack))
-@ 
+view <- browserView(session, genomeSegment(subTargetTrack) / 10, 
+                    pack = "targets")
+@
 
 \subsubsection{A shortcut}
 
-There is also a shortcut to the above steps. The \textit{browseGenome}
+There is also a shortcut to the above steps. The \texttt{browseGenome}
 function creates a session for a specified browser, loads one or more
 tracks into the session and creates a view of a given genome segment.
 In the following code, we create a new \textbf{UCSC} session, load the
@@ -206,14 +266,14 @@ the browser, enter the following:
 <<get-track-names, eval=FALSE>>=
 loaded_tracks <- tracks(session)
 @ 
-One may download any of the tracks, such as the ``Demo Track'' that
-was loaded previously in this example, with the following code:
+One may download any of the tracks, such as the ``targets'' track that
+was loaded previously in this example.
 <<get-track-data, eval=FALSE>>=
-demo_track <- trackSet(session, name = "Demo Track p")
+demo_track <- trackSet(session, name = "targets")
 @ 
 By default, the segment of the track downloaded is the current default genome segment associated with the session. One may download track data for any genome segment, such as that displayed by a particular view, as in this code:
 <<get-track-segment, eval=FALSE>>=
-view_track <- trackSet(session, genomeSegment(view), "Demo Track p")
+view_track <- trackSet(session, genomeSegment(view), "targets")
 @
 
 \subsubsection{Querying view state}
@@ -230,9 +290,35 @@ by entering:
 visible_tracks <- tracks(view)
 @ 
 
-\subsection{Conclusion}
+\section{Quantitative case study}
 
-This short demonstration has explained a few of the most important
+The data values for a track are stored as a numeric matrix under the
+name \textit{dataVals} within the \textit{assayData}. The values may
+retrieved with the \texttt{dataVals} method.
+<<datavals-accessor>>=
+head(dataVals(track))
+@
+
+Sometimes, it may be convenient to extract the track information as a
+\textit{data.frame}. The \textit{trackData} function does this by
+combining the \textit{featureData} matrix with the \textit{dataVals}.
+It also adds a column named \textit{featMid}, which gives the
+mid-points (the mean of the start and end positions) of each feature
+in the track. Here is an example of using \textit{trackData} to plot
+the data values in the track vs. their mid-points.
+<<trackData, fig=TRUE>>=
+df <- trackData(track)
+plot(df$featMid, df$dataVals)
+@ 
+
+Note that the code below refers
+to the plus strand subset of the original track named ``Demo
+Track'' by concatentating `` p'' onto its name. For the minus strand,
+`` m'' would be the appropriate postfix.
+
+\section{Conclusion}
+
+These case studies have demonstrated a few of the most important
 features of \textbf{rtracklayer}, but many have been left unexplained.
 Please see the package documentation for more details.
 

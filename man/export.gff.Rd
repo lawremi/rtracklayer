@@ -45,7 +45,7 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
   \item{source}{ The source of the GFF information, for \acronym{GFF}. }
   \item{wig}{ Whether to output the \acronym{WIG} variant of
     \acronym{BED} lines, not to be used directly. }
-  \item{color} { Recycled vector of colors, as interpreted by
+  \item{color}{Recycled vector of colors, as interpreted by
     \code{\link{col2rgb}} for BED features. If \code{NULL}, the
     \code{color} column in the \code{featureData} is used, if any.}
   \item{dataFormat}{ The format of the data lines for \acronym{WIG}
@@ -56,7 +56,9 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
   \item{\dots}{For \code{export.gff1}, \code{export.gff2} and
     \code{export.gff3}: arguments to pass to \code{export.gff}. For
     \code{export.bed} and \code{export.wig} : arguments to pass to methods. For
-    \code{export.ucsc}: arguments to pass to \code{export.subformat}.}
+    \code{export.ucsc}: arguments to pass to \code{export.subformat} or
+    to set on the slots of the \code{\linkS4class{ucscTrackLine}} subclass
+    corresponding to \code{subformat}.}
 }
 \value{
   If \code{con} is missing, a character vector containing the string

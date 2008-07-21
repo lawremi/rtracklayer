@@ -30,9 +30,12 @@ Class \code{"\linkS4class{browserSession}"}, directly.
     \item{\code{\link{browserView}(object, segment =
         genomeSegment(object), track = tracks(object), ...)}}{ Creates a
       \code{\linkS4class{browserView}} of \code{segment} with visible
-      tracks named in \code{track}. Arguments in \code{...} correspond
-      to slots in the \code{\linkS4class{genomeSegment}} class and override those
-      in \code{segment}. }
+      tracks specified by \code{track}. \code{track} may be an instance
+      of \code{\linkS4class{ucscTrackModes}}. Arguments in \code{...} should
+      override slots in \code{segment} or else match parameters
+      to a \code{\link{ucscTrackModes}} method for creating a
+      \code{ucscTrackModes} instance that will override modes indicated
+      by the \code{track} parameter. }
     \item{\code{\link{browserViews}}(object)}{ Gets the
       \code{\linkS4class{browserView}} instances for this session. }
     \item{\code{\link{genomeSegment}}(object)}{ Gets the
@@ -41,9 +44,12 @@ Class \code{"\linkS4class{browserSession}"}, directly.
       Gets the sequence in \code{segment} and \code{track}.
     }
     \item{\code{\link{layTrack}(object, track, name = names(track),
-        view = TRUE, format = "gff")}}{
+        view = TRUE, format = "gff", ...)}}{
       Loads a track, stored under \code{name} and formatted as
-      \code{format}.
+      \code{format}. The arguments in \code{...} are passed on to
+      \code{\link{export.ucsc}}, so they could be slots in a
+      \code{\linkS4class{ucscTrackLine}} subclass or parameters to pass
+      on to the export function for \code{format}.
     }
     \item{\code{\link{trackSet}(object, segment = genomeSegment(), name =
         deparse(substitute(object)), table = NULL)}}{

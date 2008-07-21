@@ -186,7 +186,10 @@ setMethod("browserView", "ucscSession",
           })
 
 # every view has a "mode" (hide, dense, pack, squish, full) for each track
-setClass("ucscTrackModes", contains = "character")
+### FIXME: probably should be merged with ucscTracks
+### FIXME: and maybe hide the structure entirely, using [ on ucscView
+setClass("ucscTrackModes", representation(labels = "character"),
+         contains = "character")
 
 # get/set track modes to/from e.g. a view
 setGeneric("ucscTrackModes",
@@ -194,7 +197,7 @@ setGeneric("ucscTrackModes",
 
 # convenience constructor for track mode object
 setMethod("ucscTrackModes", "character",
-          function(object, hide = character(),
+          function(object, labels, hide = character(),
                    dense = character(), pack = character(),
                    squish = character(), full = character())
           {
@@ -203,7 +206,9 @@ setMethod("ucscTrackModes", "character",
             object[pack] <- "pack"
             object[squish] <- "squish"
             object[full] <- "full"
-            new("ucscTrackModes", object)
+            if (missing(labels))
+              labels <- names(object)
+            new("ucscTrackModes", object, labels = as.character(labels))
           })
 setMethod("ucscTrackModes", "missing",
           function(object, ...) ucscTrackModes(character(), ...))
@@ -236,16 +241,50 @@ setReplaceMethod("ucscTrackModes", c("ucscView", "character"),
                    object
                  })
 
+## subsetting ucscTrackModes
+
+## if not in ids, try labels
+resolveTrackIndex <- function(object, i) {
+  if (is.character(i)) {
+    missing <- !(i %in% names(object))
+    matching <- match(i[missing], object@labels)
+    if (any(is.na(matching))) {
+      unmatched <- i[missing][is.na(matching)]
+      stop("Unknown tracks:", paste(unmatched, collapse = ", "))
+    }
+    i[missing] <- names(object)[matching]
+  }
+  i
+}
+
+setMethod("[", "ucscTrackModes", function(x, i, j, ..., drop=FALSE) {
+  vec <- x@.Data
+  names(vec) <- names(x)
+  vec[resolveTrackIndex(x, i)]
+})
+
+setReplaceMethod("[", "ucscTrackModes", function(x, i, j, ..., value) {
+  vec <- x@.Data
+  names(vec) <- names(x)
+  vec[resolveTrackIndex(x, i)] <- value
+  x@.Data <- as.vector(vec)
+  x
+})
+
 # handle simple track show/hide
 
 setMethod("tracks", "ucscTrackModes",
           function(object)
           {
-            names(object)[object != "hide"]
+            visible <- object != "hide"
+            tracks <- names(object)[visible]
+            names(tracks) <- object@labels[visible]
+            tracks
           })
 setReplaceMethod("tracks", "ucscTrackModes",
                  function(object, value)
                  {
+                   value <- resolveTrackIndex(object, value)
                    spec <- names(object) %in% value
                    object[!spec] <- "hide"
                    object[spec & object == "hide"] <- "full"
@@ -675,8 +714,9 @@ setMethod("ucscTrackModes", "ucscTracks",
           function(object)
           {
             modes <- object@modes
+            labels <- names(object@ids)
             names(modes) <- object@ids
-            ucscTrackModes(modes)
+            ucscTrackModes(modes, labels)
           })
 
 # form creation

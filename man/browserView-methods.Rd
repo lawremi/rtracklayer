@@ -25,9 +25,12 @@
     \item{object = "ucscSession"}{ \code{browserView(object, segment =
         genomeSegment(object), track = tracks(object), ...)}: Creates a
       \code{\linkS4class{browserView}} of \code{segment} with visible
-      tracks named in \code{track}. Arguments in \code{...} correspond
-      to slots in the \code{\linkS4class{genomeSegment}} class and override those
-      in \code{segment}. }
+      tracks specified by \code{track}. \code{track} may be an instance
+      of \code{\linkS4class{ucscTrackModes}}. Arguments in \code{...} should
+      override slots in \code{segment} or else match parameters
+      to a \code{\link{ucscTrackModes}} method for creating a
+      \code{ucscTrackModes} instance that will override modes indicated
+      by the \code{track} parameter. }
     
     \item{object = "argoSession"}{ \code{browserView(object, segment =
         genomeSegment(object), track = tracks(object, segment, TRUE),
