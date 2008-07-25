@@ -111,7 +111,9 @@ setMethod("browseGenome", "ANY",
             # initialize session of type identified by 'browser'
             session <- browserSession(browser)
             # load 'tracks'
-            trackParams <- c(list(session, tracks, view = FALSE), trackParams)
+            trackParams <- c(list(session, tracks), trackParams)
+            if (is(tracks, "trackSet"))
+              trackParams <- c(trackParams, name = deparse(substitute(tracks)))
             session <- do.call("layTrack", trackParams)
             # open view of 'segment'
             if (view) {

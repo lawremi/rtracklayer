@@ -16,7 +16,10 @@ setMethod("export.bed", "trackSet",
                 name <- featureNames(object)
               bed <- cbind(bed, name)
             }
-            bed <- cbind(bed, df[[sampleNames(object)[1]]])
+            score <- df[[sampleNames(object)[1]]]
+            if (is.null(score))
+              score <- 0
+            bed <- cbind(bed, score)
             if (!wig) {
               blockCount <- NULL
               if (!is.null(df$blockSizes))
@@ -56,16 +59,17 @@ setMethod("import.bed", "ANY",
           function(con, wig, trackLine, genome)
           {
             if (!wig && trackLine) {
-              # check for a track line
+              ## check for a track line
               lines <- readLines(con, warn = FALSE)
               if (length(grep("^track", lines)) > 0)
                 trackSet <- import(text = lines, format = "ucsc",
                                    subformat = "bed", drop = TRUE,
                                    trackLine = FALSE, genome = genome)
-              else {
+              else { # if no trackline, pretend like nothing happened
                 trackLine <- FALSE
                 con <- file()
-                writeLines(con, lines)
+                on.exit(close(con))
+                writeLines(lines, con)
               }
             }
             if (wig || !trackLine) {

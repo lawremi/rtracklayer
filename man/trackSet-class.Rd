@@ -41,7 +41,9 @@
 \section{Slots}{
   \describe{
     \item{\code{genome}:}{Object of class \code{"character"} identifying
-    the genome to which this track pertains.}
+      the genome to which this track pertains. Should be specified
+      according to the conventions of the UCSC browser (e.g. "hg18"),
+      if possible.}
     \item{\code{assayData}:}{Object of class \code{"AssayData"} holding
       the experimental measurements. }
     \item{\code{phenoData}:}{Object of class \code{"AnnotatedDataFrame"}

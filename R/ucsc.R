@@ -11,6 +11,7 @@ setMethod("initialize", "ucscSession",
           function(.Object, url = "http://genome.ucsc.edu/cgi-bin/")
           {
             .Object@url <- url
+            .Object@views <- new.env()
             handle <- getCurlHandle()
             getURL(ucscURL(.Object, "gateway"), cookiefile = tempfile(),
                    curl = handle)
@@ -346,27 +347,26 @@ ucscPair <- function(key, value) paste(key, value, sep = "=")
 setAs("ucscTrackLine", "character",
       function(from)
       {
-        maybeQuote <- function(str) {
-          if (regexpr(" ", str)[1] != -1)
-            str <- paste("\"", str, "\"", sep="")
-          str
-        }
-        maybeTrunc <- function(str, len) {
+        checkString <- function(str, len) {
+          if (nchar(gsub("[a-zA-Z0-9_ ]", "", str)))
+            warning("The string '", str,
+                    "' contains non-standard characters.")
           if (nchar(str) > len) {
             str <- substring(str, 1, len)
             warning("The string '", str, "' must be less than ", len,
                     " characters; it has been truncated.")
           }
+          if (regexpr(" ", str)[1] != -1)
+            str <- paste("\"", str, "\"", sep="")
           str
         }
         str <- "track"
         name <- from@name
         if (length(name))
-          str <- paste(str, " name=", maybeTrunc(maybeQuote(name), 15), sep="")
+          str <- paste(str, " name=", checkString(name, 15), sep="")
         desc <- from@description
         if (length(desc))
-          str <- paste(str, " description=", maybeTrunc(maybeQuote(desc), 60),
-                       sep="")
+          str <- paste(str, " description=", checkString(desc, 60), sep="")
         vis <- from@visibility
         if (length(vis))
           str <- paste(str, " visibility=", vis, sep="")

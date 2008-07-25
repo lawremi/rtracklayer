@@ -20,6 +20,8 @@
     \item{\code{.Data}:}{Object of class \code{"character"} holding the
       modes ("hide", "dense", "full", "pack", "squish"), with its
       \code{names} attribute holding corresponding track names.}
+    \item{\code{labels}:}{Object of class \code{"character"} holding
+      labels (human-readable names) corresponding to each track/mode.|}
   }
 }
 \section{Extends}{

@@ -64,6 +64,7 @@ setMethod("export.wigLines", "trackSet",
               cat(" chrom=", as.character(chromData$chrom)[1],
                   file = con, sep = "")
               data <- chromData[[vals]]
+              browser()
               if (dataFormat == "variableStep")
                 data <- cbind(starts, data)
               else {

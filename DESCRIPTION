@@ -1,6 +1,6 @@
 Package: rtracklayer
 Title: R interface to genome browsers and their annotation tracks
-Version: 1.1.9
+Version: 1.1.12
 Author: Michael Lawrence
 Depends: R (>= 2.7.0), Biobase, methods, RCurl, Biostrings
 Imports: XML (>= 1.95-3), rJava, annotate, AnnotationDbi
