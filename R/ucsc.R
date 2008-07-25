@@ -167,6 +167,7 @@ setMethod("browserView", "ucscSession",
               else if (class(track) == "character") {
                 modes <- ucscTrackModes(object)
                 tracks(modes) <- track
+                modes <- modes[track]
               } else modes <- as(track, "ucscTrackModes")
             }
             ## new hgsid for each browser launch
@@ -174,9 +175,9 @@ setMethod("browserView", "ucscSession",
             node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
             hgsid <- xmlValue(node)
             view@hgsid <- as.numeric(hgsid)
-            if (is.null(modes))
-              modes <- ucscTrackModes(view)
             argModes <- do.call("ucscTrackModes", args[!argsForSeg])
+            if (is.null(modes)) # obviously inefficient through here...
+              modes <- ucscTrackModes(view)[names(argModes)]
             modes[names(argModes)] <- argModes
             form <- c(form, ucscForm(modes), ucscForm(view))
             ## launch a web browser
@@ -261,7 +262,9 @@ resolveTrackIndex <- function(object, i) {
 setMethod("[", "ucscTrackModes", function(x, i, j, ..., drop=FALSE) {
   vec <- x@.Data
   names(vec) <- names(x)
-  vec[resolveTrackIndex(x, i)]
+  names(x@labels) <- names(x)
+  ind <- resolveTrackIndex(x, i)
+  initialize(x, vec[ind], labels = x@labels[ind])
 })
 
 setReplaceMethod("[", "ucscTrackModes", function(x, i, j, ..., value) {
