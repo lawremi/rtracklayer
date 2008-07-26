@@ -88,6 +88,7 @@ hesceb <- eBayes(hesclim)
 tab <- topTable(hesceb, coef = 2, adjust.method = "BH", n = 7676) 
 tab2 <- tab[(tab$logFC > 1) & (tab$adj.P.Val < 0.01),]
 affyIDs <- tab2$ID
+library("rtracklayer")
 data(hsTargets)
 library("hgu133plus2.db")
 entrezIDs <- mappedRkeys(hgu133plus2ENTREZID[affyIDs])
@@ -99,13 +100,12 @@ targets <- hsTargets[targetMatches,]
 @
 % 
 
-The following code loads the \textbf{rtracklayer} package and creates
-the track from the \texttt{targets} dataset by passing it to the
-\texttt{trackSet} constructor. The columns of \texttt{targets} are
+The following code creates the track from the \texttt{targets} dataset
+by passing it to the \texttt{trackSet} constructor that is contained in
+the \textbf{rtracklayer} package. The columns of \texttt{targets} are
 named according to the convention expected by the constructor.
 % 
 <<rtl-miRNA-track>>=
-library("rtracklayer")
 targetTrack <- trackSet(targets)
 @
 %
