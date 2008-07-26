@@ -88,7 +88,6 @@ hesceb <- eBayes(hesclim)
 tab <- topTable(hesceb, coef = 2, adjust.method = "BH", n = 7676) 
 tab2 <- tab[(tab$logFC > 1) & (tab$adj.P.Val < 0.01),]
 affyIDs <- tab2$ID
-library("microRNA")
 data(hsTargets)
 library("hgu133plus2.db")
 entrezIDs <- mappedRkeys(hgu133plus2ENTREZID[affyIDs])
