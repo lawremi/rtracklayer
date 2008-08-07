@@ -61,7 +61,7 @@ setMethod("export.gff", "trackSet",
       attrsVec <- sub(" *$", "", sub("^ *", "", as.character(attrs))) # trim
       if (version == "3") {
         tvsep <- "="
-        attrsVec <- urlEncode(attrsVec, "\t\n\r;=%&")
+        attrsVec <- urlEncode(attrsVec, "\t\n\r;=%&", FALSE)
       }
       attrs <- matrix(attrsVec, ncol = ncol(attrs), dimnames = dimnames(attrs))
       attrs <- apply(attrs, 1, function(row) {

@@ -58,7 +58,7 @@ setMethod("*", "genomeSegment",
           function(e1, e2) {
             range <- c(start(e1), end(e1))
             mid <- floor(mean(range))
-            side <- diff(range)/e2/2
+            side <- (diff(range)+1)/e2/2
             start(e1) <- mid - side
             end(e1) <- mid + side
             e1

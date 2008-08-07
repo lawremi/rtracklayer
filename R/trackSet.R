@@ -154,8 +154,8 @@ setMethod("trackFeatureData", "data.frame",
             if (is.null(object$strand))
               object$strand <- NA
             object$chrom <- paste("chr", sub("chr", "", object$chrom), sep = "")
-            object$start <- as.numeric(as.character(object$start))
-            object$end <- as.numeric(as.character(object$end))
+            object$start <- as.integer(as.character(object$start))
+            object$end <- as.integer(as.character(object$end))
             features <- as(object, "AnnotatedDataFrame")
             descs <- c(chrom = "Chromosome ID",
                        start = "Start position on chromosome",

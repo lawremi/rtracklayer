@@ -60,17 +60,14 @@ setMethod("import.bed", "ANY",
           {
             if (!wig && trackLine) {
               ## check for a track line
-              lines <- readLines(con, warn = FALSE)
-              if (length(grep("^track", lines)) > 0)
-                trackSet <- import(text = lines, format = "ucsc",
-                                   subformat = "bed", drop = TRUE,
-                                   trackLine = FALSE, genome = genome)
-              else { # if no trackline, pretend like nothing happened
-                trackLine <- FALSE
-                con <- file()
-                on.exit(close(con))
-                writeLines(lines, con)
-              }
+              line <- "#"
+              while(length(grep("^ *#", line))) # skip initial comments
+                line <- readLines(con, 1, warn = FALSE)
+              pushBack(line, con)
+              if (length(grep("^track", line)) > 0)
+                trackSet <- import.ucsc(con, subformat = "bed", drop = TRUE,
+                                        trackLine = FALSE, genome = genome)
+              else trackLine <- FALSE
             }
             if (wig || !trackLine) {
               bed <- read.table(con)

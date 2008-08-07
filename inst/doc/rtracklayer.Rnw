@@ -88,7 +88,7 @@ hesceb <- eBayes(hesclim)
 tab <- topTable(hesceb, coef = 2, adjust.method = "BH", n = 7676) 
 tab2 <- tab[(tab$logFC > 1) & (tab$adj.P.Val < 0.01),]
 affyIDs <- tab2$ID
-library("rtracklayer")
+library("microRNA")
 data(hsTargets)
 library("hgu133plus2.db")
 entrezIDs <- mappedRkeys(hgu133plus2ENTREZID[affyIDs])
@@ -106,6 +106,7 @@ the \textbf{rtracklayer} package. The columns of \texttt{targets} are
 named according to the convention expected by the constructor.
 % 
 <<rtl-miRNA-track>>=
+head(targets)
 targetTrack <- trackSet(targets)
 @
 %
@@ -123,11 +124,29 @@ Most of the information for each feature in a track is stored in the
 \textit{featureData}. This includes the chromosome name, numeric start
 and end positions, the DNA strand (+/-/NA), and any other information
 available. There are methods for accessing the most commonly used
-fields. For example, the following code retrieves the chromosome names
-and then start positions for each feature in the track.
+fields: \texttt{chrom}, \texttt{start}, \texttt{end}, and
+\texttt{strand}. For example, the following code retrieves the
+chromosome names and then start positions for each feature in the
+track.
 <<feature-data-accessors>>=
 head(chrom(targetTrack))
 head(start(targetTrack))
+@ 
+
+\paragraph{Exercises}
+
+\begin{enumerate}
+\item Get the strand of each feature in the track
+\item Calculate the length of each feature
+\item Reconstruct (partially) the \texttt{targets} \textit{data.frame}
+\end{enumerate}
+
+<<sol-1, echo=FALSE, results=hide>>=
+head(strand(targetTrack))
+head(end(targetTrack) - start(targetTrack) + 1)
+data.frame(chrom = chrom(targetTrack), 
+           start = start(targetTrack), end = end(targetTrack),
+           strand = strand(targetTrack))
 @ 
 
 \subsubsection{Subsetting a \textit{trackSet}}
@@ -150,16 +169,28 @@ posTargets <- targetTrack[strand(targetTrack) == "+"]
 %
 
 The features may also be indexed by a \textit{genomeSegment} instance
-or by chromosome. We give an example of the latter below for
-obtaining all target sites on chromosome 1. In order
-to distinguish between a chromosome name and a feature name, we cast
-the chromosome name to a \textit{chrid} instance with the
-\texttt{chrid} function.
+(explained later) or by chromosome. We give an example of the latter
+below for obtaining all target sites on chromosome 1. In order to
+distinguish between a chromosome name and a feature name, we cast the
+chromosome name to a \textit{chrid} instance with the \texttt{chrid}
+function.
 %
 <<subset-chrid>>=
 chr1Targets <- targetTrack[chrid("chr1")]
 @
 %
+
+\paragraph{Exercises}
+
+\begin{enumerate}
+\item Subset the track for all features on the negative strand of
+  chromosome 2.
+\end{enumerate}
+
+<<sol-2, echo=FALSE, results=hide>>=
+negTargetTrack <- targetTrack[strand(targetTrack) == "-"]
+@ 
+
 
 \subsubsection{Exporting and importing tracks}
 \label{sec:import-export}
@@ -173,8 +204,10 @@ system.
 To save the microRNA target track created above in a format understood
 by other tools, we could export it as BED. This is done with the
 \texttt{export} function, which accepts a filename or any R connection
-object as its target. The desired format is derived, by default, from
-the extension of the filename.
+object as its target. If a target is not given, the serialized string
+is returned. The desired format is derived, by default, from
+the extension of the filename. Use the \texttt{format} parameter to
+explicitly specify a format.
 <<export, eval = FALSE>>=
 export(targetTrack, "targets.bed")
 @
@@ -188,6 +221,19 @@ format is determined from the filename, by default.
 restoredTrack <- import("targets.bed")
 @
 
+\paragraph{Exercises}
+
+\begin{enumerate}
+\item Output the track to a file in the ``gff'' format.
+\item Read the track back into R.
+\item Export the track as a character vector.
+\end{enumerate}
+
+<<sol-3, echo=FALSE, results=hide>>=
+export(targetTrack, "targets.gff")
+targetGff <- import("targets.gff")
+targetChar <- export(targetTrack, format = "gff1")
+@ 
 
 \subsection{Viewing the targets in a genome browser}
 
@@ -230,6 +276,16 @@ format. Thus, the default, ``auto'', is used. Since the track does not
 contain any data values, the track is uploaded as BED. To make this
 explicit, we could pass ``bed'' as the \textit{format} parameter.
 
+\paragraph{Exercises}
+
+\begin{enumerate}
+\item Lay a track with the first 100 features of \texttt{targetTrack}
+\end{enumerate}
+
+<<sol-4, eval = FALSE, echo=FALSE, results=hide>>=
+session <- layTrack(session, targetTrack[1:100], name = "target100")
+@ 
+
 \subsubsection{Viewing the track}
 
 By default, the \texttt{layTrack} function creates a
@@ -250,6 +306,19 @@ The returned value from \texttt{genomeSegment} is an instance of the
 its genome name, chromosome name and start and end positions. If any
 of the fields are empty, they stand for wildcards.
 
+\paragraph{Exercises}
+
+\begin{enumerate}
+\item Get the \textit{genomeSegment} describing the first feature in
+  \texttt{targetTrack}.
+\item Get the chromosome ID of that segment.
+\end{enumerate}
+
+<<sol-5, echo=FALSE, results=hide>>=
+segment <- genomeSegment(targetTrack[1])
+chrom(segment)
+@ 
+
 The target sites are distributed throughout the genome, so we will
 only be able to view a few features at a time. In this case, we will
 view only the first feature in the track. A convenient way to focus a
@@ -257,7 +326,7 @@ view on a particular set of features is to subset the track and pass
 the range of the subtrack to the constructor of the view. 
 Below we take a track subset that contains only the first feature.
 <<take-subset>>=
-subTargetTrack <- targetTrack[1] # get first two features
+subTargetTrack <- targetTrack[1] # get first feature
 @
 
 Now we call the \texttt{browserView} function to construct the view
@@ -270,6 +339,21 @@ name of the microRNA appearing next to the target site glyph.
 view <- browserView(session, genomeSegment(subTargetTrack) / 10, 
                     pack = "targets")
 @
+
+
+\paragraph{Exercises}
+
+\begin{enumerate}
+\item Create a new view with the same region as \texttt{view}, except
+  zoomed out 2X.
+\item Create a view with the ``targets'' track displayed in ``full''
+  mode, instead of ``packed''.
+\end{enumerate}
+
+<<sol-6, eval=FALSE, echo=FALSE, results=hide>>=
+viewOut <- browserView(session, genomeSegment(view) / 2)
+viewFull <- browserView(session, full = "targets")
+@ 
 
 \subsubsection{A shortcut}
 
@@ -312,6 +396,20 @@ data for any genome segment, such as those on a particular chromosome.
 <<get-track-segment, eval=FALSE>>=
 posTargets <- trackSet(session, "targets", genomeSegment(chr1Targets))
 @
+
+\paragraph{Exercises}
+
+\begin{enumerate}
+\item Get the SNP under the first target, displayed in \texttt{view}.
+\item Get the UCSC gene for the same target.
+\end{enumerate}
+
+<<sol-7, eval=FALSE, echo=FALSE, results=hide>>=
+targetSNP <- trackSet(session, "snp128", genomeSegment(subTargetTrack))
+featureNames(targetSNP)
+targetGene <- trackSet(session, "knownGene", genomeSegment(subTargetTrack))
+featureNames(targetGene)
+@ 
 
 \subsubsection{Accessing view state}
 
@@ -357,6 +455,20 @@ views <- browserViews(session)
 length(views)
 @ 
 %
+
+\paragraph{Exercises}
+
+\begin{enumerate}
+\item Retrieve target currently visible in the view.
+\item Limit the view to display only the SNP, UCSC gene and target track.
+\item Hide the UCSC gene track.
+\end{enumerate}
+
+<<sol-8, eval=FALSE, echo=FALSE, results=hide>>=
+viewTarget <- trackSet(session, "targets", genomeSegment(view))
+tracks(view) <- c("snp128", "knownGene", "targets")
+ucscTrackModes(view)["knownGene"] <- "hide"
+@ 
 
 \section{CPNE1 expression and HapMap SNPs}
 
@@ -470,7 +582,7 @@ a track, and display a portion of it in the \textbf{UCSC} browser.
 
 We will use the \textbf{Biostrings} package to search human chromosome
 1 for NRSF binding sites. The binding sequence motif is assumed to be
-\textit{TCAGCACCNNGGACAG}, though in reality it is more variable. To
+\textit{TCAGCACCATGGACAG}, though in reality it is more variable. To
 perform the search, we construct a \textit{PDict} dictionary and run
 \texttt{matchPDict} on the positive strand of chromosome 1.
 %
