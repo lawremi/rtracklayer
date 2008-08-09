@@ -1,9 +1,9 @@
 import(Biobase, RCurl, XML, rJava, annotate, AnnotationDbi)
 
-importFrom("Biostrings", "start<-")
-importFrom("Biostrings", "end<-")
-importFrom("Biostrings", "start")
-importFrom("Biostrings", "end")
+importFrom("IRanges", "start<-")
+importFrom("IRanges", "end<-")
+importFrom("IRanges", "start")
+importFrom("IRanges", "end")
 
 
 exportClasses("genomeSegment", "chrid",
