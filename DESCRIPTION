@@ -1,6 +1,6 @@
 Package: rtracklayer
 Title: R interface to genome browsers and their annotation tracks
-Version: 1.1.18
+Version: 1.1.19
 Author: Michael Lawrence
 Depends: R (>= 2.7.0), Biobase, methods, RCurl, IRanges, Biostrings
 Imports: XML (>= 1.95-3), rJava, annotate, AnnotationDbi
@@ -10,7 +10,7 @@ Description: Extensible framework for interacting with multiple genome
   annotation tracks in various formats (currently GFF, BED and WIG built-in). 
   The user may export/import tracks to/from the supported browsers, as 
   well as query and modify the browser state, such as the current viewport.
-Maintainer: Michael Lawrence <lawremi@iastate.edu>
+Maintainer: Michael Lawrence <mflawren@fhcrc.org>
 License: Artistic-2.0
 Collate: io.R web.R segment.R trackSet.R browser.R gff.R ucsc.R bed.R wig.R 
   argo.R
