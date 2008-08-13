@@ -8,11 +8,11 @@ setClass("ucscSession",
 
 # gets an 'hgsid' to initialize the session
 setMethod("initialize", "ucscSession",
-          function(.Object, url = "http://genome.ucsc.edu/cgi-bin/")
+          function(.Object, url = "http://genome.ucsc.edu/cgi-bin/", ...)
           {
             .Object@url <- url
             .Object@views <- new.env()
-            handle <- getCurlHandle()
+            handle <- getCurlHandle(...)
             getURL(ucscURL(.Object, "gateway"), cookiefile = tempfile(),
                    curl = handle)
             cart <- getURL(ucscURL(.Object, "cart"), curl = handle)

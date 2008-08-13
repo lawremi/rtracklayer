@@ -9,7 +9,10 @@
 \section{Objects from the Class}{
   Objects can be created by calls of the form
   \code{\link{browserSession}("ucsc", url =
-    "http://genome.ucsc.edu/cgi-bin")}.
+    "http://genome.ucsc.edu/cgi-bin", ...)}. The arguments in \code{...}
+  correspond to libcurl options, see
+  \code{\link[RCurl]{getCurlHandle}}. Setting these options may be
+  useful e.g. for getting past a proxy.
 }
 \section{Slots}{
   \describe{
