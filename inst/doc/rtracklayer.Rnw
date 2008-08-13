@@ -107,6 +107,7 @@ named according to the convention expected by the constructor.
 % 
 <<rtl-miRNA-track>>=
 head(targets)
+library(rtracklayer)
 targetTrack <- trackSet(targets)
 @
 %

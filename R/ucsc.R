@@ -111,7 +111,6 @@ setMethod("trackSet", "ucscSession",
 setMethod("genomeSequence", "ucscSession",
           function(object, segment, table = "gold")
           {
-            require(Biostrings)
             followup <- list(hgta_doGenomicDna = "get sequence",
                              hgSeq.casing = "upper",
                              hgSeq.repMasking = "lower")
