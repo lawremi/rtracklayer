@@ -226,44 +226,44 @@ setMethod("genomeSegment", "trackSet", function(object) {
 setGeneric("trackSet", function(object, ...) standardGeneric("trackSet"))
 
 ## conversion from an eSet
-setMethod("trackSet", "eSet",
-          function(object, span, dataVals = NULL, ...)
-          {
-            ## figure out chrom,start,end,strand for each record
-            ann <- annotation(object)
-            keys <- featureNames(object)
-            locMap <- getAnnMap("CHRLOC", ann)[keys]
-            locList <- as.list(locMap)
-            locInd <- rep(seq_along(locList), sapply(locList, length))
-            start <- unlist(locList)
-            mapped <- !is.na(start)
-            start <- start[mapped]
-            chrom <- sub(".*?\\.([a-zA-Z0-9]*).*", "\\1", names(start))
-            chrom <- paste("chr", chrom, sep = "")
-            strand <- ifelse(start > 0, "+", "-")
-            ## combine with existing featureData
-            features <- trackFeatureData(chrom, abs(start), strand = strand,
-                                         span = span)
-            origFeatureData <- featureData(object)[locInd,][mapped,] 
-            dimLabels(features) <- dimLabels(origFeatureData) # match dimLabels
-            featureNames(features) <- featureNames(origFeatureData)
-            featureData <- combine(origFeatureData, features)
-            args <- list(featureData = featureData, genome = genome)
-            ## extract data to use as 'dataVals'
-            if (!is.null(dataVals)) {
-              dataVals <- as.matrix(dataVals)[locInd,,drop=FALSE][mapped,]
-              args <- c(args, list(dataVals = dataVals))
-            }
-            ## create new trackSet object
-            do.call("new", c("trackSet", args))
-          })
+## setMethod("trackSet", "eSet",
+##           function(object, span, dataVals = NULL, ...)
+##           {
+##             ## figure out chrom,start,end,strand for each record
+##             ann <- annotation(object)
+##             keys <- featureNames(object)
+##             locMap <- getAnnMap("CHRLOC", ann)[keys]
+##             locList <- as.list(locMap)
+##             locInd <- rep(seq_along(locList), sapply(locList, length))
+##             start <- unlist(locList)
+##             mapped <- !is.na(start)
+##             start <- start[mapped]
+##             chrom <- sub(".*?\\.([a-zA-Z0-9]*).*", "\\1", names(start))
+##             chrom <- paste("chr", chrom, sep = "")
+##             strand <- ifelse(start > 0, "+", "-")
+##             ## combine with existing featureData
+##             features <- trackFeatureData(chrom, abs(start), strand = strand,
+##                                          span = span)
+##             origFeatureData <- featureData(object)[locInd,][mapped,] 
+##             dimLabels(features) <- dimLabels(origFeatureData) # match dimLabels
+##             featureNames(features) <- featureNames(origFeatureData)
+##             featureData <- combine(origFeatureData, features)
+##             args <- list(featureData = featureData, genome = genome)
+##             ## extract data to use as 'dataVals'
+##             if (!is.null(dataVals)) {
+##               dataVals <- as.matrix(dataVals)[locInd,,drop=FALSE][mapped,]
+##               args <- c(args, list(dataVals = dataVals))
+##             }
+##             ## create new trackSet object
+##             do.call("new", c("trackSet", args))
+##           })
 
-## ExpressionSet has different parameter defaults
-setMethod("trackSet", "ExpressionSet",
-          function(object, span = 25, dataVals = NULL, ...)
-          {
-            callNextMethod(object, span, dataVals, ...)
-          })
+## ## ExpressionSet has different parameter defaults
+## setMethod("trackSet", "ExpressionSet",
+##           function(object, span = 25, dataVals = NULL, ...)
+##           {
+##             callNextMethod(object, span, dataVals, ...)
+##           })
 
 ## Some simple wrappers around trackFeatureData()
 setMethod("trackSet", "data.frame",
