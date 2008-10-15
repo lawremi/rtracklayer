@@ -4,6 +4,8 @@
 \alias{export.bed,ucscTrackSet-method}
 \alias{export.gff,ucscTrackSet-method}
 \alias{export.ucsc,ucscTrackSet-method}
+\alias{initialize,ucscTrackSet-method}
+\alias{show,ucscTrackSet-method}
 
 \title{Class "ucscTrackSet"}
 \description{Each track in \acronym{UCSC} has an associated

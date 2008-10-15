@@ -14,6 +14,7 @@
 \alias{genomeSegment,ucscView-method}
 \alias{genomeSegment,argoView-method}
 \alias{genomeSegment,ucscCart-method}
+\alias{genomeSegment,IRanges-method}
 \title{ Accessing a segment of a genome }
 \description{
   Methods for creating, getting or setting a \code{\linkS4class{genomeSegment}}.
@@ -58,6 +59,9 @@
       \code{genomeSegment(object) <- value}: Set the segment displayed
       by the the view.
     }
+
+    \item{object = "IRanges"}{ Obtain the genome segment that spans the
+      range of the \code{IRanges} object. }
 }}
 \keyword{methods}
 \examples{

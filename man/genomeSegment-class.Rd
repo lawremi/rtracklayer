@@ -14,6 +14,8 @@
 \alias{chrom<-,genomeSegment-method}
 \alias{start<-,genomeSegment-method}
 \alias{end<-,genomeSegment-method}
+\alias{/,genomeSegment,ANY-method}
+\alias{*,genomeSegment,ANY-method}
 
 \title{Class "genomeSegment"}
 \description{ An object representing a segment of a genome. }
@@ -68,6 +70,14 @@
     }
     \item{\code{end(object) <- value}}{
       Sets the end position.
+    }
+    \item{\code{object / x}}{
+      Zoom out \code{x} times (expand segment by \code{x/2} on each
+      side).
+    }
+    \item{\code{object * x}}{
+      Zoom in \code{x} times (contract segment by \code{x/2} on each
+      side).
     }
   }
 }

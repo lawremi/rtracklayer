@@ -4,6 +4,7 @@
 \alias{browserSession-methods}
 \alias{browserSession,character-method}
 \alias{browserSession,browserView-method}
+\alias{browserSession,missing-method}
 \title{ Get a genome browser session }
 \description{
   Methods for getting browser sessions.
@@ -20,6 +21,8 @@
     
     \item{object = "browserView"}{ Gets the
       \code{\linkS4class{browserSession}} for the view. }
+
+    \item{object = "missing"}{ Calls \code{browserSession("ucsc", ...)}. }
   }
 }
 \keyword{methods}

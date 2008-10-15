@@ -3,6 +3,7 @@
 \alias{ucscTrackLine-class}
 \alias{coerce,character,ucscTrackLine-method}
 \alias{coerce,ucscTrackLine,character-method}
+\alias{show,ucscTrackLine-method}
 
 \title{Class "ucscTrackLine"}
 \description{An object representing a "track line" in the \acronym{UCSC}

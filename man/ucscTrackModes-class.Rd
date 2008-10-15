@@ -1,6 +1,8 @@
 \name{ucscTrackModes-class}
 \docType{class}
 \alias{ucscTrackModes-class}
+\alias{[,ucscTrackModes,ANY,ANY,ANY-method}
+\alias{[<-,ucscTrackModes,ANY,ANY,ANY-method}
 
 \title{Class "ucscTrackModes"}
 \description{A vector of view modes ("hide", "dense", "full",
@@ -21,7 +23,7 @@
       modes ("hide", "dense", "full", "pack", "squish"), with its
       \code{names} attribute holding corresponding track names.}
     \item{\code{labels}:}{Object of class \code{"character"} holding
-      labels (human-readable names) corresponding to each track/mode.|}
+      labels (human-readable names) corresponding to each track/mode.}
   }
 }
 \section{Extends}{
@@ -37,6 +39,14 @@ Class \code{"\link[Biobase:characterORMIAME-class]{characterORMIAME}"}, by class
       visible tracks. Any tracks named in \code{value} are set to "full"
       if the are currently set to "hide" in this object. Any tracks not
       in \code{value} are set to "hide". All other modes are preserved.}
+    \item{\code{object[i]}}{Gets the track mode of the tracks indexed
+      by \code{i}, which can be any type of index supported by character
+      vector subsetting. If \code{i} is a character vector, it indexes
+      first by the internal track IDs (the \code{names} on \code{.Data})
+      and then by the user-level track names (the \code{labels} slot).}
+    \item{\code{object[i] <- value}}{Sets the track modes indexed by
+      \code{i} (in the same way as in \code{object[i]} above) to those
+      specified in \code{value}.} 
   }
 }
 \author{ Michael Lawrence }
