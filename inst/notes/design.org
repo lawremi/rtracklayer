@@ -1,9 +1,33 @@
 * Data integration
 ** Track data structure
-*** Base trackSet class
-    * Contains eSet, location info in featureData, data in assayData.
-    * Accessors for "built-in" featureData columns and data values.
-    * Convertible to a data frame for e.g. plotting.
+*** trackSet class
+  * Contains eSet, location info in featureData, data in assayData.
+  * Accessors for "built-in" featureData columns and data values.
+  * Convertible to a data frame for e.g. plotting.
+*** GenomeRanges class
+The trackSet class approaches the problem from the experimental data
+perspective. Alternatively, could represent tracks as information,
+using IRanges + chromosome/strand information, scores, etc. This would
+probably be more efficient than trackSet, and avoid Biobase dependency.
+**** Components
+  * IRanges for start/stop on chromosome
+  * Chromosome index (possibly one IRanges per chromosome?)
+  * Strand index (IRanges for each strand?)
+  * Scores, factors, etc (multiple variables)
+  * Species of the genome
+**** Implementation
+TrackRanges could extend RangesCollection, with IRanges per
+chrom/strand. But where does the data go?
+  * Each IRanges could have an attached environment of data
+    - strange, why split the data unnecessarily?
+  * GenomeRanges itself could have a data environment
+Following the second path, GenomeRanges would extend the RangeData
+container, and thus it would have the following slots:
+  * a RangesCollection, holding the IRanges for each chrom/strand
+  * an environment for storing genome-wide variables
+  * the species
+In fact, the species slot is the only genome-specific slot. Otherwise
+it's just a RangeData with a RangesCollection in its 'ranges' slot.
 *** Import/export
 **** Formats
      * GFF: general feature format - widely used, three versions

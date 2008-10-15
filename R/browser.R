@@ -81,7 +81,7 @@ setMethod("layTrack", c("browserSession", "trackSets"),
           {
             for (i in seq_len(length(name) - 1))
             #for (t in head(track, -1))
-              layTrack(object, name[i], FALSE, ...) <- track[[i]]
+              layTrack(object, track[[i]], name[i], FALSE, ...)
             last <- tail(track, 1)
             if (length(last))
               object <- layTrack(object, last[[1]], tail(name, 1), view, ...)
