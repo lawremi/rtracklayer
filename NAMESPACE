@@ -5,6 +5,8 @@ importFrom("IRanges", "end<-")
 importFrom("IRanges", "start")
 importFrom("IRanges", "end")
 
+importFrom(Biostrings, read.DNAStringSet)
+importFrom(Biostrings, BString)
 
 exportClasses("genomeSegment", "chrid",
               "trackSet", "trackSets",
