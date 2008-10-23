@@ -80,12 +80,12 @@ setMethod("import.bed", "ANY",
               featureData <- bed[,!(colnames(bed) == "score")]
               if (!wig)
                 rownames(featureData) <- make.names(bed$name, TRUE)
-              score <- NA
               if (wig) {
                 score <- bed$name
                 featureData$name <- NULL
               } else if (!is.null(bed$score))
                 score <- bed$score
+              else score <- rep(NA, nrow(featureData))
               trackSet <- new("trackSet",
                               featureData = trackFeatureData(featureData),
                               dataVals = cbind(score = score), genome = genome)
