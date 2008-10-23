@@ -72,7 +72,7 @@ ucscExport <- function(object, segment, track, table, output, followup = NULL)
     output <- ucscGet(object, "tables", form, .parse = !is.null(followup))
     if (!is.null(followup)) {
       node <- getNodeSet(output, "//input[@name = 'hgsid']/@value")[[1]]
-      hgsid <- xmlValue(node)
+      hgsid <- node ##xmlValue(node)
       form <- c(followup, list(hgsid = hgsid))
       output <- ucscGet(object, "tables", form, .parse = FALSE)
     }
@@ -84,16 +84,19 @@ setMethod("trackSet", "ucscSession",
           function(object, name, segment = genomeSegment(object), table = NULL)
           {
             trackids <- tracks(object)
-            if (!(name %in% trackids))
-              name <- trackids[name]
-            if (is.na(name))
-              stop("Unknown track: ", name)
+            if (!(name %in% trackids)) {
+              mapped_name <- trackids[name]
+              if (is.na(mapped_name))
+                stop("Unknown track: ", name)
+              name <- mapped_name
+            }
             if (is.null(table))
               table <- name # default table is track id
             followup <- NULL
             tables <- ucscGet(object, "tables")
             types_path <- "//select[@name = 'hgta_outputType']/option/@value"
-            types <- sapply(getNodeSet(tables, types_path), xmlValue)
+            ##types <- sapply(getNodeSet(tables, types_path), xmlValue)
+            types <- unlist(getNodeSet(tables, types_path))
             if ("wigData" %in% types) { # track stored as wig
               format <- "wig"
               output <- "wigData"
@@ -172,7 +175,7 @@ setMethod("browserView", "ucscSession",
             ## new hgsid for each browser launch
             doc <- ucscGet(object, "gateway")
             node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
-            hgsid <- xmlValue(node)
+            hgsid <- node ##xmlValue(node)
             view@hgsid <- as.numeric(hgsid)
             argModes <- do.call("ucscTrackModes", args[!argsForSeg])
             if (is.null(modes)) # obviously inefficient through here...
@@ -700,7 +703,8 @@ setMethod("ucscTracks", "ucscSession",
             nodes <- getNodeSet(tracks, "//select/option[@selected]/text()")
             trackModes <- sapply(nodes, xmlValue)
             nodes <- getNodeSet(tracks, "//select/@name")
-            trackIds <- sapply(nodes, xmlValue)
+            trackIds <- unlist(nodes)
+            ##trackIds <- sapply(nodes, xmlValue)
             nodes <- getNodeSet(tracks, "//select/../a/text()")
             names(trackIds) <- sub("^ ", "", sapply(nodes, xmlValue))
             new("ucscTracks", ids = trackIds, modes = trackModes)

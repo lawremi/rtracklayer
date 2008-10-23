@@ -79,8 +79,8 @@
 \examples{
 \dontrun{
 session <- browseGenome()
-track <- import(system.file("tests", "v2.gff", package = "rtracklayer"))
-layTrack(session, track, "My Track")
+track <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
+session <- layTrack(session, track, "My Track", format = "gff1", view = TRUE)
 track <- trackSet(session, name = "My Track")
 }
 }

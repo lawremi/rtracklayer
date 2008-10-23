@@ -1,5 +1,11 @@
+htmlErrorHandler <- function(msg, code, domain, line, col, level, filename) {
+  if (level > 2)
+    stop("Failed to Parse HTML [", line, ":", col, "]: ", msg)
+}
+
 htmlParse <- function(str)
-  suppressWarnings(htmlTreeParse(str, asText = TRUE, useInternalNodes = TRUE))
+  suppressWarnings(htmlTreeParse(str, asText = TRUE, useInternalNodes = TRUE,
+                                 error = htmlErrorHandler))
 
 httpGet <- function(url, .form = list(), .parse = TRUE, ...) {
   if (length(.form) == 0)
