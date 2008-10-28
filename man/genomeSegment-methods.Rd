@@ -3,7 +3,6 @@
 \alias{genomeSegment}
 \alias{genomeSegment<-}
 \alias{genomeSegment<-,ucscView-method}
-\alias{genomeSegment<-,argoView-method}
 \alias{genomeSegment-methods}
 \alias{genomeSegment,character-method}
 \alias{genomeSegment,missing-method}
@@ -12,7 +11,6 @@
 \alias{genomeSegment,browserSession-method}
 \alias{genomeSegment,ucscSession-method}
 \alias{genomeSegment,ucscView-method}
-\alias{genomeSegment,argoView-method}
 \alias{genomeSegment,ucscCart-method}
 \alias{genomeSegment,IRanges-method}
 \title{ Accessing a segment of a genome }
@@ -52,7 +50,7 @@
     
     \item{object = "ucscSession"}{ Get the last accessed segment. }
     
-    \item{object = "ucscView" or "argoView"}{
+    \item{object = "ucscView"}{
       \code{genomeSegment(object)}: Get the segment displayed by the
       view.
       

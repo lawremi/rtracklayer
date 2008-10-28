@@ -3,7 +3,6 @@
 \alias{browserView}
 \alias{browserView-methods}
 \alias{browserView,ucscSession-method}
-\alias{browserView,argoSession-method}
 \title{Getting browser views}
 \description{
   Methods for creating and getting browser views.
@@ -32,13 +31,6 @@
       \code{ucscTrackModes} instance that will override modes indicated
       by the \code{track} parameter. }
     
-    \item{object = "argoSession"}{ \code{browserView(object, segment =
-        genomeSegment(object), track = tracks(object, segment, TRUE),
-        ...)}: Creates a \code{\linkS4class{browserView}} of
-      \code{segment} with visible tracks named in
-      \code{track}. Parameters in \code{...} correspond to slots in
-      the \code{\linkS4class{genomeSegment}} class and override those in
-      \code{segment}. }
 }}
 \examples{
 \dontrun{

@@ -3,7 +3,6 @@
 \alias{trackSet}
 \alias{trackSet-methods}
 \alias{trackSet,ucscSession-method}
-\alias{trackSet,argoSession-method}
 \alias{trackSet,AnnotatedDataFrame-method}
 \alias{trackSet,character-method}
 \alias{trackSet,data.frame-method}
@@ -65,11 +64,6 @@
       Get a track from the session by its \code{name} in format
       \code{format}. Some built-in tracks have multiple series, each
       identified by a \code{table} name.
-    }
-    
-    \item{object = "argoSession"}{
-      \code{trackSet(object, name, segment = genomeSegment(object))}:
-      Get a track from the session by its \code{name}.
     }
   }
 }

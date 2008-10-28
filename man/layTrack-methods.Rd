@@ -5,7 +5,6 @@
 \alias{layTrack,browserSession,trackSet-method}
 \alias{layTrack,browserSession,trackSets-method}
 \alias{layTrack,ucscSession,trackSets-method}
-\alias{layTrack,argoSession,trackSet-method}
 \title{ Laying tracks }
 \description{
   Methods for loading \code{\linkS4class{trackSet}}s into genome browsers.
@@ -40,10 +39,6 @@ layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
         view = FALSE, format = "gff")}:
       Load the tracks into the session using the specified
       \code{format}.
-    }
-    
-    \item{object = "argoSession", track = "trackSet"}{
-      Load the track into the session.
     }
   }
 }

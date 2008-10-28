@@ -1,4 +1,4 @@
-import(Biobase, RCurl, XML, rJava)
+import(Biobase, RCurl, XML)
 
 importFrom("IRanges", "start<-")
 importFrom("IRanges", "end<-")
@@ -12,7 +12,6 @@ exportClasses("genomeSegment", "chrid",
               "trackSet", "trackSets",
               "browserSession", "browserView",
               "ucscSession", "ucscView",
-              "argoSession", "argoView",
               "ucscTrackSet", "ucscTrackLine", "basicTrackLine", "wigTrackLine",
               "ucscTrackModes")
 

@@ -33,8 +33,7 @@ and export from and to files is supported in various formats, see
 Section~\ref{sec:import-export}.
 
 The \textbf{rtracklayer} package currently interfaces with the
-\textbf{UCSC} web-based genome browser as well as the locally
-installed Java-based \textbf{Argo} browser. Other packages may provide
+\textbf{UCSC} web-based genome browser. Other packages may provide
 drivers for other genome browsers through a plugin system. With
 \textbf{rtracklayer}, the user may start a genome browser session,
 create and manipulate genomic views, and import/export tracks and

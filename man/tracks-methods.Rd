@@ -5,13 +5,10 @@
 \alias{tracks<--methods}
 \alias{tracks<-,ucscTrackModes-method}
 \alias{tracks<-,ucscView-method}
-\alias{tracks<-,argoView-method}
 \alias{tracks-methods}
 \alias{tracks,ucscSession-method}
 \alias{tracks,ucscTrackModes-method}
 \alias{tracks,ucscView-method}
-\alias{tracks,argoSession-method}
-\alias{tracks,argoView-method}
 \title{ Accessing track names }
 \description{
   Methods for getting and setting track names.
@@ -28,14 +25,6 @@
 
   \item{object = "ucscView"}{ Get the visible tracks in the view. }
 
-  \item{object = "argoSession"}{
-    \code{tracks(object, segment, visible = FALSE)}:
-    Gets the tracks on \code{segment} in the session. Restricted to
-    visible tracks if \code{visible} is \code{TRUE}. }
-
-  \item{object = "argoView"}{ Gets the tracks visible in the view. Note
-    that this is a global property in Argo. }
-
   The following methods are defined by \pkg{rtracklayer} for \bold{setting}
   track names via the generic \code{tracks(object) <- value}.
   
@@ -47,9 +36,5 @@
 
   \item{object = "ucscView"}{ Sets the visible tracks in the view. This
     opens a new web browser with only the specified tracks visible. }
-  
-  \item{object = "argoView"}{ Sets the visible tracks globally (not just
-    in the given view).}
-
 }}
 \keyword{methods}
