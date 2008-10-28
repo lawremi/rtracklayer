@@ -588,8 +588,8 @@ perform the search, we construct a \textit{PDict} dictionary and run
 \texttt{matchPDict} on the positive strand of chromosome 1.
 %
 <<search-nrsf>>=
-nrsfPD <- PDict("TCAGCACCATGGACAG") # TCAGCACC trusted band
 library(BSgenome.Hsapiens.UCSC.hg18)
+nrsfPD <- PDict("TCAGCACCATGGACAG") # TCAGCACC trusted band
 nrsfHits <- matchPDict(nrsfPD, Hsapiens[[1]])
 countIndex(nrsfHits)
 @ 

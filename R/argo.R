@@ -176,7 +176,7 @@ setMethod("browserView", "argoSession",
 setMethod("activeView", "argoView",
           function(object)
           {
-            tabbed <- .jcall(active, "Ljavax/swing/JTabbedPane;",
+            tabbed <- .jcall(object, "Ljavax/swing/JTabbedPane;",
                              "getTabbedPane")
             sel <- .jcall(tabbed, "Ljava/awt/Component;",
                           "getSelectedComponent")

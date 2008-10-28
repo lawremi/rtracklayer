@@ -1,4 +1,4 @@
-import(Biobase, RCurl, XML, rJava, annotate, AnnotationDbi)
+import(Biobase, RCurl, XML, rJava)
 
 importFrom("IRanges", "start<-")
 importFrom("IRanges", "end<-")
@@ -31,6 +31,6 @@ exportMethods("activeView", "activeView<-", "browseGenome",
               "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",
               "show", "[", "start", "start<-", "end", "end<-", "*", "/")
 
-export("genomeBrowsers")
+export("genomeBrowsers", "start", "end", "start<-", "end<-")
 
 S3method(c, genomeSegment)
