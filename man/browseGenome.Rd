@@ -18,9 +18,9 @@ browseGenome(tracks = trackSets(), browser = "ucsc",
   \item{segment}{ The \code{\linkS4class{genomeSegment}} to display in
     the initial view. }
   \item{view}{ Whether to open a view. }
-  \item{trackParams} { Named list of parameters to pass to
+  \item{trackParams}{ Named list of parameters to pass to
     \code{\link{layTrack}}. }
-  \item{viewParams} { Named list of parameters to pass to
+  \item{viewParams}{ Named list of parameters to pass to
     \code{\link{browserView}}. }
   \item{\dots}{ Arguments corresponding to slots in
     \code{\linkS4class{genomeSegment}} that override those in \code{segment}. }
