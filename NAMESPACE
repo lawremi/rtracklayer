@@ -1,35 +1,39 @@
-import(Biobase, RCurl, XML)
+import(RCurl, XML)
 
-importFrom("IRanges", "start<-")
-importFrom("IRanges", "end<-")
-importFrom("IRanges", "start")
-importFrom("IRanges", "end")
+importFrom("IRanges", XDataFrame, IRanges, RangedDataList)
+importFrom("BSgenome", GenomicData, GenomicRanges)
+importFrom("Biostrings", score)
 
-importFrom(Biostrings, read.DNAStringSet)
-importFrom(Biostrings, BString)
+importClassesFrom("IRanges", "RangedData", "RangedDataList")
 
-exportClasses("genomeSegment", "chrid",
-              "trackSet", "trackSets",
-              "browserSession", "browserView",
-              "ucscSession", "ucscView",
-              "ucscTrackSet", "ucscTrackLine", "basicTrackLine", "wigTrackLine",
-              "ucscTrackModes")
+importMethodsFrom("BSgenome",  strand, chrom, score, genome, "genome<-",
+                  "score<-")
+importMethodsFrom("IRanges", start, end, "start<-", "end<-",
+                  range, split, lapply, ranges, values, unlist,
+                  isDisjoint, width, space, as.data.frame)
 
-exportMethods("activeView", "activeView<-", "browseGenome",
+exportClasses("BrowserSession", "BrowserView",
+              "UCSCSession", "UCSCView",
+              "UCSCData", "TrackLine", "BasicTrackLine", "WigTrackLine",
+              "UCSCTrackModes")
+
+exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "browserSession", "browserView", "browserViews",
-              "chrid", "close", "dataVals", "export", "export.bed",
+              "close", "export", "export.bed",
               "export.gff", "export.gff1", "export.gff2",
-              "export.gff3", "export.ucsc", "export.wig", "genome", "genome<-",
-              "genomeSegment", "genomeSegment<-",
+              "export.gff3", "export.ucsc", "export.wig",
               "genomeSequence", "import", "import.bed", "import.gff",
               "import.gff1", "import.gff2", "import.gff3",
               "import.ucsc", "import.wig", "laySequence", "layTrack",
-              "merge", "chrom", "chrom<-", "strand",
-              "trackData", "trackSet",
-              "trackSets", "tracks", "tracks<-", "ucscTable",
+              "merge", "track", "trackNames", "trackNames<-", "ucscTable",
+              "ucscTables", "ucscTableOutputs",
               "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",
-              "show", "[", "start", "start<-", "end", "end<-", "*", "/")
+              "show", "[", "*",
+              ## from IRanges
+              "start", "end", "genome", "strand", "start<-",
+              "end<-", "genome<-", "chrom", "range", "score", "score<-",
+              "as.data.frame")
 
-export("genomeBrowsers", "start", "end", "start<-", "end<-")
-
-S3method(c, genomeSegment)
+export("genomeBrowsers", "start", "end", "genome", "strand", "start<-",
+       "end<-", "genome<-", "chrom", "score", "score<-",
+       "GenomicRanges", "RangedDataList")

@@ -4,51 +4,69 @@ setGeneric("export.bed",
            function(object, con, wig = FALSE, color = NULL, ...)
            standardGeneric("export.bed"))
 
-setMethod("export.bed", "trackSet",
+setMethod("export.bed", "RangedData",
           function(object, con, wig, color)
           {
-            df <- trackData(object) # BED start positions are 0-based
-            bed <- cbind(as.character(df$chrom), as.numeric(df$start) - 1,
-                         df$end)
-            if (!wig) {
-              name <- as.character(df$name)
-              if (!length(name))
-                name <- featureNames(object)
-              bed <- cbind(bed, name)
-            }
-            score <- df[[sampleNames(object)[1]]]
-            if (is.null(score))
-              score <- 0
-            bed <- cbind(bed, score)
-            if (!wig) {
-              blockCount <- NULL
-              if (!is.null(df$blockSizes))
-                blockCount <- length(strsplit(df$blockSizes, ",")[[1]])
+            name <- strand <- thickStart <- thickEnd <- color <- NULL
+            blockCount <- blockSizes <- blockStarts <- NULL
+            df <- data.frame(chrom(object), start(object)-1, end(object))
+            score <- score(object)
+            if (wig) {
+              if (is.null(score)) ## wig requires score
+                score <- 0
+              df$score <- score
+            } else {
+              blockSizes <- object$blockSizes
+              if (!is.null(blockSizes)) {
+                blockCount <- length(strsplit(blockSizes, ",")[[1]])
+                blockStarts <- object$blockStarts
+              }
               if (is.null(color))
-                color <- df$color
+                color <- object$color
               if (is.null(color) && !is.null(blockCount))
-                color <- "black"
+                color <- "black" ## blocks require color
               if (!is.null(color))
                 color <- paste(as.vector(col2rgb(color)), collapse=",")
-              thickStart <- df$thickStart
-              thickEnd <- df$thickEnd
+              thickStart <- object$thickStart
+              thickEnd <- object$thickEnd ## color requires thick ranges
               if (is.null(thickStart) && !is.null(color)) {
-                thickStart <- df$start
-                thickEnd <- df$end
+                thickStart <- start(object)
+                thickEnd <- end(object)
               }
-              bed <- cbind(bed, as.character(df$strand), thickStart, thickEnd,
-                           color, blockCount, df$blockSizes, df$blockStarts)
+              strand <- object$strand
+              if (!is.null(thickStart) && is.null(strand)) {
+                strand <- rep(NA, nrow(object))
+              }
+              if (!is.null(strand) && is.null(score))
+                score <- 0
+              name <- object$name
+              if (is.null(name))
+                name <- rownames(object)
+              if (!is.null(score) && is.null(name))
+                name <- rep(NA, nrow(object))
+              df$name <- name
+              df$score <- score
+              df$strand <- strand
+              df$thickStart <- thickStart
+              df$thickEnd <- thickEnd
+              df$color <- color
+              df$blockCount <- blockCount
+              df$blockSizes <- blockSizes
+              df$blockStarts <- blockStarts
             }
-            write.table(bed, con, sep = "\t", col.names = FALSE,
+            scipen <- getOption("scipen")
+            options(scipen = 100) # prevent use of scientific notation
+            on.exit(options(scipen = scipen))
+            write.table(df, con, sep = "\t", col.names = FALSE,
                         row.names = FALSE, quote = FALSE, na = ".")
           })
 
-setMethod("export.bed", "ucscTrackSet",
-          function(object, con, wig, trackLine = !wig, color, ...)
+setMethod("export.bed", "UCSCData",
+          function(object, con, wig, color, trackLine = !wig, ...)
           {
             if (!wig && trackLine) {
               export.ucsc(object, con, "bed", wig, color, ...)
-            } else export.bed(as(object, "trackSet"), con, wig, color)
+            } else callNextMethod(object, con, wig, color)
           })
           
 setGeneric("import.bed",
@@ -65,30 +83,57 @@ setMethod("import.bed", "ANY",
                 line <- readLines(con, 1, warn = FALSE)
               pushBack(line, con)
               if (length(grep("^track", line)) > 0)
-                trackSet <- import.ucsc(con, subformat = "bed", drop = TRUE,
-                                        trackLine = FALSE, genome = genome)
-              else trackLine <- FALSE
+                return(import.ucsc(con, subformat = "bed", drop = TRUE,
+                                   trackLine = FALSE, genome = genome))
             }
-            if (wig || !trackLine) {
-              bed <- read.table(con)
+            if (wig) {
+              bedClasses <- c("factor", "integer", "integer", "numeric")
+              bedNames <- c("chrom", "start", "end", "score")
+            } else {
               bedNames <- c("chrom", "start", "end", "name",
                             "score", "strand", "thickStart",
-                            "thickEnd", "color", "blockCount", "blockSizes",
-                            "blockStarts")
-              colnames(bed) <- bedNames[seq_len(ncol(bed))]
-              bed$start <- bed$start + 1 # BED has 0-based start positions
-              featureData <- bed[,!(colnames(bed) == "score")]
-              if (!wig)
-                rownames(featureData) <- make.names(bed$name, TRUE)
-              if (wig) {
-                score <- bed$name
-                featureData$name <- NULL
-              } else if (!is.null(bed$score))
-                score <- bed$score
-              else score <- rep(NA, nrow(featureData))
-              trackSet <- new("trackSet",
-                              featureData = trackFeatureData(featureData),
-                              dataVals = cbind(score = score), genome = genome)
+                            "thickEnd", "color", "blockCount",
+                            "blockSizes", "blockStarts")
+              bedClasses <- NA
             }
-            trackSet
+            ## FIXME: reading in 'as.is' to save memory, XFactor would
+            ## be useful here.
+            bed <- XDataFrame(read.table(con, colClasses = bedClasses,
+                                         as.is = TRUE))
+            colnames(bed) <- bedNames[seq_len(ncol(bed))]
+            if (!wig) { ## don't know how many columns, coerce here
+              bed$start <- as.integer(bed$start)
+              bed$end <- as.integer(bed$end)
+            } ## BED is 0-start, so add 1 to start
+            track <- GenomicData(IRanges(bed$start + 1, bed$end),
+                                 bed[,tail(colnames(bed), -3),drop=FALSE],
+                                 chrom = bed$chrom, genome = genome)
+            
+            ##featureData <- bed[,!(colnames(bed) == "score")]
+            ##if (!wig)
+            ##  rownames(featureData) <- make.names(bed$name, TRUE)
+            ##if (wig) {
+            ##  score <- bed$name
+            ##  featureData$name <- NULL
+            ##} else if (!is.null(bed$score))
+            ##score <- bed$score
+            ##else score <- rep(NA, nrow(featureData))
+            ##trackSet <- new("trackSet",
+            ##                featureData = trackFeatureData(featureData),
+            ##               dataVals = cbind(score = score), genome = genome)
+            track
+          })
+
+setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
+
+setMethod("blocks", "RangedData",
+          function(x, sizes = "blockSizes", starts = "blockStarts")
+          {
+            if (!isSingleString(sizes) || is.null(x[[sizes]]))
+              stop("'sizes' must be a single column name in 'x'")
+            if (!isSingleString(starts) || is.null(x[[starts]]))
+              stop("'starts' must be a single column name in 'x'")
+            starts <- unlist(strsplit(as.character(x[[starts]]), ","))
+            sizes <- unlist(strsplit(as.character(x[[sizes]]), ","))
+            IRanges(x[[starts]], width = x[[sizes]])
           })

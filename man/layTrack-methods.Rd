@@ -2,18 +2,19 @@
 \docType{methods}
 \alias{layTrack}
 \alias{layTrack-methods}
-\alias{layTrack,browserSession,trackSet-method}
-\alias{layTrack,browserSession,trackSets-method}
-\alias{layTrack,ucscSession,trackSets-method}
+\alias{layTrack,BrowserSession,RangedData-method}
+\alias{layTrack,BrowserSession,RangedDataList-method}
+\alias{layTrack,UCSCSession,RangedDataList-method}
 \title{ Laying tracks }
 \description{
-  Methods for loading \code{\linkS4class{trackSet}}s into genome browsers.
+  Methods for loading \code{\linkS4class{RangedData}} instances (tracks)
+  into genome browsers.
 }
 \usage{
 layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
 }
 \arguments{
-  \item{object}{A \code{\linkS4class{browserSession}} into which the
+  \item{object}{A \code{\linkS4class{BrowserSession}} into which the
     track is loaded.}
   \item{track}{The track(s) to load.}
   \item{name}{The name(s) of the track(s) being loaded.}
@@ -23,18 +24,18 @@ layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
 \section{Methods}{
   The following methods are defined by \pkg{rtracklayer}. A browser
   session implementation must implement a method for either
-  \code{trackSet} or \code{trackSets}. The base \code{browserSession}
+  \code{RangedData} or \code{RangedDataList}. The base \code{browserSession}
   class will delegate appropriately.
   
   \describe{
 
-    \item{object = "browserSession", track = "trackSet"}{ Load this
+    \item{object = "BrowserSession", track = "RangedData"}{ Load this
       track into the session. }
 
-    \item{object = "browserSession", track = "trackSets"}{ Load all tracks
+    \item{object = "BrowserSession", track = "RangedDataList"}{ Load all tracks
       into the session. }
 
-    \item{object = "ucscSession", track = "trackSets"}{
+    \item{object = "UCSCSession", track = "RangedDataList"}{
       \code{layTrack(object, track, name = deparse(substitute(track)),
         view = FALSE, format = "gff")}:
       Load the tracks into the session using the specified
@@ -42,8 +43,7 @@ layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
     }
   }
 }
-\seealso{\code{\link{trackSet}} for getting \code{trackSet} instances
-  from a session.}
+\seealso{\code{\link{track}} for getting a track from a session.}
 \examples{
 \dontrun{
   session <- browserSession()

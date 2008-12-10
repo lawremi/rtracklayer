@@ -5,7 +5,7 @@ setGeneric("export.gff",
                     source = "rtracklayer")
            standardGeneric("export.gff"))
 
-setMethod("export.gff", "trackSet",
+setMethod("export.gff", "RangedData",
           function(object, con, version, source)
 {
   version <- match.arg(version)
@@ -16,47 +16,47 @@ setMethod("export.gff", "trackSet",
     gffComment(con, "source-version", source, sourceVersion)
   gffComment(con, "date", format(Sys.time(), "%Y-%m-%d"))
   
-  feat <- pData(featureData(object))
-  seqname <- feat$chrom
-  if (is.null(feat$ID))
-    feat$ID <- rownames(feat)
+  seqname <- chrom(object)
+  if (is.null(object$ID))
+    object$ID <- rownames(object)
   if (version == "3")
     seqname <- urlEncode(seqname, "a-zA-Z0-9.:^*$@!+_?|-")
-  if (!is.null(feat$source))
-    source <- feat$source
+  if (!is.null(object$source))
+    source <- object$source
   if (version == "3")
     source <- urlEncode(source, "\t\n\r;=%&,", FALSE)
-  feature <- feat$type
+  feature <- object$type
   if (is.null(feature))
     feature <- "sequence"
-  score <- dataVals(object)
-  if (is.null(score) || !nrow(score) || !is.numeric(score)) {
+  score <- score(object)
+  if (is.null(score)) {
     if (version == "1")
       score <- 0
     else score <- NA
+  } else {
+    if (!("score" %in% colnames(object)))
+      colnames(object)[1] <- "score" ## avoid outputting as attribute
   }
-  else score <- score[,1]
-  strand <- feat$strand
+  strand <- strand(object)
   if (is.null(strand))
     strand <- NA
-  frame <- feat$phase
+  frame <- object$phase
   if (is.null(frame))
     frame <- NA
   
-  table <- data.frame(seqname, source, feature, feat$start, feat$end,
+  table <- data.frame(seqname, source, feature, start(object), end(object),
                       score, strand, frame)
 
   attrs <- NULL
   if (version == "1") {
-    attrs <- feat$group
+    attrs <- object$group
     if (is.null(attrs))
       attrs <- seqname
   } else {
-    builtin <- c("chrom", "type", "start", "end", "strand",
-                 "phase", "source")
-    custom <- !(colnames(feat) %in% builtin)
+    builtin <- c("type", "strand", "score", "phase", "source")
+    custom <- !(colnames(object) %in% builtin)  
     if (any(custom)) {
-      attrs <- as.matrix(feat[, custom, drop = FALSE])
+      attrs <- as.matrix(as.data.frame(unlist(values(object)))[,custom])
       tvsep <- " "
       attrsVec <- sub(" *$", "", sub("^ *", "", as.character(attrs))) # trim
       if (version == "3") {
@@ -112,7 +112,7 @@ setMethod("import.gff", "ANY",
   notComments <- grep("^[^#]", lines)
   lines <- lines[notComments]
   
-### TODO: handle ontologies (store in trackSet)
+### TODO: handle ontologies (store in RangedData)
 
   ## construct table
   fields <- c("seqname", "source", "feature", "start", "end", "score", "strand",
@@ -134,16 +134,9 @@ setMethod("import.gff", "ANY",
     table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
   }
 
-  featureData <- data.frame(chrom = table[,"seqname"],
-                            start = as.numeric(table[,"start"]),
-                            end = as.numeric(table[,"end"]),
-                            strand = table[,"strand"],
-                            phase = table[,"frame"],
-                            type = table[,"feature"],
-                            source = table[,"source"])
-
-  rownames(featureData) <- make.names(table[,"seqname"], TRUE)
-
+  xd <- XDataFrame(type = table[,"feature"], source = table[,"source"],
+                   phase = table[,"frame"], strand = table[,"strand"])
+  
   if (!is.null(table[,"attributes"])) {
     if (version == "1") {
       attrList <- list(group = table[,"attributes"])
@@ -171,15 +164,15 @@ setMethod("import.gff", "ANY",
                            vec
                          })
     }
-    featureData <- cbind(featureData, as.data.frame(attrList))
-    if (!is.null(featureData$ID) && !any(is.na(featureData$ID)))
-      rownames(featureData) <- featureData$ID
+    xd <- XDataFrame(xd, attrList)
   }
 
   suppressWarnings(score <- as.numeric(table[,"score"]))
-  
-  new("trackSet", featureData = trackFeatureData(featureData),
-      dataVals = cbind(score = score), genome = genome)
+  if (!all(is.na(score)))
+    xd$score <- score
+
+  GenomicData(IRanges(as.integer(table[,"start"]), as.integer(table[,"end"])),
+              xd, chrom = table[,"seqname"], genome = genome)
 })
 
 setGeneric("export.gff1",

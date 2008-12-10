@@ -1,10 +1,10 @@
-\name{ucscTrackModes-class}
+\name{UCSCTrackModes-class}
 \docType{class}
-\alias{ucscTrackModes-class}
-\alias{[,ucscTrackModes,ANY,ANY,ANY-method}
-\alias{[<-,ucscTrackModes,ANY,ANY,ANY-method}
+\alias{UCSCTrackModes-class}
+\alias{[,UCSCTrackModes,ANY,ANY,ANY-method}
+\alias{[<-,UCSCTrackModes,ANY,ANY,ANY-method}
 
-\title{Class "ucscTrackModes"}
+\title{Class "UCSCTrackModes"}
 \description{A vector of view modes ("hide", "dense", "full",
   "pack", "squish") for each track in a \acronym{UCSC} view.}
 \section{Objects from the Class}{
@@ -33,9 +33,9 @@ Class \code{"\link[Biobase:characterORMIAME-class]{characterORMIAME}"}, by class
 }
 \section{Methods}{
   \describe{
-    \item{\code{\link{tracks}(object)}}{ Gets the names of the visible
+    \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks (those that do not have mode "hide"). }
-    \item{\code{\link{tracks}(object) <- value}}{ Sets the names of the
+    \item{\code{\link{trackNames}(object) <- value}}{ Sets the names of the
       visible tracks. Any tracks named in \code{value} are set to "full"
       if the are currently set to "hide" in this object. Any tracks not
       in \code{value} are set to "hide". All other modes are preserved.}
@@ -51,6 +51,6 @@ Class \code{"\link[Biobase:characterORMIAME-class]{characterORMIAME}"}, by class
 }
 \author{ Michael Lawrence }
 \seealso{
-  \code{\linkS4class{ucscView}} on which track view modes may be set.
+  \code{\linkS4class{UCSCView}} on which track view modes may be set.
 }
 \keyword{classes}

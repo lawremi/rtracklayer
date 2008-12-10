@@ -12,7 +12,7 @@ setGeneric("export.wig",
                     dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
                     ...)
            standardGeneric("export.wig"))
-setMethod("export.wig", "trackSet",
+setMethod("export.wig", "ANY",
           function(object, con,
                    dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
                    ...)
@@ -26,22 +26,24 @@ setGeneric("export.wigLines",
                     dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
                     ...)
            standardGeneric("export.wigLines"))
-setMethod("export.wigLines", "trackSet",
+setMethod("export.wigLines", "RangedData",
           function(object, con,
                    dataFormat = c("auto", "bed", "variableStep", "fixedStep"))
           {
-            vals <- sampleNames(object)[1] # can only use a single condition
-            object <- object[!is.na(dataVals(object)[,1])]
-            object <- object[order(start(object))]
-            object <- object[order(chrom(object))]
-            df <- trackData(object)
+            if (any(is.na(score(object))))
+              stop("WIG cannot encode missing values")
+            object <- object[order(start(object)),]
+            object <- object[order(space(object)),]
             ## df <- df[!is.na(df[[vals]]),] # no NAs
             ## df <- df[order(df$start),]
             ## attempt to use most efficient format if not specified
 ### FIXME: If we need bed, use bedGraph format
+            scipen <- getOption("scipen")
+            options(scipen = 100) # prevent use of scientific notation
+            on.exit(options(scipen = scipen))
             byChrom <- function(chromData, formatOnly) {
-              starts <- chromData$start
-              ends <- chromData$end
+              starts <- start(chromData)
+              ends <- end(chromData)
               if (!all(tail(starts, -1) - head(ends, -1) > 0))
                 stop("Features cannot overlap. ",
                      "Note that WIG does not distinguish between strands - ",
@@ -61,9 +63,9 @@ setMethod("export.wigLines", "trackSet",
               if (formatOnly)
                 return(dataFormat)
               cat(dataFormat, file = con)
-              cat(" chrom=", as.character(chromData$chrom)[1],
+              cat(" chrom=", as.character(space(chromData))[1],
                   file = con, sep = "")
-              data <- chromData[[vals]]
+              data <- score(chromData)
               if (dataFormat == "variableStep")
                 data <- cbind(starts, data)
               else {
@@ -80,10 +82,10 @@ setMethod("export.wigLines", "trackSet",
             }
             dataFormat <- match.arg(dataFormat)
             if (dataFormat == "auto")
-              dataFormat <- by(df, df$chrom, byChrom, TRUE)
+              dataFormat <- lapply(object, byChrom, TRUE)
             if (any(dataFormat == "bed")) # one BED, all BED
               export.bed(object, con, wig = TRUE)
-            else by(df, df$chrom, byChrom, FALSE) # else, mix variable/fixed
+            else lapply(object, byChrom, FALSE) # else, mix variable/fixed
           })
 
 setGeneric("import.wig",
@@ -118,40 +120,38 @@ setMethod("import.wigLines", "ANY",
                   start <- data[,1]
                   score <- data[,2]
                 } else {
-                  start <- seq(as.numeric(formatVals["start"]),
-                               by = as.numeric(formatVals["step"]),
+                  start <- seq(as.integer(formatVals["start"]),
+                               by = as.integer(formatVals["step"]),
                                length.out = nrow(data))
                   score <- data[,1]
                 }
                 span <- formatVals["span"]
                 if (is.na(span))
                   span <- 1
-                end <- start + as.numeric(span) - 1
-                data.frame(chrom = formatVals[["chrom"]],
-                           start = start, end = end,
-                           score = score)
+                end <- start + as.integer(span) - 1
+                GenomicData(IRanges(start, end), score = score,
+                            chrom = formatVals[["chrom"]])
               }
               resultList <- lapply(seq_along(formatInds), parseData)
-              resultMat <- do.call("rbind", resultList)
-              featureData <- resultMat[,c("chrom", "start", "end")]
-              new("trackSet", featureData = trackFeatureData(featureData),
-                  dataVals = resultMat[,"score",drop=FALSE], genome = genome)
+              gd <- do.call("rbind", resultList)
+              genome(gd) <- genome
+              gd
             } else import(text = lines, format = "bed", wig = TRUE)
         })
 
-setClass("wigTrackLine",
+setClass("WigTrackLine",
          representation(altColor = "integer", autoScale = "logical",
                         gridDefault = "logical", maxHeightPixels = "numeric",
                         graphType = "character", viewLimits = "numeric",
                         yLineMark = "numeric", yLineOnOff = "logical",
                         windowingFunction = "character",
                         smoothingWindow = "numeric"),
-         contains = "ucscTrackLine")
+         contains = "TrackLine")
 
-setAs("wigTrackLine", "character",
+setAs("WigTrackLine", "character",
       function(from)
       {
-        str <- as(as(from, "ucscTrackLine"), "character")
+        str <- as(as(from, "TrackLine"), "character")
         str <- paste(str, "type=wiggle_0")
         color <- from@altColor
         if (length(color))
@@ -188,10 +188,10 @@ setAs("wigTrackLine", "character",
         str
       })
 
-setAs("character", "wigTrackLine",
+setAs("character", "WigTrackLine",
       function(from)
       {
-        line <- new("wigTrackLine", as(from, "ucscTrackLine"))
+        line <- new("WigTrackLine", as(from, "TrackLine"))
         vals <- ucscParsePairs(from)
         if (!is.na(vals["altColor"]))
           line@altColor <- as.integer(strsplit(vals["altColor"], ",")[[1]])
@@ -218,8 +218,8 @@ setAs("character", "wigTrackLine",
         line
       })
 
-setAs("basicTrackLine", "wigTrackLine",
-      function(from) new("wigTrackLine", from))
+setAs("BasicTrackLine", "WigTrackLine",
+      function(from) new("WigTrackLine", from))
 
-setAs("wigTrackLine", "basicTrackLine",
-      function(from) new("basicTrackLine", from))
+setAs("WigTrackLine", "BasicTrackLine",
+      function(from) new("BasicTrackLine", from))

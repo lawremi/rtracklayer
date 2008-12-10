@@ -1,11 +1,11 @@
-\name{browserView-class}
+\name{BrowserView-class}
 \docType{class}
-\alias{browserView-class}
-\alias{show,browserView-method}
+\alias{BrowserView-class}
+\alias{show,BrowserView-method}
 
-\title{Class "browserView"}
+\title{Class "BrowserView"}
 \description{ An object representing a genome browser view of a particular
-  \code{\linkS4class{genomeSegment}} of a genome. }
+  \code{\linkS4class{RangesList}} of a genome. }
 \section{Objects from the Class}{
   A virtual Class: No objects may be created from it directly. See
   \code{\link{browserView}} for obtaining
@@ -13,7 +13,7 @@
 }
 \section{Slots}{
   \describe{
-    \item{\code{session}:}{Object of class \code{"browserSession"} the
+    \item{\code{session}:}{Object of class \code{"BrowserSession"} the
       browser session to which this view belongs. }
   }
 }
@@ -22,13 +22,13 @@
   a backend is not guaranteed to support all operations.
   \describe{
     \item{\code{\link{browserSession}(object)}}{ Obtains the
-      \code{\linkS4class{browserSession}} to which this view belongs. }
+      \code{\linkS4class{BrowserSession}} to which this view belongs. }
     \item{\code{\link{close}(object)}}{ Close this view. }
-    \item{\code{\link{genomeSegment}(object)}}{ Obtains the
-      \code{\linkS4class{genomeSegment}} displayed by this view.}
-    \item{\code{\link{tracks}(object)}}{ Gets the names of the visible
+    \item{\code{\link{range}(object)}}{ Obtains the
+      \code{\linkS4class{RangesList}} displayed by this view.}
+    \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks in the view. }
-    \item{\code{\link{tracks}(object) <- value}}{ Sets the visible
+    \item{\code{\link{trackNames}(object) <- value}}{ Sets the visible
       tracks by their names. }
     \item{\code{\link{show}(object)}}{ Outputs a textual description of
       this view. }  

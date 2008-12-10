@@ -1,18 +1,18 @@
-\name{wigTrackLine-class}
+\name{WigTrackLine-class}
 \docType{class}
-\alias{wigTrackLine-class}
-\alias{coerce,character,wigTrackLine-method}
-\alias{coerce,wigTrackLine,character-method}
-\alias{coerce,wigTrackLine,basicTrackLine-method}
-\alias{coerce,basicTrackLine,wigTrackLine-method}
+\alias{WigTrackLine-class}
+\alias{coerce,character,WigTrackLine-method}
+\alias{coerce,WigTrackLine,character-method}
+\alias{coerce,WigTrackLine,BasicTrackLine-method}
+\alias{coerce,BasicTrackLine,WigTrackLine-method}
 
-\title{Class "wigTrackLine"}
+\title{Class "WigTrackLine"}
 \description{ A \acronym{UCSC} track line for Wiggle tracks. }
 \section{Objects from the Class}{
-  Objects can be created by calls of the form \code{new("wigTrackLine",
+  Objects can be created by calls of the form \code{new("WigTrackLine",
     ...)} or parsed from a character vector track line with
-  \code{as(text, "wigTrackLine")} or converted from a
-  \code{\linkS4class{basicTrackLine}} using \code{as(basic, "wigTrackLine")}.
+  \code{as(text, "WigTrackLine")} or converted from a
+  \code{\linkS4class{BasicTrackLine}} using \code{as(basic, "WigTrackLine")}.
 }
 \section{Slots}{
   \describe{
@@ -44,7 +44,7 @@
       describing the track. }
     \item{\code{visibility}:}{Object of class \code{"character"}
       indicating the default visible mode of the track, see
-      \code{\linkS4class{ucscTrackModes}}.}
+      \code{\linkS4class{UCSCTrackModes}}.}
     \item{\code{color}:}{Object of class \code{"integer"} representing the
       track color (as from \code{\link{col2rgb}}).
     }
@@ -53,12 +53,12 @@
   }
 }
 \section{Extends}{
-  Class \code{"\linkS4class{ucscTrackLine}"}, directly.
+  Class \code{"\linkS4class{TrackLine}"}, directly.
 }
 \section{Methods}{
   \item{as(object, "character")}{Export line to its string
     representation.}
-  \item{as(object, \code{"\linkS4class{basicTrackLine}"})}{Convert this
+  \item{as(object, \code{"\linkS4class{BasicTrackLine}"})}{Convert this
     line to a basic UCSC track line, using defaults for slots not held
     in common.}
 }

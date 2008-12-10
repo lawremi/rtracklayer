@@ -1,6 +1,6 @@
 \name{export-tracks}
 \alias{export.gff}
-\alias{export.gff,trackSet-method}
+\alias{export.gff,RangedData-method}
 \alias{export.gff1}
 \alias{export.gff2}
 \alias{export.gff3}
@@ -8,16 +8,16 @@
 \alias{export.gff2,ANY-method}
 \alias{export.gff3,ANY-method}
 \alias{export.bed}
-\alias{export.bed,trackSet-method}
+\alias{export.bed,RangedData-method}
 \alias{export.wig}
-\alias{export.wig,trackSet-method}
+\alias{export.wig,RangedData-method}
 \alias{export.ucsc}
-\alias{export.ucsc,trackSet-method}
-\alias{export.ucsc,trackSets-method}
+\alias{export.ucsc,RangedData-method}
+\alias{export.ucsc,RangedDataList-method}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Export tracks}
 \description{
-  These functions output \code{\linkS4class{trackSet}} instances in
+  These functions output \code{\linkS4class{RangedData}} instances in
   various formats.
 }
 \usage{
@@ -34,10 +34,10 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{ The object to export, such as a
-    \code{\linkS4class{trackSet}}. If a
-    \code{\linkS4class{ucscTrackSet}}, the track line information is
+    \code{\linkS4class{RangedData}}. If a
+    \code{\linkS4class{UCSCData}}, the track line information is
     output. In the case of \code{export.ucsc}, a
-    \code{\linkS4class{trackSets}} 
+    \code{\linkS4class{RangedDataList}} 
     object with possibly multiple tracks is supported.}
   \item{con}{ The connection to which the object is exported. }
   \item{version}{ The \acronym{GFF} version, either "1", "2" or "3"
@@ -57,7 +57,7 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
     \code{export.gff3}: arguments to pass to \code{export.gff}. For
     \code{export.bed} and \code{export.wig} : arguments to pass to methods. For
     \code{export.ucsc}: arguments to pass to \code{export.subformat} or
-    to set on the slots of the \code{\linkS4class{ucscTrackLine}} subclass
+    to set on the slots of the \code{\linkS4class{TrackLine}} subclass
     corresponding to \code{subformat}.}
 }
 \value{
@@ -90,7 +90,7 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
   ## output multiple tracks in UCSC meta-format
   track2 <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
   ## output to WIG with BED line format
-  export.ucsc(trackSets(track, track2), dummy, subformat = "wig", dataFormat = "bed") 
+  export.ucsc(RangedDataList(track, track2), dummy, subformat = "wig", dataFormat = "bed") 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

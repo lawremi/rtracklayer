@@ -3,7 +3,7 @@ library(XML)
 library(Biobase)
 library(rJava)
 
-files <- c("web.R", "segment.R", "trackSet.R", "browser.R", "gff.R", "ucsc.R",
+files <- c("web.R", "range.R", "trackSet.R", "browser.R", "gff.R", "ucsc.R",
            "bed.R", "wig.R", "io.R")
 sapply(files, source)
 

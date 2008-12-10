@@ -3,7 +3,7 @@
 \alias{browserSession}
 \alias{browserSession-methods}
 \alias{browserSession,character-method}
-\alias{browserSession,browserView-method}
+\alias{browserSession,BrowserView-method}
 \alias{browserSession,missing-method}
 \title{ Get a genome browser session }
 \description{
@@ -14,13 +14,13 @@
   
   \describe{
     \item{object = "character"}{ \code{browserSession(object, ...)}: Creates a
-      \code{\linkS4class{browserSession}} from a genome browser
+      \code{\linkS4class{BrowserSession}} from a genome browser
       identifier. The identifier corresponds to the prefix of the
-      session class name (e.g. "ucsc" in "ucscSession"). The arguments
+      session class name (e.g. "ucsc" in "UCSCSession"). The arguments
       in \dots are passed to the initialization function of the class.}
     
     \item{object = "browserView"}{ Gets the
-      \code{\linkS4class{browserSession}} for the view. }
+      \code{\linkS4class{BrowserSession}} for the view. }
 
     \item{object = "missing"}{ Calls \code{browserSession("ucsc", ...)}. }
   }

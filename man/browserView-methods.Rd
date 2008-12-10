@@ -2,18 +2,18 @@
 \docType{methods}
 \alias{browserView}
 \alias{browserView-methods}
-\alias{browserView,ucscSession-method}
+\alias{browserView,UCSCSession-method}
 \title{Getting browser views}
 \description{
   Methods for creating and getting browser views.
 }
 \usage{
-  browserView(object, segment = genomeSegment(object),
-              track = tracks(object), ...)
+  browserView(object, range = range(object),
+              track = trackNames(object), ...)
 }
 \arguments{
   \item{object}{The object from which to get the views.}
-  \item{segment}{The \code{\linkS4class{genomeSegment}} to display.}
+  \item{range}{The \code{\linkS4class{RangesList}} to display.}
   \item{track}{List of track names to make visible in the view.}
   \item{\dots}{Arguments to pass to methods}
 }
@@ -21,22 +21,22 @@
   The following methods are defined by \pkg{rtracklayer}. 
   \describe{
     
-    \item{object = "ucscSession"}{ \code{browserView(object, segment =
-        genomeSegment(object), track = tracks(object), ...)}: Creates a
-      \code{\linkS4class{browserView}} of \code{segment} with visible
+    \item{object = "UCSCSession"}{ \code{browserView(object, range =
+        range(object), track = trackNames(object), ...)}: Creates a
+      \code{\linkS4class{BrowserView}} of \code{range} with visible
       tracks specified by \code{track}. \code{track} may be an instance
-      of \code{\linkS4class{ucscTrackModes}}. Arguments in \code{...} should
-      override slots in \code{segment} or else match parameters
+      of \code{\linkS4class{UCSCTrackModes}}. Arguments in \code{...} should
+      override slots in \code{range} or else match parameters
       to a \code{\link{ucscTrackModes}} method for creating a
-      \code{ucscTrackModes} instance that will override modes indicated
+      \code{UCSCTrackModes} instance that will override modes indicated
       by the \code{track} parameter. }
     
 }}
 \examples{
 \dontrun{
   session <- browserSession()
-  browserView(session, genomeSegment(start = 20000, end = 50000,
-                                     segment = genomeSegment(session)))
+  browserView(session, GenomicRanges(start = 20000, end = 50000,
+                                     range = range(session)))
   ## equivalent to above, but shorter
   browserView(session, start = 20000, end = 50000)
   ## only view "knownGene" track

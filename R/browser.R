@@ -1,14 +1,14 @@
 # central abstraction, represents a genome browser
-setClass("browserSession")
+setClass("BrowserSession")
 
 # a single genome view in a session
-setClass("browserView", representation(session = "browserSession"),
+setClass("BrowserView", representation(session = "BrowserSession"),
          contains = "VIRTUAL")
 
 # create a browser view
 setGeneric("browserView",
-           function(object, segment = genomeSegment(object),
-                    track = tracks(object), ...)
+           function(object, range = range(object),
+                    track = trackNames(object), ...)
            standardGeneric("browserView"))
 
 # get the views from the browser
@@ -20,7 +20,7 @@ setGeneric("activeView", function(object) standardGeneric("activeView"))
 setGeneric("activeView<-", function(object, value)
            standardGeneric("activeView<-"))
 
-setMethod("activeView", "browserSession",
+setMethod("activeView", "BrowserSession",
           function(object)
           {
             views <- browserViews(object)
@@ -30,12 +30,12 @@ setMethod("activeView", "browserSession",
             else NULL
           })
 
-setMethod("show", "browserSession",
+setMethod("show", "BrowserSession",
           function(object)
           {
             cat("A genome browser session of class '", class(object), "' with ",
                 length(browserViews(object)), " views and ",
-                length(tracks(object)), " tracks\n", sep ="")
+                length(trackNames(object)), " tracks\n", sep ="")
           })
 
 # close a session or view
@@ -44,8 +44,9 @@ setGeneric("close", function(con, ...) standardGeneric("close"))
 # FIXME: what about isOpen?
 
 # get/set (names of) tracks from e.g. a view
-setGeneric("tracks", function(object, ...) standardGeneric("tracks"))
-setGeneric("tracks<-", function(object, value) standardGeneric("tracks<-"))
+setGeneric("trackNames", function(object, ...) standardGeneric("trackNames"))
+setGeneric("trackNames<-",
+           function(object, value) standardGeneric("trackNames<-"))
 
 # get/set the selected features in e.g. a view
 # this can return a list, with a logical vector for each track
@@ -54,14 +55,14 @@ setGeneric("selectedFeatures", function(object, ...)
 setGeneric("selectedFeatures<-", function(object, value)
            standardGeneric("selectedFeatures<-"))
 
-setMethod("show", "browserView", function(object)
+setMethod("show", "BrowserView", function(object)
           {
             cat("A genome browser view of class '", class(object), "'.\n\n",
                 sep = "")
             cat("Segment:\n")
-            show(genomeSegment(object))
+            show(range(object))
             cat("Tracks:\n")
-            show(tracks(object))
+            show(trackNames(object))
           })
 
 setGeneric("layTrack",
@@ -69,14 +70,14 @@ setGeneric("layTrack",
                     view = FALSE, ...)
            standardGeneric("layTrack"))
 # load a track into a browser
-setMethod("layTrack", c("browserSession", "trackSet"),
+setMethod("layTrack", c("BrowserSession", "RangedData"),
           function(object, track, name, view, ...)
           {
-            layTrack(object, trackSets(track), name, view, ...)
+            layTrack(object, RangedDataList(track), name, view, ...)
           })
 # load several tracks into a browser
 # (this may be more efficient for some implementations)
-setMethod("layTrack", c("browserSession", "trackSets"),
+setMethod("layTrack", c("BrowserSession", "RangedDataList"),
           function(object, track, name = names(track), view, ...)
           {
             for (i in seq_len(length(name) - 1))
@@ -88,39 +89,50 @@ setMethod("layTrack", c("browserSession", "trackSets"),
             object
           })
 
-# get genome segment of active view (or default if no views)
-setMethod("genomeSegment", "browserSession",
-          function(object, ...)
+setGeneric("track", function(object, ...) standardGeneric("track"))
+
+# get genome range of active view (or default if no views)
+setMethod("range", "BrowserSession",
+          function(x, ..., na.rm)
           {
-            view <- activeView(object)
+            if (length(...) > 0)
+              stop("arguments in '...' ignored")
+            view <- activeView(x)
             if (!is.null(view))
-              genomeSegment(view, ...)
+              range(view)
             else NULL
           })
 
+setGeneric("range<-", function(x, ..., value) standardGeneric("range<-"))
+
 # high-level entry point
 setGeneric("browseGenome",
-           function(tracks = trackSets(), browser = "ucsc",
-                    segment = genomeSegment(tracks), view = TRUE,
-                    trackParams = list(), viewParams = list(), ...)
+           function(object, ...)
            standardGeneric("browseGenome"))
 
-setMethod("browseGenome", "ANY",
-          function(tracks, browser, segment, view, trackParams, viewParams, ...)
+setMethod("browseGenome", "missing",
+          function(object, ...) browseGenome(RangedDataList(), ...))
+          
+setClassUnion("RangedDataORRangedDataList", c("RangedData", "RangedDataList"))
+
+setMethod("browseGenome", "RangedDataORRangedDataList",
+          function(object, browser = "UCSC",
+                   range = base::range(object), view = TRUE,
+                   trackParams = list(), viewParams = list(), ...)
           {
             # initialize session of type identified by 'browser'
-            session <- browserSession(browser)
-            # load 'tracks'
-            trackParams <- c(list(session, tracks), trackParams)
-            if (is(tracks, "trackSet"))
-              trackParams <- c(trackParams, name = deparse(substitute(tracks)))
+            session <- browserSession(browser, ...)
+            # load 'object'
+            trackParams <- c(list(session, object), trackParams)
+            pcall <- sys.call(sys.parent(1))
+            name <- deparse(as.list(match.call(call=pcall))[[2]])
+            if (is(object, "RangedData"))
+              trackParams <- c(trackParams, name = name)
             session <- do.call("layTrack", trackParams)
-            # open view of 'segment'
+            # open view of 'range'
             if (view) {
-              segment <- merge(genomeSegment(session), segment)
-              if (length(list(...)))
-                segment <- genomeSegment(..., segment = segment)
-              viewParams <- c(list(session, segment), viewParams)
+              range <- merge(range(session), range)
+              viewParams <- c(list(session, range), viewParams)
               do.call("browserView", viewParams)
             }
             session
@@ -129,7 +141,7 @@ setMethod("browseGenome", "ANY",
 # list names of available genome browsers
 genomeBrowsers <- function(where = topenv(parent.frame()))
 {
-  cl <- getClass("browserSession", where = where)
+  cl <- getClass("BrowserSession", where = where)
   browsers <- names(cl@subclasses)
   browsers <- browsers[!sapply(browsers, isVirtualClass, where)]
   sub("Session$", "", browsers)
@@ -144,22 +156,22 @@ setMethod("browserSession", "character",
           function(object, ...)
           {
             class <- paste(object, "Session", sep = "")
-            if (!extends(class, "browserSession"))
+            if (!extends(class, "BrowserSession"))
               stop("Browser named '", object, "' is unsupported.")
             new(class, ...)
           })
 
 setMethod("browserSession", "missing",
-          function(object, ...) browserSession("ucsc", ...))
+          function(object, ...) browserSession("UCSC", ...))
 
 # get one from a view
-setMethod("browserSession", "browserView", function(object) object@session)
+setMethod("browserSession", "BrowserView", function(object) object@session)
 
 # load a sequence into the browser
 setGeneric("laySequence", function(object, sequence, name, ...)
            standardGeneric("laySequence"))
 
-# retrieve a segment of a genome sequence from a browser
+# retrieve a range of a genome sequence from a browser
 setGeneric("genomeSequence",
-           function(object, segment = genomeSegment(object), ...)
+           function(object, range = base::range(object), ...)
            standardGeneric("genomeSequence"))

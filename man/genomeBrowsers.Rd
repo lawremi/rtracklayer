@@ -13,8 +13,8 @@ genomeBrowsers(where = topenv(parent.frame()))
 }
 \details{
   This searches the specified environment for classes that extend
-  \code{\linkS4class{browserSession}}. The prefix of the class name,
-  e.g. "ucsc" in "ucscSession", is returned for each driver. 
+  \code{\linkS4class{BrowserSession}}. The prefix of the class name,
+  e.g. "ucsc" in "UCSCSession", is returned for each driver. 
 }
 \value{
   A character vector of driver identifiers.

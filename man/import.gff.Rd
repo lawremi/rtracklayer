@@ -16,7 +16,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Importing tracks }
 \description{
-  These are the functions for importing \code{\linkS4class{trackSet}}
+  These are the functions for importing \code{\linkS4class{RangedData}}
   instances from connections or text.
 }
 \usage{
@@ -48,9 +48,9 @@ import.ucsc(con, subformat = c("auto", "gff1", "wig", "bed"),
     For \code{import.ucsc}: arguments to pass on to \code{import.subformat}.}
 }
 \value{
-  An instance of \code{\linkS4class{trackSet}} or one of its subclasses,
+  An instance of \code{\linkS4class{RangedData}} or one of its subclasses,
   except for \code{import.ucsc}, which returns a
-  \code{\linkS4class{trackSets}} instance, unless there is one track and
+  \code{\linkS4class{RangedDataList}} instance, unless there is one track and
   the \code{drop} parameter is \code{TRUE}.
 }
 \references{

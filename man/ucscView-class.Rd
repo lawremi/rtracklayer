@@ -1,42 +1,42 @@
-\name{ucscView-class}
+\name{UCSCView-class}
 \docType{class}
-\alias{ucscView-class}
+\alias{UCSCView-class}
 
-\title{Class "ucscView"}
+\title{Class "UCSCView"}
 \description{An object representing a view of a genome in the
   \acronym{UCSC} browser.}
 \section{Objects from the Class}{
   Objects are created by calling \code{\link{browserView}(session, ...)}
-  where \code{session} is a \code{\linkS4class{ucscSession}}. 
+  where \code{session} is a \code{\linkS4class{UCSCSession}}. 
 }
 \section{Slots}{
   \describe{
     \item{\code{hgsid}:}{Object of class \code{"numeric"}, which
       identifies this view to \acronym{UCSC}.}
-    \item{\code{session}:}{Object of class \code{"browserSession"} to
+    \item{\code{session}:}{Object of class \code{"BrowserSession"} to
       which this view belongs.}
   }
 }
 \section{Extends}{
-Class \code{"\linkS4class{browserView}"}, directly.
+Class \code{"\linkS4class{BrowserView}"}, directly.
 }
 \section{Methods}{
   \describe{
     \item{\code{\link{activeView}(object)}}{ Obtains a logical
       indicating whether this view is the active view. }
-    \item{\code{\link{genomeSegment}(object)}}{ Obtains the
-      \code{\linkS4class{genomeSegment}} displayed by this view. }
-    \item{\code{\link{genomeSegment}(object) <- value}}{ Sets the
-      \code{\linkS4class{genomeSegment}} displayed by this view. }
-    \item{\code{\link{tracks}(object)}}{ Gets the names of the visible
+    \item{\code{\link{range}(object)}}{ Obtains the
+      \code{\linkS4class{RangesList}} displayed by this view. }
+    \item{\code{\link{range}(object) <- value}}{ Sets the
+      \code{\linkS4class{RangesList}} displayed by this view. }
+    \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks in this view. }
-    \item{\code{\link{tracks}(object) <- value}}{ Sets the visible
+    \item{\code{\link{trackNames}(object) <- value}}{ Sets the visible
       tracks by name. }
     \item{\code{\link{ucscTrackModes}(object)}}{ Obtains the
-      \code{\linkS4class{ucscTrackModes}} for this view. }
+      \code{\linkS4class{UCSCTrackModes}} for this view. }
     \item{\code{\link{ucscTrackModes}(object) <- value}}{ Sets the
-      \code{\linkS4class{ucscTrackModes}} for this view. The
-      \code{value} may be either a \code{ucscTrackModes} instance or a
+      \code{\linkS4class{UCSCTrackModes}} for this view. The
+      \code{value} may be either a \code{UCSCTrackModes} instance or a
       character vector that will be coerced by a call to
       \code{\link{ucscTrackModes}}. }
   }

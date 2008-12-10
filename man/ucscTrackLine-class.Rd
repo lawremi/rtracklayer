@@ -1,20 +1,20 @@
-\name{ucscTrackLine-class}
+\name{TrackLine-class}
 \docType{class}
-\alias{ucscTrackLine-class}
-\alias{coerce,character,ucscTrackLine-method}
-\alias{coerce,ucscTrackLine,character-method}
-\alias{show,ucscTrackLine-method}
+\alias{TrackLine-class}
+\alias{coerce,character,TrackLine-method}
+\alias{coerce,TrackLine,character-method}
+\alias{show,TrackLine-method}
 
-\title{Class "ucscTrackLine"}
+\title{Class "TrackLine"}
 \description{An object representing a "track line" in the \acronym{UCSC}
   format. There are two concrete types of track lines:
-  \code{\linkS4class{basicTrackLine}} (used for most types of tracks) and
-  \code{\linkS4class{wigTrackLine}} (used for Wiggle tracks). This class
+  \code{\linkS4class{BasicTrackLine}} (used for most types of tracks) and
+  \code{\linkS4class{WigTrackLine}} (used for Wiggle tracks). This class
   only declares the common elements between the two.}
 \section{Objects from the Class}{
-  Objects can be created by calls of the form \code{new("ucscTrackLine",
+  Objects can be created by calls of the form \code{new("TrackLine",
     ...)} or parsed from a character vector track line with
-  \code{as(text, "ucscTrackLine")}.
+  \code{as(text, "TrackLine")}.
   But note that \acronym{UCSC} only understands one of the
   subclasses mentioned above.
 }
@@ -26,7 +26,7 @@
       describing the track. }
     \item{\code{visibility}:}{Object of class \code{"character"}
       indicating the default visible mode of the track, see
-      \code{\linkS4class{ucscTrackModes}}.}
+      \code{\linkS4class{UCSCTrackModes}}.}
     \item{\code{color}:}{Object of class \code{"integer"} representing the
       track color (as from \code{\link{col2rgb}}).
     }
@@ -43,7 +43,7 @@
 \author{ Michael Lawrence }
 
 \seealso{
-  \code{\linkS4class{basicTrackLine}} (used for most types of tracks) and
-  \code{\linkS4class{wigTrackLine}} (used for Wiggle tracks).
+  \code{\linkS4class{BasicTrackLine}} (used for most types of tracks) and
+  \code{\linkS4class{WigTrackLine}} (used for Wiggle tracks).
 }
 \keyword{classes}

@@ -1,23 +1,20 @@
-\name{ucscTrackSet-class}
+\name{UCSCData-class}
 \docType{class}
-\alias{ucscTrackSet-class}
-\alias{export.bed,ucscTrackSet-method}
-\alias{export.gff,ucscTrackSet-method}
-\alias{export.ucsc,ucscTrackSet-method}
-\alias{initialize,ucscTrackSet-method}
-\alias{show,ucscTrackSet-method}
+\alias{UCSCData-class}
+\alias{export.bed,UCSCData-method}
+\alias{export.gff,UCSCData-method}
+\alias{export.ucsc,UCSCData-method}
+\alias{initialize,UCSCData-method}
+\alias{show,UCSCData-method}
 
-\title{Class "ucscTrackSet"}
+\title{Class "UCSCData"}
 \description{Each track in \acronym{UCSC} has an associated
-  \code{\linkS4class{ucscTrackLine}} that contains metadata on the track.}
-\section{Objects from the Class}{
-  Objects can be created by calls of the form \code{new("ucscTrackSet",
-    assayData, phenoData, featureData, experimentData, annotation,
-    ...)}. See \code{\linkS4class{trackSet}} for more details.
+  \code{\linkS4class{TrackLine}} that contains metadata on the track.}
+\section{Constructor}{
 }
 \section{Slots}{
   \describe{
-    \item{\code{trackLine}:}{Object of class \code{"ucscTrackLine"}
+    \item{\code{trackLine}:}{Object of class \code{"TrackLine"}
       holding track metadata. }
     \item{\code{genome}:}{Object of class \code{"character"} identifying
       the genome of this track, e.g. "hg18".}
@@ -37,12 +34,6 @@
     \item{\code{.__classVersion__}:}{Object of class \code{"Versions"}
       holding version information. }
   }
-}
-\section{Extends}{
-Class \code{"\linkS4class{trackSet}"}, directly.
-Class \code{"\link[Biobase:eSet-class]{eSet}"}, by class "trackSet", distance 2.
-Class \code{"\link[Biobase:VersionedBiobase-class]{VersionedBiobase}"}, by class "trackSet", distance 3.
-Class \code{"\link[Biobase:Versioned-class]{Versioned}"}, by class "trackSet", distance 4.
 }
 \section{Methods}{
   \describe{

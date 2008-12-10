@@ -1,17 +1,17 @@
-\name{basicTrackLine-class}
+\name{BasicTrackLine-class}
 \docType{class}
-\alias{basicTrackLine-class}
-\alias{coerce,character,basicTrackLine-method}
-\alias{coerce,basicTrackLine,character-method}
+\alias{BasicTrackLine-class}
+\alias{coerce,character,BasicTrackLine-method}
+\alias{coerce,BasicTrackLine,character-method}
 
-\title{Class "basicTrackLine"}
+\title{Class "BasicTrackLine"}
 \description{The type of \acronym{UCSC} track line used to annotate most
   types of tracks (every type except Wiggle).}
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("basicTrackLine",
+Objects can be created by calls of the form \code{new("BasicTrackLine",
   ...)} or parsed from a character vector track line with \code{as(text,
-  "basicTrackLine")} or converted from a
-\code{\linkS4class{wigTrackLine}} using \code{as(wig, "basicTrackLine")}.
+  "BasicTrackLine")} or converted from a
+\code{\linkS4class{WigTrackLine}} using \code{as(wig, "BasicTrackLine")}.
 }
 \section{Slots}{
   \describe{
@@ -36,7 +36,7 @@ Objects can be created by calls of the form \code{new("basicTrackLine",
       describing the track. }
     \item{\code{visibility}:}{Object of class \code{"character"}
       indicating the default visible mode of the track, see
-      \code{\linkS4class{ucscTrackModes}}.}
+      \code{\linkS4class{UCSCTrackModes}}.}
     \item{\code{color}:}{Object of class \code{"integer"} representing the
       track color (as from \code{\link{col2rgb}}). }
     \item{\code{priority}:}{Object of class \code{"numeric"} specifying
@@ -44,12 +44,12 @@ Objects can be created by calls of the form \code{new("basicTrackLine",
   }
 }
 \section{Extends}{
-Class \code{"\linkS4class{ucscTrackLine}"}, directly.
+Class \code{"\linkS4class{TrackLine}"}, directly.
 }
 \section{Methods}{
   \item{as(object, "character")}{Export line to its string
     representation.}
-  \item{as(object, \code{"\linkS4class{wigTrackLine}"})}{Convert this
+  \item{as(object, \code{"\linkS4class{WigTrackLine}"})}{Convert this
     line to a WIG track line, using defaults for slots not held
     in common.}
 }
@@ -59,6 +59,6 @@ Class \code{"\linkS4class{ucscTrackLine}"}, directly.
 \author{ Michael Lawrence }
 
 \seealso{
-  \code{\linkS4class{wigTrackLine}} for Wiggle tracks.
+  \code{\linkS4class{WigTrackLine}} for Wiggle tracks.
 }
 \keyword{classes}

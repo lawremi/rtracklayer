@@ -3,7 +3,7 @@
 \docType{data}
 \title{CPNE1 SNP track}
 \description{
-  A \code{trackSet} object (created by the \code{GGtools} package)
+  A \code{RangedData} object (created by the \code{GGtools} package)
   with features from a subset of the SNPs on chromosome 20 from 60
   HapMap founders in the CEU cohort. Each SNP has an associated data
   value indicating its association with the expression of the CPNE1 gene
@@ -12,15 +12,14 @@
 }
 \usage{data(cpneTrack)}
 \format{
-  Each feature is described by its start, stop, chromosome and strand in
-  the genome. There is a single column of data values, representing the
-  association test scores.
+  Each feature (row) is a SNP. The association test scores are
+  accessible via \code{\link{score}}.
 }
 \source{
   Vince Carey and the \code{GGtools} package.
 }
 \examples{
 data(cpneTrack)
-plot(start(cpneTrack), dataVals(cpneTrack))
+plot(start(cpneTrack), score(cpneTrack))
 }
 \keyword{datasets}
