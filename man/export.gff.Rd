@@ -17,7 +17,7 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Export tracks}
 \description{
-  These functions output \code{\linkS4class{RangedData}} instances in
+  These functions output \code{\link[IRanges:RangedData-class]{RangedData}} instances in
   various formats.
 }
 \usage{
@@ -34,7 +34,7 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{ The object to export, such as a
-    \code{\linkS4class{RangedData}}. If a
+    \code{\link[IRanges:RangedData-class]{RangedData}}. If a
     \code{\linkS4class{UCSCData}}, the track line information is
     output. In the case of \code{export.ucsc}, a
     \code{\linkS4class{RangedDataList}} 

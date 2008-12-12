@@ -14,18 +14,18 @@ browseGenome(object, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{object}{ A list of \code{\linkS4class{RangedData}} instances,
+  \item{object}{ A list of \code{\link[IRanges:RangedData-class]{RangedData}} instances,
     e.g. a \code{\linkS4class{RangedDataList}} instance.}
   \item{browser}{ The name of the genome browser. }
-  \item{range}{ The \code{\linkS4class{RangesList}} to display in
+  \item{range}{ The \code{\link[IRanges:RangesList-class]{RangesList}} to display in
     the initial view. }
   \item{view}{ Whether to open a view. }
   \item{trackParams}{ Named list of parameters to pass to
-    \code{\link{layTrack}}. }
+    \code{\link{track<-}}. }
   \item{viewParams}{ Named list of parameters to pass to
     \code{\link{browserView}}. }
   \item{\dots}{ Arguments corresponding to slots in
-    \code{\linkS4class{RangesList}} that override those in \code{range}. }
+    \code{\link[IRanges:RangesList-class]{RangesList}} that override those in \code{range}. }
 }
 \value{
   Returns a \code{\linkS4class{BrowserSession}}.

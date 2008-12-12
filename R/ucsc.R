@@ -26,16 +26,16 @@ setMethod("initialize", "UCSCSession",
             .Object
           })
 
-setMethod("layTrack", c("UCSCSession", "RangedDataList"),
-          function(object, track, name = names(track), view,
-                   format = c("auto", "bed", "wig", "gff1"), ...) {
+setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
+          function(object, name = names(value), view = FALSE,
+                   format = c("auto", "bed", "wig", "gff1"), ..., value) {
             format <- match.arg(format)
-            if (length(track)) {
-              ## upload tracks in blocks, one for each genome
-              genomes <- lapply(track, genome)
+            if (length(value)) {
+              ## upload values in blocks, one for each genome
+              genomes <- lapply(value, genome)
               genomes[sapply(genomes, length) == 0] <- ""
-              names(track) <- name
-              tapply(track, unlist(genomes),
+              names(value) <- name
+              tapply(value, unlist(genomes),
                      function(tracks)
                      {
                        form <- ucscForm(tracks, format, ...)
@@ -44,7 +44,7 @@ setMethod("layTrack", c("UCSCSession", "RangedDataList"),
                      })
               args <- list()
               if (view) { # optionally view the track
-                args <- c(args, range(tail(track, 1)[[1]][1]))
+                args <- c(args, range(tail(value, 1)[[1]][1]))
                 ## update the view
                 do.call("browserView", c(object, args))
               }
@@ -186,7 +186,7 @@ setMethod("track", "UCSCSession",
           })
 
 ## grab sequences for features in 'track' at 'range'
-## setMethod("genomeSequence", "UCSCSession",
+## setMethod("getSeq", "UCSCSession",
 ##           function(object, range, table = "gold")
 ##           {
 ##             followup <- list(hgta_doGenomicDna = "get sequence",

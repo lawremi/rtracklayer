@@ -1,8 +1,7 @@
 import(RCurl, XML)
 
-importFrom("IRanges", XDataFrame, IRanges, RangedDataList)
+importFrom("IRanges", XDataFrame, IRanges, RangedDataList, score)
 importFrom("BSgenome", GenomicData, GenomicRanges)
-importFrom("Biostrings", score)
 
 importClassesFrom("IRanges", "RangedData", "RangedDataList")
 
@@ -22,9 +21,9 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "close", "export", "export.bed",
               "export.gff", "export.gff1", "export.gff2",
               "export.gff3", "export.ucsc", "export.wig",
-              "genomeSequence", "import", "import.bed", "import.gff",
+              "import", "import.bed", "import.gff",
               "import.gff1", "import.gff2", "import.gff3",
-              "import.ucsc", "import.wig", "laySequence", "layTrack",
+              "import.ucsc", "import.wig", "sequence<-", "track<-",
               "merge", "track", "trackNames", "trackNames<-", "ucscTable",
               "ucscTables", "ucscTableOutputs",
               "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",

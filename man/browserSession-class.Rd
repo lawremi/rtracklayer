@@ -28,23 +28,23 @@
       Returns the \code{\linkS4class{BrowserView}} that is currently
       active in the session.}
     \item{\code{\link{range}(object, ...)}}{
-      Gets the \code{\linkS4class{RangesList}}
+      Gets the \code{\link[IRanges:RangesList-class]{RangesList}}
       representing the range of the genome currently displayed by the
       browser (i.e. the range shown by the active view) or a default
       value (possibly \code{NULL}) if no views exist.
     }
-    \item{\code{\link{genomeSequence}(object, range =
+    \item{\code{\link{getSeq}(object, range =
         range(object), ...)}}{
       gets a genomic sequence of \code{range} from this session.}
-    \item{\code{\link{laySequence}(object, ...)}}{Loads a sequence into the
-      session.}
-    \item{\code{\link{layTrack}(object, track, name = deparse(substitute(track)),
-        view = TRUE, ...)}}{
+    \item{\code{\link[=sequence<-]{sequence}(object, ...) <- value}}{
+      Loads a sequence into the session.}
+    \item{\code{\link[=track<-]{track}(object, name =
+        deparse(substitute(track)), view = TRUE, ...) <- value}}{
       Loads one or more \code{track}s into the session and optionally open a
       \code{view} of the track.
     }
     \item{\code{\link{track}(object, ...)}}{
-      Gets a track from a session as a \code{\linkS4class{RangedData}}.
+      Gets a track from a session as a \code{\link[IRanges:RangedData-class]{RangedData}}.
     }
     \item{\code{\link{trackNames}(object, ...)}}{ Gets the names of the
       tracks stored in this session. }

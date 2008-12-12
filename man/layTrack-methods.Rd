@@ -1,22 +1,22 @@
-\name{layTrack-methods}
+\name{track<--methods}
 \docType{methods}
-\alias{layTrack}
-\alias{layTrack-methods}
-\alias{layTrack,BrowserSession,RangedData-method}
-\alias{layTrack,BrowserSession,RangedDataList-method}
-\alias{layTrack,UCSCSession,RangedDataList-method}
+\alias{track<-}
+\alias{track<--methods}
+\alias{track<-,BrowserSession,RangedData-method}
+\alias{track<-,BrowserSession,RangedDataList-method}
+\alias{track<-,UCSCSession,RangedDataList-method}
 \title{ Laying tracks }
 \description{
-  Methods for loading \code{\linkS4class{RangedData}} instances (tracks)
+  Methods for loading \code{\link[IRanges:RangedData-class]{RangedData}} instances (tracks)
   into genome browsers.
 }
 \usage{
-layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
+\S4method{track}{BrowserSession,RangedData}(object, name = deparse(substitute(track)), view = FALSE, ...) <- value
 }
 \arguments{
   \item{object}{A \code{\linkS4class{BrowserSession}} into which the
     track is loaded.}
-  \item{track}{The track(s) to load.}
+  \item{value}{The track(s) to load.}
   \item{name}{The name(s) of the track(s) being loaded.}
   \item{view}{Whether to create a view of the track after loading it.}
   \item{\dots}{Arguments to pass on to methods.}
@@ -29,15 +29,15 @@ layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
   
   \describe{
 
-    \item{object = "BrowserSession", track = "RangedData"}{ Load this
+    \item{object = "BrowserSession", value = "RangedData"}{ Load this
       track into the session. }
 
-    \item{object = "BrowserSession", track = "RangedDataList"}{ Load all tracks
+    \item{object = "BrowserSession", value = "RangedDataList"}{ Load all tracks
       into the session. }
 
-    \item{object = "UCSCSession", track = "RangedDataList"}{
-      \code{layTrack(object, track, name = deparse(substitute(track)),
-        view = FALSE, format = "gff")}:
+    \item{object = "UCSCSession", value = "RangedDataList"}{
+      \code{track(object, name = deparse(substitute(track)),
+        view = FALSE, format = "gff") <- value}:
       Load the tracks into the session using the specified
       \code{format}.
     }
@@ -48,7 +48,7 @@ layTrack(object, track, name = deparse(substitute(track)), view = FALSE, ...)
 \dontrun{
   session <- browserSession()
   track <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
-  layTrack(session, track, "My Track")
+  track(session, "My Track") <- track
 }
 }
 \keyword{methods}

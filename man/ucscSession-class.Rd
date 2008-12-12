@@ -42,12 +42,12 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
     \item{\code{\link{browserViews}}(object)}{ Gets the
       \code{\linkS4class{BrowserView}} instances for this session. }
     \item{\code{\link{range}}(object)}{ Gets the
-      \code{\linkS4class{RangesList}} last displayed in this session. }
-    \item{\code{\link{genomeSequence}(object, range, track = "Assembly")}}{
+      \code{\link[IRanges:RangesList-class]{RangesList}} last displayed in this session. }
+    \item{\code{\link[BSgenome]{getSeq}(object, range, track = "Assembly")}}{
       Gets the sequence in \code{range} and \code{track}.
     }
-    \item{\code{\link{layTrack}(object, track, name = names(track),
-        view = TRUE, format = "gff", ...)}}{
+    \item{\code{\link[=track<-]{track}(object, name = names(track),
+        view = TRUE, format = "gff", ...) <- value}}{
       Loads a track, stored under \code{name} and formatted as
       \code{format}. The arguments in \code{...} are passed on to
       \code{\link{export.ucsc}}, so they could be slots in a
@@ -56,7 +56,7 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
     }
     \item{\code{\link{track}(object, name, range = range(object),
         table = NULL)}}{
-      Retrieves a \code{\linkS4class{RangedData}} with features in
+      Retrieves a \code{\link[IRanges:RangedData-class]{RangedData}} with features in
       \code{range} from track named \code{name}. Some built-in tracks
       have multiple series, each stored in a separate database
       table. A specific table may be retrieved by passing its name in

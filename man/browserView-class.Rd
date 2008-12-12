@@ -25,7 +25,7 @@
       \code{\linkS4class{BrowserSession}} to which this view belongs. }
     \item{\code{\link{close}(object)}}{ Close this view. }
     \item{\code{\link{range}(object)}}{ Obtains the
-      \code{\linkS4class{RangesList}} displayed by this view.}
+      \code{\link[IRanges:RangesList-class]{RangesList}} displayed by this view.}
     \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks in the view. }
     \item{\code{\link{trackNames}(object) <- value}}{ Sets the visible

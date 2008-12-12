@@ -65,31 +65,46 @@ setMethod("show", "BrowserView", function(object)
             show(trackNames(object))
           })
 
-setGeneric("layTrack",
-           function(object, track, name = deparse(substitute(track)),
-                    view = FALSE, ...)
-           standardGeneric("layTrack"))
+setGeneric("track<-",
+           function(object, ..., value) standardGeneric("track<-"))
 # load a track into a browser
-setMethod("layTrack", c("BrowserSession", "RangedData"),
-          function(object, track, name, view, ...)
-          {
-            layTrack(object, RangedDataList(track), name, view, ...)
-          })
+setReplaceMethod("track", c("BrowserSession", "RangedData"),
+          function(object, name = deparse(substitute(track)), view = FALSE, ...,
+                   value)
+                 {
+                   track(object, name, view, ...) <- RangedDataList(value)
+                   object
+                 })
 # load several tracks into a browser
 # (this may be more efficient for some implementations)
-setMethod("layTrack", c("BrowserSession", "RangedDataList"),
-          function(object, track, name = names(track), view, ...)
-          {
-            for (i in seq_len(length(name) - 1))
-            #for (t in head(track, -1))
-              layTrack(object, track[[i]], name[i], FALSE, ...)
-            last <- tail(track, 1)
-            if (length(last))
-              object <- layTrack(object, last[[1]], tail(name, 1), view, ...)
-            object
+setReplaceMethod("track", c("BrowserSession", "RangedDataList"),
+                 function(object, name = names(track), view = FALSE, ..., value)
+                 {
+                   for (i in seq_len(length(name) - 1))
+                     track(object, name[i], FALSE, ...) <- value[[i]]
+                   last <- tail(value, 1)
+                   if (length(last))
+                     track(object, tail(name, 1), view, ...) <- last[[1]]
+                   object
+                 })
+
+setClassUnion("RangedDataORRangedDataList", c("RangedData", "RangedDataList"))
+
+setMethod("[[<-", c("BrowserSession", value="RangedDataORRangedDataList"),
+          function(x, i, j, ..., value) {
+            if (!missing(j))
+              warning("argument 'j' ignored")
+            track(x, i, ...) <- value
+            x
           })
 
 setGeneric("track", function(object, ...) standardGeneric("track"))
+
+setMethod("[[", "BrowserSession", function (x, i, j, ...) {
+  if (!missing(j))
+    warning("argument 'j' ignored")
+  track(x, i, ...)
+})
 
 # get genome range of active view (or default if no views)
 setMethod("range", "BrowserSession",
@@ -112,8 +127,6 @@ setGeneric("browseGenome",
 
 setMethod("browseGenome", "missing",
           function(object, ...) browseGenome(RangedDataList(), ...))
-          
-setClassUnion("RangedDataORRangedDataList", c("RangedData", "RangedDataList"))
 
 setMethod("browseGenome", "RangedDataORRangedDataList",
           function(object, browser = "UCSC",
@@ -123,12 +136,12 @@ setMethod("browseGenome", "RangedDataORRangedDataList",
             # initialize session of type identified by 'browser'
             session <- browserSession(browser, ...)
             # load 'object'
-            trackParams <- c(list(session, object), trackParams)
+            trackParams <- c(list(session), trackParams)
             pcall <- sys.call(sys.parent(1))
             name <- deparse(as.list(match.call(call=pcall))[[2]])
             if (is(object, "RangedData"))
               trackParams <- c(trackParams, name = name)
-            session <- do.call("layTrack", trackParams)
+            session <- do.call("track<-", c(trackParams, list(value = object)))
             # open view of 'range'
             if (view) {
               range <- merge(range(session), range)
@@ -168,10 +181,5 @@ setMethod("browserSession", "missing",
 setMethod("browserSession", "BrowserView", function(object) object@session)
 
 # load a sequence into the browser
-setGeneric("laySequence", function(object, sequence, name, ...)
-           standardGeneric("laySequence"))
-
-# retrieve a range of a genome sequence from a browser
-setGeneric("genomeSequence",
-           function(object, range = base::range(object), ...)
-           standardGeneric("genomeSequence"))
+setGeneric("sequence<-", function(object, name, ..., value)
+           standardGeneric("sequence<-"))

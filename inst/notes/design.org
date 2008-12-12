@@ -212,7 +212,7 @@ Both of these are possible, but could they be made easier?
 ** Other packages
 *** Biostrings
 **** XString
-Sequence data accessed via genomeSequence()
+Sequence data accessed via getSeq()
 **** IRanges/BStringViews
 Ranges occur in two places in rtracklayer:
   * genomeSegment (only a single range)

@@ -14,7 +14,7 @@ ucscTable(object, range, track, table)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{ The e.g. \code{\linkS4class{UCSCSession}} }
-  \item{range}{ The \code{\linkS4class{RangesList}} for which to
+  \item{range}{ The \code{\link[IRanges:RangesList-class]{RangesList}} for which to
     retrieve the data. }
   \item{track}{ The name of the track to which the table belongs. }
   \item{table}{ The name of the table. }
@@ -27,7 +27,7 @@ ucscTable(object, range, track, table)
 }
 \author{ Michael Lawrence }
 \seealso{ \code{\link{track}} for getting tracks,
-  \code{\link{genomeSequence}} for getting sequences. }
+  \code{\link{getSeq}} for getting sequences. }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ interface }

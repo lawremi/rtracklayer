@@ -1,7 +1,7 @@
-\name{laySequence-methods}
+\name{sequence<--methods}
 \docType{methods}
-\alias{laySequence}
-\alias{laySequence-methods}
+\alias{sequence<-}
+\alias{sequence<--methods}
 \title{ Load a sequence }
 \description{
   Methods for loading sequences.
@@ -9,6 +9,6 @@
 \section{Methods}{
 \describe{
   No methods are defined by \pkg{rtracklayer} for the
-  \code{laySequence(object, sequence, ...)} generic.
+  \code{sequence(object, ...) <- value} generic.
 }}
 \keyword{methods}

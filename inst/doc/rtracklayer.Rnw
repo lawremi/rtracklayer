@@ -277,14 +277,14 @@ genomeBrowsers()
 \subsubsection{Laying the track}
 
 Before a track can be viewed on the genome, it must be
-loaded into the session using the \texttt{layTrack} function, as
+loaded into the session using the \texttt{track<-} function, as
 demonstrated below:
 <<layTrack, eval=FALSE>>=
-session <- layTrack(session, targetTrack, name = "targets")
+track(session, "targets") <- targetTrack
 @ 
 The \textit{name} argument should be a character vector that will
 help identify the track within \texttt{session}. Note that the
-invocation of \texttt{layTrack} above does not specify an upload
+invocation of \texttt{track<-} above does not specify an upload
 format. Thus, the default, ``auto'', is used. Since the track does not
 contain any data values, the track is uploaded as BED. To make this
 explicit, we could pass ``bed'' as the \textit{format} parameter.
@@ -295,18 +295,19 @@ explicit, we could pass ``bed'' as the \textit{format} parameter.
 \item Lay a track with the first 100 features of \texttt{targetTrack}
 \end{enumerate}
 
+Here we use the short-cut \texttt{[[} syntax for storing the track.
 <<sol-4, eval = FALSE, echo=FALSE, results=hide>>=
-session <- layTrack(session, targetTrack[1:100,], name = "target100")
+session[["target100"]] <- targetTrack[1:100,]
 @ 
 
 \subsubsection{Viewing the track}
 
-By default, the \texttt{layTrack} function creates a
+By default, the \texttt{track<-} function creates a
 \textit{BrowserView}, an object that represents a view of a particular
 set of tracks along a particular region of the genome. For
 \textbf{UCSC}, this roughly corresponds to one tab or window in the
 web browser. To override the automatic creation of a view, pass
-\texttt{view = FALSE} to the \texttt{layTrack} function.
+\texttt{view = FALSE} to the \texttt{track<-} function.
 
 The default view of the track attempts to show the entire track. The
 view region is determined by a call to \texttt{range} on the
@@ -533,10 +534,11 @@ information, which requires special consideration for visualization.
 \subsubsection{Laying a WIG track}
 
 To view the SNP locations as a track in a genome browser, we first
-need to upload the track to a fresh session.
+need to upload the track to a fresh session. In the code below, we use
+the \texttt{[[<-} alias of \texttt{track<-}.
 <<layTrack-snp, eval = FALSE>>=
 session <- browserSession()
-session <- layTrack(session, cpneTrack, name = "cpne")
+session[["cpne"]] <- cpneTrack
 @
 %
 Note that because \texttt{cpneTrack} contains data values and its
@@ -545,7 +547,7 @@ format. One limitation of the WIG format is that it is not possible to
 encode strand information. Thus, each strand needs to have its own
 track, and \textbf{rtracklayer} does this automatically, unless only
 one strand is represented in the track (as in this case). One could
-pass ``bed'' to the \textit{format} parameter of \texttt{layTrack} to
+pass ``bed'' to the \textit{format} parameter of \texttt{track<-} to
 prevent the split, but tracks uploaded as BED are much more limited
 compared to WIG tracks in terms of visualization options.
 
@@ -578,10 +580,8 @@ specified by \textit{yLineMark}. We set it arbitrarily to the 25\%
 quantile.
 %
 <<layTrack-snp2, eval = FALSE>>=
-session <- layTrack(session, cpneTrack, name = "cpne2", 
-                    autoScale = FALSE,
-                    yLineOnOff = TRUE, 
-                    yLineMark = quantile(score(cpneTrack), .25))
+track(session, "cpne2", autoScale = FALSE, yLineOnOff = TRUE, 
+      yLineMark = quantile(score(cpneTrack), .25)) <- cpneTrack
 view <- browserView(session, range(cpneTrack[1:5,]), full = "cpne2")
 @
 %
