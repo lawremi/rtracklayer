@@ -46,7 +46,7 @@ setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
               if (view) { # optionally view the track
                 args <- c(args, range(tail(value, 1)[[1]][1]))
                 ## update the view
-                do.call("browserView", c(object, args))
+                do.call(browserView, c(object, args))
               }
             }
             object
@@ -647,7 +647,7 @@ setMethod("export.ucsc", "UCSCData",
               }
             }
             writeLines(as(object@trackLine, "character"), con)
-            do.call("export", c(list(as(object, "RangedData"), con, subformat),
+            do.call(export, c(list(as(object, "RangedData"), con, subformat),
                                 args[!lineArgs]))
           })
 
@@ -686,7 +686,7 @@ setMethod("import.ucsc", "ANY",
             tsets <- lapply(seq_along(trackLines), makeTrackSet)
             if (drop && length(tsets) == 1)
               tsets[[1]]
-            else do.call("RangedDataList", tsets)
+            else do.call(RangedDataList, tsets)
           })
 
 ############ INTERNAL API ############

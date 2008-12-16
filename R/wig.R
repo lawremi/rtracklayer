@@ -133,7 +133,7 @@ setMethod("import.wigLines", "ANY",
                             chrom = formatVals[["chrom"]])
               }
               resultList <- lapply(seq_along(formatInds), parseData)
-              gd <- do.call("rbind", resultList)
+              gd <- do.call(rbind, resultList)
               genome(gd) <- genome
               gd
             } else import(text = lines, format = "bed", wig = TRUE)

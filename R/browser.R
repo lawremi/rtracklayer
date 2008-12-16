@@ -141,12 +141,12 @@ setMethod("browseGenome", "RangedDataORRangedDataList",
             name <- deparse(as.list(match.call(call=pcall))[[2]])
             if (is(object, "RangedData"))
               trackParams <- c(trackParams, name = name)
-            session <- do.call("track<-", c(trackParams, list(value = object)))
+            session <- do.call(track<-, c(trackParams, list(value = object)))
             # open view of 'range'
             if (view) {
               range <- merge(range(session), range)
               viewParams <- c(list(session, range), viewParams)
-              do.call("browserView", viewParams)
+              do.call(browserView, viewParams)
             }
             session
           })
