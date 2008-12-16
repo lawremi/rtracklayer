@@ -9,7 +9,7 @@ importMethodsFrom("BSgenome",  strand, chrom, score, genome, "genome<-",
                   "score<-")
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   range, split, lapply, ranges, values, unlist,
-                  isDisjoint, width, space, as.data.frame)
+                  isDisjoint, width, space, as.data.frame, rbind)
 
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",

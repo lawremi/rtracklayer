@@ -77,7 +77,7 @@ setGeneric("ucscTables",
            standardGeneric("ucscTables"))
 
 setMethod("ucscTables", "UCSCSession",
-          function(object, query, range = range(object),
+          function(object, query, range = base::range(object),
                    trackOnly = FALSE)
           {
             tabQuery <- new("UCSCTableQuery", track = query, range = range)
@@ -121,6 +121,7 @@ setMethod("ucscTableSchema", "UCSCSession",
           })
 
 # export data from UCSC (internal utility)
+### FIXME: Needs to check for going over limit of data values (100000)
 ucscExport <- function(object, range, track, table, output)
 {
     range <- merge(range(object), range)
@@ -425,14 +426,15 @@ setAs("TrackLine", "character",
       function(from)
       {
         checkString <- function(str, len) {
-          if (nchar(gsub("[a-zA-Z0-9_ ]", "", str)))
-            warning("The string '", str,
-                    "' contains non-standard characters.")
-          if (nchar(str) > len) {
-            str <- substring(str, 1, len)
-            warning("The string '", str, "' must be less than ", len,
-                    " characters; it has been truncated.")
-          }
+          ## These are more annoying than useful
+          ## if (nchar(gsub("[a-zA-Z0-9_ ]", "", str)))
+          ##   warning("The string '", str,
+          ##           "' contains non-standard characters.")
+          ## if (nchar(str) > len) {
+          ##   str <- substring(str, 1, len)
+          ##   warning("The string '", str, "' must be less than ", len,
+          ##           " characters; it has been truncated.")
+          ## }
           if (regexpr(" ", str)[1] != -1)
             str <- paste("\"", str, "\"", sep="")
           str
@@ -820,8 +822,8 @@ setMethod("ucscForm", "UCSCTableQuery",
           function(object) {
             ## range (ie genome) and track name are required
             range <- object@range
-            form <- list(ucscForm(range), hgta_group = "allTracks",
-                         hgta_track = object@track)
+            form <- c(ucscForm(range),
+                      list(hgta_group = "allTracks", hgta_track = object@track))
             if (length(chrom(range)))
               regionType <- "range"
             else regionType <- "genome"
