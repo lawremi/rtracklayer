@@ -4,7 +4,7 @@ Version: 1.3.4
 Author: Michael Lawrence
 Depends: R (>= 2.7.0), methods, RCurl
 Imports: XML (>= 1.98-0), IRanges (>= 1.1.8), Biostrings (>= 2.11.14), BSgenome (>= 1.11.5)
-Suggests: humanStemCell, microRNA, genefilter, limma, org.Hs.eg.db
+Suggests: humanStemCell, microRNA (>= 1.1.1), genefilter, limma, org.Hs.eg.db
 Description: Extensible framework for interacting with multiple genome 
   browsers (currently UCSC built-in) and manipulating 
   annotation tracks in various formats (currently GFF, BED and WIG built-in). 
