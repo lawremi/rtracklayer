@@ -63,104 +63,206 @@ setMethod("trackNames", "UCSCSession",
 setMethod("range", "UCSCSession",
           function(x, ..., na.rm) range(ucscCart(x)))
 
-## just for factoring together the table browser form logic
-### TODO: This should be the primary component of the API
-### Should resolve track name to track ID at construction time and cache it
+setReplaceMethod("range", c("UCSCSession", "RangesList"),
+                 function(x, value) {
+                   ucscGet(x, "cart", ucscForm(value))
+                 })
+
+## just the genome, for convenience
+setMethod("genome", "UCSCSession", function(x) genome(range(x)))
+setReplaceMethod("genome", "UCSCSession",
+                 function(x, value) {
+                   ucscGet(x, "cart", list(db = value))
+                   x
+                 })
+
+## context for querying UCSC tables
 setClass("UCSCTableQuery",
-         representation(track = "character", table = "characterORNULL",
+         representation(session = "UCSCSession",
+                        track = "characterORNULL",
+                        table = "characterORNULL",
                         range = "RangesList",
                         outputType = "characterORNULL"))
 
-## returns a character vector of table names for a given track name + range
-setGeneric("ucscTables",
-           function(object, query, ...)
-           standardGeneric("ucscTables"))
-
-setMethod("ucscTables", "UCSCSession",
-          function(object, query, range = base::range(object),
-                   trackOnly = FALSE)
-          {
-            tabQuery <- new("UCSCTableQuery", track = query, range = range)
-            doc <- ucscGet(object, "tables", ucscForm(tabQuery))
-            table_path <- "//select[@name = 'hgta_table']/option/@value"
-            tables <- unlist(getNodeSet(doc, table_path))
-            if (trackOnly) {
-              isTrack <- function(table) {
-                outputs <- ucscTableOutputs(object, query, table, range)
-                any(c("wigData", "wigBed", "bed") %in% outputs)
-              }
-              tables <- tables[sapply(tables, isTrack)]
-            }
-            tables
+setMethod("show", "UCSCTableQuery",
+          function(object) {
+            cat("Get ")
+            if (!is.null(tableName(object)))
+              cat("table '", tableName, "' from ", sep = "")
+            cat("track '", names(trackName(object)), "' within ", sep = "")
+            range <- range(object)
+            cat(genome(range), ":", as.character(chrom(range)), ":",
+                start(range), "-", end(range), "\n", sep="")
           })
 
-setGeneric("ucscTableOutputs",
-           function(object, query, ...)
-           standardGeneric("ucscTableOutputs"))
+setMethod("browserSession", "UCSCTableQuery", function(object) {
+  object@session
+})
 
-## returns a character vector of available output types for the table
-setMethod("ucscTableOutputs", "UCSCSession",
-          function(object, query, table, range = range(object)) {
-            query <- new("UCSCTableQuery", track = query, table = table,
-                         range = range)
-            doc <- ucscGet(object, "tables", ucscForm(query))
-            output_path <- "//select[@name = 'hgta_outputType']/option/@value"
-            unlist(getNodeSet(doc, output_path))
-          })
+setGeneric("browserSession<-",
+           function(object, ..., value) standardGeneric("browserSession<-"))
+setReplaceMethod("browserSession", c("UCSCTableQuery", "UCSCSession"),
+                 function(object, value) {
+                   object@session <- value
+                   object
+                 })
 
-setGeneric("ucscTableSchema",
-           function(object, query, ...) standardGeneric("ucscTableSchema"))
+setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
+setReplaceMethod("range", c("UCSCTableQuery", "RangesList"),
+                 function(x, value) {
+                   x@range <- merge(browserSession(x), value)
+                   x
+                 })
 
-setMethod("ucscTableSchema", "UCSCSession",
-          function(object, query, table, range = range(object))
-          {
-            query <- new("UCSCTableQuery", track = query, range = range)
-            form <- c(ucscForm(query), hgta_doSchema = "describe table schema")
-            doc <- ucscGet(object, "tables", form)
-### TODO: get the schema as a data.frame for the given track and table 
-          })
+setGeneric("trackName", function(x, ...) standardGeneric("trackName"))
+setMethod("trackName", "UCSCTableQuery", function(x) x@track)
 
-# export data from UCSC (internal utility)
-### FIXME: Needs to check for going over limit of data values (100000)
-ucscExport <- function(object, range, track, table, output)
-{
-    range <- merge(range(object), range)
-    followup <- NULL
-    if (output == "bed") { ## some formats have extra pages
-      followup <- list(hgta_doGetBed = "get BED",
-                       hgta_printCustomTrackHeaders = "on",
-                       boolshad.hgta_printCustomTrackHeaders = "1")
-    }
-    form <- ucscForm(new("UCSCTableQuery", table = table, track = track,
-                         outputType = output, range = range))
-    output <- ucscGet(object, "tables", form, .parse = !is.null(followup))
-    if (!is.null(followup)) {
-      node <- getNodeSet(output, "//input[@name = 'hgsid']/@value")[[1]]
-      hgsid <- node ##xmlValue(node)
-      form <- c(followup, list(hgsid = hgsid))
-      output <- ucscGet(object, "tables", form, .parse = FALSE)
-    }
-    output
-}
+setGeneric("trackName<-",
+           function(x, ..., value) standardGeneric("trackName<-"))
+setReplaceMethod("trackName", "UCSCTableQuery", function(x, value)
+                 {
+                   x@track <- normArgTrack(browserSession(x), value)
+                   x
+                 })
+
+setGeneric("tableName", function(x, ...) standardGeneric("tableName"))
+setMethod("tableName", "UCSCTableQuery", function(x) x@table)
+
+setGeneric("tableName<-", function(x, ..., value)
+           standardGeneric("tableName<-"))
+setReplaceMethod("tableName", "UCSCTableQuery", function(x, value)
+                 {
+                   if (!is.null(value) && !isSingleString(value))
+                     stop("'value' must be a single string")
+                   x@table <- value
+                   x
+                 })
+
+## not exported
+setGeneric("outputType", function(x, ...) standardGeneric("outputType"))
+setMethod("outputType", "UCSCTableQuery", function(x) x@outputType)
+setGeneric("outputType<-",
+           function(x, ..., value) standardGeneric("outputType<-"))
+setReplaceMethod("outputType", "UCSCTableQuery",
+                 function(x, value) {
+                   x@outputType <- value
+                   x
+                 })
 
 normArgTrack <- function(object, name) {
+  if (!isSingleString(name))
+    stop("'track' must be a single string")
   trackids <- trackNames(object)
   if (!(name %in% trackids)) {
     mapped_name <- trackids[name]
     if (is.na(mapped_name))
       stop("Unknown track: ", name)
     name <- mapped_name
-  }
+  } else names(name) <- name
   name
 }
 
-## download a trackSet by name
-setMethod("track", "UCSCSession",
-          function(object, name, range = base::range(object),
-                   table = NULL)
+setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
+setMethod("ucscTableQuery", "UCSCSession",
+          function(x, track, range = GenomicRanges(), table = NULL)
           {
-            name <- normArgTrack(object, name)
-            tables <- ucscTables(object, name, range, FALSE)
+            if (!is.null(table) && !isSingleString(table))
+              stop("'table' must be a single string")
+            if (!is(range, "RangesList"))
+              stop("'range' must be a 'RangesList'")
+            range <- mergeRange(range(x), range)
+            track <- normArgTrack(x, track)
+            new("UCSCTableQuery", session = x, track = track, range = range,
+                table = table)
+          })
+
+ucscTableGet <- function(query, .parse = TRUE, ...)
+  ucscGet(browserSession(query), "tables", c(ucscForm(query), ...),
+          .parse = .parse)
+
+## returns a character vector of table names for a given track name + range
+setGeneric("tableNames", function(object, ...)
+           standardGeneric("tableNames"))
+
+setMethod("tableNames", "UCSCTableQuery",
+          function(object, trackOnly = FALSE)
+          {
+            doc <- ucscTableGet(object)
+            table_path <- "//select[@name = 'hgta_table']/option/@value"
+            tables <- unlist(getNodeSet(doc, table_path))
+            outputType <- outputType(object)
+            if (trackOnly) {
+              trackOutputs <- c("wigData", "wigBed", "bed")
+              if (!is.null(outputType))
+                outputType <- intersect(trackOutputs, outputType)
+              else outputType <- trackOutputs
+            }
+            if (!is.null(outputType)) {
+              checkOutput <- function(table) {
+                tableName(object) <- table
+                outputs <- ucscTableOutputs(object)
+                any(outputType %in% outputs)
+              }
+              tables <- tables[sapply(tables, checkOutput)]
+            }
+            unname(tables)
+          })
+
+setGeneric("ucscTableOutputs",
+           function(object, ...)
+           standardGeneric("ucscTableOutputs"))
+
+## returns a character vector of available output types for the table
+## not exported
+setMethod("ucscTableOutputs", "UCSCTableQuery",
+          function(object) {
+            doc <- ucscTableGet(object)
+            output_path <- "//select[@name = 'hgta_outputType']/option/@value"
+            unlist(getNodeSet(doc, output_path))
+          })
+
+setGeneric("ucscTableSchema",
+           function(object, ...) standardGeneric("ucscTableSchema"))
+
+setMethod("ucscTableSchema", "UCSCTableQuery",
+          function(object)
+          {
+            doc <- ucscTableGet(object, hgta_doSchema = "describe table schema")
+### TODO: get the schema as a data.frame for the given track and table 
+          })
+
+# export data from UCSC (internal utility)
+### FIXME: Needs to check for going over limit of data values (100000)
+ucscExport <- function(object)
+{
+  followup <- NULL
+  if (outputType(object) == "bed") { ## some formats have extra pages
+    followup <- list(hgta_doGetBed = "get BED",
+                     hgta_printCustomTrackHeaders = "on",
+                     boolshad.hgta_printCustomTrackHeaders = "1")
+  }
+  output <- ucscTableGet(object, !is.null(followup),
+                         hgta_doTopSubmit = "get output")
+  if (!is.null(followup)) {
+    node <- getNodeSet(output, "//input[@name = 'hgsid']/@value")[[1]]
+    hgsid <- node ##xmlValue(node)
+    form <- c(followup, list(hgsid = hgsid))
+    output <- ucscGet(browserSession(object), "tables", form, .parse = FALSE)
+  }
+  output
+}
+
+setMethod("track", "UCSCSession",
+          function(object, name, range = base::range(object), table = NULL) {
+            track(ucscTableQuery(object, name, range, table))
+          })
+
+## download a trackSet by name
+setMethod("track", "UCSCTableQuery",
+          function(object)
+          {
+            tables <- tableNames(object)
+            table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
               stop("Unknown table: '", table, "'. Valid table names: ", tables)
             formats <- c("wigData", "wigBed", "bed")
@@ -168,7 +270,7 @@ setMethod("track", "UCSCSession",
             if (!is.null(table))
               tables <- table
             for (table in tables) {
-              outputs <- ucscTableOutputs(object, name, table, range)
+              outputs <- ucscTableOutputs(object)
               if (any(formats %in% outputs))
                 break
             }
@@ -182,7 +284,9 @@ setMethod("track", "UCSCSession",
               if ("wigBed" %in% outputs)
                 output <- "wigBed"
             }
-            output <- ucscExport(object, range, name, table, output)
+            outputType(object) <- output
+            tableName(object) <- table
+            output <- ucscExport(object)
             import(text = output, format = format)
           })
 
@@ -204,13 +308,15 @@ setMethod("track", "UCSCSession",
 
 ## get a data.frame from a UCSC table
 ## think about taking specific columns
-setGeneric("ucscTable",
-           function(object, range, track, table) standardGeneric("ucscTable"))
-setMethod("ucscTable", "UCSCSession",
-          function(object, range, track, table)
+setGeneric("getTable",
+           function(object, ...) standardGeneric("getTable"))
+setMethod("getTable", "UCSCTableQuery",
+          function(object)
           {
-            track <- normArgTrack(object, track)
-            output <- ucscExport(object, range, track, table, "primaryTable")
+            if (!("primaryTable" %in% ucscTableOutputs(object)))
+              stop("tabular output format not available")
+            outputType(object) <- "primaryTable"
+            output <- ucscExport(object)
             f <- file()
             writeLines(output, f)
             header <- readChar(f, 1) ## strip off the '#' header prefix
@@ -386,7 +492,7 @@ setReplaceMethod("trackNames", "UCSCView",
 
 setMethod("range", "UCSCView",
           function(x, ..., na.rm) range(ucscCart(x)))
-setReplaceMethod("range", "UCSCView",
+setReplaceMethod("range", c("UCSCView", "RangesList"),
                  function(x, value)
                  {
                    # need to check for partially specified range
@@ -723,7 +829,7 @@ setMethod("range", "ucscCart",
             pos <- x["position"]
             posSplit <- strsplit(pos, ":")[[1]]
             range <- as.numeric(strsplit(posSplit[2], "-")[[1]])
-            GenomicRanges(range[1], range[2], posSplit[1], x["db"])
+            GenomicRanges(range[1], range[2], posSplit[1], x[["db"]])
           })
             
 #setMethod("ucscTrackModes", "ucscCart",
@@ -782,12 +888,17 @@ setMethod("ucscForm", "RangesList",
             form <- list()
             if (length(genome(object)))
               form <- c(form, db = genome(object))
-            if (length(chrom(object))) {
+            chrom <- chrom(object)
+            if (!is.null(chrom)) {
+              if (!length(chrom))
+                chrom <- levels(chrom)[1]
               scipen <- getOption("scipen")
               options(scipen = 100) # prevent use of scientific notation
               on.exit(options(scipen = scipen))
-              position <- paste(chrom(object), ":", start(object), "-",
-                                end(object), sep = "")
+              position <- chrom
+              if (length(start(object)))
+                position <- paste(position, ":", start(object), "-",
+                                  end(object), sep = "")
               form <- c(form, position = position)
             }
             form
@@ -831,8 +942,7 @@ setMethod("ucscForm", "UCSCTableQuery",
             if (!is.null(object@table))
               form <- c(form, hgta_table = object@table)
             if (!is.null(object@outputType)) {
-              form <- c(form, hgta_outputType = object@outputType,
-                        hgta_doTopSubmit = "get output")
+              form <- c(form, hgta_outputType = object@outputType)
             }
             form
           })
