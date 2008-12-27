@@ -98,12 +98,22 @@ setMethod("[[<-", c("BrowserSession", value="RangedDataORRangedDataList"),
             x
           })
 
+setMethod("$<-", c("BrowserSession", value="RangedDataORRangedDataList"),
+          function(x, name, value) {
+            x[[name]] <- value
+            x
+          })
+
 setGeneric("track", function(object, ...) standardGeneric("track"))
 
 setMethod("[[", "BrowserSession", function (x, i, j, ...) {
   if (!missing(j))
     warning("argument 'j' ignored")
   track(x, i, ...)
+})
+
+setMethod("$", "BrowserSession", function (x, name) {
+  x[[name]]
 })
 
 # get genome range of active view (or default if no views)
@@ -144,7 +154,7 @@ setMethod("browseGenome", "RangedDataORRangedDataList",
             session <- do.call(`track<-`, c(trackParams, list(value = object)))
             # open view of 'range'
             if (view) {
-              range <- merge(range(session), range)
+              range <- mergeRange(range(session), range)
               viewParams <- c(list(session, range), viewParams)
               do.call(browserView, viewParams)
             }
