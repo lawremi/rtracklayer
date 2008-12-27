@@ -127,13 +127,11 @@ setMethod("import.bed", "ANY",
 setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
 
 setMethod("blocks", "RangedData",
-          function(x, sizes = "blockSizes", starts = "blockStarts")
+          function(x)
           {
-            if (!isSingleString(sizes) || is.null(x[[sizes]]))
-              stop("'sizes' must be a single column name in 'x'")
-            if (!isSingleString(starts) || is.null(x[[starts]]))
-              stop("'starts' must be a single column name in 'x'")
-            starts <- unlist(strsplit(as.character(x[[starts]]), ","))
-            sizes <- unlist(strsplit(as.character(x[[sizes]]), ","))
-            IRanges(x[[starts]], width = x[[sizes]])
+            if (is.null(x$blockStarts) || is.null(x$blockSizes))
+              stop("'x' must have 'blockStarts' and 'blockSizes' columns")
+            starts <- unlist(strsplit(as.character(x$blockStarts), ","))
+            sizes <- unlist(strsplit(as.character(x$blockSizes), ","))
+            split(IRanges(starts, width = sizes), x$name)
           })
