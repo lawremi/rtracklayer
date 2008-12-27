@@ -1,31 +1,16 @@
 ### some utilities for working with RangesList in rtracklayer
 
 # replace fields in 'x' with those in 'y', if given
-setGeneric("merge", function(x, y, ...) standardGeneric("merge"))
-setMethod("merge", c("RangesList", "RangesList"),
-          function(x, y)
-          {
-            if (length(genome(y)))
-              genome(x) <- genome(y)
-            if (length(names(y)))
-              names(x)[1] <- names(y)[1]
-            x[[1]] <- y[[1]]
-            x
-          })
-
-setMethod("*", "RangesList",
-          function(e1, e2) {
-            r <- e1[[1]]
-            if (e2 < 0)
-              e2 <- abs(1/e2)
-            range <- c(start(r), end(r))
-            mid <- floor(mean(range))
-            side <- (diff(range)+1)/e2/2
-            start(r) <- mid - side
-            end(r) <- mid + side
-            e1[[1]] <- r
-            e1
-          })
+mergeRange <- function(x, y)
+{
+  if (length(genome(y)))
+    genome(x) <- genome(y)
+  if (length(y))
+    x[[1]] <- y[[1]]
+  if (length(names(y)))
+    names(x)[1] <- names(y)[1]
+  x
+}
 
 ### Is this used? With Ranges, can call range(c(...))
 ## take the union of the segments (including gaps between segments)
