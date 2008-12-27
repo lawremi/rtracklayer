@@ -2,6 +2,13 @@
 \docType{class}
 \alias{UCSCSession-class}
 \alias{initialize,UCSCSession-method}
+\alias{track,UCSCSession-method}
+\alias{range<-}
+\alias{range<-,UCSCSession,RangesList-method}
+\alias{genome,UCSCSession-method}
+\alias{genome<-,UCSCSession-method}
+\alias{range,UCSCSession-method}
+\alias{range,ucscCart-method}
 
 \title{Class "UCSCSession"}
 \description{An implementation of \code{\linkS4class{BrowserSession}}
@@ -41,8 +48,18 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       by the \code{track} parameter. }
     \item{\code{\link{browserViews}}(object)}{ Gets the
       \code{\linkS4class{BrowserView}} instances for this session. }
-    \item{\code{\link{range}}(object)}{ Gets the
-      \code{\link[IRanges:RangesList-class]{RangesList}} last displayed in this session. }
+    \item{\code{\link{range}}(x)}{ Gets the
+      \code{\link[BSgenome:RangesList-methods]{RangesList}} last
+      displayed in this session. }
+    \item{\code{\link[BSgenome:genome]{genome}(x)}}{Gets the genome
+      identifier of the session, i.e. \code{genome(range(x))}.}
+    \item{\code{range(x) <- value}}{ Sets \code{value}, a
+      \code{RangesList}, as the range of session \code{x}. Note that
+      this setting only lasts until a view is created or
+      manipulated. This mechanism is useful, for example, when treating the UCSC
+      browser as a database, rather than a genome viewer.}
+    \item{\code{\link[BSgenome:genome<-]{genome}(x) <- value}}{Sets the
+      genome identifier on the range of session \code{x}.}
     \item{\code{\link[BSgenome]{getSeq}(object, range, track = "Assembly")}}{
       Gets the sequence in \code{range} and \code{track}.
     }
@@ -56,18 +73,18 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
     }
     \item{\code{\link{track}(object, name, range = range(object),
         table = NULL)}}{
-      Retrieves a \code{\link[IRanges:RangedData-class]{RangedData}} with features in
+      Retrieves a \code{\link[IRanges:RangedData-class]{RangedData}}
+      with features in 
       \code{range} from track named \code{name}. Some built-in tracks
       have multiple series, each stored in a separate database
       table. A specific table may be retrieved by passing its name in
-      the \code{table} parameter.
+      the \code{table} parameter. See \code{\link{tableNames}} for a way
+      to list the available tables.
     }
     \item{\code{\link{trackNames}}(object)}{ Gets the
       names of the tracks stored in the session. }
     \item{\code{\link{ucscTrackModes}}(object)}{ Gets the
       default view modes for the tracks in the session. }
-    \item{\code{\link{ucscTable}}(object)}{ Gets the database \code{table}
-      in \code{range} from \code{track} as a \code{data.frame}. }
   }
 }
 \author{ Michael Lawrence }

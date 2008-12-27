@@ -17,22 +17,24 @@ exportClasses("BrowserSession", "BrowserView",
               "UCSCTrackModes")
 
 exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
-              "browserSession", "browserView", "browserViews",
+              "browserSession", "browserSession<-",
+              "browserView", "browserViews",
               "close", "export", "export.bed",
               "export.gff", "export.gff1", "export.gff2",
               "export.gff3", "export.ucsc", "export.wig",
               "import", "import.bed", "import.gff",
               "import.gff1", "import.gff2", "import.gff3",
               "import.ucsc", "import.wig", "sequence<-", "track<-",
-              "merge", "track", "trackNames", "trackNames<-", "ucscTable",
-              "ucscTables", "ucscTableOutputs",
+              "track", "trackNames", "trackNames<-", "getTable",
+              "tableNames", "trackName", "trackName<-",
+              "tableName", "tableName<-",
               "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",
-              "show", "[", "*",
+              "show", "[", "ucscTableQuery",
               ## from IRanges
               "start", "end", "genome", "strand", "start<-",
-              "end<-", "genome<-", "chrom", "range", "score", "score<-",
-              "as.data.frame")
+              "end<-", "genome<-", "chrom", "range", "range<-",
+              "score", "score<-", "as.data.frame")
 
 export("genomeBrowsers", "start", "end", "genome", "strand", "start<-",
        "end<-", "genome<-", "chrom", "score", "score<-",
-       "GenomicRanges", "RangedDataList")
+       "GenomicRanges", "RangedDataList", "as.data.frame")

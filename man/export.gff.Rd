@@ -10,7 +10,7 @@
 \alias{export.bed}
 \alias{export.bed,RangedData-method}
 \alias{export.wig}
-\alias{export.wig,RangedData-method}
+\alias{export.wig,ANY-method}
 \alias{export.ucsc}
 \alias{export.ucsc,RangedData-method}
 \alias{export.ucsc,RangedDataList-method}
@@ -37,7 +37,7 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
     \code{\link[IRanges:RangedData-class]{RangedData}}. If a
     \code{\linkS4class{UCSCData}}, the track line information is
     output. In the case of \code{export.ucsc}, a
-    \code{\linkS4class{RangedDataList}} 
+    \code{\link[IRanges:RangedDataList-class]{RangedDataList}} 
     object with possibly multiple tracks is supported.}
   \item{con}{ The connection to which the object is exported. }
   \item{version}{ The \acronym{GFF} version, either "1", "2" or "3"

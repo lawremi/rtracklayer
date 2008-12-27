@@ -5,7 +5,7 @@
 
 \title{Class "BrowserView"}
 \description{ An object representing a genome browser view of a particular
-  \code{\linkS4class{RangesList}} of a genome. }
+  segment of a genome. }
 \section{Objects from the Class}{
   A virtual Class: No objects may be created from it directly. See
   \code{\link{browserView}} for obtaining
@@ -25,7 +25,7 @@
       \code{\linkS4class{BrowserSession}} to which this view belongs. }
     \item{\code{\link{close}(object)}}{ Close this view. }
     \item{\code{\link{range}(object)}}{ Obtains the
-      \code{\link[IRanges:RangesList-class]{RangesList}} displayed by this view.}
+      \code{\link[BSgenome:RangesList-methods]{RangesList}} displayed by this view.}
     \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks in the view. }
     \item{\code{\link{trackNames}(object) <- value}}{ Sets the visible
