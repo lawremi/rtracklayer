@@ -69,7 +69,7 @@ setGeneric("track<-",
            function(object, ..., value) standardGeneric("track<-"))
 # load a track into a browser
 setReplaceMethod("track", c("BrowserSession", "RangedData"),
-          function(object, name = deparse(substitute(track)), view = FALSE, ...,
+          function(object, name = deparse(substitute(value)), view = FALSE, ...,
                    value)
                  {
                    track(object, name, view, ...) <- RangedDataList(value)

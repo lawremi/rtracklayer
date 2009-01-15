@@ -664,6 +664,18 @@ setMethod("show", "UCSCData",
             cat("trackLine:", as(object@trackLine, "character"), "\n")
           })
 
+ucscNormSeqNames <- function(nms) {
+  nms <- gsub("^([0-9A-Z]*)$", "chr\\1", nms)
+  if (length(grep("^chr|^scaffold", nms)) != length(nms))
+    stop("UCSC requires all sequence names to begin with 'chr' or 'scaffold'")
+  nms
+}
+
+setAs("RangedData", "UCSCData", function(from) {
+  names(from) <- ucscNormSeqNames(names(from))
+  new("UCSCData", from)
+})
+
 # the 'ucsc' format is a meta format with a track line followed by
 # tracks formatted as 'wig', 'bed', 'gff', 'gtf', or 'psl'.
 # currently, only gff and wig are supported
@@ -897,8 +909,8 @@ setMethod("ucscForm", "RangesList",
               on.exit(options(scipen = scipen))
               position <- chrom
               if (length(start(object)))
-                position <- paste(position, ":", start(object), "-",
-                                  end(object), sep = "")
+                position <- paste(ucscNormSeqNames(chrom), ":", start(object),
+                                  "-", end(object), sep = "")
               form <- c(form, position = position)
             }
             form
