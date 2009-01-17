@@ -1,8 +1,7 @@
-- Make '[<-' for layTrack and '[' for track
 - Add presentation options management 
-- Rework table browser API, add intersection functionality
 - Attach to existing saved sessions
 - Represent connection of particular format with formal class in I/O framework
 - readTrack and writeTrack instead of import/export, and port to C
 - Move chain file reading here
 - Accessors for TrackLine slots
+- Add intersection functionality to table browser

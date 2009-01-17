@@ -1,15 +1,15 @@
 import(RCurl, XML)
 
-importFrom("IRanges", XDataFrame, IRanges, RangedDataList, score)
-importFrom("BSgenome", GenomicData, GenomicRanges)
+importFrom("IRanges", XDataFrame, IRanges, RangedDataList, score,
+           RangedData, RangesList)
 
 importClassesFrom("IRanges", "RangedData", "RangedDataList")
 
-importMethodsFrom("BSgenome",  strand, chrom, score, genome, "genome<-",
-                  "score<-")
+importMethodsFrom("BSgenome",  strand)
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   range, split, lapply, ranges, values, unlist,
-                  isDisjoint, width, space, as.data.frame, rbind)
+                  isDisjoint, width, space, as.data.frame, rbind, universe,
+                  "universe<-")
 
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
@@ -30,11 +30,14 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "tableName", "tableName<-",
               "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",
               "show", "[", "ucscTableQuery",
+              "genome", "genome<-", "chrom", "range", "range<-", "score<-", 
               ## from IRanges
-              "start", "end", "genome", "strand", "start<-",
-              "end<-", "genome<-", "chrom", "range", "range<-",
-              "score", "score<-", "as.data.frame")
+              "start", "end", "start<-", "end<-", "score", "as.data.frame",
+              ## from BSgenome
+              "strand"
+              )
 
-export("genomeBrowsers", "start", "end", "genome", "strand", "start<-",
-       "end<-", "genome<-", "chrom", "score", "score<-",
-       "GenomicRanges", "RangedDataList", "as.data.frame")
+export("genomeBrowsers", "start", "end", "strand",
+       "start<-", "end<-", "score",
+       "ranges", "GenomicRanges", "GenomicData", "IRanges",
+       "RangedDataList", "as.data.frame")
