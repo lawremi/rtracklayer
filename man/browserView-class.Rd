@@ -2,6 +2,9 @@
 \docType{class}
 \alias{BrowserView-class}
 \alias{show,BrowserView-method}
+\alias{visible}
+\alias{visible,BrowserView-method}
+\alias{visible<-,BrowserView-method}
 
 \title{Class "BrowserView"}
 \description{ An object representing a genome browser view of a particular
@@ -19,7 +22,9 @@
 }
 \section{Methods}{
   This specifies the API implemented by each browser backend. Note that
-  a backend is not guaranteed to support all operations.
+  a backend is not guaranteed to support all operations. See
+  the backend-specific documentation for more details. The only built-in
+  backend is \code{\linkS4class{UCSCView}}.
   \describe{
     \item{\code{\link{browserSession}(object)}}{ Obtains the
       \code{\linkS4class{BrowserSession}} to which this view belongs. }
@@ -31,7 +36,14 @@
     \item{\code{\link{trackNames}(object) <- value}}{ Sets the visible
       tracks by their names. }
     \item{\code{\link{show}(object)}}{ Outputs a textual description of
-      this view. }  
+      this view. }
+    \item{\code{visible(object)}}{Get a named logical vector indicating
+      whether each track is visible.
+    }
+    \item{\code{visible(object) <- value}}{Set a logical vector
+      indicating the visibility of each track, with the same names and
+      in the same order as that returned by \code{visible(object)}.
+    }
   }
 }
 \author{ Michael Lawrence }

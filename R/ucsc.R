@@ -490,6 +490,22 @@ setReplaceMethod("trackNames", "UCSCView",
                    object
                  })
 
+
+setMethod("visible", "UCSCView", function(object) {
+  modes <- ucscTrackModes(object)
+  vis <- modes != "hide"
+  names(vis) <- modes@labels
+  vis
+})
+setReplaceMethod("visible", "UCSCView", function(object, value) {
+  modes <- ucscTrackModes(object)
+  modes[value & modes == "hide"] <- "full"
+  modes[!value] <- "hide"
+  ucscTrackModes(object) <- modes
+  object
+})
+
+
 setMethod("range", "UCSCView",
           function(x, ..., na.rm) range(ucscCart(x)))
 setReplaceMethod("range", c("UCSCView", "RangesList"),

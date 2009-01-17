@@ -3,6 +3,8 @@
 \alias{UCSCView-class}
 \alias{range,UCSCView-method}
 \alias{range<-,UCSCView,RangesList-method}
+\alias{visible,UCSCView-method}
+\alias{visible<-,UCSCView-method}
 
 \title{Class "UCSCView"}
 \description{An object representing a view of a genome in the
@@ -34,6 +36,13 @@ Class \code{"\linkS4class{BrowserView}"}, directly.
       tracks in this view. }
     \item{\code{\link{trackNames}(object) <- value}}{ Sets the visible
       tracks by name. }
+    \item{\code{visible(object)}}{Get a named logical vector indicating
+      whether each track is visible.
+    }
+    \item{\code{visible(object) <- value}}{Set a logical vector
+      indicating the visibility of each track, in the same order as
+      returned by \code{visible(object)}.
+    }
     \item{\code{\link{ucscTrackModes}(object)}}{ Obtains the
       \code{\linkS4class{UCSCTrackModes}} for this view. }
     \item{\code{\link{ucscTrackModes}(object) <- value}}{ Sets the
@@ -41,6 +50,7 @@ Class \code{"\linkS4class{BrowserView}"}, directly.
       \code{value} may be either a \code{UCSCTrackModes} instance or a
       character vector that will be coerced by a call to
       \code{\link{ucscTrackModes}}. }
+    
   }
 }
 \author{ Michael Lawrence }

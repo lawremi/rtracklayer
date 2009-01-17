@@ -48,6 +48,19 @@ setGeneric("trackNames", function(object, ...) standardGeneric("trackNames"))
 setGeneric("trackNames<-",
            function(object, value) standardGeneric("trackNames<-"))
 
+# get/set visibility of view tracks
+setGeneric("visible", function(object, ...) standardGeneric("visible"))
+setMethod("visible", "BrowserView", function(object) {
+  trackNames(browserSession(object)) %in% trackNames(object)
+})
+          
+setGeneric("visible<-",
+           function(object, ..., value) standardGeneric("visible<-"))
+setReplaceMethod("visible", "BrowserView", function(object, value) {
+  trackNames(object) <- names(value)[value]
+  object
+})
+
 # get/set the selected features in e.g. a view
 # this can return a list, with a logical vector for each track
 setGeneric("selectedFeatures", function(object, ...)
