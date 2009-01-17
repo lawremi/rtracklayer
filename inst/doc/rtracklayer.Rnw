@@ -16,20 +16,17 @@ options(width=70)
 \section{Introduction}
 
 The \textbf{rtracklayer} package is an interface (or \emph{layer})
-between \textbf{R} and genome browsers. Its main purpose is
-the visualization of genomic annotation \emph{tracks}, whether
-generated through experimental data analysis performed in R or loaded
-from an external data source. The features of \textbf{rtracklayer} may
-be divided into two categories: 1) the representation and
-import/export of track data and 2) the control and querying of
-external genome browser sessions and views.
+between \textbf{R} and genome browsers. Its main purpose is the
+visualization of genomic annotation \emph{tracks}, whether generated
+through experimental data analysis performed in R or loaded from an
+external data source. The features of \textbf{rtracklayer} may be
+divided into two categories: 1) the import/export of track data and 2)
+the control and querying of external genome browser sessions and
+views.
 
-For working with track data, the package defines a data structure
-named \textit{trackSet}, which extends the Bioconductor \textit{eSet}
-class. A \textit{trackSet} contains information on the features of a
-track, including their chromosome, start and end positions in the
-genome, as well as any associated experimental measurements. Import
-and export from and to files is supported in various formats, see
+The base track data structure is \emph{RangedData}, as defined by the
+\textbf{IRanges} package. \textbf{rtracklayer} supports the import
+and export of tracks from and to files in various formats, see
 Section~\ref{sec:import-export}.
 
 The \textbf{rtracklayer} package currently interfaces with the
@@ -65,14 +62,16 @@ that are known to be targeted by a microRNA. We will represent this
 information as an annotation track, so that we may view it in the UCSC
 genome browser.
 
-\subsubsection{Constructing the \textit{trackSet}}
+\subsubsection{Constructing the \textit{RangedData}}
 
 In preparation for creating the microRNA target track, we first used
 \textbf{limma} to detect the differentially expressed
 genes in the microarray experiment. The locations of the microRNA
-target sites were obtained from MiRBase. Information
-about the target sites on differentially expressed genes was stored in
-the \textit{data.frame} called \texttt{targets}.
+target sites were obtained from MiRBase. The code below stores information
+about the target sites on differentially expressed genes in
+the \textit{data.frame} called \texttt{targets}, which can also be
+obtained by entering \texttt{data(targets)} when \textbf{rtracklayer}
+is loaded.
 
 % 
 <<rtl-init, results = hide>>=
@@ -95,6 +94,7 @@ library("org.Hs.eg.db")
 mappedEntrezIDs <- entrezIDs[entrezIDs %in% mappedkeys(org.Hs.egENSEMBLTRANS)]
 ensemblIDs <- mappedRkeys(org.Hs.egENSEMBLTRANS[mappedEntrezIDs])
 targetMatches <- match(ensemblIDs, hsTargets$target, 0)
+## same as data(targets)
 targets <- hsTargets[targetMatches,]
 @
 % 
@@ -102,7 +102,7 @@ targets <- hsTargets[targetMatches,]
 The following code creates the track from the \texttt{targets}
 dataset. First, we construct an \textit{IRanges} instance for holding
 the start, end and name of each target site. This is then passed to
-the \texttt{GenomicData} function from the \texttt{BSgenome} package,
+the \texttt{GenomicData} function,
 which constructs a \textit{RangedData} instance. The stand
 information, the name of the microRNA and the Ensembl ID of the
 targeted transcript are stored as columns in the
@@ -113,7 +113,7 @@ targeted transcript are stored as columns in the
 head(targets)
 library(IRanges)
 targetRanges <- IRanges(targets$start, targets$end)
-library(BSgenome)
+library(rtracklayer)
 targetTrack <- GenomicData(targetRanges, 
                            targets[,c("strand", "name", "target")],
                            chrom = paste("chr", targets$chrom, sep = ""), 
@@ -124,24 +124,27 @@ targetTrack <- GenomicData(targetRanges,
 \subsubsection{Accessing track information}
 
 The track information is now stored in the R session as a
-\textit{trackSet} object. As the \textit{trackSet} class inherits from
-\textit{eSet} defined in the \textbf{Biobase} package, it has slots
-for storing feature information (\textit{featureData}), experimental
-design information (\textit{phenoData}) and experimental measurements
-(\textit{assayData}). 
+\textit{RangedData} object. It holds the feature start and end
+positions along with any number of data columns. The ranges and
+data are grouped by chromosome (or other sequence).
 
-Most of the information for each feature in a track is stored in the
-\textit{featureData}. This includes the chromosome name, numeric start
-and end positions, the DNA strand (+/-/NA), and any other information
-available. There are methods for accessing the most commonly used
-fields: \texttt{chrom}, \texttt{start}, \texttt{end}, and
-\texttt{strand}. For example, the following code retrieves the
+The primary feature attributes are the \texttt{start}, \texttt{end},
+\texttt{chrom} and \texttt{strand}. There are accessors for each
+of these, named accordingly. For example, the following code retrieves the
 chromosome names and then start positions for each feature in the
 track.
+%
 <<feature-data-accessors>>=
 head(chrom(targetTrack))
 head(start(targetTrack))
-@ 
+@
+%
+The \texttt{chrom} and \texttt{strand} accessors are defined by the
+\textbf{rtracklayer} package, for use with genomic ranges. They are
+simple wrappers around \texttt{names(targetTrack)} and
+\texttt{targetTrack\$strand}, respectively. The strand is just
+another variable in the data and should be a factor with levels
+\textit{+}, \textit{-} and \textit{*} (either).
 
 \paragraph{Exercises}
 
@@ -159,7 +162,7 @@ data.frame(chrom = chrom(targetTrack),
            strand = strand(targetTrack))
 @ 
 
-\subsubsection{Subsetting a \textit{trackSet}}
+\subsubsection{Subsetting a \textit{RangedData}}
 
 It is often helpful to extract subsets from \textit{RangedData}
 instances, especially when uploading to a genome browser.  The data
@@ -203,7 +206,7 @@ negTargetTrack <- targetTrack[strand(targetTrack) == "-",]
 \subsubsection{Exporting and importing tracks}
 \label{sec:import-export}
 
-Import and export of \textit{trackSet} instances is supported in the
+Import and export of \textit{RangedData} instances is supported in the
 following formats: Browser Extended Display (BED), versions 1, 2 and 3
 of the General Feature Format (GFF), and Wiggle (WIG). Support for
 additional formats may be provided by other packages through a plugin
@@ -614,7 +617,7 @@ We then convert the hits, stored as an \textit{MIndex} object, to a
 \textit{RangedData} instance, by \texttt{unlist}ing the
 \textit{MIndex} into an \textit{IRanges}.
 %
-<<trackSet-nrsf>>=
+<<track-nrsf>>=
 nrsfTrack <- GenomicData(unlist(nrsfHits), strand="+", chrom="chr1", 
                          genome = "hg18")
 @ 

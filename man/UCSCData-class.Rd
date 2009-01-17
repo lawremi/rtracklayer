@@ -6,12 +6,11 @@
 \alias{export.ucsc,UCSCData-method}
 \alias{initialize,UCSCData-method}
 \alias{show,UCSCData-method}
+\alias{coerce,RangedData,UCSCData-method}
 
 \title{Class "UCSCData"}
 \description{Each track in \acronym{UCSC} has an associated
   \code{\linkS4class{TrackLine}} that contains metadata on the track.}
-\section{Constructor}{
-}
 \section{Slots}{
   \describe{
     \item{\code{trackLine}:}{Object of class \code{"TrackLine"}
@@ -38,15 +37,23 @@
 \section{Methods}{
   \describe{
     \item{\code{\link{export.bed}(object, con, wig = FALSE, trackLine =
-        !wig)}}{ Exports the track and its track line (if
+        !wig)}}{
+      Exports the track and its track line (if
       \code{trackLine} is \code{TRUE}) to \code{con} in the Browser
-      Extended Display (\acronym{BED}) format. }
-    \item{\code{\link{export.gff}(object)}}{ Exports
-    the track and its track line (as a comment) to \code{con} in the
-    General Feature Format (\acronym{GFF}). }
+      Extended Display (\acronym{BED}) format.
+    }
+    \item{\code{\link{export.gff}(object)}}{
+      Exports the track and its track line (as a comment) to \code{con} in the
+      General Feature Format (\acronym{GFF}).
+    }
     \item{\code{\link{export.ucsc}(object)}}{
       Exports the track and its track line to \code{con} in the
       \acronym{UCSC} meta-format.  }
+    \item{\code{as(object, "UCSCData")}}{Constructs a \code{UCSCData}
+      from a \code{RangedData} instance, by adding a default track line
+      and ensuring that the sequence/chromosome names are compliant with
+      UCSC conventions.
+    }
   }
 }
 \author{ Michael Lawrence }

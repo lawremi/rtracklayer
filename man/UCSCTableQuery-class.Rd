@@ -43,7 +43,7 @@
 
 \details{
   There are four supported fields for a table query:
-  \description{
+  \describe{
     \item{session}{The \code{\linkS4class{UCSCSession}} instance from
       the tables are retrieved. Although all sessions are based on the
       same database, the set of user-uploaded tracks, which are represented

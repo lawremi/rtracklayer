@@ -56,11 +56,13 @@
   Class \code{"\linkS4class{TrackLine}"}, directly.
 }
 \section{Methods}{
-  \item{as(object, "character")}{Export line to its string
-    representation.}
-  \item{as(object, \code{"\linkS4class{BasicTrackLine}"})}{Convert this
-    line to a basic UCSC track line, using defaults for slots not held
-    in common.}
+  \describe{
+    \item{as(object, "character")}{Export line to its string
+      representation.}
+    \item{as(object, \code{"\linkS4class{BasicTrackLine}"})}{Convert this
+      line to a basic UCSC track line, using defaults for slots not held
+      in common.}
+  }
 }
 \references{ Official documentation:
   \url{http://genome.ucsc.edu/goldenPath/help/wiggle.html}. }

@@ -35,7 +35,10 @@
   }
 }
 \section{Methods}{
-  \item{as(object, "character")}{Export line to its string representation.}
+  \describe{
+    \item{as(object, "character")}{Export line to its string
+      representation.}
+  }
 }
 \references{
   \url{http://genome.ucsc.edu/goldenPath/help/customTrack.html#TRACK}

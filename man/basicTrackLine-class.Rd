@@ -47,11 +47,13 @@ Objects can be created by calls of the form \code{new("BasicTrackLine",
 Class \code{"\linkS4class{TrackLine}"}, directly.
 }
 \section{Methods}{
-  \item{as(object, "character")}{Export line to its string
-    representation.}
-  \item{as(object, \code{"\linkS4class{WigTrackLine}"})}{Convert this
-    line to a WIG track line, using defaults for slots not held
-    in common.}
+  \describe{
+    \item{as(object, "character")}{Export line to its string
+      representation.}
+    \item{as(object, \code{"\linkS4class{WigTrackLine}"})}{Convert this
+      line to a WIG track line, using defaults for slots not held
+      in common.}
+  }
 }
 \references{
   \url{http://genome.ucsc.edu/goldenPath/help/customTrack.html#TRACK}
