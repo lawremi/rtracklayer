@@ -676,8 +676,9 @@ setClass("UCSCData",
 setMethod("show", "UCSCData",
           function(object)
           {
+            if (!is.null(object@trackLine@name))
+              cat("UCSC track '", object@trackLine@name, "'\n", sep = "")
             callNextMethod()
-            cat("trackLine:", as(object@trackLine, "character"), "\n")
           })
 
 ucscNormSeqNames <- function(nms) {
