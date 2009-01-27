@@ -218,11 +218,7 @@ by other tools, we could export it as BED. This is done with the
 object as its target. If a target is not given, the serialized string
 is returned. The desired format is derived, by default, from
 the extension of the filename. Use the \texttt{format} parameter to
-explicitly specify a format. This is the first time we actually make
-use of the \texttt{rtracklayer} package.
-<<load-rtl>>=
-library(rtracklayer)
-@ 
+explicitly specify a format.
 <<export, eval = FALSE>>=
 export(targetTrack, "targets.bed")
 @
@@ -305,16 +301,10 @@ session[["target100"]] <- targetTrack[1:100,]
 
 \subsubsection{Viewing the track}
 
-By default, the \texttt{track<-} function creates a
-\textit{BrowserView}, an object that represents a view of a particular
-set of tracks along a particular region of the genome. For
-\textbf{UCSC}, this roughly corresponds to one tab or window in the
-web browser. To override the automatic creation of a view, pass
-\texttt{view = FALSE} to the \texttt{track<-} function.
-
-The default view of the track attempts to show the entire track. The
-view region is determined by a call to \texttt{range} on the
-track object.
+For \textbf{UCSC}, a view roughly corresponds to one tab or window in
+the web browser.  The default view of the track attempts to show the
+entire track. The view region is determined by a call to
+\texttt{range} on the track object.
 <<genomeSegment-track>>=
 range(chr1Targets)
 @ 

@@ -9,7 +9,7 @@ data(targets)
 ###################################################
 targetTrack <- with(targets, 
     RangedData(IRanges(start, end), 
-               strand, space = chrom))
+               target, strand, space = chrom))
 
 
 ###################################################

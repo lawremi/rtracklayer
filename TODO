@@ -1,7 +1,8 @@
+- Move chain file reading here
 - Add presentation options management 
 - Attach to existing saved sessions
 - Represent connection of particular format with formal class in I/O framework
-- readTrack and writeTrack instead of import/export, and port to C
-- Move chain file reading here
+- Make aliases readTrack, writeTrack that expect a track format
+- Port to track reading and writing to C
 - Accessors for TrackLine slots
 - Add intersection functionality to table browser
