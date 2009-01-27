@@ -30,7 +30,8 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "tableName", "tableName<-",
               "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",
               "show", "[", "ucscTableQuery",
-              "genome", "genome<-", "chrom", "range", "range<-", "score<-", 
+              "genome", "genome<-", "chrom", "range", "range<-", "score<-",
+              "visible", "visible<-",
               ## from IRanges
               "start", "end", "start<-", "end<-", "score", "as.data.frame",
               ## from BSgenome
