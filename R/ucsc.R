@@ -338,11 +338,11 @@ setMethod("browserView", "UCSCSession",
           {
             view <- new("UCSCView", session = object)
             form <- list()
-            if (!is.null(range))
+            if (!missing(range))
               form <- c(form, ucscForm(range))
             ## figure out track modes
             modes <- NULL
-            if (!is.null(track)) {
+            if (!missing(track)) {
               if (is(track, "UCSCTrackModes"))
                 modes <- track
               else if (class(track) == "character") {

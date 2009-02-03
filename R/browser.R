@@ -7,7 +7,7 @@ setClass("BrowserView", representation(session = "BrowserSession"),
 
 # create a browser view
 setGeneric("browserView",
-           function(object, range = NULL, track = NULL, ...)
+           function(object, range, track, ...)
            standardGeneric("browserView"))
 
 # get the views from the browser
