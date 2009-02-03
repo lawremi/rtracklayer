@@ -334,15 +334,15 @@ setClass("UCSCView", representation(hgsid = "numeric"),
 ## assumed to name the tracks that should be in the view. otherwise, an
 ## attempt is made to coerce it to a UCSCTrackModes instance.
 setMethod("browserView", "UCSCSession",
-          function(object, range, track, ...)
+          function(object, range, track, imagewidth = 800, ...)
           {
             view <- new("UCSCView", session = object)
             form <- list()
-            if (!missing(range))
+            if (!is.null(range))
               form <- c(form, ucscForm(range))
             ## figure out track modes
             modes <- NULL
-            if (!missing(track)) {
+            if (!is.null(track)) {
               if (is(track, "UCSCTrackModes"))
                 modes <- track
               else if (class(track) == "character") {
@@ -361,9 +361,8 @@ setMethod("browserView", "UCSCSession",
               modes <- ucscTrackModes(view)[names(argModes)]
             modes[names(argModes)] <- argModes
             form <- c(form, ucscForm(modes), ucscForm(view))
-            opts <- getOption("BioC")$rtracklayer
-            if (!is.null(opts$imagewidth))
-              form <- c(form, pix = opts$imagewidth)
+            if (!missing(imagewidth))
+              form <- c(form, pix = imagewidth)
             ## launch a web browser
             ucscShow(object, "tracks", form)
             ## save this view
