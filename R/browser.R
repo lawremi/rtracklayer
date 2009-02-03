@@ -7,7 +7,7 @@ setClass("BrowserView", representation(session = "BrowserSession"),
 
 # create a browser view
 setGeneric("browserView",
-           function(object, range = range(object),
+           function(object, range = base::range(object),
                     track = trackNames(object), ...)
            standardGeneric("browserView"))
 
@@ -70,12 +70,12 @@ setGeneric("selectedFeatures<-", function(object, value)
 
 setMethod("show", "BrowserView", function(object)
           {
-            cat("A genome browser view of class '", class(object), "'.\n\n",
-                sep = "")
-            cat("Segment:\n")
-            show(range(object))
-            cat("Tracks:\n")
-            show(trackNames(object))
+            range <- range(object)
+            cat(class(object), "of",
+                paste(names(range), ":", start(range), "-", end(range),
+                      sep = ""),
+                "\n")
+            cat(IRanges:::labeledLine("trackNames", names(trackNames(object))))
           })
 
 setGeneric("track<-",

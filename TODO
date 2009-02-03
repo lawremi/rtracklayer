@@ -6,3 +6,4 @@
 - Port to track reading and writing to C
 - Accessors for TrackLine slots
 - Add intersection functionality to table browser
+- Check out AnnotationViewer: http://sourceforge.net/projects/associationview/

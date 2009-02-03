@@ -22,14 +22,17 @@
   \describe{
     
     \item{object = "UCSCSession"}{ \code{browserView(object, range =
-        range(object), track = trackNames(object), ...)}: Creates a
+        range(object), track = trackNames(object), imagewidth = 800,
+        ...)}: Creates a 
       \code{\linkS4class{BrowserView}} of \code{range} with visible
-      tracks specified by \code{track}. \code{track} may be an instance
-      of \code{\linkS4class{UCSCTrackModes}}. Arguments in \code{...} should
-      override slots in \code{range} or else match parameters
-      to a \code{\link{ucscTrackModes}} method for creating a
-      \code{UCSCTrackModes} instance that will override modes indicated
-      by the \code{track} parameter. }
+      tracks specified by \code{track}. The \code{imagewidth} parameter
+      specifies the width of the track image in pixels. \code{track}
+      may be an instance 
+      of \code{\linkS4class{UCSCTrackModes}}. Arguments in \code{...}
+      are passed to \code{\link{ucscTrackModes}} to create the
+      \code{UCSCTrackModes} instance that will override modes
+      indicated by the \code{track} parameter.
+   }
     
 }}
 \examples{
@@ -37,8 +40,6 @@
   session <- browserSession()
   browserView(session, GenomicRanges(start = 20000, end = 50000,
                                      range = range(session)))
-  ## equivalent to above, but shorter
-  browserView(session, start = 20000, end = 50000)
   ## only view "knownGene" track
   browserView(session, track = "knownGene")
 }

@@ -361,6 +361,9 @@ setMethod("browserView", "UCSCSession",
               modes <- ucscTrackModes(view)[names(argModes)]
             modes[names(argModes)] <- argModes
             form <- c(form, ucscForm(modes), ucscForm(view))
+            opts <- getOption("BioC")$rtracklayer
+            if (!is.null(opts$imagewidth))
+              form <- c(form, pix = opts$imagewidth)
             ## launch a web browser
             ucscShow(object, "tracks", form)
             ## save this view
