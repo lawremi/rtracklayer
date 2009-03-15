@@ -128,7 +128,7 @@ setMethod("import.gff", "ANY",
 
   # handle missings
   table[table == "."] <- NA
-  if (version == 3) {
+  if (version == "3") {
     table[table[,"strand"] == "?","strand"] <- NA
     tableDec <- urlDecode(as.vector(table))
     table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
@@ -171,7 +171,10 @@ setMethod("import.gff", "ANY",
   if (!all(is.na(score)))
     xd$score <- score
 
-  GenomicData(IRanges(as.integer(table[,"start"]), as.integer(table[,"end"])),
+  end <- as.integer(table[,"end"])
+  if (version == "3") ## GFF3 has right-open intervals
+    end <- end - 1
+  GenomicData(IRanges(as.integer(table[,"start"]), end),
               xd, chrom = table[,"seqname"], genome = genome)
 })
 
