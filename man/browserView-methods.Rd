@@ -8,8 +8,7 @@
   Methods for creating and getting browser views.
 }
 \usage{
-  browserView(object, range = range(object),
-              track = trackNames(object), ...)
+  browserView(object, range, track, ...)
 }
 \arguments{
   \item{object}{The object from which to get the views.}

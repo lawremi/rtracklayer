@@ -4,6 +4,7 @@
 \alias{show,BrowserView-method}
 \alias{visible}
 \alias{visible,BrowserView-method}
+\alias{visible<-}
 \alias{visible<-,BrowserView-method}
 
 \title{Class "BrowserView"}
