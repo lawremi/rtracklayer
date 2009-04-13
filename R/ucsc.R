@@ -91,8 +91,14 @@ setMethod("show", "UCSCTableQuery",
               cat("table '", tableName, "' from ", sep = "")
             cat("track '", names(trackName(object)), "' within ", sep = "")
             range <- range(object)
-            cat(genome(range), ":", as.character(chrom(range)), ":",
-                start(range), "-", end(range), "\n", sep="")
+            chrom <- as.character(chrom(range))
+            if (!length(chrom))
+              chrom <- "*"
+            start <- start(range)
+            end <- end(range)
+            if (!length(start))
+              start <- end <- "*"
+            cat(genome(range), ":", chrom, ":", start, "-", end, "\n", sep="")
           })
 
 setMethod("browserSession", "UCSCTableQuery", function(object) {
@@ -316,6 +322,8 @@ setMethod("getTable", "UCSCTableQuery",
             if (!("primaryTable" %in% ucscTableOutputs(object)))
               stop("tabular output format not available")
             outputType(object) <- "primaryTable"
+            if (is.null(tableName(object))) # must specify a table name
+              tableName(object) <- tableNames(object)[1]
             output <- ucscExport(object)
             f <- file()
             writeLines(output, f)
@@ -970,8 +978,8 @@ setMethod("ucscForm", "UCSCTableQuery",
               regionType <- "range"
             else regionType <- "genome"
             form <- c(form, hgta_regionType = regionType)
-            if (!is.null(object@table))
-              form <- c(form, hgta_table = object@table)
+            table <- object@table
+            form <- c(form, hgta_table = table)
             if (!is.null(object@outputType)) {
               form <- c(form, hgta_outputType = object@outputType)
             }
