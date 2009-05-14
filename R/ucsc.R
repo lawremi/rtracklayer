@@ -66,6 +66,7 @@ setMethod("range", "UCSCSession",
 setReplaceMethod("range", c("UCSCSession", "RangesList"),
                  function(x, value) {
                    ucscGet(x, "cart", ucscForm(value))
+                   x
                  })
 
 ## just the genome, for convenience
