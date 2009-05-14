@@ -131,7 +131,7 @@ setMethod("blocks", "RangedData",
           {
             if (is.null(x$blockStarts) || is.null(x$blockSizes))
               stop("'x' must have 'blockStarts' and 'blockSizes' columns")
-            starts <- unlist(strsplit(as.character(x$blockStarts), ","))
+            starts <- unlist(strsplit(as.character(x$blockStarts), ",")) + 1
             sizes <- unlist(strsplit(as.character(x$blockSizes), ","))
             split(IRanges(starts, width = sizes), x$name)
           })
