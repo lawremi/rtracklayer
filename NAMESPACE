@@ -1,6 +1,6 @@
 import(RCurl, XML)
 
-importFrom("IRanges", XDataFrame, IRanges, RangedDataList, score,
+importFrom("IRanges", DataFrame, IRanges, RangedDataList, score,
            RangedData, RangesList)
 
 importClassesFrom("IRanges", "RangedData", "RangedDataList")
