@@ -134,8 +134,8 @@ setMethod("import.gff", "ANY",
     table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
   }
 
-  xd <- XDataFrame(type = table[,"feature"], source = table[,"source"],
-                   phase = table[,"frame"], strand = table[,"strand"])
+  xd <- DataFrame(type = table[,"feature"], source = table[,"source"],
+                  phase = table[,"frame"], strand = table[,"strand"])
   
   if (!is.null(table[,"attributes"])) {
     if (version == "1") {
@@ -164,7 +164,7 @@ setMethod("import.gff", "ANY",
                            vec
                          })
     }
-    xd <- XDataFrame(xd, attrList)
+    xd <- DataFrame(xd, attrList)
   }
 
   suppressWarnings(score <- as.numeric(table[,"score"]))

@@ -96,10 +96,12 @@ setMethod("import.bed", "ANY",
                             "blockSizes", "blockStarts")
               bedClasses <- NA
             }
-            ## FIXME: reading in 'as.is' to save memory, XFactor would
-            ## be useful here.
-            bed <- XDataFrame(read.table(con, colClasses = bedClasses,
-                                         as.is = TRUE))
+            ## FIXME: could read a single line to get ncols up-front,
+            ## and thus specify all col classes
+            ## FIXME: reading in 'as.is' to save memory,
+            ## XFactor would be useful here.
+            bed <- DataFrame(read.table(con, colClasses = bedClasses,
+                                        as.is = TRUE))
             colnames(bed) <- bedNames[seq_len(ncol(bed))]
             if (!wig) { ## don't know how many columns, coerce here
               bed$start <- as.integer(bed$start)

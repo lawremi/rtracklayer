@@ -3,7 +3,8 @@ import(RCurl, XML)
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, score,
            RangedData, RangesList)
 
-importClassesFrom("IRanges", "RangedData", "RangedDataList")
+importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
+                  Sequence, Annotated, DataTableORNULL)
 
 importMethodsFrom("BSgenome",  strand)
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
