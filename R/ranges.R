@@ -35,7 +35,7 @@ setGeneric("score<-", function(x, ..., value) standardGeneric("score<-"))
 
 setMethod("score", "RangedData", function(x) {
   score <- x[["score"]]
-  if (!is.null(score) && ncol(x) > 0 && is.numeric(x[[1]]))
+  if (is.null(score) && ncol(x) > 0 && is.numeric(x[[1]]))
     score <- x[[1]]
   score
 })
