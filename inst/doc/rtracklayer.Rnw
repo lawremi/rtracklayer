@@ -27,7 +27,8 @@ views.
 The base track data structure is \emph{RangedData}, as defined by the
 \textbf{IRanges} package. \textbf{rtracklayer} supports the import
 and export of tracks from and to files in various formats, see
-Section~\ref{sec:import-export}.
+Section~\ref{sec:import-export}. All positions in a \emph{RangedData}
+should be 1-based, as in R itself.
 
 The \textbf{rtracklayer} package currently interfaces with the
 \textbf{UCSC} web-based genome browser. Other packages may provide
