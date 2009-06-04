@@ -693,9 +693,9 @@ setMethod("show", "UCSCData",
           })
 
 ucscNormSeqNames <- function(nms) {
-  nms <- gsub("^([0-9A-Z]*)$", "chr\\1", nms)
-  if (length(grep("^chr|^scaffold", nms)) != length(nms))
-    stop("UCSC requires all sequence names to begin with 'chr' or 'scaffold'")
+  nms <- gsub("^([0-9A-Z]+)$", "chr\\1", nms)
+  if (!all(grepl("^chr|^scaffold", nms)))
+    stop("All sequence names should begin with 'chr' or 'scaffold'")
   nms
 }
 
