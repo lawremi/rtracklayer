@@ -54,6 +54,12 @@ setReplaceMethod("score", "RangedData", function(x, value) {
 
 GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NULL)
 {
+  if (is(ranges, "data.frame") || is(ranges, "DataTable")) {
+    colnames(ranges)[match("chrom", colnames(ranges))] <- "space"
+  }
+  if (!is(ranges, "Ranges")) {
+    return(RangedData(ranges)) # direct coercion
+  }
   if (length(chrom) > length(ranges))
     stop("length of 'chrom' greater than length of 'ranges'")
   if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))

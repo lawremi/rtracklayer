@@ -79,6 +79,13 @@ and there is formal treatment of an optional \code{strand} variable.}
       across the chromosomes. The \code{genome} argument should be a
       scalar string and is treated as the \code{RangedData}
       universe. See the examples.
+      
+      If \code{ranges} is not a \code{Ranges} object, this function
+      calls \code{as(ranges, "RangedData")} and returns the result if
+      successful. As a special case, the \dQuote{chrom} column in a
+      \code{data.frame}-like object is renamed to \dQuote{space}, for
+      convenience. Thus, one could pass a \code{data.frame} with columns
+      \dQuote{start}, \dQuote{end} and, optionally, \dQuote{chrom}.
     }
   }
 }
@@ -116,6 +123,9 @@ and there is formal treatment of an optional \code{strand} variable.}
   gr[["score"]] # unlists over the chromosomes
   score(gr)
   gr[1][["score"]] # equal to score[1:3]
+
+  df <- as.data.frame(gr)
+  GenomicData(df)
 }
 \keyword{classes}
 \keyword{methods}
