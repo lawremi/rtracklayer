@@ -33,8 +33,9 @@ session$targets <- targetTrack
 ###################################################
 ### chunk number 6: rtl-ucsc-view eval=FALSE
 ###################################################
-range <- ranges(targetTrack[1,]) * -10
+top <- targetTrack$target == targets$target[1]
+range <- ranges(targetTrack[top,]) * -10
 view <- browserView(session, range,
-                    pack = "targets")
-
+                    hide = c("refGene", "mgcFullMrna", "intronEst"),
+                    dense = "knownGene", squish = "cons44way")
 

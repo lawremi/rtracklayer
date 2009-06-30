@@ -515,7 +515,7 @@ head(score(cpneTrack))
 % the test value for each SNP vs. its position.
 
 One use of extracting the data values is to plot the data.
-<<trackData, fig=TRUE>>=
+<<trackData, fig=TRUE, png=TRUE>>=
 plot(start(cpneTrack), score(cpneTrack))
 @ 
 
