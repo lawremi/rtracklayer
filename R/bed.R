@@ -12,8 +12,8 @@ setMethod("export.bed", "RangedData",
             df <- data.frame(chrom(object), start(object)-1, end(object))
             score <- score(object)
             if (!is.null(score)) {
-              if (any(is.na(score)))
-                stop("scores cannot be NA")
+              if (!is.numeric(score) || any(is.na(score)))
+                stop("Scores must be non-NA numeric values")
               if (!wig && any(score < 0 | score > 1000))
                 stop("BED requires scores to fall within [0, 1000]")
             }
