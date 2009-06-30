@@ -1,5 +1,5 @@
 htmlErrorHandler <- function(msg, code, domain, line, col, level, filename) {
-  if (level > 2)
+  if (!length(level) || level > 2)
     stop("Failed to Parse HTML [", line, ":", col, "]: ", msg)
 }
 
