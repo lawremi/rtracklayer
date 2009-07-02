@@ -1,5 +1,7 @@
 htmlErrorHandler <- function(msg, code, domain, line, col, level, filename) {
-  if (!length(level) || level > 2)
+  if (!length(level))
+    stop("Unknown HTML parse error")
+  if (level > 2)
     stop("Failed to Parse HTML [", line, ":", col, "]: ", msg)
 }
 
@@ -9,15 +11,17 @@ htmlParse <- function(str)
 
 httpGet <- function(url, .form = list(), .parse = TRUE, ...) {
   if (length(.form) == 0)
-    out <- getURL(url, ...)
-  else out <- getForm(url, .params = .form, .opts = list(...))
+    out <- getURL(url, useragent = "rtracklayer", ...)
+  else out <- getForm(url, .params = .form,
+                      .opts = list(..., useragent = "rtracklayer"))
   if (.parse)
     htmlParse(out)
   else out
 }
 
 httpPost <- function(url, .form = list(), .parse = TRUE, ...) {
-  form <- postForm(url, .params = .form, .opts = list(...))
+  form <- postForm(url, .params = .form,
+                   .opts = list(..., useragent = "rtracklayer"))
   if (.parse)
     htmlParse(form)
   else form
