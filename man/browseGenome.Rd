@@ -8,8 +8,8 @@
 }
 \usage{
 browseGenome(object, ...)
-\S4method{browseGenome}{RangedDataORRangedDataList}(object = RangedDataList(),
-  browser = "ucsc", range = range(tracks),
+\S4method{browseGenome}{RangedDataORRangedDataList}(object,
+  browser = "UCSC", range = base::range(object),
   view = TRUE, trackParams = list(), viewParams = list(), ...)
 }
 %- maybe also 'usage' for other objects documented here.
