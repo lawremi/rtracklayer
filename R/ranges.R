@@ -16,14 +16,6 @@ setReplaceMethod("genome", "RangedData",
                    x
                  })
 
-setMethod("strand", "RangedData", function(x) {
-  strand <- x[["strand"]]
-  if (is.null(strand))
-    strand <- rep(NA, nrow(x))
-  levs <- levels(strand())
-  factor(strand, levs)
-})
-
 setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
 setMethod("chrom", "RangedData", function(x) {
   chrom(ranges(x))

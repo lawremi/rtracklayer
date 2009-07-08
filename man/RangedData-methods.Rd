@@ -15,13 +15,11 @@
 \alias{genome,RangedData-method}
 \alias{genome<-}
 \alias{genome<-,RangedData-method}
-\alias{strand,RangedData-method}
 
 \title{Data on a Genome} \description{The \code{rtracklayer} package adds
 convenience methods on top of \code{RangedData} manipulate data on
 genomic ranges. The spaces are now called chromosomes (but could still
-refer to some other type of sequence). The universe refers to the genome
-and there is formal treatment of an optional \code{strand} variable.}
+refer to some other type of sequence). The universe refers to the genome.}
 
 \section{Accessors}{
   In the code snippets below,
@@ -38,15 +36,6 @@ and there is formal treatment of an optional \code{strand} variable.}
       the ranges in \code{x}; simple wrappers around
       \code{\link[IRanges]{universe}} and
       \code{\link[IRanges]{universe<-}}, respectively.
-    }
-    \item{}{
-      \code{\link[BSgenome]{strand}(x)}: Gets the strand factor in
-      \code{x}, with the standard 
-      levels: \code{-}, \code{+} and \code{*}, referring to the negative,
-      positive and either/both strands, respectively. Any strand factor
-      stored in the \code{RangedData} should have those levels.
-      \code{NA}'s are allowed; the value is all \code{NA} if no strand
-      has been specified.
     }
     \item{}{\code{score(x)}: gets the column representing a "score" in
       \code{x}, as a vector. This is the column named
