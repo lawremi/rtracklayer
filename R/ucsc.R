@@ -14,10 +14,13 @@ setMethod("initialize", "UCSCSession",
             .Object@url <- url
             .Object@views <- new.env()
             handle <- getCurlHandle(...)
-            getURL(ucscURL(.Object, "gateway"), cookiefile = tempfile(),
-                   curl = handle)
-            cart <- getURL(ucscURL(.Object, "cart"), curl = handle)
-            .Object@hguid <- as.numeric(gsub(".*hguid=([^\n]*).*", "\\1", cart))
+            gw <- getURL(ucscURL(.Object, "gateway"), cookiefile = tempfile(),
+                         header = TRUE, curl = handle)
+            cookie <- grep("Set-Cookie: hguid=", gw)
+            if (!length(cookie))
+              stop("Failed to obtain 'hguid' cookie")
+            hguid <- gsub(".*Set-Cookie: hguid=([^;]*);.*", "\\1", gw)
+            .Object@hguid <- as.numeric(hguid)
             if (!is.null(user) && !is.null(session)) { ## bring in other session
               ucscGet(.Object, "tracks",
                       list(hgS_doOtherUser = "submit", hgS_otherUserName = user,
