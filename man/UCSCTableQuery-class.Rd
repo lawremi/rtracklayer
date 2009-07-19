@@ -17,6 +17,8 @@
 \alias{tableName<-,UCSCTableQuery-method}
 \alias{range,UCSCTableQuery-method}
 \alias{range<-,UCSCTableQuery,RangesList-method}
+\alias{names,UCSCTableQuery-method}
+\alias{names<-,UCSCTableQuery-method}
 
 % Query execution
 \alias{tableNames}
@@ -42,7 +44,7 @@
   incremental construction and adjustment of a query.} 
 
 \details{
-  There are four supported fields for a table query:
+  There are five supported fields for a table query:
   \describe{
     \item{session}{The \code{\linkS4class{UCSCSession}} instance from
       the tables are retrieved. Although all sessions are based on the
@@ -66,6 +68,7 @@
       non-\code{NULL}.  If the \code{RangesList} is empty, the table is
       downloaded for the entire genome.
     }
+    \item{names}{Names/accessions of the desired features}
   } 
 
   A common workflow for querying the UCSC database is to create an
@@ -86,7 +89,8 @@
 \section{Constructor}{
   \describe{
     \item{}{
-      \code{ucscTableQuery(x, track, range = GenomicRanges(), table = NULL)}: 
+      \code{ucscTableQuery(x, track, range = GenomicRanges(), table =
+        NULL, names = NULL)}: 
       Creates a \code{UCSCTableQuery} with the
       \code{UCSCSession} given as \code{x} and the track name given by
       the single string \code{track}. \code{range} should be a
@@ -94,7 +98,8 @@
       \code{range(x)}. Any missing information in \code{range}, often
       the genome identifier, is filled in from \code{range(x)}. The
       table name is given by \code{table}, which may be a single string
-      or \code{NULL}.
+      or \code{NULL}. Feature names, such as gene identifiers, may be
+      passed via \code{names} as a character vector.
     }
   }
 }
@@ -142,6 +147,10 @@
       \code{RangesList} indicating the portion of the table to retrieve in
       genomic coordinates. Any missing information, such as the genome
       identifier, is filled in using \code{range(browserSession(x))}.
+    }
+    \item{}{\code{names(x)}, \code{names(x) <- value}: Get or set the
+      names of the features to retrieve. If \code{NULL}, this filter is
+      disabled.
     }
   }
 }

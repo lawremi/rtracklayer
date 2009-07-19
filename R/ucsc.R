@@ -86,7 +86,8 @@ setClass("UCSCTableQuery",
                         track = "characterORNULL",
                         table = "characterORNULL",
                         range = "RangesList",
-                        outputType = "characterORNULL"))
+                        outputType = "characterORNULL",
+                        NAMES = "characterORNULL"))
 
 setMethod("show", "UCSCTableQuery",
           function(object) {
@@ -148,6 +149,12 @@ setReplaceMethod("tableName", "UCSCTableQuery", function(x, value)
                    x
                  })
 
+setMethod("names", "UCSCTableQuery", function(x) x@NAMES)
+setReplaceMethod("names", "UCSCTableQuery", function(x, value) {
+  x@NAMES <- value
+  x
+})
+
 ## not exported
 setGeneric("outputType", function(x, ...) standardGeneric("outputType"))
 setMethod("outputType", "UCSCTableQuery", function(x) x@outputType)
@@ -174,16 +181,19 @@ normArgTrack <- function(object, name) {
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
-          function(x, track, range = GenomicRanges(), table = NULL)
+          function(x, track, range = GenomicRanges(), table = NULL,
+                   names = NULL)
           {
             if (!is.null(table) && !isSingleString(table))
               stop("'table' must be a single string")
             if (!is(range, "RangesList"))
               stop("'range' must be a 'RangesList'")
+            if (!is(names, "characterORNULL"))
+              stop("'names' must be 'NULL' or a character vector")
             range <- mergeRange(range(x), range)
             track <- normArgTrack(x, track)
             new("UCSCTableQuery", session = x, track = track, range = range,
-                table = table)
+                table = table, NAMES = names)
           })
 
 ucscTableGet <- function(query, .parse = TRUE, ...)
@@ -245,6 +255,16 @@ setMethod("ucscTableSchema", "UCSCTableQuery",
 ### FIXME: Needs to check for going over limit of data values (100000)
 ucscExport <- function(object)
 {
+  get_hgsid <- function(node)
+    getNodeSet(node, "//input[@name = 'hgsid']/@value")[[1]]
+  hgsid <- NULL
+  if (!is.null(names(object))) { # filter by names
+    text <- paste(names(object), collapse = "\n")
+    ## ucscTableGet(object, FALSE, hgta_doUploadIdentifiers = "upload list")
+    output <- ucscTableGet(object, hgta_doPastedIdentiers = "submit",
+                           hgta_pastedIdentifiers = text)
+    hgsid <- get_hgsid(output)
+  }
   followup <- NULL
   if (outputType(object) == "bed") { ## some formats have extra pages
     followup <- list(hgta_doGetBed = "get BED",
@@ -252,10 +272,10 @@ ucscExport <- function(object)
                      boolshad.hgta_printCustomTrackHeaders = "1")
   }
   output <- ucscTableGet(object, !is.null(followup),
-                         hgta_doTopSubmit = "get output")
+                         hgta_doTopSubmit = "get output",
+                         hgsid = hgsid)
   if (!is.null(followup)) {
-    node <- getNodeSet(output, "//input[@name = 'hgsid']/@value")[[1]]
-    hgsid <- node ##xmlValue(node)
+    hgsid <- get_hgsid(output)
     form <- c(followup, list(hgsid = hgsid))
     output <- ucscGet(browserSession(object), "tables", form, .parse = FALSE)
   }
