@@ -174,6 +174,11 @@ track(query)
 ## get a data.frame summarizing the multiple alignment
 tableName(query) <- "multiz30waySummary"
 getTable(query)
+
+genome(session) <- "hg18"
+query <- ucscTableQuery(session, "snp129",
+                        names = c("rs10003974", "rs10087355", "rs10075230"))
+getTable(query)
 }
 }
 
