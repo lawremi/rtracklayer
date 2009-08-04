@@ -31,7 +31,9 @@ setMethod("initialize", "UCSCSession",
 
 setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
           function(object, name = names(value), view = FALSE,
-                   format = c("auto", "bed", "wig", "gff1"), ..., value) {
+                   format = c("auto", "bed", "wig", "gff1", "bed15"), ...,
+                   value)
+          {
             format <- match.arg(format)
             if (length(value)) {
               ## upload values in blocks, one for each genome
@@ -43,6 +45,7 @@ setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
                      {
                        form <- ucscForm(tracks, format, ...)
                        response <- ucscPost(object, "custom", form)
+                       browser()
 ### FIXME: need to check for error
                      })
               args <- list()
@@ -731,12 +734,14 @@ setAs("RangedData", "UCSCData", function(from) {
 # tracks formatted as 'wig', 'bed', 'gff', 'gtf', or 'psl'.
 # currently, only gff and wig are supported
 setGeneric("export.ucsc",
-           function(object, con, subformat = c("auto", "gff1", "wig", "bed"),
+           function(object, con,
+                    subformat = c("auto", "gff1", "wig", "bed", "bed15"),
                     ...)
            standardGeneric("export.ucsc"))
 
 setMethod("export.ucsc", "RangedDataList",
-          function(object, con, subformat = c("auto", "gff1", "wig", "bed"),
+          function(object, con,
+                   subformat = c("auto", "gff1", "wig", "bed", "bed15"),
                    trackNames, ...)
           {
             subformat <- match.arg(subformat)
@@ -758,6 +763,8 @@ trackLineClass <- function(subformat)
 {
   if (subformat == "wig")
     "WigTrackLine"
+  else if (subformat == "bed15")
+    "Bed15TrackLine"
   else "BasicTrackLine"
 }
 
@@ -777,7 +784,9 @@ setMethod("export.ucsc", "UCSCData",
             if (subformat == "auto") {
               auto <- TRUE
               subformat <- "bed"
-              if (is.numeric(score(object)))
+              if (is(object@trackLine, "Bed15TrackLine"))
+                subformat <- "bed15"
+              else if (is.numeric(score(object)))
                 subformat <- "wig"
             }
             if (subformat == "wig") {
@@ -804,6 +813,7 @@ setMethod("export.ucsc", "UCSCData",
             lineArgs <- names(args) %in% slotNames(lineClass)
             for (argName in names(args)[lineArgs])
               slot(object@trackLine, argName) <- args[[argName]]
+            trackLine <- NULL
             if (subformat == "wig") {
               subformat <- "wigLines"
               strand <- as.character(strand(object))
@@ -816,10 +826,13 @@ setMethod("export.ucsc", "UCSCData",
                 export.ucsc(tracks, con, "wig", name, ...)
                 return()
               }
+            } else if (subformat == "bed15") {
+              subformat <- "bed15Lines"
+              trackLine <- object@trackLine
             }
             writeLines(as(object@trackLine, "character"), con)
             do.call(export, c(list(as(object, "RangedData"), con, subformat),
-                                args[!lineArgs]))
+                                args[!lineArgs], trackLine = trackLine))
           })
 
 # for GFF, the track line should go in a comment
@@ -831,7 +844,7 @@ setMethod("export.gff", "UCSCData",
           })
 
 setGeneric("import.ucsc",
-           function(con, subformat = c("auto", "gff1", "wig", "bed"),
+           function(con, subformat = c("auto", "gff1", "wig", "bed", "bed15"),
                     drop = FALSE, ...)
            standardGeneric("import.ucsc"))
 setMethod("import.ucsc", "ANY",
@@ -849,7 +862,10 @@ setMethod("import.ucsc", "ANY",
               if (subformat == "wig")
                 subformat <- "wigLines"
               text <- lines[starts[i]:ends[i]]
-              trackSet <- import(format = subformat, text = text, ...)
+              if (subformat == "bed15") # need to pass track line
+                trackSet <- import(format = "bed15Lines", text = text,
+                                   trackLine = line, ...)
+              else trackSet <- import(format = subformat, text = text, ...)
               ucsc <- as(trackSet, "UCSCData", FALSE)
               ucsc@trackLine <- line
               ucsc

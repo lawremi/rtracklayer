@@ -8,22 +8,22 @@ importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
 
 importMethodsFrom("BSgenome",  strand)
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
-                  range, split, lapply, ranges, values, unlist,
+                  range, split, lapply, ranges, values, unlist, as.list,
                   isDisjoint, width, space, as.data.frame, rbind, universe,
                   "universe<-")
 
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
               "UCSCData", "TrackLine", "BasicTrackLine", "WigTrackLine",
-              "UCSCTrackModes")
+              "Bed15TrackLine", "UCSCTrackModes")
 
 exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "browserSession", "browserSession<-",
               "browserView", "browserViews",
-              "close", "export", "export.bed",
+              "close", "export", "export.bed", "export.bed15",
               "export.gff", "export.gff1", "export.gff2",
               "export.gff3", "export.ucsc", "export.wig",
-              "import", "import.bed", "import.gff",
+              "import", "import.bed", "import.bed15", "import.gff",
               "import.gff1", "import.gff2", "import.gff3",
               "import.ucsc", "import.wig", "sequence<-", "track<-",
               "track", "trackNames", "trackNames<-", "getTable",

@@ -84,7 +84,7 @@ setMethod("export.wigLines", "RangedData",
             if (dataFormat == "auto")
               dataFormat <- lapply(object, byChrom, TRUE)
             if (any(dataFormat == "bed")) # one BED, all BED
-              export.bed(object, con, wig = TRUE)
+              export.bed(object, con, variant = "wig")
             else lapply(object, byChrom, FALSE) # else, mix variable/fixed
           })
 
@@ -136,7 +136,7 @@ setMethod("import.wigLines", "ANY",
               gd <- do.call(rbind, resultList)
               genome(gd) <- genome
               gd
-            } else import(text = lines, format = "bed", wig = TRUE)
+            } else import(text = lines, format = "bed", variant = "wig")
         })
 
 setClass("WigTrackLine",

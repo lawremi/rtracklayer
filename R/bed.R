@@ -1,12 +1,14 @@
 # Import/export of Browser Extended Display (BED) data
 
 setGeneric("export.bed",
-           function(object, con, wig = FALSE, color = NULL, ...)
+           function(object, con, variant = c("base", "wig", "bed15"),
+                    color = NULL, ...)
            standardGeneric("export.bed"))
 
 setMethod("export.bed", "RangedData",
-          function(object, con, wig, color)
+          function(object, con, variant = c("base", "wig", "bed15"), color)
           {
+            variant <- match.arg(variant)
             name <- strand <- thickStart <- thickEnd <- color <- NULL
             blockCount <- blockSizes <- blockStarts <- NULL
             df <- data.frame(chrom(object), start(object)-1, end(object))
@@ -14,25 +16,28 @@ setMethod("export.bed", "RangedData",
             if (!is.null(score)) {
               if (!is.numeric(score) || any(is.na(score)))
                 stop("Scores must be non-NA numeric values")
-              if (!wig && any(score < 0 | score > 1000))
+              if (variant != "wig" && any(score < 0 | score > 1000))
                 stop("BED requires scores to fall within [0, 1000]")
             }
-            if (wig) {
+            if (variant == "wig") {
               if (is.null(score)) ## wig requires score
                 score <- 0
               df$score <- score
             } else {
               blockSizes <- object$blockSizes
-              if (!is.null(blockSizes)) {
+              blockStarts <- object$blockStarts
+              if (variant == "bed15" && is.null(blockSizes))
+                blockStarts <- blockSizes <- "" # bed15 must have all 15 cols
+              if (!is.null(blockSizes))
                 blockCount <- length(strsplit(blockSizes, ",")[[1]])
-                blockStarts <- object$blockStarts
-              }
               if (is.null(color))
                 color <- object$color
               if (is.null(color) && !is.null(blockCount))
                 color <- "black" ## blocks require color
-              if (!is.null(color))
-                color <- paste(as.vector(col2rgb(color)), collapse=",")
+              if (!is.null(color)) {
+                colmat <- col2rgb(color)
+                color <- paste(colmat[1,], colmat[2,], colmat[3,], sep = ",")
+              }
               thickStart <- object$thickStart
               thickEnd <- object$thickEnd ## color requires thick ranges
               if (is.null(thickStart) && !is.null(color)) {
@@ -59,6 +64,11 @@ setMethod("export.bed", "RangedData",
               df$blockCount <- blockCount
               df$blockSizes <- blockSizes
               df$blockStarts <- blockStarts
+              if (variant == "bed15") {
+                df$expCount <- object$expCount
+                df$expIds <- object$expIds
+                df$expScores <- object$expScores
+              }
             }
             scipen <- getOption("scipen")
             options(scipen = 100) # prevent use of scientific notation
@@ -68,21 +78,27 @@ setMethod("export.bed", "RangedData",
           })
 
 setMethod("export.bed", "UCSCData",
-          function(object, con, wig, color, trackLine = !wig, ...)
+          function(object, con, variant = c("base", "wig", "bed15"), color,
+                   trackLine = TRUE, ...)
           {
-            if (!wig && trackLine) {
-              export.ucsc(object, con, "bed", wig, color, ...)
-            } else callNextMethod(object, con, wig, color)
+            variant <- match.arg(variant)
+            if (variant == "base" && trackLine) {
+              export.ucsc(object, con, "bed", variant, color, ...)
+            } else {
+              callNextMethod(object, con, variant, color)
+            }
           })
           
 setGeneric("import.bed",
-           function(con, wig = FALSE, trackLine = !wig, genome = "hg18", ...)
+           function(con, variant = c("base", "wig", "bed15"),
+                    trackLine = TRUE, genome = "hg18", ...)
            standardGeneric("import.bed"))
 
 setMethod("import.bed", "ANY",
-          function(con, wig, trackLine, genome)
+          function(con, variant = c("base", "wig", "bed15"), trackLine, genome)
           {
-            if (!wig && trackLine) {
+            variant <- match.arg(variant)
+            if (variant == "base" && trackLine) {
               ## check for a track line
               line <- "#"
               while(length(grep("^ *#", line))) # skip initial comments
@@ -92,7 +108,7 @@ setMethod("import.bed", "ANY",
                 return(import.ucsc(con, subformat = "bed", drop = TRUE,
                                    trackLine = FALSE, genome = genome))
             }
-            if (wig) {
+            if (variant == "wig") {
               bedClasses <- c("factor", "integer", "integer", "numeric")
               bedNames <- c("chrom", "start", "end", "score")
             } else {
@@ -102,34 +118,21 @@ setMethod("import.bed", "ANY",
                             "blockSizes", "blockStarts")
               bedClasses <- NA
             }
+            if (variant == "bed15")
+              bedNames <- c(bedNames, "expCount", "expIds", "expScores")
             ## FIXME: could read a single line to get ncols up-front,
             ## and thus specify all col classes
             ## FIXME: reading in 'as.is' to save memory,
-            ## XFactor would be useful here.
             bed <- DataFrame(read.table(con, colClasses = bedClasses,
                                         as.is = TRUE))
             colnames(bed) <- bedNames[seq_len(ncol(bed))]
-            if (!wig) { ## don't know how many columns, coerce here
+            if (variant != "wig") { ## don't know how many columns, coerce here
               bed$start <- as.integer(bed$start)
               bed$end <- as.integer(bed$end)
             } ## BED is 0-start, so add 1 to start
-            track <- GenomicData(IRanges(bed$start + 1, bed$end),
-                                 bed[,tail(colnames(bed), -3),drop=FALSE],
-                                 chrom = bed$chrom, genome = genome)
-            
-            ##featureData <- bed[,!(colnames(bed) == "score")]
-            ##if (!wig)
-            ##  rownames(featureData) <- make.names(bed$name, TRUE)
-            ##if (wig) {
-            ##  score <- bed$name
-            ##  featureData$name <- NULL
-            ##} else if (!is.null(bed$score))
-            ##score <- bed$score
-            ##else score <- rep(NA, nrow(featureData))
-            ##trackSet <- new("trackSet",
-            ##                featureData = trackFeatureData(featureData),
-            ##               dataVals = cbind(score = score), genome = genome)
-            track
+            GenomicData(IRanges(bed$start + 1, bed$end),
+                        bed[,tail(colnames(bed), -3),drop=FALSE],
+                        chrom = bed$chrom, genome = genome)
           })
 
 setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
@@ -139,7 +142,107 @@ setMethod("blocks", "RangedData",
           {
             if (is.null(x$blockStarts) || is.null(x$blockSizes))
               stop("'x' must have 'blockStarts' and 'blockSizes' columns")
-            starts <- unlist(strsplit(as.character(x$blockStarts), ",")) + 1
+            starts <- unlist(strsplit(as.character(x$blockStarts), ","))
+            starts <- as.integer(starts) + 1
             sizes <- unlist(strsplit(as.character(x$blockSizes), ","))
             split(IRanges(starts, width = sizes), x$name)
           })
+
+setGeneric("import.bed15Lines",
+           function(con, trackLine, genome = "hg18", ...)
+           standardGeneric("import.bed15Lines"))
+
+setMethod("import.bed15Lines", "ANY",
+          function(con, trackLine, genome)
+          {
+            bed <- import.bed(con, "bed15", genome = genome)
+            if (!nrow(bed))
+              return(bed)
+            ids <- strsplit(bed$expIds[1], ",", fixed=TRUE)[[1]]
+            expNames <- trackLine@expNames[as.integer(ids) + 1]
+            scores <- unlist(strsplit(bed$expScores, ",", fixed=TRUE),
+                             use.names=FALSE)
+            scores <- as.numeric(scores)
+            scores[scores == -10000] <- NA # stupid UCSC convention
+            scores <- split(scores, gl(length(expNames), 1, length(scores)))
+            names(scores) <- expNames
+            nonExpCols <- setdiff(colnames(bed),
+                                  c("expCount", "expScores", "expIds"))
+            bed <- bed[,nonExpCols]
+            for (samp in names(scores))
+              bed[[samp]] <- scores[[samp]]
+            bed
+          })
+
+setGeneric("import.bed15",
+           function(con, genome = "hg18", ...) standardGeneric("import.bed15"))
+
+setMethod("import.bed15", "ANY",
+          function(con, genome)
+          {
+            import.ucsc(con, "bed15", TRUE, genome = genome)
+          })
+
+setGeneric("export.bed15Lines",
+           function(object, con, trackLine, ...)
+           standardGeneric("export.bed15Lines"))
+
+setMethod("export.bed15Lines", "RangedData",
+          function(object, con, trackLine, ...)
+          {
+            expNames <- trackLine@expNames
+            object$expCount <- rep(length(expNames), nrow(object))
+            object$expIds <- rep(paste(seq_along(expNames)-1, collapse=","),
+                                 nrow(object))
+            scores <- as.list(unlist(values(object[,expNames])))
+            scores <- do.call("paste", c(scores, sep = ","))
+            scores <- gsub("NA", "-10000", scores, fixed=TRUE)
+            object$expScores <- scores
+            export.bed(object, con, "bed15")
+          })
+
+setGeneric("export.bed15",
+           function(object, con, expNames = character(), ...)
+           standardGeneric("export.bed15"))
+
+setMethod("export.bed15", "RangedData",
+          function(object, con, expNames, ...)
+          {
+            export.ucsc(object, con, "bed15", expNames = expNames, ...)
+          })
+
+setMethod("export.bed15", "UCSCData",
+          function(object, con, expNames, ...)
+          {
+            if (missing(expNames) && is(object@trackLine, "Bed15TrackLine"))
+              expNames <- object@trackLine@expNames
+            export.ucsc(object, con, "bed15", expNames = expNames, ...)
+          })
+
+setClass("Bed15TrackLine",
+         representation(expStep = "numeric", expScale = "numeric",
+                        expNames = "character"),
+         prototype(expStep = 0.5, expScale = 3.0), 
+         contains = "BasicTrackLine") # not sure which fields work
+
+setAs("Bed15TrackLine", "character",
+      function(from)
+      {
+        str <- as(as(from, "TrackLine"), "character")
+        paste(str, " type=array ",
+              " expScale=", from@expScale,
+              " expStep=", from@expStep,
+              " expNames=\"", paste(from@expNames, collapse=","), "\"",
+              sep = "")
+      })
+
+setAs("character", "Bed15TrackLine",
+      function(from)
+      {
+        line <- new("Bed15TrackLine", as(from, "TrackLine"))
+        vals <- ucscParsePairs(from)
+        line@expScale <- as.numeric(vals["expScale"])
+        line@expStep <- as.numeric(vals["expStep"])
+        line@expNames <- strsplit(vals["expNames"], ",", fixed=TRUE)[[1]]
+        line
+      })
