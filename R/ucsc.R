@@ -828,6 +828,8 @@ setMethod("export.ucsc", "UCSCData",
               }
             } else if (subformat == "bed15") {
               subformat <- "bed15Lines"
+              if (is.null(object@trackLine@expNames))
+                object@trackLine@expNames <- colnames(object)
               trackLine <- object@trackLine
             }
             writeLines(as(object@trackLine, "character"), con)

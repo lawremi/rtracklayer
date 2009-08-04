@@ -202,7 +202,7 @@ setMethod("export.bed15Lines", "RangedData",
           })
 
 setGeneric("export.bed15",
-           function(object, con, expNames = character(), ...)
+           function(object, con, expNames = NULL, ...)
            standardGeneric("export.bed15"))
 
 setMethod("export.bed15", "RangedData",
@@ -214,6 +214,7 @@ setMethod("export.bed15", "RangedData",
 setMethod("export.bed15", "UCSCData",
           function(object, con, expNames, ...)
           {
+            ## ensure we do not override existing track line parameter
             if (missing(expNames) && is(object@trackLine, "Bed15TrackLine"))
               expNames <- object@trackLine@expNames
             export.ucsc(object, con, "bed15", expNames = expNames, ...)
@@ -221,7 +222,7 @@ setMethod("export.bed15", "UCSCData",
 
 setClass("Bed15TrackLine",
          representation(expStep = "numeric", expScale = "numeric",
-                        expNames = "character"),
+                        expNames = "characterORNULL"),
          prototype(expStep = 0.5, expScale = 3.0), 
          contains = "BasicTrackLine") # not sure which fields work
 

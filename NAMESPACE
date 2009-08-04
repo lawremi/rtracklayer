@@ -4,7 +4,7 @@ importFrom("IRanges", DataFrame, IRanges, RangedDataList, score,
            RangedData, RangesList)
 
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
-                  Sequence, Annotated, DataTableORNULL)
+                  Sequence, Annotated, DataTableORNULL, characterORNULL)
 
 importMethodsFrom("BSgenome",  strand)
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
