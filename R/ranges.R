@@ -21,25 +21,6 @@ setMethod("chrom", "RangedData", function(x) {
   chrom(ranges(x))
 })
 
-## score: a common track column
-
-setGeneric("score<-", function(x, ..., value) standardGeneric("score<-"))
-
-setMethod("score", "RangedData", function(x) {
-  score <- x[["score"]]
-  if (is.null(score) && ncol(x) > 0 && is.numeric(x[[1]]))
-    score <- x[[1]]
-  score
-})
-setReplaceMethod("score", "RangedData", function(x, value) {
-  if (!is.numeric(value))
-    stop("score must be numeric")
-  if (length(value) != nrow(x))
-    stop("number of scores must equal the number of rows")
-  x[["score"]] <- value
-  x
-})
-
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Constructor.
 ###

@@ -1,6 +1,6 @@
 import(RCurl, XML)
 
-importFrom("IRanges", DataFrame, IRanges, RangedDataList, score,
+importFrom("IRanges", DataFrame, IRanges, RangedDataList, score, "score<-",
            RangedData, RangesList)
 
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
@@ -31,15 +31,16 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "tableName", "tableName<-",
               "ucscTrackModes", "ucscTrackModes<-", "coerce", "initialize",
               "show", "[", "ucscTableQuery",
-              "genome", "genome<-", "chrom", "range", "range<-", "score<-",
+              "genome", "genome<-", "chrom", "range", "range<-",
               "visible", "visible<-",
               ## from IRanges
-              "start", "end", "start<-", "end<-", "score", "as.data.frame",
+              "start", "end", "start<-", "end<-", "score", "score<-",
+              "as.data.frame",
               ## from BSgenome
               "strand"
               )
 
 export("genomeBrowsers", "start", "end", "strand",
-       "start<-", "end<-", "score",
+       "start<-", "end<-", "score", "score<-",
        "ranges", "GenomicRanges", "GenomicData", "IRanges",
        "RangedDataList", "as.data.frame")

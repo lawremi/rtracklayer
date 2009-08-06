@@ -6,9 +6,6 @@
 \alias{GenomicData}
 
 % accessors
-\alias{score<-}
-\alias{score<-,RangedData-method}
-\alias{score,RangedData-method}
 \alias{chrom}
 \alias{chrom,RangedData-method}
 \alias{genome}
@@ -36,16 +33,6 @@ refer to some other type of sequence). The universe refers to the genome.}
       the ranges in \code{x}; simple wrappers around
       \code{\link[IRanges]{universe}} and
       \code{\link[IRanges]{universe<-}}, respectively.
-    }
-    \item{}{\code{score(x)}: gets the column representing a "score" in
-      \code{x}, as a vector. This is the column named
-      \code{score}, or, if this does
-      not exist, the first column, if it is numeric. Otherwise,
-      \code{NULL} is returned.
-    }
-    \item{}{\code{score(x) <- value}: sets the column named \code{score}
-      to \code{value}, which should be a numeric vector of length equal
-      to the number of rows.
     }
   }
 }
