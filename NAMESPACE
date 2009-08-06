@@ -42,4 +42,4 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
 
 export("genomeBrowsers", "start", "end", "strand", "start<-", "end<-",
        "ranges", "GenomicRanges", "GenomicData", "IRanges",
-       "RangedDataList", "as.data.frame")
+       "RangedDataList", score, "score<-", "as.data.frame")
