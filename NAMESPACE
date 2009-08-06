@@ -1,7 +1,7 @@
 import(RCurl, XML)
 
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
-           RangesList)
+           score, "score<-", RangesList)
 
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL)
