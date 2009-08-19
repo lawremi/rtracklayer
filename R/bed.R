@@ -5,6 +5,16 @@ setGeneric("export.bed",
                     color = NULL, ...)
            standardGeneric("export.bed"))
 
+setMethod("export.bed", "ANY",
+          function(object, con, variant = c("base", "wig", "bed15"), color)
+          {
+            cl <- class(object)
+            object <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(object) == "try-error")
+              stop("cannot export object of class '", cl, "'")
+            export.bed(object, con=con, variant=variant, color=color)
+          })
+
 setMethod("export.bed", "RangedData",
           function(object, con, variant = c("base", "wig", "bed15"), color)
           {
@@ -187,6 +197,17 @@ setGeneric("export.bed15Lines",
            function(object, con, trackLine, ...)
            standardGeneric("export.bed15Lines"))
 
+
+setMethod("export.bed15Lines", "ANY",
+          function(object, con, trackLine, ...)
+          {
+            cl <- class(object)
+            object <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(object) == "try-error")
+              stop("cannot export object of class '", cl, "'")
+            export.bed15Lines(object, con=con, trackLine=trackLine, ...)
+          })
+
 setMethod("export.bed15Lines", "RangedData",
           function(object, con, trackLine, ...)
           {
@@ -204,6 +225,16 @@ setMethod("export.bed15Lines", "RangedData",
 setGeneric("export.bed15",
            function(object, con, expNames = NULL, ...)
            standardGeneric("export.bed15"))
+
+setMethod("export.bed15", "ANY",
+          function(object, con, expNames, ...)
+          {
+            cl <- class(object)
+            object <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(object) == "try-error")
+              stop("cannot export object of class '", cl, "'")
+            export.bed15(object, con=con, expNames=expNames, ...)
+          })
 
 setMethod("export.bed15", "RangedData",
           function(object, con, expNames, ...)

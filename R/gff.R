@@ -5,6 +5,16 @@ setGeneric("export.gff",
                     source = "rtracklayer")
            standardGeneric("export.gff"))
 
+setMethod("export.gff", "ANY",
+          function(object, con, version, source)
+          {
+            cl <- class(object)
+            object <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(object) == "try-error")
+              stop("cannot export object of class '", cl, "'")
+            export.gff(object, con=con, version=version, source=source)
+          })
+
 setMethod("export.gff", "RangedData",
           function(object, con, version, source)
 {

@@ -26,6 +26,16 @@ setGeneric("export.wigLines",
                     dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
                     ...)
            standardGeneric("export.wigLines"))
+setMethod("export.wigLines", "ANY",
+          function(object, con,
+                   dataFormat = c("auto", "bed", "variableStep", "fixedStep"))
+          {
+            cl <- class(object)
+            object <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(object) == "try-error")
+              stop("cannot export object of class '", cl, "'")
+            export.wigLines(object, con=con, dataFormat=dataFormat)
+          })
 setMethod("export.wigLines", "RangedData",
           function(object, con,
                    dataFormat = c("auto", "bed", "variableStep", "fixedStep"))

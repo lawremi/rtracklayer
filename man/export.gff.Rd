@@ -1,5 +1,6 @@
 \name{export-tracks}
 \alias{export.gff}
+\alias{export.gff,ANY-method}
 \alias{export.gff,RangedData-method}
 \alias{export.gff1}
 \alias{export.gff2}
@@ -8,10 +9,12 @@
 \alias{export.gff2,ANY-method}
 \alias{export.gff3,ANY-method}
 \alias{export.bed}
+\alias{export.bed,ANY-method}
 \alias{export.bed,RangedData-method}
 \alias{export.wig}
 \alias{export.wig,ANY-method}
 \alias{export.ucsc}
+\alias{export.ucsc,ANY-method}
 \alias{export.ucsc,RangedData-method}
 \alias{export.ucsc,RangedDataList-method}
 %- Also NEED an '\alias' for EACH other topic documented here.

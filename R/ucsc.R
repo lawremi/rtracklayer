@@ -768,6 +768,16 @@ trackLineClass <- function(subformat)
   else "BasicTrackLine"
 }
 
+setMethod("export.ucsc", "ANY",
+          function(object, con, subformat, ...)
+          {
+            cl <- class(object)
+            object <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(object) == "try-error")
+              stop("cannot export object of class '", cl, "'")
+            export.ucsc(object, con=con, subformat=subformat, ...)
+          })
+
 setMethod("export.ucsc", "RangedData",
           function(object, con, subformat, ...)
           {
