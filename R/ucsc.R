@@ -45,7 +45,6 @@ setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
                      {
                        form <- ucscForm(tracks, format, ...)
                        response <- ucscPost(object, "custom", form)
-                       browser()
 ### FIXME: need to check for error
                      })
               args <- list()
