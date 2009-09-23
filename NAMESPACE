@@ -43,3 +43,8 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
 export("genomeBrowsers", "start", "end", "strand", "start<-", "end<-",
        "ranges", "GenomicRanges", "GenomicData", "IRanges",
        "RangedDataList", score, "score<-", "as.data.frame")
+
+## the S4-connection compatibility layer
+exportClasses("connection",
+              "file", "url", "gzfile", "unz", "pipe", "sockconn",
+              "characterORconnection")

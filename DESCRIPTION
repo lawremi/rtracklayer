@@ -1,7 +1,7 @@
 Package: rtracklayer
 Title: R interface to genome browsers and their annotation tracks
-Version: 1.5.14
-Author: Michael Lawrence
+Version: 1.5.15
+Author: Michael Lawrence, Vince Carey, Robert Gentleman
 Depends: R (>= 2.7.0), methods, RCurl
 Imports: XML (>= 1.98-0), IRanges (>= 1.3.50), Biostrings (>= 2.11.14), BSgenome (>= 1.13.10)
 Suggests: humanStemCell, microRNA (>= 1.1.1), genefilter, limma, org.Hs.eg.db

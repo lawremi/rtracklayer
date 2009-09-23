@@ -1,9 +1,19 @@
-# import/export
+## import/export
+
+## Need to dispatch on S3 "connection"
+
+##setOldClass("connection")
+
+.connectionClasses <- c("file", "url", "gzfile", "bzfile", "unz", "pipe",
+                        "fifo", "sockconn")
+apply(cbind(.connectionClasses, "connection"), 1, setOldClass,
+      where = environment())
+setClassUnion("characterORconnection", c("character", "connection"))
 
 setGeneric("export",
            function(object, con, format, ...) standardGeneric("export"))
 
-setMethod("export", c(format = "character"),
+setMethod("export", c(con = "connection", format = "character"),
           function(object, con, format, ...)
           {
             fun <- try(match.fun(paste("export", format, sep=".")), TRUE)
@@ -43,7 +53,7 @@ setMethod("export", c(con = "character", format = "character"),
 setGeneric("import",
            function(con, format, text, ...) standardGeneric("import"))
 
-setMethod("import", c(format = "character"),
+setMethod("import", c("connection", "character"),
           function(con, format, text, ...)
           {
             fun <- try(match.fun(paste("import", format, sep=".")), TRUE)

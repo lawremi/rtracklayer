@@ -89,7 +89,8 @@ setClass("UCSCTableQuery",
                         table = "characterORNULL",
                         range = "RangesList",
                         outputType = "characterORNULL",
-                        NAMES = "characterORNULL"))
+                        NAMES = "characterORNULL",
+                        intersectTrack = "characterORNULL"))
 
 setMethod("show", "UCSCTableQuery",
           function(object) {
@@ -98,14 +99,17 @@ setMethod("show", "UCSCTableQuery",
               cat("table '", tableName, "' from ", sep = "")
             cat("track '", names(trackName(object)), "' within ", sep = "")
             range <- range(object)
-            chrom <- as.character(chrom(range))
+            chrom <- names(range)
             if (!length(chrom))
               chrom <- "*"
-            start <- start(range)
-            end <- end(range)
+            start <- unlist(start(range))
+            end <- unlist(end(range))
             if (!length(start))
               start <- end <- "*"
-            cat(genome(range), ":", chrom, ":", start, "-", end, "\n", sep="")
+            cat(genome(range), ":", chrom, ":", start, "-", end, sep="")
+            for (itrack in names(intersectTrack(object)))
+              cat(" &", itrack)
+            cat("\n")
           })
 
 setMethod("browserSession", "UCSCTableQuery", function(object) {
@@ -123,7 +127,7 @@ setReplaceMethod("browserSession", c("UCSCTableQuery", "UCSCSession"),
 setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
 setReplaceMethod("range", c("UCSCTableQuery", "RangesList"),
                  function(x, value) {
-                   x@range <- merge(browserSession(x), value)
+                   x@range <- mergeRange(browserSession(x), value)
                    x
                  })
 
@@ -134,7 +138,7 @@ setGeneric("trackName<-",
            function(x, ..., value) standardGeneric("trackName<-"))
 setReplaceMethod("trackName", "UCSCTableQuery", function(x, value)
                  {
-                   x@track <- normArgTrack(browserSession(x), value)
+                   x@track <- normArgTrack(value, x)
                    x
                  })
 
@@ -157,6 +161,16 @@ setReplaceMethod("names", "UCSCTableQuery", function(x, value) {
   x
 })
 
+setGeneric("intersectTrack", function(x, ...)
+           standardGeneric("intersectTrack"))
+setMethod("intersectTrack", "UCSCTableQuery", function(x) x@intersectTrack)
+setGeneric("intersectTrack<-", function(x, ..., value)
+           standardGeneric("intersectTrack<-"))
+setReplaceMethod("intersectTrack", "UCSCTableQuery", function(x, value) {
+  x@intersectTrack <- normArgTrack(value, x, TRUE)
+  x
+})
+
 ## not exported
 setGeneric("outputType", function(x, ...) standardGeneric("outputType"))
 setMethod("outputType", "UCSCTableQuery", function(x) x@outputType)
@@ -168,10 +182,13 @@ setReplaceMethod("outputType", "UCSCTableQuery",
                    x
                  })
 
-normArgTrack <- function(object, name) {
+normArgTrack <- function(name, trackids) {
+  if (is.null(name))
+    return(name)
   if (!isSingleString(name))
     stop("'track' must be a single string")
-  trackids <- trackNames(object)
+  if (is(trackids, "UCSCTableQuery"))
+    trackids <- trackNames(browserSession(object))
   if (!(name %in% trackids)) {
     mapped_name <- trackids[name]
     if (is.na(mapped_name))
@@ -183,8 +200,8 @@ normArgTrack <- function(object, name) {
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
-          function(x, track, range = GenomicRanges(), table = NULL,
-                   names = NULL)
+          function(x, track = NULL, range = GenomicRanges(), table = NULL,
+                   names = NULL, intersectTrack = NULL)
           {
             if (!is.null(table) && !isSingleString(table))
               stop("'table' must be a single string")
@@ -193,9 +210,13 @@ setMethod("ucscTableQuery", "UCSCSession",
             if (!is(names, "characterORNULL"))
               stop("'names' must be 'NULL' or a character vector")
             range <- mergeRange(range(x), range)
-            track <- normArgTrack(x, track)
+            if (!is.null(track) || !is.null(intersectTrack)) {
+              trackids <- trackNames(x)
+              track <- normArgTrack(track, trackids)
+              intersectTrack <- normArgTrack(intersectTrack, trackids)
+            }
             new("UCSCTableQuery", session = x, track = track, range = range,
-                table = table, NAMES = names)
+                table = table, NAMES = names, intersectTrack = intersectTrack)
           })
 
 ucscTableGet <- function(query, .parse = TRUE, ...)
@@ -253,8 +274,7 @@ setMethod("ucscTableSchema", "UCSCTableQuery",
 ### TODO: get the schema as a data.frame for the given track and table 
           })
 
-# export data from UCSC (internal utility)
-### FIXME: Needs to check for going over limit of data values (100000)
+## export data from UCSC (internal utility)
 ucscExport <- function(object)
 {
   get_hgsid <- function(node)
@@ -262,9 +282,27 @@ ucscExport <- function(object)
   hgsid <- NULL
   if (!is.null(names(object))) { # filter by names
     text <- paste(names(object), collapse = "\n")
-    ## ucscTableGet(object, FALSE, hgta_doUploadIdentifiers = "upload list")
     output <- ucscTableGet(object, hgta_doPastedIdentiers = "submit",
                            hgta_pastedIdentifiers = text)
+    hgsid <- get_hgsid(output)
+  }
+  if (!is.null(intersectTrack(object))) {
+    itrack <- intersectTrack(object)
+    iquery <- object
+    iquery@track <- itrack
+    itable <- tableNames(iquery, TRUE)
+    if (!length(itable))
+      stop("No table for intersection track: ", itrack)
+    if (length(itable) > 1) # for now anyway
+      itable <- itable[1]
+    output <- ucscTableGet(object, hgta_nextIntersectGroup = "allTracks",
+                           hgta_nextIntersectTrack = itrack,
+                           hgta_nextIntersectTable = itable,
+                           hgta_nextIntersectOp = "any",
+                           hgta_doIntersectSubmit = "submit",
+                           boolshad.hgta_nextInvertTable = "0",
+                           boolshad.hgta_nextInvertTable2 = "0",
+                           hgsid = hgsid)
     hgsid <- get_hgsid(output)
   }
   followup <- NULL
@@ -616,7 +654,7 @@ setAs("TrackLine", "character",
         str
       })
 
-setAs("character", "BasicTrackLine",
+setAs("BasicTrackLine", "character",
       function(from)
       {
         str <- as(as(from, "TrackLine"), "character")
@@ -785,7 +823,7 @@ setMethod("export.ucsc", "RangedData",
             export.ucsc(object, con, subformat, ...)
            })
 
-setMethod("export.ucsc", "UCSCData",
+setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
           function(object, con, subformat, ...)
           {
             subformat <- match.arg(subformat)
@@ -795,7 +833,8 @@ setMethod("export.ucsc", "UCSCData",
               subformat <- "bed"
               if (is(object@trackLine, "Bed15TrackLine"))
                 subformat <- "bed15"
-              else if (is.numeric(score(object)))
+              else if (!is(object@trackLine, "BasicTrackLine") &&
+                       is.numeric(score(object)))
                 subformat <- "wig"
             }
             if (subformat == "wig") {
@@ -847,7 +886,7 @@ setMethod("export.ucsc", "UCSCData",
           })
 
 # for GFF, the track line should go in a comment
-setMethod("export.gff", "UCSCData",
+setMethod("export.gff", c("UCSCData", "characterORconnection"),
           function(object, con, version, source)
           {
             gffComment(con, as(object@trackLine, "character"))
@@ -858,7 +897,7 @@ setGeneric("import.ucsc",
            function(con, subformat = c("auto", "gff1", "wig", "bed", "bed15"),
                     drop = FALSE, ...)
            standardGeneric("import.ucsc"))
-setMethod("import.ucsc", "ANY",
+setMethod("import.ucsc", "characterORconnection",
           function(con, subformat, drop = FALSE, ...)
           {
             subformat <- match.arg(subformat)
@@ -986,9 +1025,10 @@ setMethod("ucscForm", "RangesList",
               options(scipen = 100) # prevent use of scientific notation
               on.exit(options(scipen = scipen))
               position <- chrom
-              if (length(start(object)))
-                position <- paste(ucscNormSeqNames(chrom), ":", start(object),
-                                  "-", end(object), sep = "")
+              if (length(unlist(start(object))))
+                position <- paste(ucscNormSeqNames(chrom), ":",
+                                  unlist(start(object)), "-",
+                                  unlist(end(object)), sep = "")
               form <- c(form, position = position)
             }
             form

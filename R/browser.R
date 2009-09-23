@@ -71,10 +71,11 @@ setMethod("show", "BrowserView", function(object)
           {
             range <- range(object)
             cat(class(object), "of",
-                paste(names(range), ":", start(range), "-", end(range),
-                      sep = ""),
+                paste(names(range), ":", unlist(start(range)), "-",
+                      unlist(end(range)), sep = ""),
                 "\n")
-            cat(IRanges:::labeledLine("trackNames", names(trackNames(object))))
+            nms <- paste("'", names(trackNames(object)), "'", sep = "")
+            cat(IRanges:::labeledLine("trackNames", nms))
           })
 
 setGeneric("track<-",

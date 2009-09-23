@@ -36,7 +36,7 @@ setMethod("export.wigLines", "ANY",
               stop("cannot export object of class '", cl, "'")
             export.wigLines(object, con=con, dataFormat=dataFormat)
           })
-setMethod("export.wigLines", "RangedData",
+setMethod("export.wigLines", c("RangedData", "characterORconnection"),
           function(object, con,
                    dataFormat = c("auto", "bed", "variableStep", "fixedStep"))
           {
@@ -108,7 +108,7 @@ setMethod("import.wig", "ANY",
 
 setGeneric("import.wigLines",
            function(con, genome = "hg18", ...) standardGeneric("import.wigLines"))
-setMethod("import.wigLines", "ANY",
+setMethod("import.wigLines", "characterORconnection",
           function(con, genome)
           {
             lines <- readLines(con, warn = FALSE)

@@ -5,6 +5,7 @@ setGeneric("export.bed",
                     color = NULL, ...)
            standardGeneric("export.bed"))
 
+
 setMethod("export.bed", "ANY",
           function(object, con, variant = c("base", "wig", "bed15"), color)
           {
@@ -15,7 +16,7 @@ setMethod("export.bed", "ANY",
             export.bed(object, con=con, variant=variant, color=color)
           })
 
-setMethod("export.bed", "RangedData",
+setMethod("export.bed", c("RangedData", "characterORconnection"),
           function(object, con, variant = c("base", "wig", "bed15"), color)
           {
             variant <- match.arg(variant)
@@ -43,10 +44,12 @@ setMethod("export.bed", "RangedData",
               if (is.null(color))
                 color <- object$color
               if (is.null(color) && !is.null(blockCount))
-                color <- "black" ## blocks require color
-              if (!is.null(color)) {
+                color <- "0" ## blocks require color
+              else if (!is.null(color)) {
+                nacol <- is.na(color)
                 colmat <- col2rgb(color)
                 color <- paste(colmat[1,], colmat[2,], colmat[3,], sep = ",")
+                color[nacol] <- "0"
               }
               thickStart <- object$thickStart
               thickEnd <- object$thickEnd ## color requires thick ranges
@@ -104,7 +107,7 @@ setGeneric("import.bed",
                     trackLine = TRUE, genome = "hg18", ...)
            standardGeneric("import.bed"))
 
-setMethod("import.bed", "ANY",
+setMethod("import.bed", "connection",
           function(con, variant = c("base", "wig", "bed15"), trackLine, genome)
           {
             variant <- match.arg(variant)
@@ -140,6 +143,16 @@ setMethod("import.bed", "ANY",
               bed$start <- as.integer(bed$start)
               bed$end <- as.integer(bed$end)
             } ## BED is 0-start, so add 1 to start
+            color <- bed$color
+            if (is.character(color)) { # could be NULL
+              spec <- color != "0"
+              cols <- unlist(strsplit(color[spec], ",", fixed=TRUE),
+                             use.names=FALSE)
+              cols <- matrix(as.integer(cols), 3)
+              color <- rep(NA, nrow(bed))
+              color[spec] <- rgb(cols[1,], cols[2,], cols[3,], max = 255)
+              bed$color <- color              
+            }
             GenomicData(IRanges(bed$start + 1, bed$end),
                         bed[,tail(colnames(bed), -3),drop=FALSE],
                         chrom = bed$chrom, genome = genome)

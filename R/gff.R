@@ -15,7 +15,7 @@ setMethod("export.gff", "ANY",
             export.gff(object, con=con, version=version, source=source)
           })
 
-setMethod("export.gff", "RangedData",
+setMethod("export.gff", c("RangedData", "characterORconnection"),
           function(object, con, version, source)
 {
   version <- match.arg(version)
@@ -100,7 +100,7 @@ setGeneric("import.gff",
            function(con, version = c("1", "2", "3"), genome = "hg18")
            standardGeneric("import.gff"))
            
-setMethod("import.gff", "ANY",
+setMethod("import.gff", "characterORconnection",
           function(con, version = c("1", "2", "3"), genome)
 {
   versionMissing <- missing(version)
