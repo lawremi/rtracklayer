@@ -764,7 +764,8 @@ ucscNormSeqNames <- function(nms) {
 
 setAs("RangedData", "UCSCData", function(from) {
   names(from) <- ucscNormSeqNames(names(from))
-  new("UCSCData", from)
+  lineType <- if (is.numeric(score(from))) "WigTrackLine" else "BasicTrackLine"
+  new("UCSCData", from, trackLine = new(lineType))
 })
 
 # the 'ucsc' format is a meta format with a track line followed by
@@ -833,8 +834,7 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
               subformat <- "bed"
               if (is(object@trackLine, "Bed15TrackLine"))
                 subformat <- "bed15"
-              else if (!is(object@trackLine, "BasicTrackLine") &&
-                       is.numeric(score(object)))
+              else if (is(object@trackLine, "WigTrackLine"))
                 subformat <- "wig"
             }
             if (subformat == "wig") {
