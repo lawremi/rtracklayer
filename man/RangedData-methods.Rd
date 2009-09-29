@@ -31,8 +31,8 @@ refer to some other type of sequence). The universe refers to the genome.}
       \code{genome(x)}, \code{genome(x) <- value}: Gets or sets the
       genome (a single string or \code{NULL}) for
       the ranges in \code{x}; simple wrappers around
-      \code{\link[IRanges]{universe}} and
-      \code{\link[IRanges]{universe<-}}, respectively.
+      \code{\link[IRanges:RangedDataList-class]{universe}} and
+      \code{\link[IRanges:RangedDataList-class]{universe<-}}, respectively.
     }
   }
 }
@@ -43,7 +43,7 @@ refer to some other type of sequence). The universe refers to the genome.}
       \code{GenomicData(ranges, ..., strand = NULL, chrom = NULL,
         genome = NULL)}: Constructs a \code{RangedData} instance with
       the given \code{ranges} and variables in \code{...} (see the
-      \code{\link[IRanges]{RangedData}} constructor). If
+      \code{\link[IRanges:RangedData-class]{RangedData}} constructor). If
       non-\code{NULL}, \code{strand} specifies the strand of each
       range. It should be a character vector or factor of length equal to
       that of \code{ranges}. All values should be either \code{-}, \code{+},

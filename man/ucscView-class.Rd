@@ -29,9 +29,11 @@ Class \code{"\linkS4class{BrowserView}"}, directly.
     \item{\code{\link{activeView}(object)}}{ Obtains a logical
       indicating whether this view is the active view. }
     \item{\code{\link{range}(object)}}{ Obtains the
-      \code{\link[BSgenome:RangesList-methods]{RangesList}} displayed by this view. }
+      \code{\link[IRanges:RangesList-class]{RangesList}} displayed by
+      this view. } 
     \item{\code{\link{range}(object) <- value}}{ Sets the
-      \code{\link[BSgenome:RangesList-methods]{RangesList}} displayed by this view. }
+      \code{\link[IRanges:RangesList-class]{RangesList}} displayed by
+      this view. } 
     \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks in this view. }
     \item{\code{\link{trackNames}(object) <- value}}{ Sets the visible

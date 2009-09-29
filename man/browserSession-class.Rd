@@ -36,7 +36,7 @@
       Returns the \code{\linkS4class{BrowserView}} that is currently
       active in the session.}
     \item{\code{\link{range}(x, ...)}}{
-      Gets the \code{\link[BSgenome:RangesList-methods]{RangesList}}
+      Gets the \code{\link[IRanges:RangesList-class]{RangesList}}
       representing the range of the genome currently displayed by the
       browser (i.e. the range shown by the active view) or a default
       value (possibly \code{NULL}) if no views exist.

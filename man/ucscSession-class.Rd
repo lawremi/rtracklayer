@@ -49,17 +49,17 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
     \item{\code{\link{browserViews}}(object)}{ Gets the
       \code{\linkS4class{BrowserView}} instances for this session. }
     \item{\code{\link{range}}(x)}{ Gets the
-      \code{\link[BSgenome:RangesList-methods]{RangesList}} last
+      \code{\link[IRanges:RangesList-class]{RangesList}} last
       displayed in this session. }
-    \item{\code{\link[BSgenome:genome]{genome}(x)}}{Gets the genome
-      identifier of the session, i.e. \code{genome(range(x))}.}
+    \item{\code{\link[rtracklayer:RangedData-methods]{genome}(x)}}{Gets
+      the genome identifier of the session, i.e. \code{genome(range(x))}.}
     \item{\code{range(x) <- value}}{ Sets \code{value}, a
       \code{RangesList}, as the range of session \code{x}. Note that
       this setting only lasts until a view is created or
       manipulated. This mechanism is useful, for example, when treating the UCSC
       browser as a database, rather than a genome viewer.}
-    \item{\code{\link[BSgenome:genome<-]{genome}(x) <- value}}{Sets the
-      genome identifier on the range of session \code{x}.}
+    \item{\code{\link[Rtracklayer:RangedData-methods]{genome}(x) <- value}}{ 
+      Sets the genome identifier on the range of session \code{x}.}
     \item{\code{\link[BSgenome]{getSeq}(object, range, track = "Assembly")}}{
       Gets the sequence in \code{range} and \code{track}.
     }

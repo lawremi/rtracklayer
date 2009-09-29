@@ -4,7 +4,7 @@
 \title{ Retrieving a genome sequence }
 \description{
   Methods for retrieving the sequence of a
-  \code{\link[BSgenome:RangesList-methods]{RangesList}} from an object.
+  \code{\link[IRanges:RangesList-class]{RangesList}} from an object.
 }
 \section{Methods}{
   The following methods are defined by \pkg{rtracklayer} for

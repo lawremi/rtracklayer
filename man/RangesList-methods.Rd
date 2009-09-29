@@ -36,8 +36,8 @@ names) of \code{RangesList} are the chromosome names. The
       \code{genome(x)}, \code{genome(x) <- value}: Gets or sets the
       genome (a single string or \code{NULL}) for
       the ranges in \code{x}; simple wrappers around
-      \code{\link[IRanges]{universe}} and
-      \code{\link[IRanges]{universe<-}}, respectively.
+      \code{\link[IRanges:RangesList-class]{universe}} and
+      \code{\link[IRanges:RangesList-class]{universe<-}}, respectively.
     }
   }
 }

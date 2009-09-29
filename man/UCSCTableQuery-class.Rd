@@ -61,7 +61,7 @@
       \code{NULL}, in which case the behavior depends on how the query
       is executed, see below.
     }
-    \item{range}{A \code{\link[BSgenome:RangesList-methods]{RangesList}}
+    \item{range}{A \code{\link[IRanges:RangesList-class]{RangesList}}
       indicating the portion of the table to retrieve, in genome
       coordinates. The \code{genome} indicated by the \code{RangesList}
       also determines which tracks are available and must always be
