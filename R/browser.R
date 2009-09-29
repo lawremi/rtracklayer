@@ -143,6 +143,13 @@ setMethod("range", "BrowserSession",
 
 setGeneric("range<-", function(x, ..., value) standardGeneric("range<-"))
 
+## just the genome, for convenience
+setMethod("genome", "BrowserSession", function(x) genome(range(x)))
+setReplaceMethod("genome", "BrowserSession", function(x, value) {
+  genome(range(x)) <- value
+  x
+})
+
 # high-level entry point
 setGeneric("browseGenome",
            function(object, ...)
@@ -206,3 +213,4 @@ setMethod("browserSession", "BrowserView", function(object) object@session)
 # load a sequence into the browser
 setGeneric("sequence<-", function(object, name, ..., value)
            standardGeneric("sequence<-"))
+

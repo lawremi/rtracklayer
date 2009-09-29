@@ -74,8 +74,6 @@ setReplaceMethod("range", c("UCSCSession", "RangesList"),
                    x
                  })
 
-## just the genome, for convenience
-setMethod("genome", "UCSCSession", function(x) genome(range(x)))
 setReplaceMethod("genome", "UCSCSession",
                  function(x, value) {
                    ucscGet(x, "cart", list(db = value))
@@ -1006,6 +1004,18 @@ setMethod("ucscTrackModes", "ucscTracks",
             names(modes) <- object@ids
             ucscTrackModes(modes, labels)
           })
+
+## List available UCSC genomes
+
+ucscGenomes <- function() {
+  doc <- httpGet("http://genome.ucsc.edu/goldenPath/releaseLog.html")
+  expr <- "//ul/li/a[@class = 'toc' and @href != '#recent']/text()"
+  labs <- sapply(getNodeSet(doc, expr), xmlValue)
+  dates <- sub(".* (.* .*) .*$", "\\1", labs)
+  dbs <- sub(".*\\((.*)\\)", "\\1", labs)
+  nms <- sub("(.*) .* .* .*$", "\\1", labs)
+  data.frame(db = dbs, organism = nms, date = dates)
+}
 
 # form creation
 
