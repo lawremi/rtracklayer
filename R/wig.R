@@ -51,7 +51,7 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
             scipen <- getOption("scipen")
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
-            byChrom <- function(chromData, formatOnly) {
+            doBlock <- function(chromData, formatOnly) {
               starts <- start(chromData)
               ends <- end(chromData)
               if (!all(tail(starts, -1) - head(ends, -1) > 0))
@@ -62,6 +62,7 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
               if (length(starts) == 1)
                 steps <- 0
               else steps <- diff(starts)
+              ## heuristic: split into blocks with fixed span
               fixedSpan <- all(spans[1] == spans)
               fixedStep <- all(steps[1] == steps)
               dataFormat <- "bed"
@@ -69,7 +70,8 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
                 dataFormat <- "variableStep"
                 if (fixedStep)
                   dataFormat <- "fixedStep"
-              }
+              } else if ((3 * length(unique(spans))) < length(spans))
+                  return(lapply(split(chromData, spans), doBlock, formatOnly))
               if (formatOnly)
                 return(dataFormat)
               cat(dataFormat, file = con)
@@ -92,10 +94,10 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
             }
             dataFormat <- match.arg(dataFormat)
             if (dataFormat == "auto")
-              dataFormat <- lapply(object, byChrom, TRUE)
+              dataFormat <- unlist(lapply(object, doBlock, TRUE))
             if (any(dataFormat == "bed")) # one BED, all BED
               export.bed(object, con, variant = "wig")
-            else lapply(object, byChrom, FALSE) # else, mix variable/fixed
+            else lapply(object, doBlock, FALSE) # else, mix variable/fixed
           })
 
 setGeneric("import.wig",
