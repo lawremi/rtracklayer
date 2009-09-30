@@ -76,7 +76,7 @@ setReplaceMethod("range", c("UCSCSession", "RangesList"),
 
 setReplaceMethod("genome", "UCSCSession",
                  function(x, value) {
-                   ucscGet(x, "cart", list(db = value))
+                   ucscGet(x, "gateway", list(db = value))
                    x
                  })
 
@@ -955,7 +955,7 @@ setMethod("range", "ucscCart",
           {
             pos <- x["position"]
             posSplit <- strsplit(pos, ":")[[1]]
-            range <- as.numeric(strsplit(posSplit[2], "-")[[1]])
+            range <- as.numeric(gsub(",", "", strsplit(posSplit[2], "-")[[1]]))
             GenomicRanges(range[1], range[2], posSplit[1], x[["db"]])
           })
             
