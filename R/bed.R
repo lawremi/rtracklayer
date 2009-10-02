@@ -10,13 +10,13 @@ setMethod("export.bed", "ANY",
           function(object, con, variant = c("base", "bedGraph", "bed15"), color)
           {
             cl <- class(object)
-            object <- try(as(object, "RangedData"), silent = TRUE)
-            if (class(object) == "try-error") {
-              object <- try(as(object, "RangedDataList"), silent = TRUE)
-              if (class(object) == "try-error")
+            track <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(track) == "try-error") {
+              track <- try(as(object, "RangedDataList"), silent = TRUE)
+              if (class(track) == "try-error")
                 stop("cannot export object of class '", cl, "'")
             }
-            export.bed(object, con=con, variant=variant, color=color)
+            export.bed(track, con=con, variant=variant, color=color)
           })
 
 setMethod("export.bed", c("RangedData", "characterORconnection"),

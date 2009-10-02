@@ -910,13 +910,13 @@ setMethod("export.ucsc", "ANY",
           function(object, con, subformat, ...)
           {
             cl <- class(object)
-            object <- try(as(object, "RangedData"), silent = TRUE)
-            if (class(object) == "try-error") {
-              object <- try(as(object, "RangedDataList"), silent = TRUE)
-              if (class(object) == "try-error")
+            track <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(track) == "try-error") {
+              track <- try(as(object, "RangedDataList"), silent = TRUE)
+              if (class(track) == "try-error")
                 stop("cannot export object of class '", cl, "'")
             }
-            export.ucsc(object, con=con, subformat=subformat, ...)
+            export.ucsc(track, con=con, subformat=subformat, ...)
           })
 
 setMethod("export.ucsc", "RangedData",
