@@ -11,7 +11,7 @@
 Objects can be created by calls of the form \code{new("BasicTrackLine",
   ...)} or parsed from a character vector track line with \code{as(text,
   "BasicTrackLine")} or converted from a
-\code{\linkS4class{WigTrackLine}} using \code{as(wig, "BasicTrackLine")}.
+\code{\linkS4class{GraphTrackLine}} using \code{as(wig, "BasicTrackLine")}.
 }
 \section{Slots}{
   \describe{
@@ -50,8 +50,8 @@ Class \code{"\linkS4class{TrackLine}"}, directly.
   \describe{
     \item{as(object, "character")}{Export line to its string
       representation.}
-    \item{as(object, \code{"\linkS4class{WigTrackLine}"})}{Convert this
-      line to a WIG track line, using defaults for slots not held
+    \item{as(object, \code{"\linkS4class{GraphTrackLine}"})}{Convert this
+      line to a graph track line, using defaults for slots not held
       in common.}
   }
 }
@@ -61,6 +61,6 @@ Class \code{"\linkS4class{TrackLine}"}, directly.
 \author{ Michael Lawrence }
 
 \seealso{
-  \code{\linkS4class{WigTrackLine}} for Wiggle tracks.
+  \code{\linkS4class{GraphTrackLine}} for Wiggle/bedGraph tracks.
 }
 \keyword{classes}

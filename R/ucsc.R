@@ -740,6 +740,97 @@ setAs("character", "BasicTrackLine",
         line
       })
 
+
+setClass("GraphTrackLine",
+         representation(altColor = "integer", autoScale = "logical",
+                        gridDefault = "logical", maxHeightPixels = "numeric",
+                        graphType = "character", viewLimits = "numeric",
+                        yLineMark = "numeric", yLineOnOff = "logical",
+                        windowingFunction = "character",
+                        smoothingWindow = "numeric", type = "character"),
+         contains = "TrackLine")
+
+setAs("GraphTrackLine", "character",
+      function(from)
+      {
+        str <- as(as(from, "TrackLine"), "character")
+        type <- if (from@type == "wig") "wiggle_0" else "bedGraph"
+        str <- paste(str, " type=", type, sep = "")
+        color <- from@altColor
+        if (length(color))
+          str <- paste(str, " altColor=", paste(color, collapse=","), sep="")
+        autoScale <- from@autoScale
+        if (length(autoScale) && !autoScale)
+          str <- paste(str, "autoScale=off")
+        gridDefault <- from@gridDefault
+        if (length(gridDefault) && gridDefault)
+          str <- paste(str, "gridDefault=On")
+        maxHeightPixels <- from@maxHeightPixels
+        if (length(maxHeightPixels) && maxHeightPixels)
+          str <- paste(str, " maxHeightPixels=",
+                       paste(maxHeightPixels, collapse=":"), sep = "")
+        graphType <- from@graphType
+        if (length(graphType))
+          str <- paste(str, " graphType=", graphType, sep = "")
+        viewLimits <- from@viewLimits
+        if (length(viewLimits))
+          str <- paste(str, " viewLimits=", paste(viewLimits, collapse = ":"),
+                       sep = "")
+        yLineMark <- from@yLineMark
+        if (length(yLineMark))
+          str <- paste(str, " yLineMark=", yLineMark, sep = "")
+        yLineOnOff <- from@yLineOnOff
+        if (length(yLineOnOff) && yLineOnOff)
+          str <- paste(str, "yLineOnOff=On")
+        windowingFunction <- from@windowingFunction
+        if (length(windowingFunction))
+          str <- paste(str, " windowingFunction=", windowingFunction, sep = "")
+        smoothingWindow <- from@smoothingWindow
+        if (length(smoothingWindow))
+          str <- paste(str, " smoothingWindow=", smoothingWindow, sep = "")
+        str
+      })
+
+setAs("character", "GraphTrackLine",
+      function(from)
+      {
+        line <- new("GraphTrackLine", as(from, "TrackLine"))
+        vals <- ucscParsePairs(from)
+        type <- vals["type"]
+        if (!(type %in% c("wiggle_0", "bedGraph")))
+          stop("Unknown graph track type: ", type)
+        line@type <- if (type == "wiggle_0") "wig" else "bedGraph"
+        if (!is.na(vals["altColor"]))
+          line@altColor <- as.integer(strsplit(vals["altColor"], ",")[[1]])
+        if (!is.na(vals["autoScale"]))
+          line@autoScale <- vals["autoScale"] == "On"
+        if (!is.na(vals["gridDefault"]))
+          line@gridDefault <- vals["gridDefault"] == "On"
+        if (!is.na(vals["maxHeightPixels"]))
+          line@maxHeightPixels <-
+            as.numeric(strsplit(vals["maxHeightPixels"], ":")[[1]])
+        if (!is.na(vals["graphType"]))
+          line@graphType <- vals["graphType"]
+        if (!is.na(vals["viewLimits"]))
+          line@viewLimits <-
+            as.numeric(strsplit(vals["viewLimits"], ":")[[1]])
+        if (!is.na(vals["yLineMark"]))
+          line@yLineMark <- as.numeric(vals["yLineMark"])
+        if (!is.na(vals["yLineOnOff"]))
+          line@yLineOnOff <- vals["yLineOnOff"] == "On"
+        if (!is.na(vals["windowingFunction"]))
+          line@windowingFunction <- vals["windowingFunction"]
+        if (!is.na(vals["smoothingWindow"]))
+          line@smoothingWindow <- as.numeric(vals["smoothingWindow"])
+        line
+      })
+
+setAs("BasicTrackLine", "GraphTrackLine",
+      function(from) new("GraphTrackLine", from))
+
+setAs("GraphTrackLine", "BasicTrackLine",
+      function(from) new("BasicTrackLine", from))
+
 setClass("UCSCData",
          representation(trackLine = "TrackLine"),
          prototype(trackLine = new("BasicTrackLine")),
@@ -762,22 +853,34 @@ ucscNormSeqNames <- function(nms) {
 
 setAs("RangedData", "UCSCData", function(from) {
   names(from) <- ucscNormSeqNames(names(from))
-  lineType <- if (is.numeric(score(from))) "WigTrackLine" else "BasicTrackLine"
-  new("UCSCData", from, trackLine = new(lineType))
+  if (is.numeric(score(from))) { # have numbers, let's plot them
+    r <- ranges(from)[[1]] # heuristic only needs first chromosome
+    type <- "bedGraph"
+    ## decide whether compression is a good idea
+    steps <- diff(sort(start(r)))
+    if (length(unique(steps)) == 1 || # fixed-step makes sense
+        ((3 * length(unique(width(r)))) < length(r) && # makes sense wrt size
+         mean(steps) < 100)) # dense enough for UCSC efficiency
+      type <- "wig"
+    line <- new("GraphTrackLine", type = type)
+  } else line <- new("BasicTrackLine")
+  new("UCSCData", from, trackLine = line)
 })
 
 # the 'ucsc' format is a meta format with a track line followed by
-# tracks formatted as 'wig', 'bed', 'gff', 'gtf', or 'psl'.
-# currently, only gff and wig are supported
+# tracks formatted as 'wig', 'bed', 'bed15', 'bedGraph', 'gff', 'gtf', or 'psl'.
+# 'gtf' and 'psl' are not yet supported
 setGeneric("export.ucsc",
            function(object, con,
-                    subformat = c("auto", "gff1", "wig", "bed", "bed15"),
+                    subformat = c("auto", "gff1", "wig", "bed", "bed15",
+                      "bedGraph"),
                     ...)
            standardGeneric("export.ucsc"))
 
 setMethod("export.ucsc", "RangedDataList",
           function(object, con,
-                   subformat = c("auto", "gff1", "wig", "bed", "bed15"),
+                   subformat = c("auto", "gff1", "wig", "bed", "bed15",
+                     "bedGraph"),
                    trackNames, ...)
           {
             subformat <- match.arg(subformat)
@@ -794,11 +897,10 @@ setMethod("export.ucsc", "RangedDataList",
                           ...)
           })
 
-# wig is a special case (requires a special track line)
 trackLineClass <- function(subformat)
 {
-  if (subformat == "wig")
-    "WigTrackLine"
+  if (subformat == "wig" || subformat == "bedGraph")
+    "GraphTrackLine"
   else if (subformat == "bed15")
     "Bed15TrackLine"
   else "BasicTrackLine"
@@ -809,8 +911,11 @@ setMethod("export.ucsc", "ANY",
           {
             cl <- class(object)
             object <- try(as(object, "RangedData"), silent = TRUE)
-            if (class(object) == "try-error")
-              stop("cannot export object of class '", cl, "'")
+            if (class(object) == "try-error") {
+              object <- try(as(object, "RangedDataList"), silent = TRUE)
+              if (class(object) == "try-error")
+                stop("cannot export object of class '", cl, "'")
+            }
             export.ucsc(object, con=con, subformat=subformat, ...)
           })
 
@@ -832,10 +937,11 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
               subformat <- "bed"
               if (is(object@trackLine, "Bed15TrackLine"))
                 subformat <- "bed15"
-              else if (is(object@trackLine, "WigTrackLine"))
-                subformat <- "wig"
+              else if (is(object@trackLine, "GraphTrackLine"))
+                subformat <- object@trackLine@type
             }
-            if (subformat == "wig") {
+            graphFormat <- subformat %in% c("wig", "bedGraph")
+            if (graphFormat) {
               strand <- as.character(strand(object))
               strand[is.na(strand)] <- "NA"
               isStrandDisjoint <- function(track) {
@@ -847,7 +953,7 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
               {
                 if (auto)
                   subformat <- "bed"
-                else stop("Track not compatible with WIG format: ",
+                else stop("Track not compatible with WIG/bedGraph: ",
                           "Overlapping features must be on separate strands",
                           " and every feature width must be positive")
               }
@@ -855,13 +961,16 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
             lineClass <- trackLineClass(subformat)
             if (!is(object@trackLine, lineClass))
               object@trackLine <- as(object@trackLine, lineClass)
+            if (is(object@trackLine, "GraphTrackLine"))
+              object@trackLine@type <- subformat
             args <- list(...)
             lineArgs <- names(args) %in% slotNames(lineClass)
             for (argName in names(args)[lineArgs])
               slot(object@trackLine, argName) <- args[[argName]]
             trackLine <- NULL
-            if (subformat == "wig") {
-              subformat <- "wigLines"
+            if (graphFormat) {
+              subformatOrig <- subformat
+              subformat <- paste(subformat, "Lines", sep = "")
               strand <- as.character(strand(object))
               strand[is.na(strand)] <- "NA"
               if (!all(strand[1] == strand)) {
@@ -869,7 +978,7 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
                 strand <- factor(strand)
                 name <- paste(object@trackLine@name, nameMap[levels(strand)])
                 tracks <- split(object, strand)
-                export.ucsc(tracks, con, "wig", name, ...)
+                export.ucsc(tracks, con, subformatOrig, name, ...)
                 return()
               }
             } else if (subformat == "bed15") {
@@ -892,7 +1001,8 @@ setMethod("export.gff", c("UCSCData", "characterORconnection"),
           })
 
 setGeneric("import.ucsc",
-           function(con, subformat = c("auto", "gff1", "wig", "bed", "bed15"),
+           function(con, subformat = c("auto", "gff1", "wig", "bed", "bed15",
+                           "bedGraph"),
                     drop = FALSE, ...)
            standardGeneric("import.ucsc"))
 setMethod("import.ucsc", "characterORconnection",
@@ -907,8 +1017,8 @@ setMethod("import.ucsc", "characterORconnection",
             makeTrackSet <- function(i)
             {
               line <- as(trackLines[i], trackLineClass(subformat))
-              if (subformat == "wig")
-                subformat <- "wigLines"
+              if (subformat == "wig" || subformat == "bedGraph")
+                subformat <- paste(subformat, "Lines", sep = "")
               text <- lines[starts[i]:ends[i]]
               if (subformat == "bed15") # need to pass track line
                 trackSet <- import(format = "bed15Lines", text = text,

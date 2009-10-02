@@ -1,20 +1,13 @@
 # import/export of wiggle (WIG) format
 
-setGeneric("import.wig", function(con, ...) standardGeneric("import.wig"))
-setMethod("import.wig", "ANY",
-          function(con)
-          {
-            import.ucsc(con, "wig")
-          })
-
 setGeneric("export.wig",
            function(object, con,
-                    dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
+                    dataFormat = c("auto", "variableStep", "fixedStep"),
                     ...)
            standardGeneric("export.wig"))
 setMethod("export.wig", "ANY",
           function(object, con,
-                   dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
+                   dataFormat = c("auto", "variableStep", "fixedStep"),
                    ...)
           {
             export.ucsc(object, con, "wig", dataFormat = match.arg(dataFormat),
@@ -23,22 +16,13 @@ setMethod("export.wig", "ANY",
 
 setGeneric("export.wigLines",
            function(object, con,
-                    dataFormat = c("auto", "bed", "variableStep", "fixedStep"),
+                    dataFormat = c("auto", "variableStep", "fixedStep"),
                     ...)
            standardGeneric("export.wigLines"))
-setMethod("export.wigLines", "ANY",
-          function(object, con,
-                   dataFormat = c("auto", "bed", "variableStep", "fixedStep"))
-          {
-            cl <- class(object)
-            object <- try(as(object, "RangedData"), silent = TRUE)
-            if (class(object) == "try-error")
-              stop("cannot export object of class '", cl, "'")
-            export.wigLines(object, con=con, dataFormat=dataFormat)
-          })
+
 setMethod("export.wigLines", c("RangedData", "characterORconnection"),
           function(object, con,
-                   dataFormat = c("auto", "bed", "variableStep", "fixedStep"))
+                   dataFormat = c("auto", "variableStep", "fixedStep"))
           {
             if (any(is.na(score(object))))
               stop("WIG cannot encode missing values")
@@ -47,11 +31,10 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
             ## df <- df[!is.na(df[[vals]]),] # no NAs
             ## df <- df[order(df$start),]
             ## attempt to use most efficient format if not specified
-### FIXME: If we need bed, use bedGraph format
             scipen <- getOption("scipen")
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
-            doBlock <- function(chromData, formatOnly) {
+            doBlock <- function(chromData) {
               starts <- start(chromData)
               ends <- end(chromData)
               if (!all(tail(starts, -1) - head(ends, -1) > 0))
@@ -65,15 +48,13 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
               ## heuristic: split into blocks with fixed span
               fixedSpan <- all(spans[1] == spans)
               fixedStep <- all(steps[1] == steps)
-              dataFormat <- "bed"
-              if (fixedSpan) {
+              if (dataFormat == "auto") {
                 dataFormat <- "variableStep"
                 if (fixedStep)
                   dataFormat <- "fixedStep"
-              } else if ((3 * length(unique(spans))) < length(spans))
-                  return(lapply(split(chromData, spans), doBlock, formatOnly))
-              if (formatOnly)
-                return(dataFormat)
+              }
+              if (!fixedSpan) ## split into blocks to make spans uniform
+                return(lapply(split(chromData, spans), doBlock))
               cat(dataFormat, file = con)
               cat(" chrom=", as.character(space(chromData))[1],
                   file = con, sep = "")
@@ -82,7 +63,7 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
                 data <- cbind(starts, data)
               else {
                 if (!fixedStep)
-                  stop("Format 'fixedStep' invalid: step not uniform")
+                  stop("Step not uniform: consider variableStep")
                 cat(" start=", starts[1], file = con, sep = "")
                 cat(" step=", steps[1], file = con, sep = "")
               }
@@ -93,11 +74,7 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
                           row.names = FALSE, quote = FALSE)
             }
             dataFormat <- match.arg(dataFormat)
-            if (dataFormat == "auto")
-              dataFormat <- unlist(lapply(object, doBlock, TRUE))
-            if (any(dataFormat == "bed")) # one BED, all BED
-              export.bed(object, con, variant = "wig")
-            else lapply(object, doBlock, FALSE) # else, mix variable/fixed
+            lapply(object, doBlock)
           })
 
 setGeneric("import.wig",
@@ -109,7 +86,9 @@ setMethod("import.wig", "ANY",
           })
 
 setGeneric("import.wigLines",
-           function(con, genome = "hg18", ...) standardGeneric("import.wigLines"))
+           function(con, genome = "hg18", ...)
+           standardGeneric("import.wigLines"))
+
 setMethod("import.wigLines", "characterORconnection",
           function(con, genome)
           {
@@ -148,90 +127,6 @@ setMethod("import.wigLines", "characterORconnection",
               gd <- do.call(rbind, resultList)
               genome(gd) <- genome
               gd
-            } else import(text = lines, format = "bed", variant = "wig")
+            } else import(text = lines, format = "bed", variant = "bedGraph",
+                          genome = genome)
         })
-
-setClass("WigTrackLine",
-         representation(altColor = "integer", autoScale = "logical",
-                        gridDefault = "logical", maxHeightPixels = "numeric",
-                        graphType = "character", viewLimits = "numeric",
-                        yLineMark = "numeric", yLineOnOff = "logical",
-                        windowingFunction = "character",
-                        smoothingWindow = "numeric"),
-         contains = "TrackLine")
-
-setAs("WigTrackLine", "character",
-      function(from)
-      {
-        str <- as(as(from, "TrackLine"), "character")
-        str <- paste(str, "type=wiggle_0")
-        color <- from@altColor
-        if (length(color))
-          str <- paste(str, " altColor=", paste(color, collapse=","), sep="")
-        autoScale <- from@autoScale
-        if (length(autoScale) && !autoScale)
-          str <- paste(str, "autoScale=off")
-        gridDefault <- from@gridDefault
-        if (length(gridDefault) && gridDefault)
-          str <- paste(str, "gridDefault=On")
-        maxHeightPixels <- from@maxHeightPixels
-        if (length(maxHeightPixels) && maxHeightPixels)
-          str <- paste(str, " maxHeightPixels=",
-                       paste(maxHeightPixels, collapse=":"), sep = "")
-        graphType <- from@graphType
-        if (length(graphType))
-          str <- paste(str, " graphType=", graphType, sep = "")
-        viewLimits <- from@viewLimits
-        if (length(viewLimits))
-          str <- paste(str, " viewLimits=", paste(viewLimits, collapse = ":"),
-                       sep = "")
-        yLineMark <- from@yLineMark
-        if (length(yLineMark))
-          str <- paste(str, " yLineMark=", yLineMark, sep = "")
-        yLineOnOff <- from@yLineOnOff
-        if (length(yLineOnOff) && yLineOnOff)
-          str <- paste(str, "yLineOnOff=On")
-        windowingFunction <- from@windowingFunction
-        if (length(windowingFunction))
-          str <- paste(str, " windowingFunction=", windowingFunction, sep = "")
-        smoothingWindow <- from@smoothingWindow
-        if (length(smoothingWindow))
-          str <- paste(str, " smoothingWindow=", smoothingWindow, sep = "")
-        str
-      })
-
-setAs("character", "WigTrackLine",
-      function(from)
-      {
-        line <- new("WigTrackLine", as(from, "TrackLine"))
-        vals <- ucscParsePairs(from)
-        if (!is.na(vals["altColor"]))
-          line@altColor <- as.integer(strsplit(vals["altColor"], ",")[[1]])
-        if (!is.na(vals["autoScale"]))
-          line@autoScale <- vals["autoScale"] == "On"
-        if (!is.na(vals["gridDefault"]))
-          line@gridDefault <- vals["gridDefault"] == "On"
-        if (!is.na(vals["maxHeightPixels"]))
-          line@maxHeightPixels <-
-            as.numeric(strsplit(vals["maxHeightPixels"], ":")[[1]])
-        if (!is.na(vals["graphType"]))
-          line@graphType <- vals["graphType"]
-        if (!is.na(vals["viewLimits"]))
-          line@viewLimits <-
-            as.numeric(strsplit(vals["viewLimits"], ":")[[1]])
-        if (!is.na(vals["yLineMark"]))
-          line@yLineMark <- as.numeric(vals["yLineMark"])
-        if (!is.na(vals["yLineOnOff"]))
-          line@yLineOnOff <- vals["yLineOnOff"] == "On"
-        if (!is.na(vals["windowingFunction"]))
-          line@windowingFunction <- vals["windowingFunction"]
-        if (!is.na(vals["smoothingWindow"]))
-          line@smoothingWindow <- as.numeric(vals["smoothingWindow"])
-        line
-      })
-
-setAs("BasicTrackLine", "WigTrackLine",
-      function(from) new("WigTrackLine", from))
-
-setAs("WigTrackLine", "BasicTrackLine",
-      function(from) new("BasicTrackLine", from))

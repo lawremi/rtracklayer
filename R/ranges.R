@@ -21,6 +21,13 @@ setMethod("chrom", "RangedData", function(x) {
   chrom(ranges(x))
 })
 
+setGeneric("chrom<-", function(x, ..., value) standardGeneric("chrom<-"))
+setReplaceMethod("chrom", "RangedData", function(x, value) {
+  chrom(ranges(x)) <- value
+  x
+})
+
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Constructor.
 ###
@@ -64,6 +71,11 @@ setMethod("chrom", "RangesList", function(x) {
   if (!is.null(chrom))
     chrom <- rep(factor(chrom, chrom), unlist(lapply(x, length)))
   chrom
+})
+
+setReplaceMethod("chrom", "RangesList", function(x, value) {
+  names(x) <- value
+  x
 })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

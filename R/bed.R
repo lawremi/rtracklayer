@@ -1,23 +1,26 @@
 # Import/export of Browser Extended Display (BED) data
 
 setGeneric("export.bed",
-           function(object, con, variant = c("base", "wig", "bed15"),
+           function(object, con, variant = c("base", "bedGraph", "bed15"),
                     color = NULL, ...)
            standardGeneric("export.bed"))
 
 
 setMethod("export.bed", "ANY",
-          function(object, con, variant = c("base", "wig", "bed15"), color)
+          function(object, con, variant = c("base", "bedGraph", "bed15"), color)
           {
             cl <- class(object)
             object <- try(as(object, "RangedData"), silent = TRUE)
-            if (class(object) == "try-error")
-              stop("cannot export object of class '", cl, "'")
+            if (class(object) == "try-error") {
+              object <- try(as(object, "RangedDataList"), silent = TRUE)
+              if (class(object) == "try-error")
+                stop("cannot export object of class '", cl, "'")
+            }
             export.bed(object, con=con, variant=variant, color=color)
           })
 
 setMethod("export.bed", c("RangedData", "characterORconnection"),
-          function(object, con, variant = c("base", "wig", "bed15"), color)
+          function(object, con, variant = c("base", "bedGraph", "bed15"), color)
           {
             variant <- match.arg(variant)
             name <- strand <- thickStart <- thickEnd <- color <- NULL
@@ -27,11 +30,11 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             if (!is.null(score)) {
               if (!is.numeric(score) || any(is.na(score)))
                 stop("Scores must be non-NA numeric values")
-              if (variant != "wig" && any(score < 0 | score > 1000))
+              if (variant != "bedGraph" && any(score < 0 | score > 1000))
                 stop("BED requires scores to fall within [0, 1000]")
             }
-            if (variant == "wig") {
-              if (is.null(score)) ## wig requires score
+            if (variant == "bedGraph") {
+              if (is.null(score)) ## bedGraph requires score
                 score <- 0
               df$score <- score
             } else {
@@ -91,7 +94,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
           })
 
 setMethod("export.bed", "UCSCData",
-          function(object, con, variant = c("base", "wig", "bed15"), color,
+          function(object, con, variant = c("base", "bedGraph", "bed15"), color,
                    trackLine = TRUE, ...)
           {
             variant <- match.arg(variant)
@@ -101,27 +104,35 @@ setMethod("export.bed", "UCSCData",
               callNextMethod(object, con, variant, color)
             }
           })
-          
+
+setMethod("export.bed", "RangedDataList",
+          function(object, con, variant = c("base", "bedGraph", "bed15"), color,
+                   ...)
+          {
+            export.ucsc(object, con, "bed", variant, color, ...)
+          })
+
 setGeneric("import.bed",
-           function(con, variant = c("base", "wig", "bed15"),
+           function(con, variant = c("base", "bedGraph", "bed15"),
                     trackLine = TRUE, genome = "hg18", ...)
            standardGeneric("import.bed"))
 
 setMethod("import.bed", "connection",
-          function(con, variant = c("base", "wig", "bed15"), trackLine, genome)
+          function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
+                   genome)
           {
             variant <- match.arg(variant)
             if (variant == "base" && trackLine) {
               ## check for a track line
               line <- "#"
-              while(length(grep("^ *#", line))) # skip initial comments
+              while(length(grep("^` *#", line))) # skip initial comments
                 line <- readLines(con, 1, warn = FALSE)
               pushBack(line, con)
               if (length(grep("^track", line)) > 0)
                 return(import.ucsc(con, subformat = "bed", drop = TRUE,
                                    trackLine = FALSE, genome = genome))
             }
-            if (variant == "wig") {
+            if (variant == "bedGraph") {
               bedClasses <- c("factor", "integer", "integer", "numeric")
               bedNames <- c("chrom", "start", "end", "score")
             } else {
@@ -139,7 +150,7 @@ setMethod("import.bed", "connection",
             bed <- DataFrame(read.table(con, colClasses = bedClasses,
                                         as.is = TRUE))
             colnames(bed) <- bedNames[seq_len(ncol(bed))]
-            if (variant != "wig") { ## don't know how many columns, coerce here
+            if (variant != "bedGraph") { ## don't know column #, coerce here
               bed$start <- as.integer(bed$start)
               bed$end <- as.integer(bed$end)
             } ## BED is 0-start, so add 1 to start
@@ -210,17 +221,6 @@ setGeneric("export.bed15Lines",
            function(object, con, trackLine, ...)
            standardGeneric("export.bed15Lines"))
 
-
-setMethod("export.bed15Lines", "ANY",
-          function(object, con, trackLine, ...)
-          {
-            cl <- class(object)
-            object <- try(as(object, "RangedData"), silent = TRUE)
-            if (class(object) == "try-error")
-              stop("cannot export object of class '", cl, "'")
-            export.bed15Lines(object, con=con, trackLine=trackLine, ...)
-          })
-
 setMethod("export.bed15Lines", "RangedData",
           function(object, con, trackLine, ...)
           {
@@ -240,16 +240,6 @@ setGeneric("export.bed15",
            standardGeneric("export.bed15"))
 
 setMethod("export.bed15", "ANY",
-          function(object, con, expNames, ...)
-          {
-            cl <- class(object)
-            object <- try(as(object, "RangedData"), silent = TRUE)
-            if (class(object) == "try-error")
-              stop("cannot export object of class '", cl, "'")
-            export.bed15(object, con=con, expNames=expNames, ...)
-          })
-
-setMethod("export.bed15", "RangedData",
           function(object, con, expNames, ...)
           {
             export.ucsc(object, con, "bed15", expNames = expNames, ...)
@@ -291,3 +281,42 @@ setAs("character", "Bed15TrackLine",
         line@expNames <- strsplit(vals["expNames"], ",", fixed=TRUE)[[1]]
         line
       })
+
+setGeneric("import.bedGraph",
+           function(con, genome = "hg18", ...)
+           standardGeneric("import.bedGraph"))
+
+setMethod("import.bedGraph", "ANY",
+          function(con, genome)
+          {
+            import.ucsc(con, "bedGraph", TRUE, genome = genome)
+          })
+
+setGeneric("import.bedGraphLines",
+           function(con, genome = "hg18", ...)
+           standardGeneric("import.bedGraphLines"))
+
+setMethod("import.bedGraphLines", "ANY",
+          function(con, genome) {
+            import.bed(con, variant = "bedGraph", genome = genome)
+          })
+
+setGeneric("export.bedGraph",
+           function(object, con, ...)
+           standardGeneric("export.bedGraph"))
+
+setMethod("export.bedGraph", "ANY",
+          function(object, con, ...)
+          {
+            export.ucsc(object, con, "bedGraph", ...)
+          })
+
+setGeneric("export.bedGraphLines",
+           function(object, con, ...)
+           standardGeneric("export.bedGraphLines"))
+
+setMethod("export.bedGraphLines", "ANY",
+          function(object, con, ...)
+          {
+            export.bed(object, con, "bedGraph")
+          })

@@ -9,7 +9,7 @@
 \description{An object representing a "track line" in the \acronym{UCSC}
   format. There are two concrete types of track lines:
   \code{\linkS4class{BasicTrackLine}} (used for most types of tracks) and
-  \code{\linkS4class{WigTrackLine}} (used for Wiggle tracks). This class
+  \code{\linkS4class{GraphTrackLine}} (used for graphical tracks). This class
   only declares the common elements between the two.}
 \section{Objects from the Class}{
   Objects can be created by calls of the form \code{new("TrackLine",
@@ -47,6 +47,6 @@
 
 \seealso{
   \code{\linkS4class{BasicTrackLine}} (used for most types of tracks) and
-  \code{\linkS4class{WigTrackLine}} (used for Wiggle tracks).
+  \code{\linkS4class{GraphTrackLine}} (used for Wiggle/bedGraph tracks).
 }
 \keyword{classes}

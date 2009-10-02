@@ -1,18 +1,18 @@
-\name{WigTrackLine-class}
+\name{GraphTrackLine-class}
 \docType{class}
-\alias{WigTrackLine-class}
-\alias{coerce,character,WigTrackLine-method}
-\alias{coerce,WigTrackLine,character-method}
-\alias{coerce,WigTrackLine,BasicTrackLine-method}
-\alias{coerce,BasicTrackLine,WigTrackLine-method}
+\alias{GraphTrackLine-class}
+\alias{coerce,character,GraphTrackLine-method}
+\alias{coerce,GraphTrackLine,character-method}
+\alias{coerce,GraphTrackLine,BasicTrackLine-method}
+\alias{coerce,BasicTrackLine,GraphTrackLine-method}
 
-\title{Class "WigTrackLine"}
-\description{ A \acronym{UCSC} track line for Wiggle tracks. }
+\title{Class "GraphTrackLine"}
+\description{ A \acronym{UCSC} track line for graphical tracks. }
 \section{Objects from the Class}{
-  Objects can be created by calls of the form \code{new("WigTrackLine",
+  Objects can be created by calls of the form \code{new("GraphTrackLine",
     ...)} or parsed from a character vector track line with
-  \code{as(text, "WigTrackLine")} or converted from a
-  \code{\linkS4class{BasicTrackLine}} using \code{as(basic, "WigTrackLine")}.
+  \code{as(text, "GraphTrackLine")} or converted from a
+  \code{\linkS4class{BasicTrackLine}} using \code{as(basic, "GraphTrackLine")}.
 }
 \section{Slots}{
   \describe{
@@ -68,6 +68,7 @@
   \url{http://genome.ucsc.edu/goldenPath/help/wiggle.html}. }
 \author{ Michael Lawrence }
 \seealso{
-  \code{\link{export.wig}} for exporting tracks in the Wiggle format.
+  \code{\link{export.wig}}, \code{\link{export.bedGraph}} for exporting
+  graphical tracks.
 }
 \keyword{classes}
