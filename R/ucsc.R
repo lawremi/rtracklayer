@@ -186,7 +186,7 @@ normArgTrack <- function(name, trackids) {
   if (!isSingleString(name))
     stop("'track' must be a single string")
   if (is(trackids, "UCSCTableQuery"))
-    trackids <- trackNames(browserSession(object))
+    trackids <- trackNames(object)
   if (!(name %in% trackids)) {
     mapped_name <- trackids[name]
     if (is.na(mapped_name))
@@ -208,18 +208,31 @@ setMethod("ucscTableQuery", "UCSCSession",
             if (!is(names, "characterORNULL"))
               stop("'names' must be 'NULL' or a character vector")
             range <- mergeRange(range(x), range)
+            query <- new("UCSCTableQuery", session = x, range = range,
+                         table = table, NAMES = names)
             if (!is.null(track) || !is.null(intersectTrack)) {
-              trackids <- trackNames(x)
-              track <- normArgTrack(track, trackids)
-              intersectTrack <- normArgTrack(intersectTrack, trackids)
+              trackids <- trackNames(query)
+              query@track <- normArgTrack(track, trackids)
+              query@intersectTrack <- normArgTrack(intersectTrack, trackids)
             }
-            new("UCSCTableQuery", session = x, track = track, range = range,
-                table = table, NAMES = names, intersectTrack = intersectTrack)
+            query
           })
 
 ucscTableGet <- function(query, .parse = TRUE, ...)
   ucscGet(browserSession(query), "tables", c(ucscForm(query), ...),
           .parse = .parse)
+
+## gets the track names available from the table browser
+
+setMethod("trackNames", "UCSCTableQuery",
+          function(object) {
+            doc <- ucscTableGet(object)
+            track_path <- "//select[@name = 'hgta_track']/option/@value"
+            tracks <- unlist(getNodeSet(doc, track_path))
+            label_path <- "//select[@name = 'hgta_track']/option/text()"
+            names(tracks) <- unlist(getNodeSet(doc, label_path))
+            tracks
+          })
 
 ## returns a character vector of table names for a given track name + range
 setGeneric("tableNames", function(object, ...)
