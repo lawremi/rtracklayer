@@ -116,14 +116,16 @@ GenomicRanges <- function(start = integer(), end = integer(), chrom = NULL,
 ##   x
 ## }
 
-## take 'y', filling info from 'x' if necessary
+## take 'y', filling in info from 'x' if necessary
 mergeRange <- function(x, y)
 {
-  if (!length(genome(y)))
+  if (!length(genome(y))) {
     genome(y) <- genome(x)
-  if (!length(names(y)) && length(y) == length(x))
-    names(y) <- names(x)
-  if (!length(unlist(y)) && length(x))
-    y[[1]] <- x[[1]]
+    if (!length(names(y)) && length(y) == length(x)) {
+      names(y) <- names(x)
+      if (!length(unlist(y)) && length(x))
+        y[[1]] <- x[[1]]
+    }
+  }
   y
 }
