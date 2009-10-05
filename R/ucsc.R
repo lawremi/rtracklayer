@@ -207,7 +207,8 @@ setMethod("ucscTableQuery", "UCSCSession",
               stop("'range' must be a 'RangesList'")
             if (!is(names, "characterORNULL"))
               stop("'names' must be 'NULL' or a character vector")
-            range <- mergeRange(range(x), range)
+            ## only inherit the genome from the session
+            range <- mergeRange(GenomicRanges(genome = genome(x)), range)
             query <- new("UCSCTableQuery", session = x, range = range,
                          table = table, NAMES = names)
             if (!is.null(track) || !is.null(intersectTrack)) {
