@@ -592,25 +592,23 @@ a track, and display a portion of it in the \textbf{UCSC} browser.
 
 We will use the \textbf{Biostrings} package to search human chromosome
 1 for NRSF binding sites. The binding sequence motif is assumed to be
-\textit{TCAGCACCATGGACAG}, though in reality it is more variable. To
-perform the search, we construct a \textit{PDict} dictionary and run
-\texttt{matchPDict} on the positive strand of chromosome 1.
+\textit{TCAGCACCATGGACAG}, though in reality it is more variable.
+To perform the search, we run \textit{matchPattern} on the positive
+strand of chromosome 1.
 %
 <<search-nrsf>>=
 library(BSgenome.Hsapiens.UCSC.hg18)
-nrsfPD <- PDict("TCAGCACCATGGACAG") # TCAGCACC trusted band
-nrsfHits <- matchPDict(nrsfPD, Hsapiens[[1]])
-countIndex(nrsfHits)
+nrsfHits <- matchPattern("TCAGCACCATGGACAG", Hsapiens[["chr1"]])
+length(nrsfHits)  # number of hits
 @ 
 %
 
-We then convert the hits, stored as an \textit{MIndex} object, to a
-\textit{RangedData} instance, by \texttt{unlist}ing the
-\textit{MIndex} into an \textit{IRanges}.
+We then convert the hits, stored as a \textit{Views} object (a
+particular type of \textit{IRanges} object), to a \textit{RangedData}
+instance.
 %
 <<track-nrsf>>=
-nrsfTrack <- GenomicData(unlist(nrsfHits), strand="+", chrom="chr1", 
-                         genome = "hg18")
+nrsfTrack <- GenomicData(nrsfHits, strand="+", chrom="chr1", genome = "hg18")
 @ 
 %
 
