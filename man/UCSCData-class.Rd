@@ -1,9 +1,10 @@
 \name{UCSCData-class}
 \docType{class}
 \alias{UCSCData-class}
-\alias{export.bed,UCSCData-method}
-\alias{export.gff,UCSCData-method}
-\alias{export.ucsc,UCSCData-method}
+\alias{export.bed,UCSCData,ANY-method}
+\alias{export.bed15,UCSCData-method}
+\alias{export.gff,UCSCData,characterORconnection-method}
+\alias{export.ucsc,UCSCData,characterORconnection-method}
 \alias{initialize,UCSCData-method}
 \alias{show,UCSCData-method}
 \alias{coerce,RangedData,UCSCData-method}
@@ -15,44 +16,38 @@
   \describe{
     \item{\code{trackLine}:}{Object of class \code{"TrackLine"}
       holding track metadata. }
-    \item{\code{genome}:}{Object of class \code{"character"} identifying
-      the genome of this track, e.g. "hg18".}
-    \item{\code{assayData}:}{Object of class \code{"AssayData"} holding
-      the experimental measurements under \code{dataVals}. }
-    \item{\code{phenoData}:}{Object of class \code{"AnnotatedDataFrame"}
-      holding the experimental design matrix. }
-    \item{\code{featureData}:}{Object of class
-      \code{"AnnotatedDataFrame"} holding feature information, generally
-      including columns \code{chrom} (chromosome), \code{start}
-      (start position), \code{end} (end position) and
-      \code{strand} (strand on the DNA: "+", "-", or \code{NA}).}
-    \item{\code{experimentData}:}{Object of class \code{"MIAME"} holding
-    experimental metadata.} 
-    \item{\code{annotation}:}{Object of class \code{"character"}
-      referring to the annotation dataset. }
-    \item{\code{.__classVersion__}:}{Object of class \code{"Versions"}
-      holding version information. }
   }
 }
 \section{Methods}{
   \describe{
-    \item{\code{\link{export.bed}(object, con, wig = FALSE, trackLine =
-        !wig)}}{
+    \item{\code{\link{export.bed}(object, con, variant = c("base",
+        "bedGraph", "bed15"), color, trackLine = TRUE, ...)}}{
       Exports the track and its track line (if
       \code{trackLine} is \code{TRUE}) to \code{con} in the Browser
-      Extended Display (\acronym{BED}) format.
+      Extended Display (\acronym{BED}) format. The arguments
+      in \code{...} are passed to \code{\link{export.ucsc}}.
+    }
+    \item{\code{\link{export.bed15}(object, con, expNames = NULL, ...)}}{
+      Exports the track and its track line (if
+      \code{trackLine} is \code{TRUE}) to \code{con} in the Bed15
+      format. The data is taken from the columns named in
+      \code{expNames}, which defaults to the \code{expNames} in the
+      track line, if any, otherwise all column names. The arguments
+      in \code{...} are passed to \code{\link{export.ucsc}}.
     }
     \item{\code{\link{export.gff}(object)}}{
       Exports the track and its track line (as a comment) to \code{con} in the
       General Feature Format (\acronym{GFF}).
     }
-    \item{\code{\link{export.ucsc}(object)}}{
+    \item{\code{\link{export.ucsc}(object, con, subformat, ...)}}{
       Exports the track and its track line to \code{con} in the
       \acronym{UCSC} meta-format.  }
     \item{\code{as(object, "UCSCData")}}{Constructs a \code{UCSCData}
       from a \code{RangedData} instance, by adding a default track line
       and ensuring that the sequence/chromosome names are compliant with
-      UCSC conventions.
+      UCSC conventions. If there is a numeric score, the track line type
+      is either "bedGraph" or "wig", depending on the feature
+      density. Otherwise, "bed" is chosen.
     }
   }
 }

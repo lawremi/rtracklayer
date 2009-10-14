@@ -186,7 +186,7 @@ normArgTrack <- function(name, trackids) {
   if (!isSingleString(name))
     stop("'track' must be a single string")
   if (is(trackids, "UCSCTableQuery"))
-    trackids <- trackNames(object)
+    trackids <- trackNames(trackids)
   if (!(name %in% trackids)) {
     mapped_name <- trackids[name]
     if (is.na(mapped_name))

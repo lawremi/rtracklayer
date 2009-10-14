@@ -58,7 +58,7 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       this setting only lasts until a view is created or
       manipulated. This mechanism is useful, for example, when treating the UCSC
       browser as a database, rather than a genome viewer.}
-    \item{\code{\link[Rtracklayer:RangedData-methods]{genome}(x) <- value}}{ 
+    \item{\code{\link[rtracklayer:RangedData-methods]{genome}(x) <- value}}{ 
       Sets the genome identifier on the range of session \code{x}.}
     \item{\code{\link[BSgenome]{getSeq}(object, range, track = "Assembly")}}{
       Gets the sequence in \code{range} and \code{track}.

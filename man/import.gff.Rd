@@ -1,6 +1,6 @@
 \name{import.gff}
 \alias{import.gff}
-\alias{import.gff,ANY-method}
+\alias{import.gff,characterORconnection-method}
 \alias{import.gff1,ANY-method}
 \alias{import.gff2,ANY-method}
 \alias{import.gff3,ANY-method}
@@ -10,9 +10,13 @@
 \alias{import.gff3}
 \alias{import.wig}
 \alias{import.bed}
-\alias{import.bed,ANY-method}
+\alias{import.bed,connection-method}
+\alias{import.bed15}
+\alias{import.bed15,ANY-method}
+\alias{import.bedGraph}
+\alias{import.bedGraph,ANY-method}
 \alias{import.ucsc}
-\alias{import.ucsc,ANY-method}
+\alias{import.ucsc,characterORconnection-method}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Importing tracks }
 \description{
@@ -25,9 +29,13 @@ import.gff(con, version = c("1", "2", "3"), genome = "hg18")
 import.gff1(con, ...)
 import.gff2(con, ...)
 import.gff3(con, ...)
-import.bed(con, wig = FALSE, trackLine = !wig, genome = "hg18", ...)
+import.bed(con, variant = c("base", "bedGraph", "bed15"),
+           trackLine = TRUE, genome = "hg18", ...)
+import.bed15(con, genome = "hg18", ...)
+import.bedGraph(con, genome = "hg18", ...)
 import.wig(con, genome = "hg18", ...)
-import.ucsc(con, subformat = c("auto", "gff1", "wig", "bed"),
+import.ucsc(con,
+            subformat = c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
             drop = FALSE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -35,8 +43,7 @@ import.ucsc(con, subformat = c("auto", "gff1", "wig", "bed"),
   \item{con}{ The connection from which to receive the input. }
   \item{version}{ The version of \acronym{GFF} ("1", "2" or "3"). }
   \item{genome}{ The genome to set on the imported track. }
-  \item{wig}{ Whether the \acronym{BED} lines are expected to be
-    \acronym{WIG} formatted (not for public use). }
+  \item{variant}{ Variant of BED lines, not for the user.}
   \item{trackLine}{ Whether the \acronym{BED} data has a track line (it
     normally does though track lines are not mandatory). }
   \item{subformat}{ The expected subformat of the \acronym{UCSC}
@@ -44,9 +51,9 @@ import.ucsc(con, subformat = c("auto", "gff1", "wig", "bed"),
   \item{drop}{If \code{TRUE} and there is only one track in the
     \acronym{UCSC} data, return the track instead of a list.}
   \item{\dots}{For \code{import.gff1}, \code{import.gff2} and
-    \code{import.gff3}: arguments to pass to \code{import.gff}. For
-    \code{import.bed} and \code{import.wig}: arguments to pass to methods.
-    For \code{import.ucsc}: arguments to pass on to \code{import.subformat}.}
+    \code{import.gff3}: arguments to pass to \code{import.gff}.
+    For \code{import.ucsc}: arguments to pass on to
+    \code{import.subformat}. For the others, arguments to pass to methods.}
 }
 \value{
   An instance of \code{\link[IRanges:RangedData-class]{RangedData}} or

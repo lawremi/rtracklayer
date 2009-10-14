@@ -8,6 +8,8 @@
 % accessors
 \alias{chrom}
 \alias{chrom,RangedData-method}
+\alias{chrom<-}
+\alias{chrom<-,RangedData-method}
 \alias{genome}
 \alias{genome,RangedData-method}
 \alias{genome<-}
@@ -24,15 +26,17 @@ refer to some other type of sequence). The universe refers to the genome.}
 
   \describe{
     \item{}{
-      \code{chrom(x)}: Gets the chromosome names (a factor) over the
-      ranges in \code{x}.
+      \code{chrom(x), chrom(x) <- value}: Gets or sets the chromosome
+      names for \code{x}. The length of \code{value} should equal the
+      length of \code{x}. This is an alias for
+      \code{\link[IRanges:RangedData-class]{names}(x)}.
     }
     \item{}{
       \code{genome(x)}, \code{genome(x) <- value}: Gets or sets the
       genome (a single string or \code{NULL}) for
       the ranges in \code{x}; simple wrappers around
-      \code{\link[IRanges:RangedDataList-class]{universe}} and
-      \code{\link[IRanges:RangedDataList-class]{universe<-}}, respectively.
+      \code{\link[IRanges:RangedData-class]{universe}} and
+      \code{\link[IRanges:RangedData-class]{universe<-}}, respectively.
     }
   }
 }

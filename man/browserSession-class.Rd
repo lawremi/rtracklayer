@@ -7,6 +7,9 @@
 \alias{$,BrowserSession-method}
 \alias{$<-,BrowserSession,ANY,RangedDataORRangedDataList-method}
 \alias{range,BrowserSession-method}
+\alias{genome,BrowserSession-method}
+\alias{genome<-,BrowserSession-method}
+
 
 \title{Class "BrowserSession"}
 \description{An object representing a genome browser session. Each
@@ -66,6 +69,8 @@
       \code{x}. A shortcut to \code{track}.}
     \item{\code{\link{trackNames}(object, ...)}}{ Gets the names of the
       tracks stored in this session. }
+    \item{\code{\link{genome}(x)}, \code{genome(x) <- value}}{Gets or
+      sets the genome identifier (e.g. \dQuote{hg18}) for the session.}
     \item{\code{\link{close}(con, ...)}}{ Close this session. }
     \item{\code{\link{show}(object, ...)}}{ Output a textual description
       of this session.}

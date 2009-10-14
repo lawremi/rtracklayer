@@ -38,6 +38,8 @@
       graph shrinks.}
     \item{\code{smoothingWindow}:}{Object of class \code{"numeric"}
       giving the window size of a smoother to pass over the graph. }
+    \item{\code{type}:}{Scalar \code{"character"} indicating the type of
+      the track, either \code{"wig"} or \code{"bedGraph"}.}
     \item{\code{name}:}{Object of class \code{"character"} specifying
       the name of the track. }
     \item{\code{description}:}{Object of class \code{"character"}

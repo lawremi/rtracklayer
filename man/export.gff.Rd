@@ -1,7 +1,7 @@
 \name{export-tracks}
 \alias{export.gff}
-\alias{export.gff,ANY-method}
-\alias{export.gff,RangedData-method}
+\alias{export.gff,ANY,ANY-method}
+\alias{export.gff,RangedData,characterORconnection-method}
 \alias{export.gff1}
 \alias{export.gff2}
 \alias{export.gff3}
@@ -9,18 +9,24 @@
 \alias{export.gff2,ANY-method}
 \alias{export.gff3,ANY-method}
 \alias{export.bed}
-\alias{export.bed,ANY-method}
-\alias{export.bed,RangedData-method}
+\alias{export.bed,ANY,ANY-method}
+\alias{export.bed,RangedData,characterORconnection-method}
+\alias{export.bed,RangedDataList,ANY-method}
+\alias{export.bed15}
+\alias{export.bed15,ANY-method}
+\alias{export.bedGraph}
+\alias{export.bedGraph,ANY-method}
 \alias{export.wig}
 \alias{export.wig,ANY-method}
 \alias{export.ucsc}
-\alias{export.ucsc,ANY-method}
-\alias{export.ucsc,RangedData-method}
-\alias{export.ucsc,RangedDataList-method}
+\alias{export.ucsc,ANY,ANY-method}
+\alias{export.ucsc,RangedData,ANY-method}
+\alias{export.ucsc,RangedDataList,ANY-method}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Export tracks}
 \description{
-  These functions output \code{\link[IRanges:RangedData-class]{RangedData}} instances in
+  These functions output
+  \code{\link[IRanges:RangedData-class]{RangedData}} instances in
   various formats.
 }
 \usage{
@@ -29,25 +35,31 @@ export.gff(object, con, version = c("1", "2", "3"), source =
 export.gff1(object, con, ...)
 export.gff2(object, con, ...)
 export.gff3(object, con, ...)
-export.bed(object, con, wig = FALSE, color = NULL, ...)
+export.bed(object, con, variant = c("base", "bedGraph", "bed15"),
+           color = NULL, ...)
+export.bed15(object, con, expNames = NULL, ...)
+export.bedGraph(object, con, ...)
 export.wig(object, con,
-           dataFormat = c("auto", "bed", "variableStep", "fixedStep"), ...)
-export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
+           dataFormat = c("auto", "variableStep", "fixedStep"), ...)
+export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed",
+           "bed15", "bedGraph"), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{ The object to export, such as a
-    \code{\link[IRanges:RangedData-class]{RangedData}}. If a
+    \code{\link[IRanges:RangedData-class]{RangedData}}, or anything
+    coercible to a \code{RangedData}. If a
     \code{\linkS4class{UCSCData}}, the track line information is
-    output. In the case of \code{export.ucsc}, a
+    output. In the case of \code{export.bed15}, \code{export.bedGraph},
+    \code{export.wig}, and \code{export.ucsc}, a
     \code{\link[IRanges:RangedDataList-class]{RangedDataList}} 
     object with possibly multiple tracks is supported.}
   \item{con}{ The connection to which the object is exported. }
   \item{version}{ The \acronym{GFF} version, either "1", "2" or "3"
     (default is "1"). }
   \item{source}{ The source of the GFF information, for \acronym{GFF}. }
-  \item{wig}{ Whether to output the \acronym{WIG} variant of
-    \acronym{BED} lines, not to be used directly. }
+  \item{variant}{ Which variant of BED lines to output,
+    not for the user. }
   \item{color}{Recycled vector of colors, as interpreted by
     \code{\link{col2rgb}} for BED features. If \code{NULL}, the
     \code{color} column in the \code{featureData} is used, if any.}
@@ -55,13 +67,59 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
     tracks, see references. The "auto" format uses the most efficient
     format possible.}
   \item{subformat}{ The format of the tracks within the \acronym{UCSC}
-    container. If "auto", "wig" is used for numeric data, else "bed". }
+    container. If "auto", the type is determined from the
+    trackline. If \code{object} is not a \code{UCSCData}, this
+    essentially means "wig" or "bedGraph" (depending on the density) if
+    there is a numeric score, else "bed".}
+  \item{expNames}{ Names of the columns in \code{object} that hold the
+    experimental data. Defaults to all column names,
+    unless \code{object} is a \code{\linkS4class{UCSCData}}, in which
+    case the \code{expNames} field is taken from the track line, if it exists. }
   \item{\dots}{For \code{export.gff1}, \code{export.gff2} and
     \code{export.gff3}: arguments to pass to \code{export.gff}. For
-    \code{export.bed} and \code{export.wig} : arguments to pass to methods. For
+    \code{export.bed}: arguments to pass to methods. For
+    \code{export.bed15}, \code{export.bedGraph} and \code{export.wig}:
+    arguments to pass to \code{export.ucsc}. For
     \code{export.ucsc}: arguments to pass to \code{export.subformat} or
     to set on the slots of the \code{\linkS4class{TrackLine}} subclass
     corresponding to \code{subformat}.}
+}
+\details{
+  The following is some advice for choosing a file format.
+  \describe{
+    \item{\acronym{GFF}}{The General Feature Format is meant to
+      represent any set of genomic features, with application-specific
+      columns represented as \dQuote{attributes}. There are three
+      principal versions (1, 2, and 3). This is a good format
+      for interoperating with other genomic tools. UCSC supports GFF1,
+      but it needs to be encapsulated in the UCSC metaformat,
+      i.e. \code{export.ucsc(subformat = "gff1")}.}
+    \item{\acronym{BED}}{The Browser Extended Display format is for
+      displaying tracks in a genome browser, in particular UCSC. There
+      are many options to control the appearance of the track, see
+      \code{\linkS4class{GraphTrackLine}}. To output a track line
+      when \code{object} is not a \code{UCSCData},
+      call \code{export.ucsc(subformat = "bed")}.}
+    \item{\acronym{Bed15}}{An extension of BED with 15 columns, Bed15 is
+      meant to represent data from microarray experiments. Multiple
+      samples/columns are supported, and the data is displayed as a
+      compact heatmap. With 15 columns per feature, this format is
+      probably too verbose for e.g. ChIP-seq coverage (use multiple WIG
+      tracks instead).}
+    \item{\acronym{bedGraph}}{A variant of BED that represents
+      experimental data more compactly than \acronym{BED} and especially
+      \acronym{Bed15}, although only one sample is supported. The data is
+      displayed as a bar or line graph. For dense data,
+      \code{WIG} is preferred.
+    }
+    \item{\acronym{WIG}}{The Wiggle format is meant for storing dense
+      numerical data, such as the coverage from a ChIP-seq
+      experiment. The data is displayed as a bar or line graph.
+    }
+  }
+  In summary, \acronym{BED} is usually best for displaying qualitative
+  features or sparse quantiative features (like ChIP-seq peaks), while
+  \acronym{WIG} is usually best for displaying dense data like coverage.
 }
 \value{
   If \code{con} is missing, a character vector containing the string
@@ -92,8 +150,8 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed"), ...)
   wig <- export.wig(track, dummy, dataFormat = "variableStep")
   ## output multiple tracks in UCSC meta-format
   track2 <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
-  ## output to WIG with BED line format
-  export.ucsc(RangedDataList(track, track2), dummy, subformat = "wig", dataFormat = "bed") 
+  ## output to WIG
+  export.ucsc(RangedDataList(track, track2), dummy, subformat = "wig") 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

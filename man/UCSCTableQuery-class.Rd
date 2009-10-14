@@ -19,6 +19,7 @@
 \alias{range<-,UCSCTableQuery,RangesList-method}
 \alias{names,UCSCTableQuery-method}
 \alias{names<-,UCSCTableQuery-method}
+\alias{trackNames,UCSCTableQuery-method}
 
 % Query execution
 \alias{tableNames}
@@ -138,6 +139,8 @@
       set the single string indicating the track containing the table of
       interest.
     }
+    \item{}{\code{trackNames(x)}}{List the names of the tracks available
+        for retrieval for the assigned genome.}
     \item{}{\code{tableName(x)}, \code{tableName(x) <- value}: Get or
       set the single string indicating the name of the table to
       retrieve. May be \code{NULL}, in which case the table is

@@ -1,6 +1,6 @@
 \name{export}
 \alias{export}
-\alias{export,ANY,ANY,character-method}
+\alias{export,ANY,connection,character-method}
 \alias{export,ANY,missing,character-method}
 \alias{export,ANY,character,missing-method}
 \alias{export,ANY,character,character-method}

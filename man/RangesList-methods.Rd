@@ -7,6 +7,7 @@
 
 % accessors
 \alias{chrom,RangesList-method}
+\alias{chrom<-,RangesList-method}
 \alias{genome,RangesList-method}
 \alias{genome<-,RangesList-method}
 
@@ -29,8 +30,9 @@ names) of \code{RangesList} are the chromosome names. The
 
   \describe{
     \item{}{
-      \code{chrom(x)}: Gets the chromosome names (a factor) over the
-      ranges in \code{x}.
+      \code{chrom(x), chrom(x) <- value}: Gets or sets the chromosome
+      names for \code{x}. This is an alias for
+      \code{\link[IRanges:RangesList-class]{names}(x)}.
     }
     \item{}{
       \code{genome(x)}, \code{genome(x) <- value}: Gets or sets the

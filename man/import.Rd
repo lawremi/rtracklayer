@@ -1,6 +1,6 @@
 \name{import}
 \alias{import}
-\alias{import,ANY,character,ANY-method}
+\alias{import,connection,character,ANY-method}
 \alias{import,character,missing,ANY-method}
 \alias{import,character,character,ANY-method}
 \alias{import,missing,ANY,character-method}
