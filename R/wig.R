@@ -26,15 +26,12 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
           {
             if (any(is.na(score(object))))
               stop("WIG cannot encode missing values")
-            object <- object[order(start(object)),]
-            object <- object[order(space(object)),]
-            ## df <- df[!is.na(df[[vals]]),] # no NAs
-            ## df <- df[order(df$start),]
-            ## attempt to use most efficient format if not specified
             scipen <- getOption("scipen")
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
             doBlock <- function(chromData) {
+              if (is.unsorted(start(chromData)))
+                chromData <- chromData[order(start(chromData)),]
               starts <- start(chromData)
               ends <- end(chromData)
               if (!all(tail(starts, -1) - head(ends, -1) > 0))
