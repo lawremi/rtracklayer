@@ -42,10 +42,21 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
               blockStarts <- object$blockStarts
               if (variant == "bed15" && is.null(blockSizes))
                 blockStarts <- blockSizes <- "" # bed15 must have all 15 cols
-              if (!is.null(blockSizes))
+              if (!is.null(blockSizes) || !is.null(blockStarts)) {
+                if (is.null(blockSizes))
+                  stop("'blockStarts' specified without 'blockSizes'")
+                if (is.null(blockStarts))
+                  stop("'blockSizes' specified without 'blockStarts'")
+                lastBlock <- function(x) sub(".*,", "", "20,20")
+                lastSize <- lastBlock(blockSizes)
+                lastStart <- lastBlock(blockStarts)
+                if (any(df[[2]] + lastSize + lastStart != df[[3]]) ||
+                    any(sub(",.*", "", blockStarts) != 0))
+                  stop("blocks must span entire feature")
                 blockCount <- length(strsplit(blockSizes, ",")[[1]])
+              }
               if (is.null(color))
-                color <- object$color
+                color <- object$itemRgb
               if (is.null(color) && !is.null(blockCount))
                 color <- "0" ## blocks require color
               else if (!is.null(color)) {
@@ -76,7 +87,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
               df$strand <- strand
               df$thickStart <- thickStart
               df$thickEnd <- thickEnd
-              df$color <- color
+              df$itemRgb <- color
               df$blockCount <- blockCount
               df$blockSizes <- blockSizes
               df$blockStarts <- blockStarts
@@ -125,7 +136,7 @@ setMethod("import.bed", "connection",
             if (variant == "base" && trackLine) {
               ## check for a track line
               line <- "#"
-              while(length(grep("^` *#", line))) # skip initial comments
+              while(length(grep("^ *#", line))) # skip initial comments
                 line <- readLines(con, 1, warn = FALSE)
               pushBack(line, con)
               if (length(grep("^track", line)) > 0)
@@ -138,7 +149,7 @@ setMethod("import.bed", "connection",
             } else {
               bedNames <- c("chrom", "start", "end", "name",
                             "score", "strand", "thickStart",
-                            "thickEnd", "color", "blockCount",
+                            "thickEnd", "itemRgb", "blockCount",
                             "blockSizes", "blockStarts")
               bedClasses <- NA
             }
@@ -154,7 +165,7 @@ setMethod("import.bed", "connection",
               bed$start <- as.integer(bed$start)
               bed$end <- as.integer(bed$end)
             } ## BED is 0-start, so add 1 to start
-            color <- bed$color
+            color <- bed$itemRgb
             if (is.character(color)) { # could be NULL
               spec <- color != "0"
               cols <- unlist(strsplit(color[spec], ",", fixed=TRUE),
@@ -162,7 +173,7 @@ setMethod("import.bed", "connection",
               cols <- matrix(as.integer(cols), 3)
               color <- rep(NA, nrow(bed))
               color[spec] <- rgb(cols[1,], cols[2,], cols[3,], max = 255)
-              bed$color <- color              
+              bed$itemRgb <- color              
             }
             GenomicData(IRanges(bed$start + 1, bed$end),
                         bed[,tail(colnames(bed), -3),drop=FALSE],

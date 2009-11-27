@@ -127,5 +127,9 @@ mergeRange <- function(x, y)
         y[[1]] <- x[[1]]
     }
   }
+  if (!length(genome(y)))
+    stop("Genome must be specified")
+  if (length(unlist(y)) && !length(names(y)))
+    stop("Chromosome must be specified if an interval is specified")
   y
 }

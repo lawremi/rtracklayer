@@ -231,7 +231,9 @@ setMethod("trackNames", "UCSCTableQuery",
             track_path <- "//select[@name = 'hgta_track']/option/@value"
             tracks <- unlist(getNodeSet(doc, track_path))
             label_path <- "//select[@name = 'hgta_track']/option/text()"
-            names(tracks) <- unlist(getNodeSet(doc, label_path))
+            labels <- sub("\n.*$", "",
+                          sapply(getNodeSet(doc, label_path), xmlValue))
+            names(tracks) <- labels
             tracks
           })
 

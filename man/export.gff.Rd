@@ -120,6 +120,49 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed",
   In summary, \acronym{BED} is usually best for displaying qualitative
   features or sparse quantiative features (like ChIP-seq peaks), while
   \acronym{WIG} is usually best for displaying dense data like coverage.
+
+  In general, columns in the \code{RangedData} are mapped to the
+  column in the track format of the same name. For example, a column
+  named \dQuote{itemRgb} will be mapped to the corresponding column in
+  BED-formatted output, while it is ignored for other formats. Missing
+  values are mapped between \code{NA} in R and the format-specific
+  missing value indicator, usually \dQuote{.}. The
+  following describes how the \code{RangedData} object is mapped to each
+  track format. Default values for columns are given in parentheses.
+  \describe{
+    \item{\acronym{GFF}}{
+      Maps columns named \dQuote{source} (\dQuote{rtracklayer}),
+      \dQuote{feature} (\dQuote{sequence}), \dQuote{score} (\dQuote{.}),
+      \dQuote{strand} (\dQuote{.}), \dQuote{frame} (\dQuote{.}), and
+      (version 1 only) \dQuote{group} (\code{seqname}). In GFF versions
+      2 and 3, extra columns are mapped to attributes.
+    }
+    \item{\acronym{BED}}{
+      Maps columns named \dQuote{name} (\dQuote{.}), \dQuote{score}
+      (\dQuote{.}), \dQuote{strand} (\dQuote{.}), \dQuote{thickStart}
+      (\code{start}), \dQuote{thickEnd} (\code{end}), \dQuote{itemRgb}
+      (\dQuote{0,0,0}), \dQuote{blockSizes}, and
+      \dQuote{blockStarts}. Note that the BED field
+      \dQuote{blockCounts} is derived automatically. The intervals
+      specified by \dQuote{thickStart}, \dQuote{thickEnd} and
+      \dQuote{blockStarts} are 0-based, half-open as in BED. Note that
+      this is different from the chromosome start/end stored in the
+      \code{Ranges} object (1-based, closed). The \dQuote{itemRgb}
+      column should be specified in a format understood by
+      \code{\link{col2rgb}}.
+    }
+    \item{\acronym{Bed15}}{
+      In addition to the behavior for \acronym{BED} above, encodes columns
+      named by the \code{expNames} parameter into the fields
+      \dQuote{expCount}, \dQuote{expIds} and \dQuote{expScores}.
+    }
+    \item{\acronym{bedGraph}}{
+      The \dQuote{score} column is used for the quantitative values.
+    }
+    \item{\acronym{WIG}}{
+      The \dQuote{score} column is used for the quantitative values.
+    }
+  }
 }
 \value{
   If \code{con} is missing, a character vector containing the string
