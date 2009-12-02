@@ -426,25 +426,22 @@ setMethod("browserView", "UCSCSession",
             form <- list()
             if (!missing(range))
               form <- c(form, ucscForm(range))
-            ## figure out track modes
-            modes <- NULL
-            if (!missing(track)) {
-              if (is(track, "UCSCTrackModes"))
-                modes <- track
-              else if (class(track) == "character") {
-                modes <- ucscTrackModes(object)
-                trackNames(modes) <- track
-                modes <- modes[track]
-              } else modes <- as(track, "UCSCTrackModes")
-            }
             ## new hgsid for each browser launch
             doc <- ucscGet(object, "gateway")
             node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
             hgsid <- node ##xmlValue(node)
             view@hgsid <- as.numeric(hgsid)
+            ## figure out track modes
+            modes <- ucscTrackModes(view)
+            if (!missing(track)) {
+              if (class(track) == "character")
+                trackNames(modes) <- track
+              else {
+                userModes <- as(track, "UCSCTrackModes")
+                modes[names(userModes)] <- userModes
+              }
+            }
             argModes <- ucscTrackModes(...)
-            if (is.null(modes)) # obviously inefficient through here...
-              modes <- ucscTrackModes(view)[names(argModes)]
             modes[names(argModes)] <- argModes
             form <- c(form, ucscForm(modes), ucscForm(view))
             if (!missing(imagewidth))
@@ -458,10 +455,12 @@ setMethod("browserView", "UCSCSession",
 
 # every view has a "mode" (hide, dense, pack, squish, full) for each track
 ### FIXME: probably should be merged with ucscTracks
-### FIXME: and maybe hide the structure entirely, using [ on UCSCView
+### Or just leave it; ucscTracks might become more complex, while we
+### need a simple way to manipulate track modes.
 setClass("UCSCTrackModes", representation(labels = "character"),
          contains = "character")
 
+setMethod
 # get/set track modes to/from e.g. a view
 setGeneric("ucscTrackModes",
            function(object, ...) standardGeneric("ucscTrackModes"))
@@ -483,8 +482,6 @@ setMethod("ucscTrackModes", "character",
           })
 setMethod("ucscTrackModes", "missing",
           function(object, ...) ucscTrackModes(character(), ...))
-
-### FIXME: the cart is not reliable, need to parse hgTracks page
 
 setMethod("ucscTrackModes", "UCSCView",
           function(object)

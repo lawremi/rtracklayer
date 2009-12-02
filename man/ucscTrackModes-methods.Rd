@@ -28,10 +28,12 @@
                    squish = character(), full = character())}
     Creates an instance of \code{\linkS4class{UCSCTrackModes}} from
     \code{object}, a character vector of mode names, with the
-    corresponding track names given in the \code{names} attribute. Note
-    that \code{object} can be a \code{UCSCTrackModes} instance.
-    The other parameters are character vectors naming the tracks for
-    each mode and overriding the modes specified by \code{object}.
+    corresponding track ids given in the \code{names} attribute. Note
+    that \code{object} can be a \code{UCSCTrackModes} instance, as
+    \code{UCSCTrackModes} extends \code{character}.
+    The other parameters are character vectors identifying the tracks for
+    each mode and overriding the modes specified by
+    \code{object}.
   }
 
   \item{object = "missing"}{
