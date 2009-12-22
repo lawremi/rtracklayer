@@ -1134,9 +1134,12 @@ ucscGenomes <- function() {
   doc <- httpGet("http://genome.ucsc.edu/goldenPath/releaseLog.html")
   expr <- "//ul/li/a[@class = 'toc' and @href != '#recent']/text()"
   labs <- sapply(getNodeSet(doc, expr), xmlValue)
-  dates <- sub(".* (.* .*) .*$", "\\1", labs)
   dbs <- sub(".*\\((.*)\\)", "\\1", labs)
-  nms <- sub("(.*) .* .* .*$", "\\1", labs)
+  monthExpr <- paste(month.abb, collapse="|")
+  isDated <- grepl(monthExpr, labs)
+  dates <- ifelse(isDated, sub(".* (.* .*) .*$", "\\1", labs), NA) 
+  nms <- ifelse(isDated, sub("(.*) .* .* .*$", "\\1", labs),
+                sub("(.*) .* .*$", "\\1", labs))
   data.frame(db = dbs, organism = nms, date = dates)
 }
 
