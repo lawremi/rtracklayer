@@ -1131,16 +1131,18 @@ setMethod("ucscTrackModes", "ucscTracks",
 ## List available UCSC genomes
 
 ucscGenomes <- function() {
-  doc <- httpGet("http://genome.ucsc.edu/goldenPath/releaseLog.html")
-  expr <- "//ul/li/a[@class = 'toc' and @href != '#recent']/text()"
-  labs <- sapply(getNodeSet(doc, expr), xmlValue)
-  dbs <- sub(".*\\((.*)\\)", "\\1", labs)
-  monthExpr <- paste(month.abb, collapse="|")
-  isDated <- grepl(monthExpr, labs)
-  dates <- ifelse(isDated, sub(".* (.* .*) .*$", "\\1", labs), NA) 
-  nms <- ifelse(isDated, sub("(.*) .* .* .*$", "\\1", labs),
-                sub("(.*) .* .*$", "\\1", labs))
-  data.frame(db = dbs, organism = nms, date = dates)
+  doc <- httpGet("http://genome.ucsc.edu/FAQ/FAQreleases")
+  table <- getNodeSet(doc, "//table[@border='1']")[[1]]
+  species <- sapply(getNodeSet(table, "tr/td[1]//text()"), xmlValue)
+  speciesRle <- Rle(species)
+  emptyRuns <- which(runValue(speciesRle) == "<c2><a0>")
+  runValue(speciesRle)[emptyRuns] <- runValue(speciesRle)[emptyRuns-1]
+  dbs <- sapply(getNodeSet(table, "tr/td[2]//text()"), xmlValue)
+  dates <- sapply(getNodeSet(table, "tr/td[3]//text()"), xmlValue)
+  nms <- sapply(getNodeSet(table, "tr/td[4]//text()"), xmlValue)
+  df <- data.frame(db = dbs, organism = as.vector(speciesRle),
+                   date = dates, name = nms)
+  df[sapply(getNodeSet(table, "tr/td[5]//text()"), xmlValue) == "Available",]
 }
 
 # form creation
