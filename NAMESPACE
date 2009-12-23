@@ -1,7 +1,7 @@
 import(RCurl, XML)
 
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
-           RangesList)
+           RangesList, Rle)
 
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL)
@@ -10,7 +10,7 @@ importMethodsFrom("BSgenome",  strand)
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   range, split, lapply, ranges, values, unlist, as.list,
                   isDisjoint, width, space, as.data.frame, rbind, universe,
-                  "universe<-", score, "score<-")
+                  "universe<-", score, "score<-", runValue, as.vector)
 
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
