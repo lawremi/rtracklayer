@@ -1134,6 +1134,7 @@ ucscGenomes <- function() {
   doc <- httpGet("http://genome.ucsc.edu/FAQ/FAQreleases")
   table <- getNodeSet(doc, "//table[@border='1']")[[1]]
   species <- sapply(getNodeSet(table, "tr/td[1]//text()"), xmlValue)
+  species <- sub("^ *", "", species) # attempt to strip weird characters
   speciesRle <- Rle(species)
   emptyRuns <- which(runValue(speciesRle) == "<c2><a0>")
   runValue(speciesRle)[emptyRuns] <- runValue(speciesRle)[emptyRuns-1]
@@ -1142,7 +1143,10 @@ ucscGenomes <- function() {
   nms <- sapply(getNodeSet(table, "tr/td[4]//text()"), xmlValue)
   df <- data.frame(db = dbs, organism = as.vector(speciesRle),
                    date = dates, name = nms)
-  df[sapply(getNodeSet(table, "tr/td[5]//text()"), xmlValue) == "Available",]
+  status <- getNodeSet(table, "tr/td[5]//text()")
+  df <- df[sapply(status, xmlValue) == "Available",]
+  rownames(df) <- NULL
+  df
 }
 
 # form creation
