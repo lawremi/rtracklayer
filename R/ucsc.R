@@ -1135,14 +1135,18 @@ ucscGenomes <- function() {
   table <- getNodeSet(doc, "//table[@border='1']")[[1]]
   species <- sapply(getNodeSet(table, "tr/td[1]//text()"), xmlValue)
   species <- sub("^ *", "", species) # attempt to strip weird characters
-  speciesRle <- Rle(species)
-  emptyRuns <- which(runValue(speciesRle) == "<c2><a0>")
-  runValue(speciesRle)[emptyRuns] <- runValue(speciesRle)[emptyRuns-1]
+  # The code below tries to detect the empty cells in the SPECIES col of
+  # the table. The real content of these cells seems to vary from one
+  # platform to the other (not clear why, maybe some sort of local issue?).
+  # There must be a simplest way.
+  # TODO: Test this on Windows!
+  is_empty_species <- species %in% c("<c2><a0>", "\xc3\x82\xc2\xa0")
+  species <- rep.int(species[!is_empty_species],
+                     diff(which(c(!is_empty_species, TRUE))))
   dbs <- sapply(getNodeSet(table, "tr/td[2]//text()"), xmlValue)
   dates <- sapply(getNodeSet(table, "tr/td[3]//text()"), xmlValue)
   nms <- sapply(getNodeSet(table, "tr/td[4]//text()"), xmlValue)
-  df <- data.frame(db = dbs, organism = as.vector(speciesRle),
-                   date = dates, name = nms)
+  df <- data.frame(db = dbs, organism = species, date = dates, name = nms)
   status <- getNodeSet(table, "tr/td[5]//text()")
   df <- df[sapply(status, xmlValue) == "Available",]
   rownames(df) <- NULL

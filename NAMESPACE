@@ -10,8 +10,7 @@ importMethodsFrom("BSgenome",  strand)
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   range, split, lapply, ranges, values, unlist, as.list,
                   isDisjoint, width, space, as.data.frame, rbind, universe,
-                  "universe<-", score, "score<-", runValue, "runValue<-",
-                  as.vector)
+                  "universe<-", score, "score<-", as.vector)
 
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
