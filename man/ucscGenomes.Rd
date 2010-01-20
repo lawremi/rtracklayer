@@ -17,7 +17,7 @@ ucscGenomes()
 \seealso{\code{\linkS4class{UCSCSession}} for details on specifying the
   genome.}
 \examples{
-ucscGenome()
+ucscGenomes()
 }
 \author{ Michael Lawrence }
 \keyword{interface}

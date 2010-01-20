@@ -1140,7 +1140,7 @@ ucscGenomes <- function() {
   # platform to the other (not clear why, maybe some sort of local issue?).
   # There must be a simplest way.
   # TODO: Test this on Windows!
-  is_empty_species <- species %in% c("<c2><a0>", "\xc3\x82\xc2\xa0")
+  is_empty_species <- species %in% c("<c2><a0>", "\xc2\xa0", "\xc3\x82\xc2\xa0")
   species <- rep.int(species[!is_empty_species],
                      diff(which(c(!is_empty_species, TRUE))))
   dbs <- sapply(getNodeSet(table, "tr/td[2]//text()"), xmlValue)
