@@ -2,24 +2,27 @@
 
 setGeneric("export.gff",
            function(object, con, version = c("1", "2", "3"),
-                    source = "rtracklayer")
+                    source = "rtracklayer", append = FALSE, ...)
            standardGeneric("export.gff"))
 
 setMethod("export.gff", "ANY",
-          function(object, con, version, source)
+          function(object, con, version, source, append)
           {
             cl <- class(object)
             object <- try(as(object, "RangedData"), silent = TRUE)
             if (class(object) == "try-error")
               stop("cannot export object of class '", cl, "'")
-            export.gff(object, con=con, version=version, source=source)
+            export.gff(object, con=con, version=version, source=source,
+                       append=append)
           })
 
 setMethod("export.gff", c("RangedData", "characterORconnection"),
-          function(object, con, version, source)
+          function(object, con, version, source, append)
 {
   version <- match.arg(version)
-  
+
+  if (!append)
+    cat("", con = file) # clear any existing file
   gffComment(con, "gff-version", version)
   sourceVersion <- try(package.version(source), TRUE)
   if (!inherits(sourceVersion, "try-error"))
@@ -88,12 +91,13 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
   
   if (!is.null(attrs)) { # write out the rows with attributes first
     write.table(cbind(table, attrs)[!is.na(attrs),], con, sep = "\t", na = ".",
-                quote = FALSE, col.names = FALSE, row.names = FALSE)
+                quote = FALSE, col.names = FALSE, row.names = FALSE,
+                append = TRUE)
     table <- table[is.na(attrs),]
   }
   
   write.table(table, con, sep = "\t", na = ".", quote = FALSE,
-              col.names = FALSE, row.names = FALSE)
+              col.names = FALSE, row.names = FALSE, append = TRUE)
 })
 
 setGeneric("import.gff",
@@ -223,4 +227,4 @@ setMethod("import.gff3", "ANY",
 # utilities
 
 gffComment <- function(con, ...)
-    cat("##", paste(...), "\n", sep = "", file = con)
+    cat("##", paste(...), "\n", sep = "", file = con, append = TRUE)

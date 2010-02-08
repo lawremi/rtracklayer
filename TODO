@@ -1,9 +1,10 @@
+- Support bigWig, bigBed, which will require a bunch of C code from UCSC, but
+  we could use that for the chain file reading and parsing other formats
 - Move chain file reading here
-- Add presentation options management 
 - Attach to existing saved sessions
-- Represent connection of particular format with formal class in I/O framework
-- Make aliases readTrack, writeTrack that expect a track format
+- Represent formats with formal class in I/O framework, rather than ".format"
 - Port to track reading and writing to C
-- Accessors for TrackLine slots
 - Add intersection functionality to table browser
-- Check out AnnotationViewer: http://sourceforge.net/projects/associationview/
+- Check out new viewers:
+  - AnnotationViewer: http://sourceforge.net/projects/associationview/
+  - IGV, which supports integration through ports

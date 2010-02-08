@@ -13,20 +13,22 @@ setClassUnion("characterORconnection", c("character", "connection"))
 setGeneric("export",
            function(object, con, format, ...) standardGeneric("export"))
 
+.exportForFormat <- function(format) {
+  fun <- try(match.fun(paste("export", format, sep=".")), TRUE)
+  if (is.character(fun))
+    stop("No export function for '", format, "' found")
+  fun
+}
+
 setMethod("export", c(con = "connection", format = "character"),
           function(object, con, format, ...)
           {
-            fun <- try(match.fun(paste("export", format, sep=".")), TRUE)
-            if (is.character(fun))
-              stop("No export function for '", format, "' found")
-            wasOpen <- TRUE
             if (!isOpen(con)) {
               open(con, "w")
-              wasOpen <- FALSE
+              on.exit(close(con))
             }
+            fun <- .exportForFormat(format)
             fun(object, con, ...)
-            if (!wasOpen)
-              close(con)
           })
 setMethod("export", c(con = "missing", format = "character"),
           function(object, con, format, ...)
@@ -46,9 +48,16 @@ setMethod("export", c(con = "character", format = "missing"),
 setMethod("export", c(con = "character", format = "character"),
           function(object, con, format, ...)
           {
-            con <- file(con)
-            export(object, con, format, ...)
+            fun <- .exportForFormat(format)
+            fun(object, con, ...)
           })
+
+.importForFormat <- function(format) {
+  fun <- try(match.fun(paste("import", format, sep=".")), TRUE)
+  if (is.character(fun))
+    stop("No import function for '", format, "' found")
+  fun
+}
 
 setGeneric("import",
            function(con, format, text, ...) standardGeneric("import"))
@@ -56,18 +65,12 @@ setGeneric("import",
 setMethod("import", c("connection", "character"),
           function(con, format, text, ...)
           {
-            fun <- try(match.fun(paste("import", format, sep=".")), TRUE)
-            if (is.character(fun))
-              stop("No import function for '", format, "' found")
-            wasOpen <- TRUE
+            fun <- .importForFormat(format)
             if (!isOpen(con)) {
               open(con, "r")
-              wasOpen <- FALSE
+              on.exit(close(con))
             }
-            object <- fun(con, ...)
-            if (!wasOpen)
-              close(con)
-            object
+            fun(con, ...)
           })
 setMethod("import", c("character", "missing"),
           function(con, format, text, ...)
@@ -78,8 +81,8 @@ setMethod("import", c("character", "missing"),
 setMethod("import", c("character", "character"),
           function(con, format, text, ...)
           {
-            con <- file(con)
-            import(con, format, ...)
+            fun <- .importForFormat(format)
+            fun(con, ...)
           })
 setMethod("import", c(con = "missing", text = "character"),
           function(con, format, text, ...)

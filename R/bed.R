@@ -2,12 +2,13 @@
 
 setGeneric("export.bed",
            function(object, con, variant = c("base", "bedGraph", "bed15"),
-                    color = NULL, ...)
+                    color = NULL, append = FALSE, ...)
            standardGeneric("export.bed"))
 
 
 setMethod("export.bed", "ANY",
-          function(object, con, variant = c("base", "bedGraph", "bed15"), color)
+          function(object, con, variant = c("base", "bedGraph", "bed15"), color,
+                   append)
           {
             cl <- class(object)
             track <- try(as(object, "RangedData"), silent = TRUE)
@@ -16,11 +17,13 @@ setMethod("export.bed", "ANY",
               if (class(track) == "try-error")
                 stop("cannot export object of class '", cl, "'")
             }
-            export.bed(track, con=con, variant=variant, color=color)
+            export.bed(track, con=con, variant=variant, color=color,
+                       append=append)
           })
 
 setMethod("export.bed", c("RangedData", "characterORconnection"),
-          function(object, con, variant = c("base", "bedGraph", "bed15"), color)
+          function(object, con, variant = c("base", "bedGraph", "bed15"), color,
+                   append)
           {
             variant <- match.arg(variant)
             name <- strand <- thickStart <- thickEnd <- color <- NULL
@@ -101,26 +104,27 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
             write.table(df, con, sep = "\t", col.names = FALSE,
-                        row.names = FALSE, quote = FALSE, na = ".")
+                        row.names = FALSE, quote = FALSE, na = ".",
+                        append = append)
           })
 
 setMethod("export.bed", "UCSCData",
           function(object, con, variant = c("base", "bedGraph", "bed15"), color,
-                   trackLine = TRUE, ...)
+                   append, trackLine = TRUE, ...)
           {
             variant <- match.arg(variant)
             if (variant == "base" && trackLine) {
-              export.ucsc(object, con, "bed", variant, color, ...)
+              export.ucsc(object, con, "bed", append, variant, color, ...)
             } else {
-              callNextMethod(object, con, variant, color)
+              callNextMethod(object, con, variant, color, append)
             }
           })
 
 setMethod("export.bed", "RangedDataList",
           function(object, con, variant = c("base", "bedGraph", "bed15"), color,
-                   ...)
+                   append, ...)
           {
-            export.ucsc(object, con, "bed", variant, color, ...)
+            export.ucsc(object, con, "bed", append, variant, color, ...)
           })
 
 setGeneric("import.bed",
@@ -243,7 +247,7 @@ setMethod("export.bed15Lines", "RangedData",
             scores <- do.call("paste", c(scores, sep = ","))
             scores <- gsub("NA", "-10000", scores, fixed=TRUE)
             object$expScores <- scores
-            export.bed(object, con, "bed15")
+            export.bed(object, con, "bed15", ...)
           })
 
 setGeneric("export.bed15",
@@ -329,5 +333,5 @@ setGeneric("export.bedGraphLines",
 setMethod("export.bedGraphLines", "ANY",
           function(object, con, ...)
           {
-            export.bed(object, con, "bedGraph")
+            export.bed(object, con, "bedGraph", ...)
           })

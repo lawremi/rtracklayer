@@ -1,21 +1,28 @@
+useDynLib(rtracklayer, .registration = TRUE)
+
 import(RCurl, XML)
 
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
-           RangesList, Rle)
+           RangesList, Rle, RangedSelection)
 
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
-                  Sequence, Annotated, DataTableORNULL, characterORNULL)
+                  Sequence, Annotated, DataTableORNULL, characterORNULL,
+                  RangedSelection)
 
-importMethodsFrom("BSgenome",  strand)
+importFrom("BSgenome", available.genomes)
+importMethodsFrom("BSgenome",  strand, seqlengths)
+
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   range, split, lapply, ranges, values, unlist, as.list,
                   isDisjoint, width, space, as.data.frame, rbind, universe,
-                  "universe<-", score, "score<-", as.vector)
+                  "universe<-", score, "score<-", as.vector,
+                  "ranges<-", colnames, "colnames<-")
 
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
               "UCSCData", "TrackLine", "BasicTrackLine", "GraphTrackLine",
-              "Bed15TrackLine", "UCSCTrackModes")
+              "Bed15TrackLine", "UCSCTrackModes",
+              "RangedSelection", "BigWigSelection")
 
 exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "browserSession", "browserSession<-",
@@ -41,8 +48,9 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               )
 
 export("genomeBrowsers", "start", "end", "strand", "start<-", "end<-",
-       "ranges", "GenomicRanges", "GenomicData", "IRanges",
-       "RangedDataList", score, "score<-", "as.data.frame", "ucscGenomes")
+       "ranges", "GenomicRanges", "GenomicData", "GenomicSelection", "IRanges",
+       "RangedDataList", score, "score<-", "as.data.frame", "ucscGenomes",
+       "export.bw", "import.bw")
 
 ## the S4-connection compatibility layer
 exportClasses("connection",

@@ -227,7 +227,7 @@ ucscTableGet <- function(query, .parse = TRUE, ...)
 
 setMethod("trackNames", "UCSCTableQuery",
           function(object) {
-            doc <- ucscTableGet(object)
+            doc <- ucscTableGet(object, tracks = TRUE)
             track_path <- "//select[@name = 'hgta_track']/option/@value"
             tracks <- unlist(getNodeSet(doc, track_path))
             label_path <- "//select[@name = 'hgta_track']/option/text()"
@@ -432,7 +432,7 @@ setMethod("browserView", "UCSCSession",
             hgsid <- node ##xmlValue(node)
             view@hgsid <- as.numeric(hgsid)
             ## figure out track modes
-            modes <- ucscTrackModes(view)
+            origModes <- modes <- ucscTrackModes(view)
             if (!missing(track)) {
               if (class(track) == "character")
                 trackNames(modes) <- track
@@ -443,6 +443,7 @@ setMethod("browserView", "UCSCSession",
             }
             argModes <- ucscTrackModes(...)
             modes[names(argModes)] <- argModes
+            modes <- modes[modes != origModes]
             form <- c(form, ucscForm(modes), ucscForm(view))
             if (!missing(imagewidth))
               form <- c(form, pix = imagewidth)
@@ -460,7 +461,6 @@ setMethod("browserView", "UCSCSession",
 setClass("UCSCTrackModes", representation(labels = "character"),
          contains = "character")
 
-setMethod
 # get/set track modes to/from e.g. a view
 setGeneric("ucscTrackModes",
            function(object, ...) standardGeneric("ucscTrackModes"))
@@ -864,17 +864,22 @@ ucscNormSeqNames <- function(nms) {
   nms
 }
 
+chooseGraphType <- function(from) {
+  r <- ranges(from)[[1]] # heuristic only needs first chromosome
+  type <- "bedGraph"
+  ## decide whether compression is a good idea
+  steps <- diff(sort(start(r)))
+  if (length(unique(steps)) == 1 || # fixed-step makes sense
+      ((3 * length(unique(width(r)))) < length(r) && # makes sense wrt size
+       mean(steps) < 100)) # dense enough for UCSC efficiency
+    type <- "wig"
+  type
+}
+
 setAs("RangedData", "UCSCData", function(from) {
   names(from) <- ucscNormSeqNames(names(from))
   if (is.numeric(score(from))) { # have numbers, let's plot them
-    r <- ranges(from)[[1]] # heuristic only needs first chromosome
-    type <- "bedGraph"
-    ## decide whether compression is a good idea
-    steps <- diff(sort(start(r)))
-    if (length(unique(steps)) == 1 || # fixed-step makes sense
-        ((3 * length(unique(width(r)))) < length(r) && # makes sense wrt size
-         mean(steps) < 100)) # dense enough for UCSC efficiency
-      type <- "wig"
+    type <- chooseGraphType(from)
     line <- new("GraphTrackLine", type = type)
   } else line <- new("BasicTrackLine")
   new("UCSCData", from, trackLine = line)
@@ -887,14 +892,14 @@ setGeneric("export.ucsc",
            function(object, con,
                     subformat = c("auto", "gff1", "wig", "bed", "bed15",
                       "bedGraph"),
-                    ...)
+                    append = FALSE, ...)
            standardGeneric("export.ucsc"))
 
 setMethod("export.ucsc", "RangedDataList",
           function(object, con,
                    subformat = c("auto", "gff1", "wig", "bed", "bed15",
                      "bedGraph"),
-                   trackNames, ...)
+                   append, trackNames, ...)
           {
             subformat <- match.arg(subformat)
             if (missing(trackNames)) {
@@ -905,9 +910,11 @@ setMethod("export.ucsc", "RangedDataList",
               lines <- unlist(lapply(object[ucsc], slot, "trackLine"))
               trackNames[ucsc] <- as.character(sapply(lines, slot, "name"))
             }
-            for (i in seq_len(length(object)))
+            for (i in seq_len(length(object))) {
               export.ucsc(object[[i]], con, subformat, name = trackNames[i],
-                          ...)
+                          append = append, ...)
+              append <- TRUE
+            }
           })
 
 trackLineClass <- function(subformat)
@@ -920,7 +927,7 @@ trackLineClass <- function(subformat)
 }
 
 setMethod("export.ucsc", "ANY",
-          function(object, con, subformat, ...)
+          function(object, con, subformat, append, ...)
           {
             cl <- class(object)
             track <- try(as(object, "RangedData"), silent = TRUE)
@@ -929,19 +936,20 @@ setMethod("export.ucsc", "ANY",
               if (class(track) == "try-error")
                 stop("cannot export object of class '", cl, "'")
             }
-            export.ucsc(track, con=con, subformat=subformat, ...)
+            export.ucsc(track, con = con, subformat = subformat,
+                        append = append, ...)
           })
 
 setMethod("export.ucsc", "RangedData",
-          function(object, con, subformat, ...)
+          function(object, con, subformat, append, ...)
           {
             object <- as(object, "UCSCData")
             subformat <- match.arg(subformat)
-            export.ucsc(object, con, subformat, ...)
+            export.ucsc(object, con, subformat, append, ...)
            })
 
 setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
-          function(object, con, subformat, ...)
+          function(object, con, subformat, append, ...)
           {
             subformat <- match.arg(subformat)
             auto <- FALSE
@@ -991,7 +999,8 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
                 strand <- factor(strand)
                 name <- paste(object@trackLine@name, nameMap[levels(strand)])
                 tracks <- split(object, strand)
-                export.ucsc(tracks, con, subformatOrig, name, ...)
+                export.ucsc(tracks, con, subformatOrig, append,
+                            trackNames = name, ...)
                 return()
               }
             } else if (subformat == "bed15") {
@@ -1000,14 +1009,15 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
                 object@trackLine@expNames <- colnames(object)
               trackLine <- object@trackLine
             }
-            writeLines(as(object@trackLine, "character"), con)
+            writeLines(as(object@trackLine, "character"), con, append = append)
             do.call(export, c(list(as(object, "RangedData"), con, subformat),
-                                args[!lineArgs], trackLine = trackLine))
+                                args[!lineArgs], trackLine = trackLine,
+                              append = TRUE))
           })
 
 # for GFF, the track line should go in a comment
 setMethod("export.gff", c("UCSCData", "characterORconnection"),
-          function(object, con, version, source)
+          function(object, con, version, source, append)
           {
             gffComment(con, as(object@trackLine, "character"))
             callNextMethod()
@@ -1206,11 +1216,15 @@ setMethod("ucscForm", "RangedDataList",
           })
 
 setMethod("ucscForm", "UCSCTableQuery",
-          function(object) {
-            ## range (ie genome) and track name are required
+          function(object, tracks = FALSE) {
+            ## range (ie genome) is required
             range <- object@range
-            form <- c(ucscForm(range),
-                      list(hgta_group = "allTracks", hgta_track = object@track))
+            form <- ucscForm(range)
+            if (is.null(object@track) && !tracks)
+              form <- c(form, list(hgta_group = "allTables"))
+            else
+              form <- c(form, list(hgta_group = "allTracks",
+                                   hgta_track = object@track))
             if (length(chrom(range)))
               regionType <- "range"
             else regionType <- "genome"

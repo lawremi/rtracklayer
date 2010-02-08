@@ -37,9 +37,12 @@
 
     \item{object = "UCSCSession", value = "RangedDataList"}{
       \code{track(object, name = deparse(substitute(track)),
-        view = FALSE, format = "gff") <- value}:
+        view = FALSE, format = "gff", ...) <- value}:
       Load the tracks into the session using the specified
-      \code{format}.
+      \code{format}. The arguments in \code{...} are passed on to
+      \code{\link{export.ucsc}}, so they could be slots in a
+      \code{\linkS4class{TrackLine}} subclass or parameters to pass
+      on to the export function for \code{format}.
     }
   }
 }

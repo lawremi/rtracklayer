@@ -10,8 +10,8 @@ setMethod("export.wig", "ANY",
                    dataFormat = c("auto", "variableStep", "fixedStep"),
                    ...)
           {
-            export.ucsc(object, con, "wig", dataFormat = match.arg(dataFormat),
-                        ...)
+            export.ucsc(object, con, "wig", 
+                        dataFormat = match.arg(dataFormat), ...)
           })
 
 setGeneric("export.wigLines",
@@ -20,15 +20,38 @@ setGeneric("export.wigLines",
                     ...)
            standardGeneric("export.wigLines"))
 
+.wigWriter <- function(chromData, con, dataFormat) {
+  cat(dataFormat, file = con, append = TRUE)
+  cat(" chrom=", as.character(space(chromData))[1],
+      file = con, sep = "", append = TRUE)
+  data <- score(chromData)
+  starts <- start(chromData)
+  if (dataFormat == "variableStep")
+    data <- cbind(starts, data)
+  else {
+    cat(" start=", starts[1], file = con, sep = "", append = TRUE)
+    step <- if (length(starts) == 1) 0 else starts[2] - starts[1]
+    cat(" step=", step, file = con, sep = "", append = TRUE)
+  }  
+  cat(" span=", width(chromData)[1], file = con, sep = "", append = TRUE)
+  cat("\n", file = con, sep = "", append = TRUE)
+  write.table(data, con, sep = "\t", col.names = FALSE,
+              row.names = FALSE, quote = FALSE, append = TRUE)
+}
+
 setMethod("export.wigLines", c("RangedData", "characterORconnection"),
           function(object, con,
-                   dataFormat = c("auto", "variableStep", "fixedStep"))
+                   dataFormat = c("auto", "variableStep", "fixedStep"),
+                   writer = .wigWriter, append = FALSE)
           {
-            if (any(is.na(score(object))))
-              stop("WIG cannot encode missing values")
+            if (!is.numeric(score(object)) || any(is.na(score(object))))
+              stop("The score must be numeric, without any NA's")
             scipen <- getOption("scipen")
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
+            if (!append)
+              cat("", file = con)
+            dataFormat <- match.arg(dataFormat)            
             doBlock <- function(chromData) {
               if (is.unsorted(start(chromData)))
                 chromData <- chromData[order(start(chromData)),]
@@ -52,23 +75,9 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
               }
               if (!fixedSpan) ## split into blocks to make spans uniform
                 return(lapply(split(chromData, spans), doBlock))
-              cat(dataFormat, file = con)
-              cat(" chrom=", as.character(space(chromData))[1],
-                  file = con, sep = "")
-              data <- score(chromData)
-              if (dataFormat == "variableStep")
-                data <- cbind(starts, data)
-              else {
-                if (!fixedStep)
-                  stop("Step not uniform: consider variableStep")
-                cat(" start=", starts[1], file = con, sep = "")
-                cat(" step=", steps[1], file = con, sep = "")
-              }
-              if (fixedSpan)
-                cat(" span=", spans[1], file = con, sep = "")
-              cat("\n", file = con, sep = "")
-              write.table(data, con, sep = "\t", col.names = FALSE,
-                          row.names = FALSE, quote = FALSE)
+              if (dataFormat != "variableStep" && !fixedStep)
+                stop("Step not uniform: consider variableStep")
+              writer(chromData, con, dataFormat)
             }
             dataFormat <- match.arg(dataFormat)
             lapply(object, doBlock)

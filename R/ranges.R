@@ -100,6 +100,45 @@ GenomicRanges <- function(start = integer(), end = integer(), chrom = NULL,
   rl
 }
 
+### =========================================================================
+### Genome-oriented conveniences for RangedSelection classes
+### -------------------------------------------------------------------------
+
+.genomeForID <- function(genome) {
+  pkgs <- grep("^BSgenome\\.", rownames(installed.packages()), value = TRUE)
+  pkg <- grep(paste(genome, "$", sep = ""), pkgs, value = TRUE)
+  if (length(pkg) == 1) {
+    org <- strsplit(pkg, ".", fixed=TRUE)[[1]][2]
+    get(org, getNamespace(pkg))
+  } else NULL
+}
+
+## One could imagine the BSgenome object having a coerce method to
+## Ranges and RangesList, and this function could use that. But would
+## the coercion consider masks?
+
+GenomicSelection <- function(genome, chrom = NULL)
+{
+  if (missing(genome) || !IRanges:::isSingleString(genome))
+    stop("'genome' must be a single string identifying a genome")
+  bsgenome <- .genomeForID(genome)
+  if (is.null(bsgenome))
+    stop("'genome' does not seem to correspond to a BSgenome package")
+  lens <- seqlengths(bsgenome)
+  if (is.null(chrom))
+    chrom <- names(lens)
+  else {
+    if (!is.character(chrom))
+      stop("'chrom' must be NULL or a character vector")
+    invalidChroms <- setdiff(chrom, names(lens))
+    if (length(invalidChroms))
+      stop("'chrom' contains invalid chromosomes: ",
+           paste(invalidChroms, collapse = ", "))
+    lens <- lens[chrom]
+  }
+  RangedSelection(split(IRanges(1, lens), factor(chrom, chrom)))
+}
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Questionable utilities
 ###
