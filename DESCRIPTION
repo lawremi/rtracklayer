@@ -14,5 +14,5 @@ Description: Extensible framework for interacting with multiple genome
   viewport.
 Maintainer: Michael Lawrence <mflawren@fhcrc.org>
 License: Artistic-2.0
-Collate: io.R web.R ranges.R browser.R gff.R ucsc.R bed.R wig.R utils.R bigWig.R
+Collate: io.R web.R ranges.R browser.R gff.R ucsc.R bed.R wig.R utils.R
 biocViews: Annotation,Visualization,DataImport
