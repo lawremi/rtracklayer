@@ -1,4 +1,4 @@
-#useDynLib(rtracklayer, .registration = TRUE)
+useDynLib(rtracklayer, .registration = TRUE)
 
 import(RCurl, XML)
 
@@ -16,15 +16,13 @@ importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   range, split, lapply, ranges, values, unlist, as.list,
                   isDisjoint, width, space, as.data.frame, rbind, universe,
                   "universe<-", score, "score<-", as.vector,
-                  "ranges<-", colnames, "colnames<-")
+                  "ranges<-", colnames, "colnames<-", queryHits, findOverlaps)
 
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
               "UCSCData", "TrackLine", "BasicTrackLine", "GraphTrackLine",
               "Bed15TrackLine", "UCSCTrackModes",
-              "RangedSelection"
-              ##"BigWigSelection"
-              )
+              "RangedSelection", "BigWigSelection")
 
 exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "browserSession", "browserSession<-",
@@ -51,9 +49,8 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
 
 export("genomeBrowsers", "start", "end", "strand", "start<-", "end<-",
        "ranges", "GenomicRanges", "GenomicData", "GenomicSelection", "IRanges",
-       "RangedDataList", score, "score<-", "as.data.frame", "ucscGenomes"
-       ##"export.bw", "import.bw"
-       )
+       "RangedDataList", score, "score<-", "as.data.frame", "ucscGenomes",
+       "export.bw", "import.bw")
 
 ## the S4-connection compatibility layer
 exportClasses("connection",
