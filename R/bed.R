@@ -132,6 +132,14 @@ setGeneric("import.bed",
                     trackLine = TRUE, genome = "hg18", ...)
            standardGeneric("import.bed"))
 
+setMethod("import.bed", "character",
+          function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
+                   genome)
+          {
+            import(file(con), format = "bed", variant = variant,
+                   trackLine = trackLine, genome = genome)
+          })
+
 setMethod("import.bed", "connection",
           function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
                    genome)
@@ -148,22 +156,28 @@ setMethod("import.bed", "connection",
                                    trackLine = FALSE, genome = genome))
             }
             if (variant == "bedGraph") {
-              bedClasses <- c("factor", "integer", "integer", "numeric")
+              bedClasses <- c("character", "integer", "integer", "numeric")
               bedNames <- c("chrom", "start", "end", "score")
             } else {
               bedNames <- c("chrom", "start", "end", "name",
                             "score", "strand", "thickStart",
                             "thickEnd", "itemRgb", "blockCount",
                             "blockSizes", "blockStarts")
-              bedClasses <- NA
+              bedClasses <- c("character", "integer", "integer", "character",
+                              "numeric", "character", "integer", "integer",
+                              "character", "integer", "character", "character")
             }
             if (variant == "bed15")
               bedNames <- c(bedNames, "expCount", "expIds", "expScores")
-            ## FIXME: could read a single line to get ncols up-front,
+            ## read a single line to get ncols up-front,
             ## and thus specify all col classes
             ## FIXME: reading in 'as.is' to save memory,
-            bed <- DataFrame(read.table(con, colClasses = bedClasses,
-                                        as.is = TRUE))
+            if (length(line <- readLines(con, 1, warn=FALSE))) {
+              pushBack(line, con)
+              bedClasses <- bedClasses[length(strsplit(line, "\t")[[1]])]
+              bed <- DataFrame(read.table(con, colClasses = bedClasses,
+                                          as.is = TRUE))
+            } else bed <- DataFrame(as.list(sapply(bedClasses, vector)))
             colnames(bed) <- bedNames[seq_len(ncol(bed))]
             if (variant != "bedGraph") { ## don't know column #, coerce here
               bed$start <- as.integer(bed$start)

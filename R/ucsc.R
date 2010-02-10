@@ -1042,7 +1042,9 @@ setMethod("import.ucsc", "characterORconnection",
               line <- as(trackLines[i], trackLineClass(subformat))
               if (subformat == "wig" || subformat == "bedGraph")
                 subformat <- paste(subformat, "Lines", sep = "")
-              text <- lines[starts[i]:ends[i]]
+              text <- character()
+              if (starts[i] <= ends[i])
+                text <- lines[starts[i]:ends[i]]
               if (subformat == "bed15") # need to pass track line
                 trackSet <- import(format = "bed15Lines", text = text,
                                    trackLine = line, ...)
