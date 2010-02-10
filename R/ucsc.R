@@ -219,9 +219,9 @@ setMethod("ucscTableQuery", "UCSCSession",
             query
           })
 
-ucscTableGet <- function(query, .parse = TRUE, ...)
-  ucscGet(browserSession(query), "tables", c(ucscForm(query), ...),
-          .parse = .parse)
+ucscTableGet <- function(query, .parse = TRUE, tracks = FALSE, ...)
+  ucscGet(browserSession(query), "tables",
+          c(ucscForm(query, tracks = tracks), ...), .parse = .parse)
 
 ## gets the track names available from the table browser
 
