@@ -9,6 +9,8 @@ importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL,
                   RangedSelection)
 
+importClassesFrom("Biostrings", file, connection)
+
 importFrom("BSgenome", available.genomes)
 importMethodsFrom("BSgenome",  strand, seqlengths)
 
