@@ -94,7 +94,7 @@ setMethod("show", "UCSCTableQuery",
           function(object) {
             cat("Get ")
             if (!is.null(tableName(object)))
-              cat("table '", tableName, "' from ", sep = "")
+              cat("table '", tableName(object), "' from ", sep = "")
             cat("track '", names(trackName(object)), "' within ", sep = "")
             range <- range(object)
             chrom <- names(range)
@@ -406,7 +406,8 @@ setMethod("getTable", "UCSCTableQuery",
             f <- file()
             writeLines(output, f)
             header <- readChar(f, 1) ## strip off the '#' header prefix
-            tab <- read.table(f, sep = "\t", header=TRUE)
+            tab <- read.table(f, sep = "\t", header=TRUE, comment.char = "",
+                              quote = "")
             close(f)
             tab
           })
