@@ -174,7 +174,7 @@ setMethod("import.bed", "connection",
             ## FIXME: reading in 'as.is' to save memory,
             if (length(line <- readLines(con, 1, warn=FALSE))) {
               pushBack(line, con)
-              bedClasses <- bedClasses[length(strsplit(line, "\t")[[1]])]
+              bedClasses <- bedClasses[length(strsplit(line, "[\t ]")[[1]])]
               bed <- DataFrame(read.table(con, colClasses = bedClasses,
                                           as.is = TRUE))
             } else bed <- DataFrame(as.list(sapply(bedClasses, vector)))
