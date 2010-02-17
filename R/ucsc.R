@@ -519,7 +519,7 @@ resolveTrackIndex <- function(object, i) {
     matching <- match(i[missing], object@labels)
     if (any(is.na(matching))) {
       unmatched <- i[missing][is.na(matching)]
-      stop("Unknown tracks:", paste(unmatched, collapse = ", "))
+      stop("Unknown track(s): ", paste(unmatched, collapse = ", "))
     }
     i[missing] <- names(object)[matching]
   }
@@ -1010,7 +1010,8 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
                 object@trackLine@expNames <- colnames(object)
               trackLine <- object@trackLine
             }
-            writeLines(as(object@trackLine, "character"), con, append = append)
+            cat(as(object@trackLine, "character"), "\n", file=con, sep = "",
+                append = append)
             do.call(export, c(list(as(object, "RangedData"), con, subformat),
                                 args[!lineArgs], trackLine = trackLine,
                               append = TRUE))

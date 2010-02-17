@@ -412,9 +412,10 @@ posTargets <- track(session, "targets", range(chr1Targets))
 \end{enumerate}
 
 <<sol-7, eval=FALSE, echo=FALSE, results=hide>>=
-targetSNP <- track(session, "snp128", range(subTargetTrack))
+region <- resize(range(subTargetTrack)[1], 1000, symmetric=TRUE)
+targetSNP <- track(session, "snp130", region)
 as.data.frame(targetSNP)
-targetGene <- track(session, "knownGene", range(subTargetTrack))
+targetGene <- track(session, "knownGene", region)
 as.data.frame(targetGene)
 @ 
 
@@ -473,7 +474,7 @@ length(views)
 
 <<sol-8, eval=FALSE, echo=FALSE, results=hide>>=
 viewTarget <- track(session, "targets", range(view))
-trackNames(view) <- c("snp128", "knownGene", "targets")
+trackNames(view) <- c("snp130", "knownGene", "targets")
 ucscTrackModes(view)["knownGene"] <- "hide"
 @ 
 

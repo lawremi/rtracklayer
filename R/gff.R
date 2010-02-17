@@ -17,12 +17,12 @@ setMethod("export.gff", "ANY",
           })
 
 setMethod("export.gff", c("RangedData", "characterORconnection"),
-          function(object, con, version, source, append)
+          function(object, con, version = c("1", "2", "3"), source, append)
 {
   version <- match.arg(version)
-
+  
   if (!append)
-    cat("", con = file) # clear any existing file
+    cat("", file = con) # clear any existing file
   gffComment(con, "gff-version", version)
   sourceVersion <- try(package.version(source), TRUE)
   if (!inherits(sourceVersion, "try-error"))
