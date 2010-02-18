@@ -117,6 +117,8 @@ if ((fd = open(fileName, O_RDONLY)) >= 0)
 return result;
 }
      
+#ifndef WIN32
+/* Decompression relies on piping, which is not supported on Windows */
 
 struct lineFile *lineFileDecompress(char *fileName, bool zTerm)
 /* open a linefile with decompression */
@@ -167,7 +169,7 @@ lf = lineFileAttach(fileName, zTerm, pipelineFd(pl));
 lf->pl = pl;
 return lf;
 }
-
+#endif
 
 
 struct lineFile *lineFileAttach(char *fileName, bool zTerm, int fd)
@@ -218,8 +220,10 @@ struct lineFile *lineFileMayOpen(char *fileName, bool zTerm)
 {
 if (sameString(fileName, "stdin"))
     return lineFileStdin(zTerm);
+#ifndef WIN32
 else if (getDecompressor(fileName) != NULL)
     return lineFileDecompress(fileName, zTerm);
+#endif
 else
     {
     int fd = open(fileName, O_RDONLY);

@@ -1,3 +1,4 @@
+#ifndef WIN32 /* Unix only; may port if we need it. */
 /* pipeline.c - create a process pipeline that can be used for reading or
  * writing  */
 #include "pipeline.h"
@@ -584,3 +585,4 @@ printf("<BR>\n");
  * End:
  */
 
+#endif

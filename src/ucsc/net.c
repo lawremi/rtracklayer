@@ -1117,6 +1117,7 @@ else
 	    url = newUrl;
 	    }
 	}
+#ifndef WIN32
     if (endsWith(url, ".gz") ||
 	endsWith(url, ".Z")  ||
     	endsWith(url, ".bz2"))
@@ -1125,6 +1126,7 @@ else
            /* url needed only for compress type determination */
 	}
     else
+#endif
 	{
 	lf = lineFileAttach(url, TRUE, sd);
 	}
