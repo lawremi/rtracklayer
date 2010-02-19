@@ -298,6 +298,10 @@ ucscExport <- function(object)
     text <- paste(names(object), collapse = "\n")
     output <- ucscTableGet(object, hgta_doPastedIdentiers = "submit",
                            hgta_pastedIdentifiers = text)
+    error <- getNodeSet(output,
+                        "//script[contains(text(), '{showWarnBox')]/text()")
+    if (length(error))
+      warning(sub(".*'<li>(.*?)'.*", "\\1", xmlValue(error[[1]])))
     hgsid <- get_hgsid(output)
   }
   if (!is.null(intersectTrack(object))) {
@@ -403,6 +407,10 @@ setMethod("getTable", "UCSCTableQuery",
             if (is.null(tableName(object))) # must specify a table name
               tableName(object) <- tableNames(object)[1]
             output <- ucscExport(object)
+            ## since '#' is not treated as a comment, we discard the
+            ## error message, leaving only the header
+            if (grepl("\\n# No results", output))
+              output <- gsub("\\n.*", "", output)
             f <- file()
             writeLines(output, f)
             header <- readChar(f, 1) ## strip off the '#' header prefix
