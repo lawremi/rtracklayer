@@ -13,6 +13,6 @@ Description: Extensible framework for interacting with multiple genome
   browsers, as well as query and modify the browser state, such as the current
   viewport.
 Maintainer: Michael Lawrence <mflawren@fhcrc.org>
-License: Artistic-2.0
+License: Artistic-2.0, but files in src/ucsc are public domain
 Collate: io.R web.R ranges.R browser.R gff.R ucsc.R bed.R wig.R utils.R bigWig.R
 biocViews: Annotation,Visualization,DataImport

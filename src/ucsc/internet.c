@@ -1,3 +1,5 @@
+#ifndef WIN32
+
 /* internet - some stuff to make it easier to use
  * internet sockets and the like. */
 #include "common.h"
@@ -147,3 +149,4 @@ for (i=0; i<4; ++i)
 return TRUE;
 }
 
+#endif

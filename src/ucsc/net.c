@@ -1,3 +1,5 @@
+#ifndef WIN32
+
 /* net.c some stuff to wrap around net communications. 
  *
  * This file is copyright 2002 Jim Kent, but license is hereby
@@ -1486,3 +1488,4 @@ int netHttpGetMultiple(char *url, struct slName *queries, void *userData,
 } /* netHttpMultipleQueries */
 
 
+#endif
