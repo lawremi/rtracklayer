@@ -39,7 +39,9 @@ return clock()/CLOCKS_PER_SEC;
 void uglyfBreak()
 /* Go into debugger. */
 {
-__asm { int 3 } /* uglyf */
+  /*
+    __asm { int 3 }
+  */
 }
 
 char *getCurrentDir()
@@ -79,7 +81,7 @@ else
     }
 
 if (pattern == NULL)
-    pattern = *;
+    pattern = "*";
 if( (hFile = _findfirst( pattern, &fileInfo)) == -1L )
     return NULL;
 
