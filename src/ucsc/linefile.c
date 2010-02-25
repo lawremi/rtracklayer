@@ -513,12 +513,15 @@ void lineFileClose(struct lineFile **pLf)
 struct lineFile *lf;
 if ((lf = *pLf) != NULL)
     {
+#ifndef WIN32
     if (lf->pl != NULL)
         {
         pipelineWait(lf->pl);
         pipelineFree(&lf->pl);
         }
-    else if (lf->fd > 0 && lf->fd != fileno(stdin))
+    else
+#endif
+      if (lf->fd > 0 && lf->fd != fileno(stdin))
 	{
 	close(lf->fd);
 	freeMem(lf->buf);

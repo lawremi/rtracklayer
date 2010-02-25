@@ -24,6 +24,26 @@ _close(fd);
 return size;
 }
 
+unsigned long fileModTime(char *pathName)
+/* Return file last modification time.  The units of
+ * these may vary from OS to OS, but you can depend on
+ * later files having a larger time. */
+{
+  struct _finddata_t fileInfo;
+  if (_findfirst( pattern, &fileInfo) == -1L)
+    errAbort("_findFirst failed in fileModTime: %s", pathName);
+  return fileInfo.txime_write.tv_sec + fileInfo.time_write.tv_usec / 1000;
+}
+
+void sleep1000(int milli)
+/* Sleep for given number of 1000ths of second */
+{
+  if (milli > 0)
+    {
+      Sleep(milli);
+    }
+}
+
 long clock1000()
 /* A millisecond clock. */
 {
@@ -59,6 +79,12 @@ void setCurrentDir(char *newDir)
 {
 if (_chdir(newDir) != 0)
     errnoAbort("can't to set current directory: %s", newDir);
+}
+
+boolean maybeSetCurrentDir(char *newDir)
+/* Change directory, return FALSE (and set errno) if fail. */
+{
+  return _chdir(newDir) == 0;
 }
 
 struct slName *listDir(char *dir, char *pattern)
@@ -99,4 +125,72 @@ if (otherDir)
     setCurrentDir(currentDir);
 slNameSort(&list);
 return list;
+}
+
+boolean makeDir(char *dirName)
+/* Make dir.  Returns TRUE on success.  Returns FALSE
+ * if failed because directory exists.  Prints error
+ * message and aborts on other error. */
+{
+  int err;
+  if (!CreateDirectory(dirName, NULL))
+    {
+      perror("");
+      errAbort("Couldn't make directory %s", dirName);    
+      return FALSE;
+    }
+  return TRUE;
+}
+
+struct fileInfo *listDirX(char *dir, char *pattern, boolean fullPath)
+/* Return list of files matching wildcard pattern with
+ * extra info. If full path is true then the path will be
+ * included in the name of each file. */
+{
+  struct fileInfo *list = NULL, *el;
+  long hFile;
+  struct _finddata_t fileInfo;
+  boolean otherDir = FALSE;
+  char *currentDir;
+  int dirNameSize = strlen(dir);
+  int fileNameOffset = dirNameSize+1;
+  char pathName[512];
+
+  if (dir == NULL || sameString(".", dir) || sameString("", dir))
+    dir = "";
+  else
+    {
+      currentDir = getCurrentDir();
+      setCurrentDir(dir);
+      otherDir = TRUE;
+    }
+
+  if (pattern == NULL)
+    pattern = "*";
+  if( (hFile = _findfirst( pattern, &fileInfo)) == -1L )
+    return NULL;
+
+  memcpy(pathName, dir, dirNameSize);
+  pathName[dirNameSize] = '/';
+
+  do
+    {
+      if (!sameString(".", fileInfo.name) && !sameString("..", fileInfo.name))
+        {
+          char *fileName = fileInfo.name;
+          strcpy(pathName+fileNameOffset, fileName);
+          if (fullPath)
+            fileName = pathName;
+          el = newFileInfo(fileInfo.name, fileInfo.size,
+                           fileInfo.attrib & _A_SUBDIR, 0,
+                           fileInfo.time_access);
+          slAddHead(&list, el);
+        }
+    }
+  while( _findnext( hFile, &fileInfo) == 0 );
+  _findclose( hFile );
+  if (otherDir)
+    setCurrentDir(currentDir);
+  slSort(&list, cmpFileInfo);
+  return list;
 }

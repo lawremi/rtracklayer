@@ -65,8 +65,10 @@ void pushWarnHandler(WarnHandler handler)
 {
 if (warnIx >= maxWarnHandlers-1)
     {
+#ifndef WIN32
     if (debugPushPopErr)
         dumpStack("pushWarnHandler overflow");
+#endif
     errAbort("Too many pushWarnHandlers, can only handle %d\n", maxWarnHandlers-1);
     }
 warnArray[++warnIx] = handler;
@@ -77,8 +79,10 @@ void popWarnHandler()
 {
 if (warnIx <= 0)
     {
+#ifndef WIN32
     if (debugPushPopErr)
         dumpStack("popWarnHandler underflow");
+#endif
     errAbort("Too many popWarnHandlers\n");
     }
 --warnIx;
@@ -137,8 +141,10 @@ void pushAbortHandler(AbortHandler handler)
 {
 if (abortIx >= maxAbortHandlers-1)
     {
+#ifndef WIN32
     if (debugPushPopErr)
         dumpStack("pushAbortHandler overflow");
+#endif
     errAbort("Too many pushAbortHandlers, can only handle %d\n", maxAbortHandlers-1);
     }
 abortArray[++abortIx] = handler;
@@ -149,8 +155,10 @@ void popAbortHandler()
 {
 if (abortIx <= 0)
     {
+#ifndef WIN32
     if (debugPushPopErr)
         dumpStack("popAbortHandler underflow");
+#endif
     errAbort("Too many popAbortHandlers\n");
     }
 --abortIx;
