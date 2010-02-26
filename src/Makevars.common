@@ -7,3 +7,5 @@ UCSC_OBJECTS = \
   sqlNum.o zlibFace.o dystring.o hmmstats.o obscure.o pipeline.o \
   rangeTree.o rbTree.o memalloc.o dlist.o udc.o net.o bits.o _cheapcgi.o \
   internet.o https.o base64.o verbose.o os.o wildcmp.o _portimpl.o
+
+DFLAGS = -Dinline=""
