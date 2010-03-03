@@ -7,6 +7,7 @@
 #include <io.h>
 #include <direct.h>
 #include "portable.h"
+#include <windows.h>
 
 static char const rcsid[] = "$Id: oswin9x.c,v 1.9 2008/06/27 18:46:53 markd Exp $";
 
@@ -30,9 +31,9 @@ unsigned long fileModTime(char *pathName)
  * later files having a larger time. */
 {
   struct _finddata_t fileInfo;
-  if (_findfirst( pattern, &fileInfo) == -1L)
+  if (_findfirst( pathName, &fileInfo) == -1L)
     errAbort("_findFirst failed in fileModTime: %s", pathName);
-  return fileInfo.txime_write.tv_sec + fileInfo.time_write.tv_usec / 1000;
+  return fileInfo.time_write.tv_sec + fileInfo.time_write.tv_usec / 1000;
 }
 
 void sleep1000(int milli)
@@ -132,7 +133,6 @@ boolean makeDir(char *dirName)
  * if failed because directory exists.  Prints error
  * message and aborts on other error. */
 {
-  int err;
   if (!CreateDirectory(dirName, NULL))
     {
       perror("");
@@ -140,6 +140,14 @@ boolean makeDir(char *dirName)
       return FALSE;
     }
   return TRUE;
+}
+
+int cmpFileInfo(const void *va, const void *vb)
+/* Compare two fileInfo. */
+{
+  const struct fileInfo *a = *((struct fileInfo **)va);
+  const struct fileInfo *b = *((struct fileInfo **)vb);
+  return strcmp(a->name, b->name);
 }
 
 struct fileInfo *listDirX(char *dir, char *pattern, boolean fullPath)
