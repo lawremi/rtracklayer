@@ -3,11 +3,11 @@
  * This file is copyright 2002 Jim Kent, but license is hereby
  * granted for all use - public, private or commercial. */
 
+#include <windows.h>
 #include "common.h"
 #include <io.h>
 #include <direct.h>
 #include "portable.h"
-#include <windows.h>
 
 static char const rcsid[] = "$Id: oswin9x.c,v 1.9 2008/06/27 18:46:53 markd Exp $";
 
@@ -33,7 +33,7 @@ unsigned long fileModTime(char *pathName)
   struct _finddata_t fileInfo;
   if (_findfirst( pathName, &fileInfo) == -1L)
     errAbort("_findFirst failed in fileModTime: %s", pathName);
-  return fileInfo.time_write.tv_sec + fileInfo.time_write.tv_usec / 1000;
+  return fileInfo.time_write;
 }
 
 void sleep1000(int milli)
