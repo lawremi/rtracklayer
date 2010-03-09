@@ -142,14 +142,6 @@ boolean makeDir(char *dirName)
   return TRUE;
 }
 
-int cmpFileInfo(const void *va, const void *vb)
-/* Compare two fileInfo. */
-{
-  const struct fileInfo *a = *((struct fileInfo **)va);
-  const struct fileInfo *b = *((struct fileInfo **)vb);
-  return strcmp(a->name, b->name);
-}
-
 struct fileInfo *listDirX(char *dir, char *pattern, boolean fullPath)
 /* Return list of files matching wildcard pattern with
  * extra info. If full path is true then the path will be
