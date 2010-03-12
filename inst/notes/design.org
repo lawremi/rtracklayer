@@ -143,7 +143,7 @@ A context slot should be provided for convenience. How that is
 interpreted will depend on the genome browser interface.
 *** Storing
 Large sequences (i.e. genomes) need to be stored for use in local
-genome browsers. The bsGenome package should provide this.
+genome browsers. The BSgenome package should provide this.
 * Software integration
 ** Browsers
 *** UCSC

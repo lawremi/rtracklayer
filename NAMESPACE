@@ -9,10 +9,12 @@ importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL,
                   RangedSelection)
 
+importMethodsFrom("GenomicRanges", strand)
+
 importClassesFrom("Biostrings", file, connection)
 
 importFrom("BSgenome", available.genomes)
-importMethodsFrom("BSgenome",  strand, seqlengths)
+importMethodsFrom("BSgenome", seqlengths)
 
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   range, split, lapply, ranges, values, unlist, as.list,
@@ -45,7 +47,7 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               ## from IRanges
               "start", "end", "start<-", "end<-", "score", "score<-",
               "as.data.frame",
-              ## from BSgenome
+              ## from GenomicRanges
               "strand"
               )
 
