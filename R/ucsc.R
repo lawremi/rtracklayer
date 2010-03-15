@@ -211,8 +211,10 @@ setMethod("ucscTableQuery", "UCSCSession",
             range <- mergeRange(GenomicRanges(genome = genome(x)), range)
             query <- new("UCSCTableQuery", session = x, range = range,
                          table = table, NAMES = names)
+            ## the following line must always happen to initialize the session
+            ## otherwise stuff can go haywire
+            trackids <- trackNames(query)
             if (!is.null(track) || !is.null(intersectTrack)) {
-              trackids <- trackNames(query)
               query@track <- normArgTrack(track, trackids)
               query@intersectTrack <- normArgTrack(intersectTrack, trackids)
             }
