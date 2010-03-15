@@ -3,7 +3,7 @@ Title: R interface to genome browsers and their annotation tracks
 Version: 1.7.11
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
 Depends: R (>= 2.7.0), methods, RCurl
-Imports: XML (>= 1.98-0), IRanges (>= 1.3.50), GenomicRanges (>= 0.0.0), Biostrings (>= 2.15.22), BSgenome (>= 1.15.15)
+Imports: XML (>= 1.98-0), IRanges (>= 1.3.50), GenomicRanges (>= 0.0.0), Biostrings (>= 2.15.22), BSgenome (>= 1.15.15), Biobase
 Suggests: humanStemCell, microRNA (>= 1.1.1), genefilter, limma, org.Hs.eg.db, BSgenome.Hsapiens.UCSC.hg18
 LinkingTo: IRanges
 Description: Extensible framework for interacting with multiple genome 
@@ -13,6 +13,6 @@ Description: Extensible framework for interacting with multiple genome
   browsers, as well as query and modify the browser state, such as the current
   viewport.
 Maintainer: Michael Lawrence <mflawren@fhcrc.org>
-License: Artistic-2.0, but files in src/ucsc are public domain
+License: Artistic-2.0
 Collate: io.R web.R ranges.R browser.R gff.R ucsc.R bed.R wig.R utils.R bigWig.R
 biocViews: Annotation,Visualization,DataImport

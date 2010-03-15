@@ -110,7 +110,7 @@ setMethod("import.gff", "characterORconnection",
   versionMissing <- missing(version)
   version <- match.arg(version)
   lines <- readLines(con, warn = FALSE) # unfortunately, not a table
-  lines <- lines[nchar(lines) > 0]
+  lines <- lines[nzchar(lines)]
   
   # check our version
   versionLine <- lines[grep("^##gff-version [1-3]", lines)]
@@ -131,8 +131,12 @@ setMethod("import.gff", "characterORconnection",
   ## construct table
   fields <- c("seqname", "source", "feature", "start", "end", "score", "strand",
               "frame", "attributes")
-  linesSplit <- strsplit(lines, "\t")
-  haveAttr <- sapply(linesSplit, length) == length(fields)
+  linesSplit <- strsplit(lines, "\t", fixed=TRUE)
+  fieldCounts <- listLen(linesSplit)
+  if (any(fieldCounts > length(fields)) ||
+      any(fieldCounts < (length(fields) - 1)))
+    stop("GFF files must have ", length(fields), " tab-separated columns")
+  haveAttr <- fieldCounts == length(fields)
   haveAttrMat <- do.call(rbind, linesSplit[haveAttr])
   noAttrMat <- do.call(rbind, linesSplit[!haveAttr])
   if (!is.null(noAttrMat))
@@ -162,7 +166,7 @@ setMethod("import.gff", "characterORconnection",
         tvMat <- matrix(unlist(strsplit(attrs, "=")), nrow =  2)
         tags <- tvMat[1,]
         vals <- tvMat[2,]
-      } else { # split on first space
+      } else { # split on first space (FIXME: not sensitive to quotes)
         tags <- sub(" .*", "", attrs) # strip surrounding quotes
         vals <- sub("^\"([^\"]*)\"$", "\\1", sub("^[^ ]* ", "", attrs))
       }

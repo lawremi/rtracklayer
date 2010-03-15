@@ -22,6 +22,8 @@ importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   "universe<-", score, "score<-", as.vector,
                   "ranges<-", colnames, "colnames<-", queryHits, findOverlaps)
 
+importFrom("Biobase", listLen)
+
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
               "UCSCData", "TrackLine", "BasicTrackLine", "GraphTrackLine",
