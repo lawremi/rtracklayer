@@ -9,12 +9,11 @@ importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL,
                   RangedSelection)
 
-importMethodsFrom("GenomicRanges", strand)
+importMethodsFrom("GenomicRanges", seqlengths, strand)
 
 importClassesFrom("Biostrings", file, connection)
 
 importFrom("BSgenome", available.genomes)
-importMethodsFrom("BSgenome", seqlengths)
 
 importMethodsFrom("IRanges", start, end, "start<-", "end<-",
                   range, split, lapply, ranges, values, unlist, as.list,
