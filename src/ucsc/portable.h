@@ -35,6 +35,8 @@ struct fileInfo *newFileInfo(char *name, off_t size, bool isDir, int statErrno,
 	time_t lastAccess);
 /* Return a new fileInfo. */
 
+int cmpFileInfo(const void *va, const void *vb);
+
 struct fileInfo *listDirXExt(char *dir, char *pattern, boolean fullPath, boolean ignoreStatFailures);
 /* Return list of files matching wildcard pattern with
  * extra info. If full path is true then the path will be
