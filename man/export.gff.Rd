@@ -22,6 +22,10 @@
 \alias{export.ucsc,ANY,ANY-method}
 \alias{export.ucsc,RangedData,ANY-method}
 \alias{export.ucsc,RangedDataList,ANY-method}
+\alias{export.bw}
+\alias{export.bw,ANY,ANY-method}
+\alias{export.bw,RangedData,character-method}
+
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{Export tracks}
 \description{
@@ -31,18 +35,21 @@
 }
 \usage{
 export.gff(object, con, version = c("1", "2", "3"), source =
-           "rtracklayer")
+           "rtracklayer", append = FALSE, ...)
 export.gff1(object, con, ...)
 export.gff2(object, con, ...)
 export.gff3(object, con, ...)
 export.bed(object, con, variant = c("base", "bedGraph", "bed15"),
-           color = NULL, ...)
+           color = NULL, append = FALSE, ...)
 export.bed15(object, con, expNames = NULL, ...)
 export.bedGraph(object, con, ...)
 export.wig(object, con,
            dataFormat = c("auto", "variableStep", "fixedStep"), ...)
 export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed",
-           "bed15", "bedGraph"), ...)
+           "bed15", "bedGraph"), append = FALSE, ...)
+export.bw(object, con,
+          dataFormat = c("auto", "variableStep", "fixedStep", "bedGraph"),
+          seqlengths = NULL, compress = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -74,7 +81,14 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed",
   \item{expNames}{ Names of the columns in \code{object} that hold the
     experimental data. Defaults to all column names,
     unless \code{object} is a \code{\linkS4class{UCSCData}}, in which
-    case the \code{expNames} field is taken from the track line, if it exists. }
+    case the \code{expNames} field is taken from the track line, if it
+    exists. }
+  \item{seqlengths}{The lengths of each sequence in \code{object}. If
+    \code{NULL}, the chromosome lengths are retrieved for
+    the \code{genome} specified on \code{object}, if possible.
+  }
+  \item{append}{Logical, whether to append the output to the connection}
+  \item{compress}{Logical, indicating whether to compress the bigWig output}
   \item{\dots}{For \code{export.gff1}, \code{export.gff2} and
     \code{export.gff3}: arguments to pass to \code{export.gff}. For
     \code{export.bed}: arguments to pass to methods. For

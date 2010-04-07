@@ -27,7 +27,7 @@ exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
               "UCSCData", "TrackLine", "BasicTrackLine", "GraphTrackLine",
               "Bed15TrackLine", "UCSCTrackModes",
-              "RangedSelection", "BigWigSelection")
+              "RangedSelection")
 
 exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "browserSession", "browserSession<-",

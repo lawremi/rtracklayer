@@ -11,12 +11,16 @@
 \alias{import.wig}
 \alias{import.bed}
 \alias{import.bed,connection-method}
+\alias{import.bed,character-method}
 \alias{import.bed15}
 \alias{import.bed15,ANY-method}
 \alias{import.bedGraph}
 \alias{import.bedGraph,ANY-method}
 \alias{import.ucsc}
 \alias{import.ucsc,characterORconnection-method}
+\alias{import.bw}
+\alias{import.bw,character-method}
+
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Importing tracks }
 \description{
@@ -37,10 +41,11 @@ import.wig(con, genome = "hg18", ...)
 import.ucsc(con,
             subformat = c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
             drop = FALSE, ...)
+import.bw(con, selection = GenomicSelection(...), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{con}{ The connection from which to receive the input. }
+  \item{con}{ The connection, filename or URL from which to receive the input. }
   \item{version}{ The version of \acronym{GFF} ("1", "2" or "3"). }
   \item{genome}{ The genome to set on the imported track. }
   \item{variant}{ Variant of BED lines, not for the user.}
@@ -50,6 +55,9 @@ import.ucsc(con,
     data. If "auto", automatic detection of the subformat is attempted.}
   \item{drop}{If \code{TRUE} and there is only one track in the
     \acronym{UCSC} data, return the track instead of a list.}
+  \item{selection}{A \linkS4class{RangedSelection} object indicating the
+    intervals to retrieve from a bigWig file. Note that this retrieval
+    is very efficient, due to the indexing of the bigWig format.}
   \item{\dots}{For \code{import.gff1}, \code{import.gff2} and
     \code{import.gff3}: arguments to pass to \code{import.gff}.
     For \code{import.ucsc}: arguments to pass on to

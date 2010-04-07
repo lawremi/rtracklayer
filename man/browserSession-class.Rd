@@ -5,7 +5,7 @@
 \alias{[[,BrowserSession-method}
 \alias{[[<-,BrowserSession,ANY,ANY,RangedDataORRangedDataList-method}
 \alias{$,BrowserSession-method}
-\alias{$<-,BrowserSession,ANY,RangedDataORRangedDataList-method}
+\alias{$<-,BrowserSession,RangedDataORRangedDataList-method}
 \alias{range,BrowserSession-method}
 \alias{genome,BrowserSession-method}
 \alias{genome<-,BrowserSession-method}

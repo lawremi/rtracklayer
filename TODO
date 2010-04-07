@@ -1,6 +1,5 @@
-- Support bigWig, bigBed, which will require a bunch of C code from UCSC, but
-  we could use that for the chain file reading and parsing other formats
 - Move chain file reading here
+- Support 'GenePred' tables in conjunction with GenomicFeatures
 - Attach to existing saved sessions
 - Represent formats with formal class in I/O framework, rather than ".format"
 - Port to track reading and writing to C
