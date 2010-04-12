@@ -93,6 +93,10 @@ import.bw(con, selection = GenomicSelection(...), ...)
   # or
   wig <- import.ucsc(system.file("tests", "bed.wig", package = "rtracklayer"),
                      subformat = "wig", drop = TRUE)
+
+  # bigWig
+  bw <- import(system.file("tests", "test.bw", package = "rtracklayer"),
+               ranges = IRanges::RangesList(chr19 = IRanges(1, 6e7)))
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

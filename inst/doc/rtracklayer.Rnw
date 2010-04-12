@@ -119,7 +119,7 @@ targetTrack <- GenomicData(targetRanges,
                            targets[,c("strand", "name", "target")],
                            chrom = paste("chr", targets$chrom, sep = ""), 
                            genome = "hg18")
-@
+x@
 %
 
 \subsubsection{Accessing track information}

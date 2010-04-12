@@ -158,11 +158,12 @@ SEXP BWGSectionList_cleanup(SEXP r_sections)
 }
 
 /* --- .Call ENTRY POINT --- */
-SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_colnames) {
+SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score) {
   struct bbiFile * file = bigWigFileOpen((char *)CHAR(asChar(r_filename)));
   SEXP chromNames = getAttrib(r_ranges, R_NamesSymbol);
   int nchroms = length(r_ranges);
   SEXP rangesList, rangesListEls, dataFrameList, dataFrameListEls, ans;
+  bool returnScore = asLogical(r_return_score);
   const char *var_names[] = { "score", "" };
   struct lm *lm = lmInit(0);
   
@@ -188,13 +189,16 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_colnames) {
     SEXP ans_start, ans_width, ans_score, ans_score_l;
     PROTECT(ans_start = allocVector(INTSXP, nhits));
     PROTECT(ans_width = allocVector(INTSXP, nhits));
-    PROTECT(ans_score_l = mkNamed(VECSXP, var_names));
-    ans_score = allocVector(REALSXP, nhits);
-    SET_VECTOR_ELT(ans_score_l, 0, ans_score);
+    if (returnScore) {
+      PROTECT(ans_score_l = mkNamed(VECSXP, var_names));
+      ans_score = allocVector(REALSXP, nhits);
+      SET_VECTOR_ELT(ans_score_l, 0, ans_score);
+    } else PROTECT(ans_score_l = allocVector(VECSXP, 0));
     for (int j = 0; j < nhits; j++, hits = hits->next) {
       INTEGER(ans_start)[j] = hits->start + 1;
       INTEGER(ans_width)[j] = hits->end - hits->start;
-      REAL(ans_score)[j] = hits->val;
+      if (returnScore)
+        REAL(ans_score)[j] = hits->val;
     }
     SET_VECTOR_ELT(rangesListEls, i,
                    new_IRanges("IRanges", ans_start, ans_width, R_NilValue));

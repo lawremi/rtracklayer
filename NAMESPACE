@@ -27,7 +27,7 @@ exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
               "UCSCData", "TrackLine", "BasicTrackLine", "GraphTrackLine",
               "Bed15TrackLine", "UCSCTrackModes",
-              "RangedSelection")
+              "RangedSelection", "BigWigSelection")
 
 exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "browserSession", "browserSession<-",
@@ -55,7 +55,7 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
 export("genomeBrowsers", "start", "end", "strand", "start<-", "end<-",
        "ranges", "GenomicRanges", "GenomicData", "GenomicSelection", "IRanges",
        "RangedDataList", score, "score<-", "as.data.frame", "ucscGenomes",
-       "export.bw", "import.bw")
+       "export.bw", "import.bw", "BigWigSelection")
 
 ## the S4-connection compatibility layer
 exportClasses("connection",

@@ -117,7 +117,7 @@ GenomicRanges <- function(start = integer(), end = integer(), chrom = NULL,
 ## Ranges and RangesList, and this function could use that. But would
 ## the coercion consider masks?
 
-GenomicSelection <- function(genome, chrom = NULL)
+GenomicSelection <- function(genome, chrom = NULL, colnames = character(0))
 {
   if (missing(genome) || !IRanges:::isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
@@ -136,7 +136,7 @@ GenomicSelection <- function(genome, chrom = NULL)
            paste(invalidChroms, collapse = ", "))
     lens <- lens[chrom]
   }
-  RangedSelection(split(IRanges(1, lens), factor(chrom, chrom)))
+  RangedSelection(split(IRanges(1, lens), factor(chrom, chrom)), colnames)
 }
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

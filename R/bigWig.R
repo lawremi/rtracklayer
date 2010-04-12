@@ -12,13 +12,26 @@
   else NULL
 }
 
-setClass("BigWigSelection", contains = "RangedSelection")
+setClass("BigWigSelection", prototype = prototype(colnames = "score"),
+         contains = "RangedSelection")
 
 setValidity("BigWigSelection",
             function(object) {
               .validateColNames(object, "bigWig")
             })
 
+BigWigSelection <- function(ranges = RangesList(), colnames = "score") {
+  if (!is.character(colnames) ||
+      (length(colnames) && !identical(colnames, "score")))
+    stop("'score' is the only valid column for BigWig")
+  if (!is(ranges, "RangesList")) 
+    stop("'ranges' must be a RangesList")
+  new("BigWigSelection", ranges = ranges, colnames = colnames)
+}
+
+setAs("RangesList", "BigWigSelection", function(from) {
+  new("BigWigSelection", as(from, "RangedSelection"))
+})
 
 setGeneric("export.bw",
            function(object, con,
@@ -81,21 +94,20 @@ setMethod("export.bw", c("RangedData", "character"),
           })
 
 setGeneric("import.bw",
-           function(con, selection = GenomicSelection(...), ...)
+           function(con, selection = BigWigSelection(...), ...)
            standardGeneric("import.bw"))
 
 
 setMethod("import.bw", "character",
-          function(con, selection = GenomicSelection(...), ...)
+          function(con, selection = BigWigSelection(...), ...)
           {
             if (!IRanges:::isSingleString(con))
               stop("'con' must be a single string, specifying a path")
-            selection <- try(as(selection, "RangedSelection"))
-            if (is.character(selection))
-              stop("'selection' must be coercible to RangedSelection")
+            selection <- as(selection, "BigWigSelection")
+            validObject(selection)
             normRanges <- as(ranges(selection), "NormalIRangesList")
             rd <- .Call(BWGFile_query, con, as.list(normRanges),
-                        colnames(selection))
+                        identical(colnames(selection), "score"))
             ## Unfortunately, the bigWig query API is such that we can
             ## end up with multiple hits.
             if (any(width(rd) > 2)) {
