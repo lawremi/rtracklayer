@@ -37,7 +37,7 @@
 \author{ Michael Lawrence }
 
 \examples{
-  rl <- RangesList(chr1 = IRanges(c(1, 5), c(3, 6)))
+  rl <- IRanges::RangesList(chr1 = IRanges(c(1, 5), c(3, 6)))
 
   BigWigSelection(rl)
   as(rl, "BigWigSelection") # same as above

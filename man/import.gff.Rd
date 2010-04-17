@@ -41,7 +41,7 @@ import.wig(con, genome = "hg18", ...)
 import.ucsc(con,
             subformat = c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
             drop = FALSE, ...)
-import.bw(con, selection = GenomicSelection(...), ...)
+import.bw(con, selection = BigWigSelection(...), ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

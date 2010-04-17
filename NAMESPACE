@@ -26,8 +26,7 @@ importFrom("Biobase", listLen)
 exportClasses("BrowserSession", "BrowserView",
               "UCSCSession", "UCSCView",
               "UCSCData", "TrackLine", "BasicTrackLine", "GraphTrackLine",
-              "Bed15TrackLine", "UCSCTrackModes",
-              "RangedSelection", "BigWigSelection")
+              "Bed15TrackLine", "UCSCTrackModes", "BigWigSelection")
 
 exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               "browserSession", "browserSession<-",
