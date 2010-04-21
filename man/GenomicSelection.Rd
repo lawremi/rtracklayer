@@ -35,7 +35,7 @@ GenomicSelection(genome, chrom = NULL, colnames = character(0))
 \examples{
 # every chromosome from hg19
 GenomicSelection("hg19")
-# chr1 and 2 from mm9, with a score column
-GenomicSelection("mm9", c("chr1", "chr2"), "score")
+# chr1 and 2 from hg19, with a score column
+GenomicSelection("hg19", c("chr1", "chr2"), "score")
 }
 \keyword{ manip }

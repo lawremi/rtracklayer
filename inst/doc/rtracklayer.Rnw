@@ -118,7 +118,7 @@ library(rtracklayer)
 targetTrack <- GenomicData(targetRanges, 
                            targets[,c("strand", "name", "target")],
                            chrom = paste("chr", targets$chrom, sep = ""), 
-                           genome = "hg18")
+                           genome = "hg19")
 @
 %
 
@@ -598,7 +598,7 @@ To perform the search, we run \textit{matchPattern} on the positive
 strand of chromosome 1.
 %
 <<search-nrsf>>=
-library(BSgenome.Hsapiens.UCSC.hg18)
+library(BSgenome.Hsapiens.UCSC.hg19)
 nrsfHits <- matchPattern("TCAGCACCATGGACAG", Hsapiens[["chr1"]])
 length(nrsfHits)  # number of hits
 @ 
@@ -609,7 +609,7 @@ particular type of \textit{IRanges} object), to a \textit{RangedData}
 instance.
 %
 <<track-nrsf>>=
-nrsfTrack <- GenomicData(nrsfHits, strand="+", chrom="chr1", genome = "hg18")
+nrsfTrack <- GenomicData(nrsfHits, strand="+", chrom="chr1", genome = "hg19")
 @ 
 %
 
