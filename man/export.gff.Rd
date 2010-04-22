@@ -47,6 +47,7 @@ export.wig(object, con,
            dataFormat = c("auto", "variableStep", "fixedStep"), ...)
 export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed",
            "bed15", "bedGraph"), append = FALSE, ...)
+## not yet supported on Windows
 export.bw(object, con,
           dataFormat = c("auto", "variableStep", "fixedStep", "bedGraph"),
           seqlengths = NULL, compress = TRUE, ...)

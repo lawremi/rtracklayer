@@ -41,6 +41,7 @@ import.wig(con, genome = "hg18", ...)
 import.ucsc(con,
             subformat = c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
             drop = FALSE, ...)
+## not yet supported on Windows
 import.bw(con, selection = BigWigSelection(...), ...)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -95,8 +96,10 @@ import.bw(con, selection = BigWigSelection(...), ...)
                      subformat = "wig", drop = TRUE)
 
   # bigWig
+\dontrun{
   bw <- import(system.file("tests", "test.bw", package = "rtracklayer"),
                ranges = IRanges::RangesList(chr19 = IRanges(1, 6e7)))
+}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
