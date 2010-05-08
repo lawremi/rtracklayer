@@ -1,8 +1,8 @@
 Package: rtracklayer
 Title: R interface to genome browsers and their annotation tracks
-Version: 1.9.0
+Version: 1.9.1
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
-Depends: R (>= 2.7.0), methods, RCurl
+Depends: R (>= 2.7.0), methods, RCurl (>= 1.4-2)
 Imports: XML (>= 1.98-0), IRanges (>= 1.3.50), GenomicRanges (>= 0.0.9), Biostrings (>= 2.15.22), BSgenome (>= 1.15.17), Biobase
 Suggests: humanStemCell, microRNA (>= 1.1.1), genefilter, limma, org.Hs.eg.db, BSgenome.Hsapiens.UCSC.hg19
 LinkingTo: IRanges
@@ -12,7 +12,7 @@ Description: Extensible framework for interacting with multiple genome
   WIG built-in). The user may export/import tracks to/from the supported
   browsers, as well as query and modify the browser state, such as the current
   viewport.
-Maintainer: Michael Lawrence <mflawren@fhcrc.org>
+Maintainer: Michael Lawrence <michafla@gene.com>
 License: Artistic-2.0
 Collate: io.R web.R ranges.R browser.R gff.R ucsc.R bed.R wig.R utils.R bigWig.R
 biocViews: Annotation,Visualization,DataImport
