@@ -19,7 +19,10 @@
   \describe{
     \item{}{\code{BigWigSelection(ranges = RangesList(),
         colnames = "score")}: Constructors a \code{BigWigSelection}
-        with the given \code{ranges} and \code{colnames}.
+        with the given \code{ranges} and \code{colnames}. \code{ranges}
+        can be either a \code{\linkS4class{RangesList}}, or
+        a \code{character} identifying a genome (see
+        \code{\link{GenomicSelection}}).
     }
   }
 }

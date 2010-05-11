@@ -24,9 +24,13 @@ BigWigSelection <- function(ranges = RangesList(), colnames = "score") {
   if (!is.character(colnames) ||
       (length(colnames) && !identical(colnames, "score")))
     stop("'score' is the only valid column for BigWig")
-  if (!is(ranges, "RangesList")) 
-    stop("'ranges' must be a RangesList")
-  new("BigWigSelection", ranges = ranges, colnames = colnames)
+  if (is.character(ranges))
+    new("BigWigSelection", GenomicSelection(ranges, colnames = colnames))
+  else {
+    if (!is(ranges, "RangesList")) 
+      stop("'ranges' must be a RangesList")
+    new("BigWigSelection", ranges = ranges, colnames = colnames)
+  }
 }
 
 setAs("RangesList", "BigWigSelection", function(from) {
