@@ -16,7 +16,7 @@
     \item{object = "character"}{ \code{browserSession(object, ...)}: Creates a
       \code{\linkS4class{BrowserSession}} from a genome browser
       identifier. The identifier corresponds to the prefix of the
-      session class name (e.g. "ucsc" in "UCSCSession"). The arguments
+      session class name (e.g. "UCSC" in "UCSCSession"). The arguments
       in \dots are passed to the initialization function of the class.}
     
     \item{object = "browserView"}{ Gets the
