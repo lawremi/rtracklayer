@@ -57,7 +57,8 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
   if (is.null(frame))
     frame <- NA
   
-  table <- data.frame(seqname, source, feature, start(object), end(object),
+  table <- data.frame(seqname, source, feature, start(object),
+                      end(object) + (version == "3"),
                       score, strand, frame)
 
   attrs <- NULL
@@ -113,9 +114,9 @@ setMethod("import.gff", "characterORconnection",
   lines <- lines[nzchar(lines)]
   
   # check our version
-  versionLine <- lines[grep("^##gff-version [1-3]", lines)]
+  versionLine <- lines[grep("^##gff-version", lines)]
   if (length(versionLine)) {
-    specVersion <- sub("^##gff-version ", "", versionLine)
+    specVersion <- sub("^##gff-version *", "", versionLine)
     if (!versionMissing && specVersion != version)
       warning("gff-version directive indicates version is ", specVersion,
               ", not ", version)
