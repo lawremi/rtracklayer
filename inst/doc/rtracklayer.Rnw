@@ -565,7 +565,7 @@ view <- browserView(session, range(cpneTrack[1:5,]), full = "cpne")
 %
 The UCSC browser will plot the data values as bars. There are several
 options available for tweaking the plot, as described in the help for
-the \textit{wigTrackLine} class. These need to be specified laying the
+the \textit{GraphTrackLine} class. These need to be specified laying the
 track, so we will lay a new track named ``cpne2''. First, we will
 turn the \textit{autoScale} option off, so that the bars will be
 scaled globally, rather than locally to the current view. Then we
