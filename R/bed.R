@@ -33,8 +33,6 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             if (!is.null(score)) {
               if (!is.numeric(score) || any(is.na(score)))
                 stop("Scores must be non-NA numeric values")
-              if (variant != "bedGraph" && any(score < 0 | score > 1000))
-                stop("BED requires scores to fall within [0, 1000]")
             }
             if (variant == "bedGraph") {
               if (is.null(score)) ## bedGraph requires score
