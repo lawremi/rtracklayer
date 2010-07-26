@@ -3,6 +3,7 @@
 \alias{track<-}
 \alias{track<--methods}
 \alias{track<-,BrowserSession,RangedData-method}
+\alias{track<-,BrowserSession,ANY-method}
 \alias{track<-,BrowserSession,RangedDataList-method}
 \alias{track<-,UCSCSession,RangedDataList-method}
 \title{ Laying tracks }

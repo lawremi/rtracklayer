@@ -7,7 +7,7 @@ importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
 
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL,
-                  RangedSelection)
+                  RangedSelection, SimpleList)
 
 importMethodsFrom("GenomicRanges", seqlengths, strand)
 
@@ -23,7 +23,7 @@ importMethodsFrom("IRanges", start, end, "start<-", "end<-",
 
 importFrom("Biobase", listLen)
 
-exportClasses("BrowserSession", "BrowserView",
+exportClasses("BrowserSession", "BrowserView", "BrowserViewList",
               "UCSCSession", "UCSCView",
               "UCSCData", "TrackLine", "BasicTrackLine", "GraphTrackLine",
               "Bed15TrackLine", "UCSCTrackModes", "BigWigSelection")

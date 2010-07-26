@@ -5,7 +5,7 @@ setClass("BrowserSession")
 setClass("BrowserView", representation(session = "BrowserSession"),
          contains = "VIRTUAL")
 
-# create a browser view
+# create one or more browser views
 setGeneric("browserView",
            function(object, range, track, ...)
            standardGeneric("browserView"))
@@ -78,9 +78,21 @@ setMethod("show", "BrowserView", function(object)
             cat(IRanges:::labeledLine("trackNames", nms))
           })
 
+setClass("BrowserViewList", contains = "SimpleList",
+         prototype = prototype(elementType = "BrowserView"))
+
+BrowserViewList <- function(...) {
+  views <- list(...)
+  if (length(views) == 1 && is.list(views[[1L]]))
+    views <- views[[1L]]
+  if (!all(sapply(views, is, "BrowserView")))
+    stop("all elements in '...' must be BrowserView objects")
+  IRanges:::newSimpleList("BrowserViewList", views)
+}
+
 setGeneric("track<-",
            function(object, ..., value) standardGeneric("track<-"))
-# load a track into a browser
+## load a track into a browser
 setReplaceMethod("track", c("BrowserSession", "RangedData"),
           function(object, name = deparse(substitute(value)), view = FALSE, ...,
                    value)
@@ -88,8 +100,15 @@ setReplaceMethod("track", c("BrowserSession", "RangedData"),
                    track(object, name, view, ...) <- RangedDataList(value)
                    object
                  })
-# load several tracks into a browser
-# (this may be more efficient for some implementations)
+setReplaceMethod("track", c("BrowserSession", "ANY"),
+                 function(object, name = deparse(substitute(value)),
+                          view = FALSE, ..., value)
+                 {
+                   track(object, name, view, ...) <- as(value, "RangedData")
+                   object
+                 })
+## load several tracks into a browser
+## (this may be more efficient for some implementations)
 setReplaceMethod("track", c("BrowserSession", "RangedDataList"),
                  function(object, name = names(track), view = FALSE, ..., value)
                  {
@@ -103,7 +122,7 @@ setReplaceMethod("track", c("BrowserSession", "RangedDataList"),
 
 setClassUnion("RangedDataORRangedDataList", c("RangedData", "RangedDataList"))
 
-setMethod("[[<-", c("BrowserSession", value="RangedDataORRangedDataList"),
+setMethod("[[<-", c("BrowserSession", value="ANY"),
           function(x, i, j, ..., value) {
             if (!missing(j))
               warning("argument 'j' ignored")
@@ -111,7 +130,7 @@ setMethod("[[<-", c("BrowserSession", value="RangedDataORRangedDataList"),
             x
           })
 
-setMethod("$<-", c("BrowserSession", value="RangedDataORRangedDataList"),
+setMethod("$<-", c("BrowserSession", value="ANY"),
           function(x, name, value) {
             x[[name]] <- value
             x

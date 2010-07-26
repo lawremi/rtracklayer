@@ -430,13 +430,24 @@ setClass("UCSCView", representation(hgsid = "numeric"),
 ## if 'tracks' is a character vector (but not a UCSCTrackModes instance) it is
 ## assumed to name the tracks that should be in the view. otherwise, an
 ## attempt is made to coerce it to a UCSCTrackModes instance.
+### TODO: support multiple ranges and return a 'browserViewList'
 setMethod("browserView", "UCSCSession",
           function(object, range, track, imagewidth = 800, ...)
           {
-            view <- new("UCSCView", session = object)
             form <- list()
-            if (!missing(range))
+            if (!missing(range)) {
+              if (length(range) > 1) {
+                ranges <- range
+                views <- list(length(ranges))
+                for (i in seq(length(ranges))) {
+                  range <- ranges[i]
+                  views[[i]] <- callGeneric()
+                }
+                return(BrowserViewList(views))
+              }
               form <- c(form, ucscForm(range))
+            }
+            view <- new("UCSCView", session = object)
             ## new hgsid for each browser launch
             doc <- ucscGet(object, "gateway")
             node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
@@ -1203,6 +1214,17 @@ setMethod("ucscForm", "RangesList",
             }
             form
           })
+setMethod("ucscForm", "GRanges",
+          function(object)
+          {
+            scipen <- getOption("scipen")
+            options(scipen = 100) # prevent use of scientific notation
+            on.exit(options(scipen = scipen))
+            list(position = paste(ucscNormSeqNames(seqnames(object)), ":",
+                  unlist(start(object)), "-",
+                  unlist(end(object)), sep = ""))
+          })
+
 setMethod("ucscForm", "UCSCTrackModes",
           function(object)
           {
