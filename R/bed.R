@@ -127,20 +127,22 @@ setMethod("export.bed", "RangedDataList",
 
 setGeneric("import.bed",
            function(con, variant = c("base", "bedGraph", "bed15"),
-                    trackLine = TRUE, genome = "hg18", ...)
+                    trackLine = TRUE, genome = "hg18", asRangedData = TRUE,
+                    ...)
            standardGeneric("import.bed"))
 
 setMethod("import.bed", "character",
           function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
-                   genome)
+                   genome, asRangedData = TRUE)
           {
             import(file(con), format = "bed", variant = variant,
-                   trackLine = trackLine, genome = genome)
+                   trackLine = trackLine, genome = genome,
+                   asRangedData = asRangedData)
           })
 
 setMethod("import.bed", "connection",
           function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
-                   genome)
+                   genome, asRangedData = TRUE)
           {
             variant <- match.arg(variant)
             if (variant == "base" && trackLine) {
@@ -151,7 +153,8 @@ setMethod("import.bed", "connection",
               pushBack(line, con)
               if (length(grep("^track", line)) > 0)
                 return(import.ucsc(con, subformat = "bed", drop = TRUE,
-                                   trackLine = FALSE, genome = genome))
+                                   trackLine = FALSE, genome = genome,
+                                   asRangedData = asRangedData))
             }
             if (variant == "bedGraph") {
               bedClasses <- c("character", "integer", "integer", "numeric")
@@ -192,9 +195,10 @@ setMethod("import.bed", "connection",
               color[spec] <- rgb(cols[1,], cols[2,], cols[3,], max = 255)
               bed$itemRgb <- color              
             }
-            GenomicData(IRanges(bed$start + 1, bed$end),
+            GenomicData(IRanges(bed$start + 1L, bed$end),
                         bed[,tail(colnames(bed), -3),drop=FALSE],
-                        chrom = bed$chrom, genome = genome)
+                        chrom = bed$chrom, genome = genome,
+                        asRangedData = asRangedData)
           })
 
 setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
@@ -211,38 +215,61 @@ setMethod("blocks", "RangedData",
           })
 
 setGeneric("import.bed15Lines",
-           function(con, trackLine, genome = "hg18", ...)
+           function(con, trackLine, genome = "hg18", asRangedData = TRUE, ...)
            standardGeneric("import.bed15Lines"))
 
 setMethod("import.bed15Lines", "ANY",
-          function(con, trackLine, genome)
+          function(con, trackLine, genome, asRangedData = TRUE)
           {
-            bed <- import.bed(con, "bed15", genome = genome)
-            if (!nrow(bed))
-              return(bed)
-            ids <- strsplit(bed$expIds[1], ",", fixed=TRUE)[[1]]
-            expNames <- trackLine@expNames[as.integer(ids) + 1]
-            scores <- unlist(strsplit(bed$expScores, ",", fixed=TRUE),
-                             use.names=FALSE)
-            scores <- as.numeric(scores)
-            scores[scores == -10000] <- NA # stupid UCSC convention
-            scores <- split(scores, gl(length(expNames), 1, length(scores)))
-            names(scores) <- expNames
-            nonExpCols <- setdiff(colnames(bed),
-                                  c("expCount", "expScores", "expIds"))
-            bed <- bed[,nonExpCols]
-            for (samp in names(scores))
-              bed[[samp]] <- scores[[samp]]
-            bed
+            if (!IRanges:::isTRUEorFALSE(asRangedData))
+              stop("'asRangedData' must be TRUE or FALSE")
+            bed <- import.bed(con, "bed15", genome = genome,
+                              asRangedData = asRangedData)
+            if (asRangedData) {
+              if (!nrow(bed))
+                return(bed)
+              ids <- strsplit(bed$expIds[1], ",", fixed=TRUE)[[1]]
+              expNames <- trackLine@expNames[as.integer(ids) + 1L]
+              scores <- unlist(strsplit(bed$expScores, ",", fixed=TRUE),
+                               use.names=FALSE)
+              scores <- as.numeric(scores)
+              scores[scores == -10000] <- NA # stupid UCSC convention
+              scores <- split(scores, gl(length(expNames), 1, length(scores)))
+              names(scores) <- expNames
+              nonExpCols <- setdiff(colnames(bed),
+                                    c("expCount", "expScores", "expIds"))
+              bed <- bed[,nonExpCols]
+              for (samp in names(scores))
+                bed[[samp]] <- scores[[samp]]
+              bed
+            } else {
+              if (!length(bed))
+                return(bed)
+              ids <- strsplit(values(bed)$expIds[1], ",", fixed=TRUE)[[1]]
+              expNames <- trackLine@expNames[as.integer(ids) + 1L]
+              scores <- unlist(strsplit(values(bed)$expScores, ",", fixed=TRUE),
+                               use.names=FALSE)
+              scores <- as.numeric(scores)
+              scores[scores == -10000] <- NA # stupid UCSC convention
+              scores <- split(scores, gl(length(expNames), 1, length(scores)))
+              names(scores) <- expNames
+              nonExpCols <- setdiff(colnames(values(bed)),
+                                    c("expCount", "expScores", "expIds"))
+              values(bed) <- values(bed)[,nonExpCols]
+              values(bed) <- cbind(values(bed), do.call(DataFrame, scores))
+              bed              
+            }
           })
 
 setGeneric("import.bed15",
-           function(con, genome = "hg18", ...) standardGeneric("import.bed15"))
+           function(con, genome = "hg18", asRangedData = TRUE, ...)
+           standardGeneric("import.bed15"))
 
 setMethod("import.bed15", "ANY",
-          function(con, genome)
+          function(con, genome, asRangedData = TRUE)
           {
-            import.ucsc(con, "bed15", TRUE, genome = genome)
+            import.ucsc(con, "bed15", TRUE, genome = genome,
+                        asRangedData = asRangedData)
           })
 
 setGeneric("export.bed15Lines",
@@ -311,22 +338,24 @@ setAs("character", "Bed15TrackLine",
       })
 
 setGeneric("import.bedGraph",
-           function(con, genome = "hg18", ...)
+           function(con, genome = "hg18", asRangedData = TRUE, ...)
            standardGeneric("import.bedGraph"))
 
 setMethod("import.bedGraph", "ANY",
-          function(con, genome)
+          function(con, genome, asRangedData = TRUE)
           {
-            import.ucsc(con, "bedGraph", TRUE, genome = genome)
+            import.ucsc(con, "bedGraph", TRUE, genome = genome,
+                        asRangedData = asRangedData)
           })
 
 setGeneric("import.bedGraphLines",
-           function(con, genome = "hg18", ...)
+           function(con, genome = "hg18", asRangedData = TRUE, ...)
            standardGeneric("import.bedGraphLines"))
 
 setMethod("import.bedGraphLines", "ANY",
-          function(con, genome) {
-            import.bed(con, variant = "bedGraph", genome = genome)
+          function(con, genome, asRangedData = TRUE) {
+            import.bed(con, variant = "bedGraph", genome = genome,
+                       asRangedData = asRangedData)
           })
 
 setGeneric("export.bedGraph",

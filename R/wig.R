@@ -84,30 +84,34 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
           })
 
 setGeneric("import.wig",
-           function(con, genome = "hg18", ...) standardGeneric("import.wig"))
+           function(con, genome = "hg18", asRangedData = TRUE, ...)
+           standardGeneric("import.wig"))
 setMethod("import.wig", "ANY",
-          function(con, genome)
+          function(con, genome, asRangedData = TRUE)
           {
-            import.ucsc(con, "wig", TRUE, genome = genome)
+            import.ucsc(con, "wig", TRUE, genome = genome,
+                        asRangedData = asRangedData)
           })
 
 setGeneric("import.wigLines",
-           function(con, genome = "hg18", ...)
+           function(con, genome = "hg18", asRangedData = TRUE, ...)
            standardGeneric("import.wigLines"))
 
 setMethod("import.wigLines", "characterORconnection",
-          function(con, genome)
+          function(con, genome, asRangedData = TRUE)
           {
+            if (!IRanges:::isTRUEorFALSE(asRangedData))
+              stop("'asRangedData' must be TRUE or FALSE")
             lines <- readLines(con, warn = FALSE)
             formatInds <- grep("^variableStep|^fixedStep", lines)
             formatLines <- lines[formatInds]
-            starts <- formatInds+1
-            ends <- c(tail(formatInds,-1)-1, length(lines))
+            starts <- formatInds + 1L
+            ends <- c(tail(formatInds, -1) - 1L, length(lines))
             if (length(formatLines)) {
               parseData <- function(i) {
                 # parse the data values
                 con <- file()
-                writeLines(lines[starts[i]:ends[i]], con)
+                writeLines(window(lines, starts[i], ends[i]), con)
                 data <- read.table(con)
                 close(con)
                 # parse format line
@@ -127,12 +131,18 @@ setMethod("import.wigLines", "characterORconnection",
                   span <- 1
                 end <- start + as.integer(span) - 1
                 GenomicData(IRanges(start, end), score = score,
-                            chrom = formatVals[["chrom"]])
+                            chrom = formatVals[["chrom"]],
+                            asRangedData = asRangedData)
               }
               resultList <- lapply(seq_along(formatInds), parseData)
-              gd <- do.call(rbind, resultList)
+              if (asRangedData)
+                gd <- do.call(rbind, resultList)
+              else
+                gd <- do.call(c, resultList)
               genome(gd) <- genome
               gd
-            } else import(text = lines, format = "bed", variant = "bedGraph",
-                          genome = genome)
+            } else {
+              import(text = lines, format = "bed", variant = "bedGraph",
+                     genome = genome, asRangedData = asRangedData)
+            }
         })

@@ -1047,39 +1047,50 @@ setMethod("export.gff", c("UCSCData", "characterORconnection"),
           })
 
 setGeneric("import.ucsc",
-           function(con, subformat = c("auto", "gff1", "wig", "bed", "bed15",
-                           "bedGraph"),
-                    drop = FALSE, ...)
+           function(con, subformat =
+                   c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
+                    drop = FALSE, asRangedData = TRUE, ...)
            standardGeneric("import.ucsc"))
 setMethod("import.ucsc", "characterORconnection",
-          function(con, subformat, drop = FALSE, ...)
+          function(con, subformat, drop = FALSE, asRangedData = TRUE, ...)
           {
+            if (!IRanges:::isTRUEorFALSE(asRangedData))
+              stop("'asRangedData' must be TRUE or FALSE")
             subformat <- match.arg(subformat)
             lines <- readLines(con, warn = FALSE)
             tracks <- grep("^track", lines)
             trackLines <- lines[tracks]
-            starts <- tracks+1
-            ends <- c(tail(tracks,-1)-1, length(lines))
+            starts <- tracks + 1L
+            ends <- c(tail(tracks, -1) - 1L, length(lines))
             makeTrackSet <- function(i)
             {
               line <- as(trackLines[i], trackLineClass(subformat))
               if (subformat == "wig" || subformat == "bedGraph")
                 subformat <- paste(subformat, "Lines", sep = "")
-              text <- character()
               if (starts[i] <= ends[i])
-                text <- lines[starts[i]:ends[i]]
+                text <- window(lines, starts[i], ends[i])
+              else
+                text <- character()
               if (subformat == "bed15") # need to pass track line
-                trackSet <- import(format = "bed15Lines", text = text,
-                                   trackLine = line, ...)
-              else trackSet <- import(format = subformat, text = text, ...)
-              ucsc <- as(trackSet, "UCSCData", FALSE)
-              ucsc@trackLine <- line
+                ucsc <- import(format = "bed15Lines", text = text,
+                               trackLine = line,
+                               asRangedData = asRangedData, ...)
+              else
+                ucsc <- import(format = subformat, text = text,
+                               asRangedData = asRangedData, ...)
+              if (asRangedData) {
+                ucsc <- as(ucsc, "UCSCData", FALSE)
+                ucsc@trackLine <- line
+              }
               ucsc
             }
             tsets <- lapply(seq_along(trackLines), makeTrackSet)
             if (drop && length(tsets) == 1)
               tsets[[1]]
-            else do.call(RangedDataList, tsets)
+            else if (asRangedData)
+              do.call(RangedDataList, tsets)
+            else
+              do.call(GRangesList, tsets)
           })
 
 ############ INTERNAL API ############

@@ -102,11 +102,13 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
 })
 
 setGeneric("import.gff",
-           function(con, version = c("1", "2", "3"), genome = "hg18")
+           function(con, version = c("1", "2", "3"), genome = "hg18",
+                    asRangedData = TRUE)
            standardGeneric("import.gff"))
            
 setMethod("import.gff", "characterORconnection",
-          function(con, version = c("1", "2", "3"), genome)
+          function(con, version = c("1", "2", "3"), genome,
+                   asRangedData = TRUE)
 {
   versionMissing <- missing(version)
   version <- match.arg(version)
@@ -194,7 +196,8 @@ setMethod("import.gff", "characterORconnection",
   if (version == "3") ## GFF3 has right-open intervals
     end <- end - 1
   GenomicData(IRanges(as.integer(table[,"start"]), end),
-              xd, chrom = table[,"seqname"], genome = genome)
+              xd, chrom = table[,"seqname"], genome = genome,
+              asRangedData = asRangedData)
 })
 
 setGeneric("export.gff1",

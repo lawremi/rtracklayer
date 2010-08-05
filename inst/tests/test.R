@@ -7,3 +7,6 @@ testExport <- function(file) {
 }
 options(error=recover)
 sapply(files, testExport)
+
+## test GRanges imports
+sapply(files[-8], import, asRangedData = FALSE)

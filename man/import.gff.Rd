@@ -29,18 +29,20 @@
   instances from connections or text.
 }
 \usage{
-import.gff(con, version = c("1", "2", "3"), genome = "hg18")
+import.gff(con, version = c("1", "2", "3"), genome = "hg18",
+           asRangedData = TRUE)
 import.gff1(con, ...)
 import.gff2(con, ...)
 import.gff3(con, ...)
 import.bed(con, variant = c("base", "bedGraph", "bed15"),
-           trackLine = TRUE, genome = "hg18", ...)
-import.bed15(con, genome = "hg18", ...)
-import.bedGraph(con, genome = "hg18", ...)
-import.wig(con, genome = "hg18", ...)
+           trackLine = TRUE, genome = "hg18",
+           asRangedData = TRUE, ...)
+import.bed15(con, genome = "hg18", asRangedData = TRUE, ...)
+import.bedGraph(con, genome = "hg18", asRangedData = TRUE, ...)
+import.wig(con, genome = "hg18", asRangedData = TRUE, ...)
 import.ucsc(con,
             subformat = c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
-            drop = FALSE, ...)
+            drop = FALSE, asRangedData = TRUE, ...)
 ## not yet supported on Windows
 import.bw(con, selection = BigWigSelection(...), ...)
 }
@@ -49,26 +51,34 @@ import.bw(con, selection = BigWigSelection(...), ...)
   \item{con}{ The connection, filename or URL from which to receive the input. }
   \item{version}{ The version of \acronym{GFF} ("1", "2" or "3"). }
   \item{genome}{ The genome to set on the imported track. }
-  \item{variant}{ Variant of BED lines, not for the user.}
+  \item{asRangedData}{ A logical value. If \code{TRUE}, a
+    \linkS4class{RangedData} object is returned. If \code{FALSE}, a
+    \linkS4class{GRanges} object is returned. }
+  \item{variant}{ Variant of BED lines, not for the user. }
   \item{trackLine}{ Whether the \acronym{BED} data has a track line (it
     normally does though track lines are not mandatory). }
   \item{subformat}{ The expected subformat of the \acronym{UCSC}
-    data. If "auto", automatic detection of the subformat is attempted.}
-  \item{drop}{If \code{TRUE} and there is only one track in the
-    \acronym{UCSC} data, return the track instead of a list.}
-  \item{selection}{A \linkS4class{RangedSelection} object indicating the
+    data. If "auto", automatic detection of the subformat is attempted. }
+  \item{drop}{ If \code{TRUE} and there is only one track in the
+    \acronym{UCSC} data, return the track instead of a list. }
+  \item{selection}{ A \linkS4class{RangedSelection} object indicating the
     intervals to retrieve from a bigWig file. Note that this retrieval
-    is very efficient, due to the indexing of the bigWig format.}
+    is very efficient, due to the indexing of the bigWig format. }
   \item{\dots}{For \code{import.gff1}, \code{import.gff2} and
     \code{import.gff3}: arguments to pass to \code{import.gff}.
     For \code{import.ucsc}: arguments to pass on to
     \code{import.subformat}. For the others, arguments to pass to methods.}
 }
 \value{
-  An instance of \code{\link[IRanges:RangedData-class]{RangedData}} or
-  one of its subclasses, except for \code{import.ucsc}, which returns a
-  \code{\link[IRanges:RangedDataList-class]{RangedDataList}} instance,
-  unless there is one track and the \code{drop} parameter is \code{TRUE}.
+  For all but \code{import.ucsc}, an instance of
+  \code{\link[IRanges:RangedData-class]{RangedData}} (or one of its
+  subclasses) or \code{\link[GenomicRanges:GRanges-class]{GRanges}}
+  if \code{asRangedData} is \code{TRUE} or \code{FALSE} respectively.
+
+  For \code{import.ucsc} when \code{drop} is \code{FALSE}, an instance
+  of \code{\link[IRanges:RangedDataList-class]{RangedDataList}} or
+  \code{\link[GenomicRanges:GRangesList-class]{GRangesList}}
+  if \code{asRangedData} is \code{TRUE} or \code{FALSE} respectively.
 }
 \references{
   \describe{
@@ -81,19 +91,28 @@ import.bw(con, selection = BigWigSelection(...), ...)
     \item{UCSC}{\url{http://genome.ucsc.edu/goldenPath/help/customTrack.html}}
   }
 }
-\author{ Michael Lawrence }
+\author{ Michael Lawrence and Patrick Aboyoun }
 \seealso{ \code{\link{import}} for the high-level interface to these routines. }
 \examples{
   # import a GFF V2 file
-  gff <- import.gff(system.file("tests", "v2.gff", package = "rtracklayer"), version = "2")
+  gffRD <- import.gff(system.file("tests", "v2.gff", package = "rtracklayer"),
+                      version = "2")
+  gffGR <- import.gff(system.file("tests", "v2.gff", package = "rtracklayer"),
+                      version = "2", asRangedData = FALSE)
   # or
-  gff <- import.gff2(system.file("tests", "v2.gff", package = "rtracklayer"))
+  gffRD <- import.gff2(system.file("tests", "v2.gff", package = "rtracklayer"))
+  gffGR <- import.gff2(system.file("tests", "v2.gff", package = "rtracklayer"),
+                       asRangedData = FALSE)
 
   # import a WIG file
-  wig <- import.wig(system.file("tests", "bed.wig", package = "rtracklayer"))
+  wigRD <- import.wig(system.file("tests", "bed.wig", package = "rtracklayer"))
+  wigGR <- import.wig(system.file("tests", "bed.wig", package = "rtracklayer"),
+                      asRangedData = FALSE)
   # or
-  wig <- import.ucsc(system.file("tests", "bed.wig", package = "rtracklayer"),
-                     subformat = "wig", drop = TRUE)
+  wigRD <- import.ucsc(system.file("tests", "bed.wig", package = "rtracklayer"),
+                       subformat = "wig", drop = TRUE)
+  wigGR <- import.ucsc(system.file("tests", "bed.wig", package = "rtracklayer"),
+                       subformat = "wig", drop = TRUE, asRangedData = FALSE)
 
   # bigWig
 \dontrun{

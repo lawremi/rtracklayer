@@ -2,28 +2,35 @@ useDynLib(rtracklayer, .registration = TRUE)
 
 import(RCurl, XML)
 
-importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
-           RangesList, Rle, RangedSelection)
-
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL,
                   RangedSelection, SimpleList)
 
-importMethodsFrom("GenomicRanges", seqlengths, strand)
+importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
+           RangesList, Rle, RangedSelection)
+
+importMethodsFrom("IRanges", elementLengths, window,
+                  start, end, width, range,
+                  "start<-", "end<-", "width<-",
+                  split, lapply, unlist,
+                  as.vector, as.list, as.data.frame,
+                  rbind, cbind, colnames,  rownames,
+                  "colnames<-","rownames<-",
+                  ranges, values, score,
+                  "ranges<-", "values<-", "score<-",
+                  space, universe, metadata,
+                  "universe<-", "metadata<-",
+                  isDisjoint, queryHits, findOverlaps)
+
+importClassesFrom("GenomicRanges", GRanges, GRangesList)
+
+importFrom("GenomicRanges", GRanges, GRangesList)
+
+importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand)
 
 importClassesFrom("Biostrings", file, connection)
 
 importFrom("BSgenome", available.genomes)
-
-importMethodsFrom("IRanges", elementLengths,
-                  start, end, width, "start<-", "end<-", "width<-",
-                  ranges, values, "ranges<-", "values<-",
-                  space, universe, "universe<-", score, "score<-",
-                  isDisjoint, range, split, lapply, unlist,
-                  as.vector, as.list, as.data.frame,
-                  rbind, rownames, "rownames<-",
-                  cbind, colnames, "colnames<-",
-                  queryHits, findOverlaps)
 
 exportClasses("BrowserSession", "BrowserView", "BrowserViewList",
               "UCSCSession", "UCSCView",
@@ -54,9 +61,9 @@ exportMethods("activeView", "activeView<-", "blocks", "browseGenome",
               )
 
 export("genomeBrowsers", "start", "end", "strand", "start<-", "end<-",
-       "ranges", "GenomicRanges", "GenomicData", "GenomicSelection", "IRanges",
-       "RangedDataList", score, "score<-", "as.data.frame", "ucscGenomes",
-       "export.bw", "import.bw", "BigWigSelection")
+       "ranges", "values", "GenomicRanges", "GenomicData", "GenomicSelection",
+       "IRanges", "RangedDataList", score, "score<-", "as.data.frame",
+       "ucscGenomes", "export.bw", "import.bw", "BigWigSelection")
 
 ## the S4-connection compatibility layer
 exportClasses("connection",

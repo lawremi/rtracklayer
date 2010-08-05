@@ -8,6 +8,13 @@
 
 setGeneric("genome", function(x, ...) standardGeneric("genome"))
 setMethod("genome", "RangedData", function(x) universe(x))
+setMethod("genome", "GRanges",
+          function(x) {
+            if (is.null(metadata(x)) || is.character(metadata(x))) 
+              metadata(x)
+            else
+              metadata(x)$universe
+          })
 
 setGeneric("genome<-", function(x, value) standardGeneric("genome<-"))
 setReplaceMethod("genome", "RangedData",
@@ -15,15 +22,25 @@ setReplaceMethod("genome", "RangedData",
                    genome(x@ranges) <- value
                    x
                  })
+setReplaceMethod("genome", "GRanges",
+                 function(x, value) {
+                   if (!is.null(value) && !IRanges:::isSingleString(value)) 
+                     stop("'value' must be a single string or NULL")
+                   metadata(x)$universe <- value
+                   x
+                 })
 
 setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
-setMethod("chrom", "RangedData", function(x) {
-  chrom(ranges(x))
-})
+setMethod("chrom", "RangedData", function(x) chrom(ranges(x)))
+setMethod("chrom", "GRanges", function(x) seqnames(x))
 
 setGeneric("chrom<-", function(x, ..., value) standardGeneric("chrom<-"))
 setReplaceMethod("chrom", "RangedData", function(x, value) {
   chrom(ranges(x)) <- value
+  x
+})
+setReplaceMethod("chrom", "GRanges", function(x, value) {
+  seqnames(x) <- value
   x
 })
 
@@ -32,26 +49,58 @@ setReplaceMethod("chrom", "RangedData", function(x, value) {
 ### Constructor.
 ###
 
-GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NULL)
+GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NULL,
+                        asRangedData = TRUE)
 {
-  if (is(ranges, "data.frame") || is(ranges, "DataTable")) {
-    colnames(ranges)[match("chrom", colnames(ranges))] <- "space"
-  }
+  if (!IRanges:::isTRUEorFALSE(asRangedData))
+    stop("'asRangedData' must be TRUE or FALSE")
   if (!is(ranges, "Ranges")) {
-    return(RangedData(ranges)) # direct coercion
+    if (is(ranges, "data.frame") || is(ranges, "DataTable")) {
+      colnames(ranges)[match("chrom", colnames(ranges))] <- "space"
+    }
+    gd <- RangedData(ranges) # direct coercion
+    if (!asRangedData)
+      gd <- as(gd, "GRanges")
+  } else {
+    if (length(chrom) > length(ranges))
+      stop("length of 'chrom' greater than length of 'ranges'")
+    if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))
+      stop("length of 'ranges' not a multiple of 'chrom' length")
+    if (!is.null(genome) && (length(genome) != 1 || !is.character(genome)))
+      stop("'genome' must be a single string")
+    if (asRangedData) {
+      if (!is.null(strand)) {
+        if (!all(strand[!is.na(strand)] %in% levels(strand())))
+          stop("strand values should be 'NA', '-', '+' or '*'")
+        strand <- factor(strand, levels(strand()))
+        gd <- RangedData(ranges, ..., strand = strand, space = chrom,
+                         universe = genome)
+      } else {
+        gd <- RangedData(ranges, ..., space = chrom, universe = genome)
+      }
+    } else {
+      if (is.null(chrom))
+        chrom <- Rle(factor("1"), length(ranges))
+      dots <- list(...)
+      if (length(dots) == 1) {
+        dots <- dots[[1L]]
+        if ((is(dots, "data.frame") || is(dots, "DataTable")) &&
+            !is.null(dots[["strand"]])) {
+          strand <- dots[["strand"]]
+          dots[["strand"]] <- NULL
+          return(GenomicData(ranges = ranges, dots, strand = strand,
+                             chrom = chrom, genome = genome,
+                             asRangedData = asRangedData))
+        }
+      }
+      if (is.null(strand))
+        strand <- Rle("*", length(ranges))
+      gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, ...)
+      if (!is.null(genome))
+        metadata(gd) <- list(universe = genome)
+    }
   }
-  if (length(chrom) > length(ranges))
-    stop("length of 'chrom' greater than length of 'ranges'")
-  if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))
-    stop("length of 'ranges' not a multiple of 'chrom' length")
-  if (!is.null(genome) && (length(genome) != 1 || !is.character(genome)))
-    stop("'genome' must be a single string")
-  if (!is.null(strand)) {
-    if (!all(strand[!is.na(strand)] %in% levels(strand())))
-      stop("strand values should be 'NA', '-', '+' or '*'")
-    strand <- factor(strand, levels(strand()))
-    RangedData(ranges, ..., strand = strand, space = chrom, universe = genome)
-  } else RangedData(ranges, ..., space = chrom, universe = genome)
+  gd
 }
 
 ### =========================================================================
