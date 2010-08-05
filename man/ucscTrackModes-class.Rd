@@ -29,8 +29,6 @@
 \section{Extends}{
 Class \code{"\linkS4class{character}"}, from data part.
 Class \code{"\linkS4class{vector}"}, by class "character", distance 2.
-Class \code{\link[Biobase:class.characterORmiame]{characterORMIAME}}, by
-class "character", distance 2. 
 }
 
 \section{Methods}{

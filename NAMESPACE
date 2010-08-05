@@ -15,13 +15,15 @@ importClassesFrom("Biostrings", file, connection)
 
 importFrom("BSgenome", available.genomes)
 
-importMethodsFrom("IRanges", start, end, "start<-", "end<-",
-                  range, split, lapply, ranges, values, unlist, as.list,
-                  isDisjoint, width, space, as.data.frame, rbind, universe,
-                  "universe<-", score, "score<-", as.vector,
-                  "ranges<-", colnames, "colnames<-", queryHits, findOverlaps)
-
-importFrom("Biobase", listLen)
+importMethodsFrom("IRanges", elementLengths,
+                  start, end, width, "start<-", "end<-", "width<-",
+                  ranges, values, "ranges<-", "values<-",
+                  space, universe, "universe<-", score, "score<-",
+                  isDisjoint, range, split, lapply, unlist,
+                  as.vector, as.list, as.data.frame,
+                  rbind, rownames, "rownames<-",
+                  cbind, colnames, "colnames<-",
+                  queryHits, findOverlaps)
 
 exportClasses("BrowserSession", "BrowserView", "BrowserViewList",
               "UCSCSession", "UCSCView",

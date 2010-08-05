@@ -1,6 +1,6 @@
 library(RCurl)
 library(XML)
-library(Biobase)
+library(GenomicRanges)
 library(rJava)
 
 files <- c("web.R", "range.R", "trackSet.R", "browser.R", "gff.R", "ucsc.R",

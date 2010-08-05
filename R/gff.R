@@ -133,7 +133,7 @@ setMethod("import.gff", "characterORconnection",
   fields <- c("seqname", "source", "feature", "start", "end", "score", "strand",
               "frame", "attributes")
   linesSplit <- strsplit(lines, "\t", fixed=TRUE)
-  fieldCounts <- listLen(linesSplit)
+  fieldCounts <- elementLengths(linesSplit)
   if (any(fieldCounts > length(fields)) ||
       any(fieldCounts < (length(fields) - 1)))
     stop("GFF files must have ", length(fields), " tab-separated columns")
