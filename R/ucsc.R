@@ -143,13 +143,21 @@ setReplaceMethod("trackName", "UCSCTableQuery", function(x, value)
 setGeneric("tableName", function(x, ...) standardGeneric("tableName"))
 setMethod("tableName", "UCSCTableQuery", function(x) x@table)
 
+normArgTable <- function(name, query) {
+  if (!is.null(name)) {
+    if (!isSingleString(name))
+      stop("table name must be a single string or NULL")
+    if (!name %in% tableNames(query))
+      stop("unknown table name '", name, "'")
+  }
+  name
+}
+
 setGeneric("tableName<-", function(x, ..., value)
            standardGeneric("tableName<-"))
 setReplaceMethod("tableName", "UCSCTableQuery", function(x, value)
                  {
-                   if (!is.null(value) && !isSingleString(value))
-                     stop("'value' must be a single string")
-                   x@table <- value
+                   x@table <- normArgTable(value, x)
                    x
                  })
 
@@ -201,8 +209,6 @@ setMethod("ucscTableQuery", "UCSCSession",
           function(x, track = NULL, range = GenomicRanges(), table = NULL,
                    names = NULL, intersectTrack = NULL)
           {
-            if (!is.null(table) && !isSingleString(table))
-              stop("'table' must be a single string")
             if (!is(range, "RangesList"))
               stop("'range' must be a 'RangesList'")
             if (!is(names, "characterORNULL"))
@@ -210,7 +216,7 @@ setMethod("ucscTableQuery", "UCSCSession",
             ## only inherit the genome from the session
             range <- mergeRange(GenomicRanges(genome = genome(x)), range)
             query <- new("UCSCTableQuery", session = x, range = range,
-                         table = table, NAMES = names)
+                         NAMES = names)
             ## the following line must always happen to initialize the session
             ## otherwise stuff can go haywire
             trackids <- trackNames(query)
@@ -218,6 +224,7 @@ setMethod("ucscTableQuery", "UCSCSession",
               query@track <- normArgTrack(track, trackids)
               query@intersectTrack <- normArgTrack(intersectTrack, trackids)
             }
+            tableName(query) <- table
             query
           })
 
