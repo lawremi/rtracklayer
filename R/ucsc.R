@@ -265,7 +265,7 @@ setMethod("tableNames", "UCSCTableQuery",
             }
             if (!is.null(outputType)) {
               checkOutput <- function(table) {
-                tableName(object) <- table
+                object@table <- table # avoid accessor to skip check
                 outputs <- ucscTableOutputs(object)
                 any(outputType %in% outputs)
               }
