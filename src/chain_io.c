@@ -1,7 +1,8 @@
-#include "IRanges.h"
 #include <S.h>
-#include "common.h"
-#include "hash.h"
+#include "ucsc/common.h"
+#include "ucsc/hash.h"
+
+#include "rtracklayer.h"
 
 #define LINEBUF_SIZE 20001
 
@@ -67,18 +68,18 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         hashAdd(hash, header[2], block);
         block->name = Salloc(name_size, char);
         memcpy(block->name, header[2], name_size);
-        block->ranges = _new_RangeAE(0, 0);
-        block->offset = _new_IntAE(0, 0, 0);
-        block->length = _new_IntAE(0, 0, 0);
-        block->score = _new_IntAE(0, 0, 0);
-        block->space = _new_CharAEAE(0, 0);
+        block->ranges = new_RangeAE(0, 0);
+        block->offset = new_IntAE(0, 0, 0);
+        block->length = new_IntAE(0, 0, 0);
+        block->score = new_IntAE(0, 0, 0);
+        block->space = new_CharAEAE(0, 0);
       } else block = value;
-      _IntAE_insert_at(&block->score, block->score.nelt, atoi(header[1]));
-      _append_string_to_CharAEAE(&block->space, header[7]);
+      IntAE_insert_at(&block->score, block->score.nelt, atoi(header[1]));
+      append_string_to_CharAEAE(&block->space, header[7]);
       header_line = line;
       trc = strcmp("+", header[4]);
       qrc = strcmp("+", header[9]);
-      _CharAE_insert_at(&block->rev, block->rev.nelt, trc != qrc);
+      CharAE_insert_at(&block->rev, block->rev.nelt, trc != qrc);
       tstart = atoi(header[5]) + 1; /* 0-based -> 1-based */
       if (trc)
         tstart = atoi(header[3]) - tstart + 2; /* start one too high */
@@ -92,9 +93,9 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       width = atoi(data[0]);
       tstart -= (trc ? width : 0);
       qstart -= (qrc ? width : 0);
-      _RangeAE_insert_at(&block->ranges, block->ranges.start.nelt, tstart,
-                         width);
-      _IntAE_insert_at(&block->offset, block->offset.nelt, tstart - qstart);
+      RangeAE_insert_at(&block->ranges, block->ranges.start.nelt, tstart,
+                        width);
+      IntAE_insert_at(&block->offset, block->offset.nelt, tstart - qstart);
       if (matches == 3) { /* normal line */
         int dt = atoi(data[1]), dq = atoi(data[2]);
         int tchange, qchange;
@@ -108,7 +109,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         qstart += qchange;
       } else {
         new_block = TRUE;
-        _IntAE_insert_at(&block->length, block->length.nelt, line-header_line);
+        IntAE_insert_at(&block->length, block->length.nelt, line-header_line);
         //Rprintf("end of %s block, line: %d\n", block->name, line);
         fgets(linebuf, LINEBUF_SIZE, stream); /* skip empty line */
         line++;
@@ -150,17 +151,17 @@ SEXP readChain(SEXP r_path, SEXP r_exclude) {
     block = NEW_OBJECT(MAKE_CLASS("AlignmentSpace"));
     SET_VECTOR_ELT(ans_listData, i, block);
     SET_SLOT(block, install("ranges"),
-		_new_IRanges_from_RangeAE("IRanges", &chains[i]->ranges));
+		new_IRanges_from_RangeAE("IRanges", &chains[i]->ranges));
     SET_SLOT(block, install("offset"),
-		_new_INTEGER_from_IntAE(&chains[i]->offset));
+		new_INTEGER_from_IntAE(&chains[i]->offset));
     SET_SLOT(block, install("length"),
-		_new_INTEGER_from_IntAE(&chains[i]->length));
+		new_INTEGER_from_IntAE(&chains[i]->length));
     SET_SLOT(block, install("score"),
-		_new_INTEGER_from_IntAE(&chains[i]->score));
+		new_INTEGER_from_IntAE(&chains[i]->score));
     SET_SLOT(block, install("space"),
-		_new_CHARACTER_from_CharAEAE(&chains[i]->space));
-    SET_SLOT(block, install("rev"),
-		_new_LOGICAL_from_CharAE(&chains[i]->rev));
+		new_CHARACTER_from_CharAEAE(&chains[i]->space));
+    SET_SLOT(block, install("reversed"),
+		new_LOGICAL_from_CharAE(&chains[i]->rev));
     SET_STRING_ELT(ans_names, i, mkChar(chains[i]->name));
   }
 

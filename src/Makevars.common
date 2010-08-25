@@ -1,5 +1,5 @@
 PKG_OBJECTS = \
-  IRanges_stubs.o R_init_rtracklayer.o bigWig.o
+  IRanges_stubs.o R_init_rtracklayer.o bigWig.o chain_io.o
   
 UCSC_OBJECTS = \
   bPlusTree.o bbiRead.o bbiWrite.o bwgCreate.o bwgQuery.o \

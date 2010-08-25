@@ -2,6 +2,8 @@ useDynLib(rtracklayer, .registration = TRUE)
 
 import(RCurl, XML)
 
+importFrom("stats", offset)
+
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL,
                   RangedSelection, SimpleList)
