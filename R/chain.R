@@ -1,4 +1,4 @@
-setClass("AlignmentSpace",
+setClass("ChainBlock",
          representation(ranges = "IRanges", # start in A, width
                         offset = "integer", # offset to start in B
                         score = "integer", # rle scores
@@ -6,20 +6,20 @@ setClass("AlignmentSpace",
                         rev = "logical", # rle reversal
                         length = "integer")) # lengths for rle slots
 
-##setMethod("length", "AlignmentSpace", function(x) length(x@offset))
+##setMethod("length", "ChainBlock", function(x) length(x@offset))
 
-setClass("Alignment",
-         prototype = prototype(elementType = "AlignmentSpace"),
+setClass("Chain",
+         prototype = prototype(elementType = "ChainBlock"),
          contains = "SimpleList")
 
 read.chain <- function(path, exclude = "_") {
   .Call("readChain", path, exclude, PACKAGE="IRanges")
 }
 
-setMethod("score", "AlignmentSpace", function(x) x@score)
+setMethod("score", "ChainBlock", function(x) x@score)
 
 setGeneric("map", function(x, alignment, ...) standardGeneric("map"))
-setMethod("map", c("RangesList", "Alignment"),
+setMethod("map", c("RangesList", "Chain"),
           function(x, alignment)
           {
             r <- IRanges()
