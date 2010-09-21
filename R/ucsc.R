@@ -204,9 +204,38 @@ normArgTrack <- function(name, trackids) {
   name
 }
 
+## normalize 'range', using 'genome' as default genome
+normArgGenomeRange <- function(range, genome) {
+  ## the user can specify a portion of the genome in several ways:
+  ## - String identifying a genome
+  ## - RangesList, possibly constructed with deprecated GenomicRanges()
+  ## - GRanges, the preferred way, possibly from GRangesForGenome()
+  ## - We do not allow Ranges, since it does not make sense to have one range
+  ##   over many chromosomes
+  if (is.character(range))
+    return(GRangesForGenome(range))
+  if (is.null(genome(range)))
+    genome(range) <- genome
+  if (is(range, "RangesList")) {
+    chrom <- names(range)
+    start <- 1L
+    end <- NULL
+    if (!is.null(chrom)) {
+      flatRange <- unlist(range)
+      if (length(flatRange)) {
+        start <- start(flatRange)
+        end <- end(flatRange)
+      }
+    }
+    GRangesForGenome(genome(range), chrom, start, end)
+  } else if (is(range, "GRanges"))
+    range
+  else stop("'range' should be either a genome string, RangesList or GRanges")
+}
+
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
-          function(x, track = NULL, range = GenomicRanges(), table = NULL,
+          function(x, track = NULL, range = genome(x), table = NULL,
                    names = NULL, intersectTrack = NULL)
           {
             if (!is(range, "RangesList"))
@@ -214,7 +243,7 @@ setMethod("ucscTableQuery", "UCSCSession",
             if (!is(names, "characterORNULL"))
               stop("'names' must be 'NULL' or a character vector")
             ## only inherit the genome from the session
-            range <- mergeRange(GenomicRanges(genome = genome(x)), range)
+            range <- normArgGenomeRange(range, genome(x))
             query <- new("UCSCTableQuery", session = x, range = range,
                          NAMES = names)
             ## the following line must always happen to initialize the session
@@ -710,7 +739,7 @@ setAs("BasicTrackLine", "character",
         db <- from@db
         if (length(db))
           str <- paste(str, " db=", db, sep="")
-        offset <- from@offset
+        Offset <- from@offset
         if (length(offset))
           str <- paste(str, " offset=", offset, sep="")
         url <- from@url
@@ -726,6 +755,7 @@ ucscParsePairs <- function(str)
 {
   str <- sub("^[^ ]* ", "", str)
   split <- strsplit(str, "=")[[1]]
+  split <- sub("^ +", "", sub(" +$", "", split))
   vals <- character(0)
   if (length(split)) {
     mixed <- tail(head(split, -1), -1)
@@ -1132,7 +1162,7 @@ setMethod("range", "ucscCart",
             pos <- x["position"]
             posSplit <- strsplit(pos, ":")[[1]]
             range <- as.numeric(gsub(",", "", strsplit(posSplit[2], "-")[[1]]))
-            GenomicRanges(range[1], range[2], posSplit[1], x[["db"]])
+            GRangesForGenome(x[["db"]], posSplit[1], range[1], range[2])
           })
             
 #setMethod("ucscTrackModes", "ucscCart",
@@ -1279,6 +1309,10 @@ setMethod("ucscForm", "UCSCTableQuery",
             else
               form <- c(form, list(hgta_group = "allTracks",
                                    hgta_track = object@track))
+            ## if (identical(seqnames(range) == names(seqlengths(range))) &&
+            ##     identical(width(range), unname(seqlengths(range))))
+            ##   regionType <- "genome"
+            ## else regionType <- "range"
             if (length(chrom(range)))
               regionType <- "range"
             else regionType <- "genome"
