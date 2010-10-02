@@ -29,6 +29,35 @@ setMethod("initialize", "UCSCSession",
             .Object
           })
 
+setMethod("seqlengths", "UCSCSession", function(x) {
+  chromInfo <- ucscGet(x, "tracks", list(chromInfoPage = ""))
+  path <- "//table/tr[1]/td[contains(text(), 'Sequence name')]/../.."
+  table <- getNodeSet(chromInfo, path)[[1]]
+  ans <- sapply(getNodeSet(table, "tr/td[@align = 'RIGHT']/text()"), xmlValue)
+  ans <- as.integer(gsub("[^0-9]", "", ans))
+  names(ans) <- sapply(getNodeSet(table, "tr/td/a/text()"), xmlValue)
+  ans
+})
+
+normArgTrackData <- function(value, session) {
+  genomes <- lapply(value, genome)
+  genomes[sapply(genomes, length) == 0L] <- ""
+  tapply(value, unlist(genomes),
+         function(tracks)
+         {
+           browser()
+           genome <- genome(tracks[[1]])
+           if (!length(genome))
+             genome <- genome(session)
+           else genome(session) <- genome
+           spaces <- unlist(lapply(tracks, names))
+           badSpaces <- setdiff(spaces, names(seqlengths(session)))
+           if (length(badSpaces))
+             stop("Invalid chromosomes: ", paste(badSpaces, collapse = ", "))
+         })
+  value
+}
+
 setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
           function(object, name = names(value), view = FALSE,
                    format = c("auto", "bed", "wig", "gff1", "bed15"), ...,
@@ -37,9 +66,10 @@ setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
             format <- match.arg(format)
             if (length(value)) {
               ## upload values in blocks, one for each genome
-              genomes <- lapply(value, genome)
-              genomes[sapply(genomes, length) == 0] <- ""
+              value <- normArgTrackData(value, session)
               names(value) <- name
+              genomes <- lapply(value, genome)
+              genomes[sapply(genomes, length) == 0L] <- ""
               tapply(value, unlist(genomes),
                      function(tracks)
                      {
@@ -918,8 +948,6 @@ setMethod("show", "UCSCData",
 
 ucscNormSeqNames <- function(nms) {
   nms <- gsub("^([0-9A-Z]+)$", "chr\\1", nms)
-  if (!all(grepl("^chr|^scaffold", nms)))
-    stop("All sequence names should begin with 'chr' or 'scaffold'")
   nms
 }
 
@@ -1287,7 +1315,7 @@ setMethod("ucscForm", "UCSCView",
           })
 setMethod("ucscForm", "RangedDataList",
           function(object, format, ...)
-          {  
+          {
             lines <- export(object, format = "ucsc", subformat = format, ...)
             text <- paste(paste(lines, collapse = "\n"), "\n", sep = "")
             filename <- paste("track", format, sep = ".")
