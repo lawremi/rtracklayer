@@ -6,6 +6,7 @@
 \alias{BigWigSelection}
 
 \alias{coerce,RangesList,BigWigSelection-method}
+\alias{coerce,GRanges,BigWigSelection-method}
 
 \title{Selection of ranges and columns}
 
@@ -17,7 +18,7 @@
 
 \section{Constructor}{
   \describe{
-    \item{}{\code{BigWigSelection(ranges = RangesList(),
+    \item{}{\code{BigWigSelection(ranges = GRanges(),
         colnames = "score")}: Constructors a \code{BigWigSelection}
         with the given \code{ranges} and \code{colnames}. \code{ranges}
         can be either a \code{\linkS4class{RangesList}}, or
@@ -31,8 +32,9 @@
   \describe{
     \item{}{\code{as(from, "BigWigSelection")}: Coerces \code{from} to a
       \code{BigWigSelection} object. Typically, \code{from} is a
-      \code{\linkS4class{RangesList}}, the ranges of which become the
-      ranges in the new \code{BigWigSelection}.
+      \code{\link[GenomicRanges:GRanges-class]{GRanges}} or
+      a \code{\link[IRanges:RangesList-class]{RangesList}}, the ranges of
+      which become the ranges in the new \code{BigWigSelection}.
     }
   }
 }

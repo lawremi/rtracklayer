@@ -31,7 +31,7 @@
       \code{\linkS4class{BrowserSession}} to which this view belongs. }
     \item{\code{\link{close}(object)}}{ Close this view. }
     \item{\code{\link{range}(object)}}{ Obtains the
-      \code{\link[IRanges:RangesList-class]{RangesList}} displayed by
+      \code{\link[GenomicRanges:GRanges-class]{GRanges}} displayed by
       this view.} 
     \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks in the view. }

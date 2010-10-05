@@ -16,7 +16,7 @@
 \alias{tableName<-}
 \alias{tableName<-,UCSCTableQuery-method}
 \alias{range,UCSCTableQuery-method}
-\alias{range<-,UCSCTableQuery,RangesList-method}
+\alias{range<-,UCSCTableQuery-method}
 \alias{names,UCSCTableQuery-method}
 \alias{names<-,UCSCTableQuery-method}
 \alias{trackNames,UCSCTableQuery-method}
@@ -62,12 +62,13 @@
       \code{NULL}, in which case the behavior depends on how the query
       is executed, see below.
     }
-    \item{range}{A \code{\link[IRanges:RangesList-class]{RangesList}}
-      indicating the portion of the table to retrieve, in genome
-      coordinates. The \code{genome} indicated by the \code{RangesList}
-      also determines which tracks are available and must always be
-      non-\code{NULL}.  If the \code{RangesList} is empty, the table is
-      downloaded for the entire genome.
+    \item{range}{A genome identifier, a
+      \code{\link[GenomicRanges:GRanges-class]{GRanges}} or (deprecated)
+      a \code{\link[IRanges:RangesList-class]{RangesList}} indicating
+      the portion of the table to retrieve, in genome coordinates.
+      Simply specifying the genome string is the easiest way to download
+      data for the entire genome, and \code{\link{GRangesForUCSCGenome}}
+      facilitates downloading data for e.g. an entire chromosome.
     }
     \item{names}{Names/accessions of the desired features}
   } 
@@ -90,17 +91,17 @@
 \section{Constructor}{
   \describe{
     \item{}{
-      \code{ucscTableQuery(x, track, range = GenomicRanges(), table =
-        NULL, names = NULL)}: 
-      Creates a \code{UCSCTableQuery} with the
-      \code{UCSCSession} given as \code{x} and the track name given by
-      the single string \code{track}. \code{range} should be a
-      \code{RangesList} instance, and it effectively defaults to
-      \code{range(x)}. Any missing information in \code{range}, often
-      the genome identifier, is filled in from \code{range(x)}. The
-      table name is given by \code{table}, which may be a single string
-      or \code{NULL}. Feature names, such as gene identifiers, may be
-      passed via \code{names} as a character vector.
+      \code{ucscTableQuery(x, track, range = genome(x), table = NULL,
+        names = NULL)}: Creates a \code{UCSCTableQuery} with the
+        \code{UCSCSession} given as \code{x} and the track name given by
+        the single string \code{track}. \code{range} should be a genome
+        string identifier, a \code{GRanges} instance or (deprecated)
+        \code{RangesList} instance, and it effectively defaults to
+        \code{genome(x)}. If the genome is missing, it is taken from the
+        session. The table name is given by
+        \code{table}, which may be a single string or
+        \code{NULL}. Feature names, such as gene identifiers, may be
+        passed via \code{names} as a character vector.
     }
   }
 }
@@ -147,9 +148,11 @@
       automatically determined.
     }
     \item{}{\code{range(x)}, \code{range(x) <- value}: Get or set the
-      \code{RangesList} indicating the portion of the table to retrieve in
+      \code{GRanges} indicating the portion of the table to retrieve in
       genomic coordinates. Any missing information, such as the genome
-      identifier, is filled in using \code{range(browserSession(x))}.
+      identifier, is filled in using \code{range(browserSession(x))}. It
+      is also possible to set the genome identifier string or
+      (deprecated) a \code{RangesList}.
     }
     \item{}{\code{names(x)}, \code{names(x) <- value}: Get or set the
       names of the features to retrieve. If \code{NULL}, this filter is

@@ -193,7 +193,7 @@ setMethod("browseGenome", "RangedDataORRangedDataList",
             session <- do.call(`track<-`, c(trackParams, list(value = object)))
             # open view of 'range'
             if (view) {
-              range <- mergeRange(range(session), range)
+              range <- normGenomeRange(range(session), session)
               viewParams <- c(list(session, range), viewParams)
               do.call(browserView, viewParams)
             }

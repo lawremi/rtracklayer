@@ -12,8 +12,10 @@
 }
 \arguments{
   \item{object}{The object from which to get the views.}
-  \item{range}{The \code{\link[IRanges:RangesList-class]{RangesList}} to
-    display.} 
+  \item{range}{The \code{\link[GenomicRanges:GRanges-class]{GRanges}} to
+    display. If there are multiple elements, a view is created for each
+    element and a \code{\linkS4class{BrowserViewList}} is
+    returned. Support for \code{RangesList} exists but is deprecated.} 
   \item{track}{List of track names to make visible in the view.}
   \item{\dots}{Arguments to pass to methods}
 }

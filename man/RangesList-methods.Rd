@@ -14,6 +14,9 @@
 \title{Ranges on a Genome}
 
 \description{
+  \strong{Representing intervals on the genome with \code{RangesList} has been
+    deprecated in favor of \code{GRanges}; see \code{\link{GRanges-methods}}.}
+  
 Genomic coordinates are often specified in terms of a genome identifier,
 chromosome name, start position and end position. This information can
 be represented by a \code{\link[IRanges:RangesList-class]{RangesList}}

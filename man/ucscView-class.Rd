@@ -29,11 +29,12 @@ Class \code{"\linkS4class{BrowserView}"}, directly.
     \item{\code{\link{activeView}(object)}}{ Obtains a logical
       indicating whether this view is the active view. }
     \item{\code{\link{range}(object)}}{ Obtains the
-      \code{\link[IRanges:RangesList-class]{RangesList}} displayed by
+      \code{\link[GenomicRanges:GRanges-class]{GRanges}} displayed by
       this view. } 
     \item{\code{\link{range}(object) <- value}}{ Sets the
-      \code{\link[IRanges:RangesList-class]{RangesList}} displayed by
-      this view. } 
+      \code{\link[GenomicRanges:GRanges-class]{GRanges}} displayed by
+      this view. Support for \code{RangesList} also exists but is
+      deprecated. } 
     \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks in this view. }
     \item{\code{\link{trackNames}(object) <- value}}{ Sets the visible

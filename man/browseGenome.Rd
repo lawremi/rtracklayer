@@ -18,16 +18,17 @@ browseGenome(object, ...)
     \code{\link[IRanges:RangedData-class]{RangedData}} instances, 
     e.g. a \code{\link[IRanges:RangedDataList-class]{RangedDataList}} instance.}
   \item{browser}{ The name of the genome browser. }
-  \item{range}{ The \code{\link[IRanges:RangesList-class]{RangesList}}
-    to display in the initial view. }
+  \item{range}{ A genome identifier or a
+    \code{\link[GenomicRanges:GRanges-class]{GRanges}} to display in the
+    initial view.
+    Support for \code{\link[IRanges:RangesList-class]{RangesList}} is also
+    available, but deprecated. }
   \item{view}{ Whether to open a view. }
   \item{trackParams}{ Named list of parameters to pass to
     \code{\link{track<-}}. }
   \item{viewParams}{ Named list of parameters to pass to
     \code{\link{browserView}}. }
-  \item{\dots}{ Arguments corresponding to slots in
-    \code{\link[IRanges:RangesList-class]{RangesList}} that override
-    those in \code{range}. } 
+  \item{\dots}{ Arguments passed to \code{\link{browserSession}}. } 
 }
 \value{
   Returns a \code{\linkS4class{BrowserSession}}.

@@ -20,21 +20,24 @@ setValidity("BigWigSelection",
               .validateColNames(object, "bigWig")
             })
 
-BigWigSelection <- function(ranges = RangesList(), colnames = "score") {
+BigWigSelection <- function(ranges = GRanges(), colnames = "score") {
   if (!is.character(colnames) ||
       (length(colnames) && !identical(colnames, "score")))
     stop("'score' is the only valid column for BigWig")
   if (is.character(ranges))
     new("BigWigSelection", GenomicSelection(ranges, colnames = colnames))
   else {
-    if (!is(ranges, "RangesList")) 
-      stop("'ranges' must be a RangesList")
-    new("BigWigSelection", ranges = ranges, colnames = colnames)
+    new("BigWigSelection", ranges = as(ranges, "RangesList"),
+        colnames = colnames)
   }
 }
 
 setAs("RangesList", "BigWigSelection", function(from) {
   new("BigWigSelection", as(from, "RangedSelection"))
+})
+
+setAs("GRanges", "BigWigSelection", function(from) {
+  as(as(from, "RangesList"), "BigWigSelection")
 })
 
 setGeneric("export.bw",

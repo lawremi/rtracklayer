@@ -39,27 +39,28 @@ setMethod("seqlengths", "UCSCSession", function(x) {
   ans
 })
 
+setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
+
 normArgTrackData <- function(value, session) {
   genomes <- lapply(value, genome)
   genomes[sapply(genomes, length) == 0L] <- ""
   tapply(value, unlist(genomes),
          function(tracks)
          {
-           browser()
            genome <- genome(tracks[[1]])
-           if (!length(genome))
-             genome <- genome(session)
-           else genome(session) <- genome
+           if (length(genome))
+             genome(session) <- genome
            spaces <- unlist(lapply(tracks, names))
-           badSpaces <- setdiff(spaces, names(seqlengths(session)))
+           badSpaces <- setdiff(spaces, seqnames(session))
            if (length(badSpaces))
-             stop("Invalid chromosomes: ", paste(badSpaces, collapse = ", "))
+             stop("Invalid chromosomes for ", genome, ": ",
+                  paste(badSpaces, collapse = ", "))
          })
   value
 }
 
 setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
-          function(object, name = names(value), view = FALSE,
+          function(object, name = names(value),
                    format = c("auto", "bed", "wig", "gff1", "bed15"), ...,
                    value)
           {
@@ -77,12 +78,6 @@ setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
                        response <- ucscPost(object, "custom", form)
 ### FIXME: need to check for error
                      })
-              args <- list()
-              if (view) { # optionally view the track
-                args <- c(args, range(tail(value, 1)[[1]][1]))
-                ## update the view
-                do.call(browserView, c(object, args))
-              }
             }
             object
           })
@@ -90,17 +85,17 @@ setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
 setMethod("browserViews", "UCSCSession",
           function(object) object@views$instances)
 
-# get the list of track names
+## get the list of track names
 setMethod("trackNames", "UCSCSession",
           function(object) ucscTracks(object)@ids)
 
-# get the current range
+## get the current range
 setMethod("range", "UCSCSession",
           function(x, ..., na.rm) range(ucscCart(x)))
 
-setReplaceMethod("range", c("UCSCSession", "RangesList"),
+setReplaceMethod("range", "UCSCSession",
                  function(x, value) {
-                   ucscGet(x, "cart", ucscForm(value))
+                   ucscGet(x, "cart", ucscForm(normGenomeRange(value, x)))
                    x
                  })
 
@@ -110,12 +105,24 @@ setReplaceMethod("genome", "UCSCSession",
                    x
                  })
 
+GRangesForUCSCGenome <- function(genome, chrom = NULL, start = 1L, end = NULL,
+                                 ...)
+{
+  if (missing(genome) || !IRanges:::isSingleString(genome))
+    stop("'genome' must be a single string identifying a genome")
+  session <- browserSession("UCSC")
+  genome(session) <- genome
+  GRangesForGenome(genome, seqlengths(session), chrom = chrom, start = start,
+                   end = end, ...)
+}
+
+
 ## context for querying UCSC tables
 setClass("UCSCTableQuery",
          representation(session = "UCSCSession",
                         track = "characterORNULL",
                         table = "characterORNULL",
-                        range = "RangesList",
+                        range = "GRanges",
                         outputType = "characterORNULL",
                         NAMES = "characterORNULL",
                         intersectTrack = "characterORNULL"))
@@ -127,13 +134,13 @@ setMethod("show", "UCSCTableQuery",
               cat("table '", tableName(object), "' from ", sep = "")
             cat("track '", names(trackName(object)), "' within ", sep = "")
             range <- range(object)
-            chrom <- names(range)
-            if (!length(chrom))
-              chrom <- "*"
-            start <- unlist(start(range))
-            end <- unlist(end(range))
-            if (!length(start))
-              start <- end <- "*"
+            if (length(range) > 1)
+              start <- end <- chrom <- "*"
+            else {
+              chrom <- as.character(seqnames(range))
+              start <- start(range)
+              end <- end(range)
+            }
             cat(genome(range), ":", chrom, ":", start, "-", end, sep="")
             for (itrack in names(intersectTrack(object)))
               cat(" &", itrack)
@@ -153,9 +160,9 @@ setReplaceMethod("browserSession", c("UCSCTableQuery", "UCSCSession"),
                  })
 
 setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
-setReplaceMethod("range", c("UCSCTableQuery", "RangesList"),
+setReplaceMethod("range", "UCSCTableQuery",
                  function(x, value) {
-                   x@range <- mergeRange(browserSession(x), value)
+                   x@range <- normGenomeRange(value, browserSession(x))
                    x
                  })
 
@@ -234,46 +241,15 @@ normArgTrack <- function(name, trackids) {
   name
 }
 
-## normalize 'range', using 'genome' as default genome
-normArgGenomeRange <- function(range, genome) {
-  ## the user can specify a portion of the genome in several ways:
-  ## - String identifying a genome
-  ## - RangesList, possibly constructed with deprecated GenomicRanges()
-  ## - GRanges, the preferred way, possibly from GRangesForGenome()
-  ## - We do not allow Ranges, since it does not make sense to have one range
-  ##   over many chromosomes
-  if (is.character(range))
-    return(GRangesForGenome(range))
-  if (is.null(genome(range)))
-    genome(range) <- genome
-  if (is(range, "RangesList")) {
-    chrom <- names(range)
-    start <- 1L
-    end <- NULL
-    if (!is.null(chrom)) {
-      flatRange <- unlist(range)
-      if (length(flatRange)) {
-        start <- start(flatRange)
-        end <- end(flatRange)
-      }
-    }
-    GRangesForGenome(genome(range), chrom, start, end)
-  } else if (is(range, "GRanges"))
-    range
-  else stop("'range' should be either a genome string, RangesList or GRanges")
-}
-
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
           function(x, track = NULL, range = genome(x), table = NULL,
                    names = NULL, intersectTrack = NULL)
           {
-            if (!is(range, "RangesList"))
-              stop("'range' must be a 'RangesList'")
             if (!is(names, "characterORNULL"))
               stop("'names' must be 'NULL' or a character vector")
             ## only inherit the genome from the session
-            range <- normArgGenomeRange(range, genome(x))
+            range <- normGenomeRange(range, x)
             query <- new("UCSCTableQuery", session = x, range = range,
                          NAMES = names)
             ## the following line must always happen to initialize the session
@@ -496,7 +472,6 @@ setClass("UCSCView", representation(hgsid = "numeric"),
 ## if 'tracks' is a character vector (but not a UCSCTrackModes instance) it is
 ## assumed to name the tracks that should be in the view. otherwise, an
 ## attempt is made to coerce it to a UCSCTrackModes instance.
-### TODO: support multiple ranges and return a 'browserViewList'
 setMethod("browserView", "UCSCSession",
           function(object, range, track, imagewidth = 800, ...)
           {
@@ -504,13 +479,14 @@ setMethod("browserView", "UCSCSession",
             if (!missing(range)) {
               if (length(range) > 1) {
                 ranges <- range
-                views <- list(length(ranges))
+                views <- vector("list", length(ranges))
                 for (i in seq(length(ranges))) {
                   range <- ranges[i]
                   views[[i]] <- callGeneric()
                 }
                 return(BrowserViewList(views))
-              }
+             }
+              range <- normGenomeRange(range, object)
               form <- c(form, ucscForm(range))
             }
             view <- new("UCSCView", session = object)
@@ -681,11 +657,9 @@ setReplaceMethod("visible", "UCSCView", function(object, value) {
 
 setMethod("range", "UCSCView",
           function(x, ..., na.rm) range(ucscCart(x)))
-setReplaceMethod("range", c("UCSCView", "RangesList"),
+setReplaceMethod("range", "UCSCView",
                  function(x, value)
                  {
-                   # need to check for partially specified range
-                   # and resolve that here
                    browserView(x@session, value, ucscTrackModes(x))
                  })
 
@@ -1160,7 +1134,7 @@ setMethod("import.ucsc", "characterORconnection",
 
 ############ INTERNAL API ############
 
-# every cgi variable is stored in the 'cart'
+## every cgi variable is stored in the 'cart'
 setClass("ucscCart", contains = "character")
 
 setGeneric("ucscCart", function(object, ...) standardGeneric("ucscCart"))
@@ -1190,20 +1164,10 @@ setMethod("range", "ucscCart",
             pos <- x["position"]
             posSplit <- strsplit(pos, ":")[[1]]
             range <- as.numeric(gsub(",", "", strsplit(posSplit[2], "-")[[1]]))
-            GRangesForGenome(x[["db"]], posSplit[1], range[1], range[2])
+            GRangesForUCSCGenome(x[["db"]], posSplit[1], range[1], range[2])
           })
-            
-#setMethod("ucscTrackModes", "ucscCart",
-#          function(object)
-#          {
-#            modes <- character()
-#            for (mode in c("hide", "dense", "pack", "squish", "full"))
-#              modes[names(object)[object == mode]] <- mode
-#            ucscTrackModes(modes)
-#          })
 
-
-# track information
+### track information
 
 setClass("ucscTracks",
          representation(ids = "character", modes = "character"))
@@ -1337,13 +1301,9 @@ setMethod("ucscForm", "UCSCTableQuery",
             else
               form <- c(form, list(hgta_group = "allTracks",
                                    hgta_track = object@track))
-            ## if (identical(seqnames(range) == names(seqlengths(range))) &&
-            ##     identical(width(range), unname(seqlengths(range))))
-            ##   regionType <- "genome"
-            ## else regionType <- "range"
-            if (length(chrom(range)))
-              regionType <- "range"
-            else regionType <- "genome"
+            if (spansGenome(range))
+              regionType <- "genome"
+            else regionType <- "range"
             form <- c(form, hgta_regionType = regionType)
             table <- object@table
             form <- c(form, hgta_table = table)

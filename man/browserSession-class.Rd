@@ -45,7 +45,7 @@
       active in the session. Fallback calls \code{browserViews} and
       queries each view with \code{activeView}.}
     \item{\code{\link{range}(x, ...)}}{
-      Gets the \code{\link[IRanges:RangesList-class]{RangesList}}
+      Gets the \code{\link[GenomicRanges:GRanges-class]{GRanges}}
       representing the range of the genome currently displayed by the
       browser (i.e. the range shown by the active view) or a default
       value (possibly \code{NULL}) if no views exist.
