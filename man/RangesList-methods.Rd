@@ -14,17 +14,15 @@
 \title{Ranges on a Genome}
 
 \description{
-  \strong{Representing intervals on the genome with \code{RangesList} has been
-    deprecated in favor of \code{GRanges}; see \code{\link{GRanges-methods}}.}
-  
-Genomic coordinates are often specified in terms of a genome identifier,
-chromosome name, start position and end position. This information can
-be represented by a \code{\link[IRanges:RangesList-class]{RangesList}}
-instance, and the \code{rtracklayer} package adds convenience methods to
-\code{RangesList} for the manipulation of genomic ranges. The spaces (or
-names) of \code{RangesList} are the chromosome names. The
-\code{universe} slot indicates the genome, usually as given by UCSC
-(e.g. \dQuote{hg18}).
+  Genomic coordinates are often specified in terms of a genome identifier,
+  chromosome name, start position and end
+  position. \code{\link[IRanges:RangedData-class]{RangedData}} represents
+  this with a \code{\link[IRanges:RangesList-class]{RangesList}}
+  instance, and the \code{rtracklayer} package adds convenience methods to
+  \code{RangesList} for the manipulation of genomic ranges. The spaces (or
+  names) of \code{RangesList} are the chromosome names. The
+  \code{universe} slot indicates the genome, usually as given by UCSC
+  (e.g. \dQuote{hg18}).
 }
 
 \section{Accessors}{
@@ -51,6 +49,11 @@ names) of \code{RangesList} are the chromosome names. The
   \describe{
     \item{}{
       \code{GenomicRanges(start, end, chrom = NULL, genome = NULL)}:
+      
+      \strong{This function has been deprecated in favor of constructing
+        a \code{\link[GenomicRanges:GRanges-class]{GRanges}} using
+        \code{\link{GRangesForUCSCGenome}}.}
+      
       Constructs a \code{RangesList} containing ranges specified by
       \code{start} and \code{end}, optionally split into elements based on
       \code{chrom}, a vector of chromosome identifiers (or \code{NULL} for no

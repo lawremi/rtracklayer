@@ -24,11 +24,17 @@ divided into two categories: 1) the import/export of track data and 2)
 the control and querying of external genome browser sessions and
 views.
 
-The base track data structure is \emph{RangedData}, as defined by the
-\textbf{IRanges} package. \textbf{rtracklayer} supports the import
-and export of tracks from and to files in various formats, see
-Section~\ref{sec:import-export}. All positions in a \emph{RangedData}
-should be 1-based, as in R itself.
+There are two basic track data structures in Bioconductor:
+\Rclass{GRanges}, defined by the \Rpackage{GenomicRanges} package, 
+and \Rclass{RangedData}, a more general data structure from the
+\Rpackage{IRanges} package. For most purposes, \Rclass{GRanges} is
+preferred in the context of \Rpackage{rtracklayer}; however,
+\Rclass{RangedData} has some particular use cases. 
+
+\textbf{rtracklayer} supports the import and export of tracks from and
+to files in various formats, see Section~\ref{sec:import-export}. All
+positions in a \Rclass{RangedData} or \Rclass{GRanges} should be
+1-based, as in R itself.
 
 The \textbf{rtracklayer} package currently interfaces with the
 \textbf{UCSC} web-based genome browser. Other packages may provide
@@ -63,7 +69,7 @@ that are known to be targeted by a microRNA. We will represent this
 information as an annotation track, so that we may view it in the UCSC
 genome browser.
 
-\subsubsection{Constructing the \textit{RangedData}}
+\subsubsection{Constructing the \Rclass{GRanges}}
 
 In preparation for creating the microRNA target track, we first used
 \textbf{limma} to detect the differentially expressed
@@ -101,71 +107,82 @@ targets <- hsTargets[targetMatches,]
 % 
 
 The following code creates the track from the \texttt{targets}
-dataset. First, we construct an \textit{IRanges} instance for holding
-the start, end and name of each target site. This is then passed to
-the \texttt{GenomicData} function,
-which constructs a \textit{RangedData} instance. The stand
-information, the name of the microRNA and the Ensembl ID of the
-targeted transcript are stored as columns in the
-\textit{RangedData}. The chromosome for each site is passed as the
-\texttt{chrom} argument.
+dataset:
 % 
 <<rtl-miRNA-track>>=
-head(targets)
-library(IRanges)
-targetRanges <- IRanges(targets$start, targets$end)
 library(rtracklayer)
-targetTrack <- GenomicData(targetRanges, 
-                           targets[,c("strand", "name", "target")],
-                           chrom = paste("chr", targets$chrom, sep = ""), 
-                           genome = "hg19")
+library(GenomicRanges)
+## call data(targets) if skipping first block
+head(targets)
+targetRanges <- IRanges(targets$start, targets$end)
+targetTrack <- with(targets, 
+                    GRangesForUCSCGenome("hg18", paste("chr", chrom, sep = ""), 
+                                         targetRanges, strand, name, target))
 @
 %
+The \Rfunction{GRangesForUCSCGenome} function constructs a
+\Rclass{GRanges} object for the named genome. The stand information,
+the name of the microRNA and the Ensembl ID of the targeted transcript
+are stored in the \Rclass{GRanges}. The chromosome for each site is
+passed as the \texttt{chrom} argument. The chromosome names and
+lengths for the genome are taken from the UCSC database and stored in
+the \Rclass{GRanges} along with the genome identifier. We can retrieve
+them as follows:
+<<rtl-miRNA-track-seqinfo>>=
+genome(targetTrack)
+head(seqlengths(targetTrack))
+@ 
+%
+While this extra information is not strictly needed to upload data to
+UCSC, calling \Rfunction{GRangesForUCSCGenome} is an easy way to
+formally associate interval data to a UCSC genome build. This ensures,
+for example, that the data will always be uploaded to the correct
+genome, regardless of browser state. It also immediately validates
+whether the intervals fall within the bounds of the genome.
+
+For cases where one is not interacting with the UCSC genome browser,
+and in particular when network access is unavailable, the
+\Rfunction{GRangesForBSGenome} function behaves the same, except it
+finds an installed \Rpackage{BSGenome} package and loads it to
+retrieve the chromosome information.
 
 \subsubsection{Accessing track information}
 
 The track information is now stored in the R session as a
-\textit{RangedData} object. It holds the feature start and end
-positions along with any number of data columns. The ranges and
-data are grouped by chromosome (or other sequence).
+\Rclass{GRanges} object. It holds the chromosme, start, end and strand
+for each feature, along with any number of data columns.
 
 The primary feature attributes are the \texttt{start}, \texttt{end},
-\texttt{chrom} and \texttt{strand}. There are accessors for each
+\texttt{seqnames} and \texttt{strand}. There are accessors for each
 of these, named accordingly. For example, the following code retrieves the
 chromosome names and then start positions for each feature in the
 track.
 %
 <<feature-data-accessors>>=
-head(chrom(targetTrack))
+head(seqnames(targetTrack))
 head(start(targetTrack))
 @
 %
-The \texttt{chrom} and \texttt{strand} accessors are defined by the
-\textbf{rtracklayer} package, for use with genomic ranges. They are
-simple wrappers around \texttt{names(targetTrack)} and
-\texttt{targetTrack\$strand}, respectively. The strand is just
-another variable in the data and should be a factor with levels
-\textit{+}, \textit{-} and \textit{*} (either).
 
 \paragraph{Exercises}
 
 \begin{enumerate}
 \item Get the strand of each feature in the track
 \item Calculate the length of each feature
-\item Reconstruct (partially) the \texttt{targets} \textit{data.frame}
+\item Reconstruct (partially) the \texttt{targets} \Rclass{data.frame}
 \end{enumerate}
 
 <<sol-1, echo=FALSE, results=hide>>=
 head(strand(targetTrack))
 head(width(targetTrack))
-data.frame(chrom = chrom(targetTrack), 
+data.frame(chrom = as.factor(seqnames(targetTrack)), 
            start = start(targetTrack), end = end(targetTrack),
-           strand = strand(targetTrack))
+           strand = as.factor(strand(targetTrack)))
 @ 
 
-\subsubsection{Subsetting a \textit{RangedData}}
+\subsubsection{Subsetting a \textit{GRanges}}
 
-It is often helpful to extract subsets from \textit{RangedData}
+It is often helpful to extract subsets from \Rclass{GRanges}
 instances, especially when uploading to a genome browser.  The data
 can be subset though a matrix-style syntax by feature and column.  The
 conventional \texttt{[} method is employed for subsetting, where the
@@ -175,21 +192,12 @@ numeric, logical and character indices, which behave as expected.
 %
 <<subset-features>>=
 ## get the first 10 targets
-first10 <- targetTrack[1:10,]
+first10 <- targetTrack[1:10]
 ## get pos strand targets
-posTargets <- targetTrack[strand(targetTrack) == "+",]
+posTargets <- targetTrack[strand(targetTrack) == "+"]
+## get the targets on chr1
+chr1Targets <- targetTrack[seqnames(targetTrack) == "chr1"]
 @ 
-%
-
-The features may also be indexed by a \textit{IRanges} instance
-(explained later) or by chromosome. We give an example of the latter
-below for obtaining all target sites on chromosome 1. The name or
-index of a chromosome is passed as the sole argument to the \texttt{[}
-function, as in list subsetting.
-%
-<<subset-chrid>>=
-chr1Targets <- targetTrack["chr1"]
-@
 %
 
 \paragraph{Exercises}
@@ -200,18 +208,19 @@ chr1Targets <- targetTrack["chr1"]
 \end{enumerate}
 
 <<sol-2, echo=FALSE, results=hide>>=
-negTargetTrack <- targetTrack[strand(targetTrack) == "-",]
+negChr2Targets <- targetTrack[strand(targetTrack) == "-" & 
+                              seqnames(targetTrack) == "chr2"]
 @ 
 
 
 \subsubsection{Exporting and importing tracks}
 \label{sec:import-export}
 
-Import and export of \textit{RangedData} instances is supported in the
-following formats: Browser Extended Display (BED), versions 1, 2 and 3
-of the General Feature Format (GFF), and Wiggle (WIG). Support for
-additional formats may be provided by other packages through a plugin
-system.
+Import and export of \Rclass{GRanges} and \Rclass{RangedData}
+instances is supported in the following formats: Browser Extended
+Display (BED), versions 1, 2 and 3 of the General Feature Format
+(GFF), and Wiggle (WIG). Support for additional formats may be
+provided by other packages through a plugin system.
 
 To save the microRNA target track created above in a format understood
 by other tools, we could export it as BED. This is done with the
@@ -232,6 +241,19 @@ format is determined from the filename, by default.
 <<import, eval = FALSE>>=
 restoredTrack <- import("targets.bed")
 @
+%
+The \Robject{restoredTrack} object is of class \Rclass{RangedData}. To
+obtain a \Rclass{GRanges} object directly upon importing, pass
+\Rcode{asRangedData = FALSE} to \Rfunction{import}:
+<<import-gr, eval = FALSE>>=
+restoredTrack <- import("targets.bed", asRangedData = FALSE)
+@
+%
+Eventually, \Rfunction{import} will return \Rclass{GRanges} objects by
+default; the extra parameter is necessary for backwards
+compatibility. Thus, if a \Rclass{RangedData} is desired, new code
+should specify \Rcode{asRangedData = TRUE} in anticipation of the
+change in default value.
 
 \paragraph{Exercises}
 
@@ -295,56 +317,38 @@ explicit, we could pass ``bed'' as the \textit{format} parameter.
 \item Lay a track with the first 100 features of \texttt{targetTrack}
 \end{enumerate}
 
-Here we use the short-cut \texttt{[[} syntax for storing the track.
+Here we use the short-cut \texttt{\$} syntax for storing the track.
 <<sol-4, eval = FALSE, echo=FALSE, results=hide>>=
-session[["target100"]] <- targetTrack[1:100,]
+session$target100 <- targetTrack[1:100]
 @ 
 
 \subsubsection{Viewing the track}
 
 For \textbf{UCSC}, a view roughly corresponds to one tab or window in
-the web browser.  The default view of the track attempts to show the
-entire track. The view region is determined by a call to
-\texttt{range} on the track object.
-<<genomeSegment-track>>=
-range(chr1Targets)
-@ 
-The returned value from \texttt{range} is an instance of the
-\textit{RangesList} class, which specifies a segment of a genome by
-its genome ID, chromosome, and start and end positions.
-
-\paragraph{Exercises}
-
-\begin{enumerate}
-\item Get the \textit{RangesList} describing the first feature in
-  \texttt{targetTrack}.
-\item Get the chromosome ID of that segment.
-\end{enumerate}
-
-<<sol-5, echo=FALSE, results=hide>>=
-segment <- range(targetTrack[1])
-chrom(segment)
-@ 
-
-The target sites are distributed throughout the genome, so we will
-only be able to view a few features at a time. In this case, we will
-view only the first feature in the track. A convenient way to focus a
-view on a particular set of features is to subset the track and pass
-the range of the subtrack to the constructor of the view. 
-Below we take a track subset that contains only the first feature.
+the web browser.  The target sites are distributed throughout the
+genome, so we will only be able to view a few features at a time. In
+this case, we will view only the first feature in the track. A
+convenient way to focus a view on a particular set of features is to
+subset the track and pass the range of the subtrack to the constructor
+of the view.  Below we take a track subset that contains only the
+first feature.
 <<take-subset>>=
-subTargetTrack <- targetTrack[1,] # get first feature
+subTargetTrack <- targetTrack[1] # get first feature
 @
 
 Now we call the \texttt{browserView} function to construct the view
-and pass the \textit{RangesList} of the subtrack, zoomed out by a
-factor of 10, as the segment to view. By passing the name of the
-targets track in the \textit{pack} parameter, we instruct the browser
-to use the ``pack'' mode for viewing the track. This results in the
-name of the microRNA appearing next to the target site glyph.
+and pass the subtrack, zoomed out by a factor of 10, as the segment to
+view. By passing the name of the targets track in the \textit{pack}
+parameter, we instruct the browser to use the ``pack'' mode for
+viewing the track. This results in the name of the microRNA appearing
+next to the target site glyph.
 <<view-subset, eval=FALSE>>=
-view <- browserView(session, range(subTargetTrack) * -10, 
-                    pack = "targets")
+view <- browserView(session, subTargetTrack * -10, pack = "targets")
+@
+
+If multiple ranges are provided, multiple views are launched:
+<<view-subset-multi, eval=FALSE>>=
+view <- browserView(session, targetTrack[1:5] * -10, pack = "targets")
 @
 
 
@@ -370,8 +374,7 @@ tracks into the session and creates a view of a given genome segment.
 In the following code, we create a new \textbf{UCSC} session, load the
 track and view the first two features, all in one call:
 <<browseGenome, eval=FALSE>>=
-browseGenome(targetTrack, 
-             range = range(subTargetTrack) * -10)
+browseGenome(targetTrack, range = subTargetTrack * -10)
 @
 It is even simpler to view the subtrack in \textbf{UCSC} by
 relying on parameter defaults:
@@ -396,12 +399,17 @@ was loaded previously in this example.
 subTargetTrack <- track(session, "targets")
 @
 %
-By default, the segment of the track downloaded is the current default
+The returned object is a \Rclass{RangedData}, even if the data was
+originally uploaded as a \Rclass{GRanges} or other object. To get a
+\Rclass{GRanges} instead, pass \Rcode{asRangedData = FALSE}. By
+default, the segment of the track downloaded is the current default
 genome segment associated with the session. One may download track
-data for any genome segment, such as those on a particular chromosome.
+data for any genome segment, such as those on a particular
+chromosome. Note that this does not distinguish by strand; we are only
+indicating a position on the genome.
 %
 <<get-track-segment, eval=FALSE>>=
-posTargets <- track(session, "targets", range(chr1Targets))
+chr1Targets <- track(session, "targets", chr1Targets)
 @
 
 \paragraph{Exercises}
@@ -412,7 +420,7 @@ posTargets <- track(session, "targets", range(chr1Targets))
 \end{enumerate}
 
 <<sol-7, eval=FALSE, echo=FALSE, results=hide>>=
-region <- resize(range(subTargetTrack)[1], 1000, symmetric=TRUE)
+region <- range(subTargetTrack) + 500
 targetSNP <- track(session, "snp130", region)
 as.data.frame(targetSNP)
 targetGene <- track(session, "knownGene", region)
@@ -533,7 +541,7 @@ need to upload the track to a fresh session. In the code below, we use
 the \texttt{[[<-} alias of \texttt{track<-}.
 <<layTrack-snp, eval = FALSE>>=
 session <- browserSession()
-session[["cpne"]] <- cpneTrack
+session$cpne <- cpneTrack
 @
 %
 Note that because \texttt{cpneTrack} contains data values and its
@@ -556,8 +564,8 @@ track visibility.
 \subsubsection{Plotting the SNP track}
 
 To plot the data values for the SNP's in a track, we need to create a
-\textit{browserView}. We will view the first 5 SNPs in the track,
-which will be displayed in the ``full'' mode.
+\textit{browserView}. We will view the region spanning the first 5
+SNPs in the track, which will be displayed in the ``full'' mode.
 %
 <<browserView-snp, eval = FALSE>>=
 view <- browserView(session, range(cpneTrack[1:5,]), full = "cpne")
@@ -612,6 +620,13 @@ instance.
 nrsfTrack <- GenomicData(nrsfHits, strand="+", chrom="chr1", genome = "hg19")
 @ 
 %
+\Rfunction{GenomicData} is a convenience function that by default
+constructs a \Rclass{RangedData} object. A \Rclass{GRanges} may be
+obtained by passing \Rcode{asRangedData = FALSE}; however, a
+\Rclass{RangedData} may be preferred in this case, as the
+\Robject{nrsfHits} object is stored as a \Rclass{Views} object in
+\Robject{nrsfTrack} without any loss of informatqion, in particular
+the sequence of chr1.
 
 \subsection{Browsing the binding sites}
 

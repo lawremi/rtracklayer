@@ -53,7 +53,7 @@ normArgTrackData <- function(value, session) {
            spaces <- unlist(lapply(tracks, names))
            badSpaces <- setdiff(spaces, seqnames(session))
            if (length(badSpaces))
-             stop("Invalid chromosomes for ", genome, ": ",
+             stop("Invalid chromosomes for ", genome(session), ": ",
                   paste(badSpaces, collapse = ", "))
          })
   value
@@ -105,15 +105,14 @@ setReplaceMethod("genome", "UCSCSession",
                    x
                  })
 
-GRangesForUCSCGenome <- function(genome, chrom = NULL, start = 1L, end = NULL,
-                                 ...)
+GRangesForUCSCGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 {
   if (missing(genome) || !IRanges:::isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
   session <- browserSession("UCSC")
   genome(session) <- genome
-  GRangesForGenome(genome, seqlengths(session), chrom = chrom, start = start,
-                   end = end, ...)
+  GRangesForGenome(genome, seqlengths(session), chrom = chrom, ranges = ranges,
+                   ...)
 }
 
 
@@ -385,13 +384,15 @@ ucscExport <- function(object)
 }
 
 setMethod("track", "UCSCSession",
-          function(object, name, range = base::range(object), table = NULL) {
-            track(ucscTableQuery(object, name, range, table))
+          function(object, name, range = base::range(object), table = NULL,
+                   asRangedData = TRUE)
+          {
+            track(ucscTableQuery(object, name, range, table), asRangedData)
           })
 
 ## download a trackSet by name
 setMethod("track", "UCSCTableQuery",
-          function(object)
+          function(object, asRangedData = TRUE)
           {
             tables <- tableNames(object)
             table <- tableName(object)
@@ -419,7 +420,7 @@ setMethod("track", "UCSCTableQuery",
             outputType(object) <- output
             tableName(object) <- table
             output <- ucscExport(object)
-            import(text = output, format = format)
+            import(text = output, format = format, asRangedData = asRangedData)
           })
 
 ## grab sequences for features in 'track' at 'range'
@@ -485,7 +486,7 @@ setMethod("browserView", "UCSCSession",
                   views[[i]] <- callGeneric()
                 }
                 return(BrowserViewList(views))
-             }
+              }
               range <- normGenomeRange(range, object)
               form <- c(form, ucscForm(range))
             }
@@ -743,7 +744,7 @@ setAs("BasicTrackLine", "character",
         db <- from@db
         if (length(db))
           str <- paste(str, " db=", db, sep="")
-        Offset <- from@offset
+        offset <- from@offset
         if (length(offset))
           str <- paste(str, " offset=", offset, sep="")
         url <- from@url
@@ -1164,7 +1165,8 @@ setMethod("range", "ucscCart",
             pos <- x["position"]
             posSplit <- strsplit(pos, ":")[[1]]
             range <- as.numeric(gsub(",", "", strsplit(posSplit[2], "-")[[1]]))
-            GRangesForUCSCGenome(x[["db"]], posSplit[1], range[1], range[2])
+            GRangesForUCSCGenome(x[["db"]], posSplit[1],
+                                 IRanges(range[1], range[2]))
           })
 
 ### track information

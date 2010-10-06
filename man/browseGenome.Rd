@@ -10,7 +10,8 @@
 browseGenome(object, ...)
 \S4method{browseGenome}{RangedDataORRangedDataList}(object,
   browser = "UCSC", range = base::range(object),
-  view = TRUE, trackParams = list(), viewParams = list(), ...)
+  view = TRUE, trackParams = list(), viewParams = list(),
+  name = "customTrack", ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -19,15 +20,17 @@ browseGenome(object, ...)
     e.g. a \code{\link[IRanges:RangedDataList-class]{RangedDataList}} instance.}
   \item{browser}{ The name of the genome browser. }
   \item{range}{ A genome identifier or a
-    \code{\link[GenomicRanges:GRanges-class]{GRanges}} to display in the
-    initial view.
-    Support for \code{\link[IRanges:RangesList-class]{RangesList}} is also
-    available, but deprecated. }
+    \code{\link[GenomicRanges:GRanges-class]{GRanges}} or
+  \code{\link[IRanges:RangesList-class]{RangesList}} to display in the
+    initial view. }
   \item{view}{ Whether to open a view. }
   \item{trackParams}{ Named list of parameters to pass to
     \code{\link{track<-}}. }
   \item{viewParams}{ Named list of parameters to pass to
     \code{\link{browserView}}. }
+  \item{name}{ The name for the track. Ignored if \code{object} is
+    a \code{RangedDataList}, in which case the names are taken from the
+    list names. }
   \item{\dots}{ Arguments passed to \code{\link{browserSession}}. } 
 }
 \value{

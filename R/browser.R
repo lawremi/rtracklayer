@@ -94,29 +94,25 @@ setGeneric("track<-",
            function(object, ..., value) standardGeneric("track<-"))
 ## load a track into a browser
 setReplaceMethod("track", c("BrowserSession", "RangedData"),
-          function(object, name = deparse(substitute(value)), view = FALSE, ...,
-                   value)
+          function(object, name = deparse(substitute(value)), ..., value)
                  {
-                   track(object, name, view, ...) <- RangedDataList(value)
+                   track(object, name, ...) <- RangedDataList(value)
                    object
                  })
 setReplaceMethod("track", c("BrowserSession", "ANY"),
                  function(object, name = deparse(substitute(value)),
-                          view = FALSE, ..., value)
+                          ..., value)
                  {
-                   track(object, name, view, ...) <- as(value, "RangedData")
+                   track(object, name, ...) <- as(value, "RangedData")
                    object
                  })
 ## load several tracks into a browser
 ## (this may be more efficient for some implementations)
 setReplaceMethod("track", c("BrowserSession", "RangedDataList"),
-                 function(object, name = names(track), view = FALSE, ..., value)
+                 function(object, name = names(track), ..., value)
                  {
-                   for (i in seq_len(length(name) - 1))
-                     track(object, name[i], FALSE, ...) <- value[[i]]
-                   last <- tail(value, 1)
-                   if (length(last))
-                     track(object, tail(name, 1), view, ...) <- last[[1]]
+                   for (i in seq_len(length(name)))
+                     track(object, name[i], ...) <- value[[i]]
                    object
                  })
 
@@ -177,23 +173,26 @@ setGeneric("browseGenome",
 setMethod("browseGenome", "missing",
           function(object, ...) browseGenome(RangedDataList(), ...))
 
+setMethod("browseGenome", "GRanges",
+          function(object, ...) browseGenome(as(object, "RangedData"), ...))
+
 setMethod("browseGenome", "RangedDataORRangedDataList",
           function(object, browser = "UCSC",
                    range = base::range(object), view = TRUE,
-                   trackParams = list(), viewParams = list(), ...)
+                   trackParams = list(), viewParams = list(),
+                   name = "customTrack", ...)
           {
             # initialize session of type identified by 'browser'
             session <- browserSession(browser, ...)
             # load 'object'
             trackParams <- c(list(session), trackParams)
-            pcall <- sys.call(sys.parent(1))
-            name <- deparse(as.list(match.call(call=pcall))[[2]])
             if (is(object, "RangedData"))
               trackParams <- c(trackParams, name = name)
             session <- do.call(`track<-`, c(trackParams, list(value = object)))
             # open view of 'range'
             if (view) {
-              range <- normGenomeRange(range(session), session)
+              if (!missing(range))
+                range <- normGenomeRange(range, session)
               viewParams <- c(list(session, range), viewParams)
               do.call(browserView, viewParams)
             }

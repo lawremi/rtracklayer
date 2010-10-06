@@ -48,13 +48,14 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       by the \code{track} parameter. }
     \item{\code{\link{browserViews}}(object)}{ Gets the
       \code{\linkS4class{BrowserView}} instances for this session. }
-    \item{\code{\link{range}}(x)}{ Gets the
+    \item{\code{\link{range}}(x, asRangedData = TRUE)}{ Gets the
       \code{\link[GenomicRanges:GRanges-class]{GRanges}} last
-      displayed in this session. }
+      displayed in this session. Set \code{asRangedData}
+      to \code{FALSE} to obtain a \code{GRanges} object.}
     \item{\code{\link[rtracklayer:RangedData-methods]{genome}(x)}}{Gets
       the genome identifier of the session, i.e. \code{genome(range(x))}.}
     \item{\code{range(x) <- value}}{ Sets \code{value}, usually a
-      \code{GRanges} object or (deprecated) \code{RangesList}, as the range
+      \code{GRanges} object or \code{RangesList}, as the range
       of session \code{x}. Note that
       this setting only lasts until a view is created or
       manipulated. This mechanism is useful, for example, when treating the UCSC

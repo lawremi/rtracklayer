@@ -1,5 +1,5 @@
 ### =========================================================================
-### Genome-oriented methods for RangedData classes
+### Genome-oriented methods for GRanges/RangedData classes
 ### -------------------------------------------------------------------------
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -13,7 +13,7 @@ setMethod("genome", "GRanges",
             if (is.null(metadata(x)) || is.character(metadata(x))) 
               metadata(x)
             else
-              metadata(x)$genome
+              metadata(x)$universe # 'universe' for compat with RangedData
           })
 
 setGeneric("genome<-", function(x, value) standardGeneric("genome<-"))
@@ -26,7 +26,7 @@ setReplaceMethod("genome", "GRanges",
                  function(x, value) {
                    if (!is.null(value) && !IRanges:::isSingleString(value)) 
                      stop("'value' must be a single string or NULL")
-                   metadata(x)$genome <- value
+                   metadata(x)$universe <- value
                    x
                  })
 
@@ -127,6 +127,33 @@ setReplaceMethod("chrom", "RangesList", function(x, value) {
   x
 })
 
+## zooming (symmetrically scales the width)
+setMethod("Ops", c("GRanges", "numeric"),
+          function(e1, e2)
+          {
+            if (IRanges:::anyMissing(e2))
+              stop("NA not allowed as zoom factor")
+            if ((length(e1) < length(e2) && length(e1)) ||
+                (length(e1) && !length(e2)) ||
+                (length(e1) %% length(e2) != 0))
+              stop("zoom factor length not a multiple of number of ranges")
+            if (.Generic == "*") {
+              e2 <- ifelse(e2 < 0, abs(1/e2), e2)
+              resize(e1, width(e1) / e2, fix = "center")
+            } else {
+              if (.Generic == "-") {
+                e2 <- -e2
+                .Generic <- "+"
+              }
+              if (.Generic == "+") {
+                if (any(-e2*2 > width(e1)))
+                  stop("adjustment would result in ranges with negative widths")
+                resize(e1, width(e1) + e2*2, fix = "center")
+              }
+            }
+          }
+          )
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Constructor
 ###
@@ -151,8 +178,7 @@ GenomicRanges <- function(start = integer(), end = integer(), chrom = NULL,
   rl
 }
 
-GRangesForBSGenome <- function(genome, chrom = NULL, start = 1L, end = NULL,
-                               ...)
+GRangesForBSGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 {
   if (missing(genome) || !IRanges:::isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
@@ -160,18 +186,16 @@ GRangesForBSGenome <- function(genome, chrom = NULL, start = 1L, end = NULL,
   if (is.null(bsgenome))
     stop("genome '", genome,
          "' does not correspond to an installed BSgenome package")
-  GRangesForGenome(genome, seqlengths(bsgenome), chrom = chrom, start = start,
-                   end = end, ...)
+  GRangesForGenome(genome, seqlengths(bsgenome), chrom, ranges, ...)
 }
 
 ## Internal helper
-GRangesForGenome <- function(genome, seqlens, chrom = NULL, start = 1L,
-                             end = NULL, ...)
+GRangesForGenome <- function(genome, seqlens, chrom = NULL, ranges = NULL, ...)
 {
   if (!is.integer(seqlens) || is.null(names(seqlens)))
     stop("'seqlens' must be a named integer vector of chromosome lengths")
-  if (any(start < 1))
-    stop("all values in 'start' should be positive")
+  if (!is.null(ranges) && !is(ranges, "Ranges"))
+    stop("'ranges' must be NULL or a Ranges object")
   if (is.null(chrom))
     chrom <- names(seqlens)
   else {
@@ -180,9 +204,9 @@ GRangesForGenome <- function(genome, seqlens, chrom = NULL, start = 1L,
       stop("Chromosome(s) ", paste(badChrom, collapse = ", "),
            "are invalid for: ", genome)
   }
-  if (is.null(end))
-    end <- seqlens[chrom]
-  gr <- GRanges(chrom, IRanges(start, end), ..., seqlengths = seqlens)
+  if (is.null(ranges))
+    ranges <- IRanges(1L, seqlens[chrom])
+  gr <- GRanges(chrom, ranges, ..., seqlengths = seqlens)
   genome(gr) <- genome
   gr
 }
@@ -192,6 +216,7 @@ GRangesForGenome <- function(genome, seqlens, chrom = NULL, start = 1L,
 ###
 
 ## normalize 'range', using 'session' for default genome
+## note that is singular, i.e., only one interval should come out of this
 normGenomeRange <- function(range, session) {
   ## the user can specify a portion of the genome in several ways:
   ## - String identifying a genome
@@ -211,24 +236,28 @@ normGenomeRange <- function(range, session) {
     on.exit(genome(session) <- genome)
   }
   if (is(range, "RangesList")) {
-    warning("Specifying coordinates with 'RangesList' is deprecated: ",
-            "Use 'GRanges' instead")
+    if (length(range) > 1)
+      stop("'range' must contain ranges on a single chromosome")
     chrom <- names(range)
-    start <- 1L
-    end <- NULL
+    genome <- genome(range)
+    ranges <- NULL
     if (!is.null(chrom)) {
       flatRange <- unlist(range)
-      if (length(flatRange)) {
-        start <- start(flatRange)
-        end <- end(flatRange)
-      }
+      if (length(flatRange))
+        range <- range(flatRange)
     }
-    GRangesForGenome(genome(range), seqlengths(session), chrom, start, end)
+    GRangesForGenome(genome, seqlengths(session), chrom, range)
   } else if (is(range, "GRanges")) {
-    badChroms <- setdiff(seqnames(range), seqnames(session))
-    if (length(badChroms))
-      stop("Invalid chromosomes for ", genome(range), ": ",
-           paste(badChroms, collapse = ", "))
+    if (length(unique(seqnames(range))) != 1L)
+      stop("'range' must contain ranges on a single chromosome")
+    strand(range) <- "*"
+    range <- range(range)
+    seqlens <- seqlengths(session)
+    chr <- as.character(seqnames(range))
+    if (!chr %in% names(seqlens))
+      stop("'range' has invalid chromosome: ", chr)
+    if (start(range) < 1L || end(range) > seqlens[chr])
+      stop("'range' is out of bounds for ", genome(range), ":", chr)
     range
   }
   else stop("'range' should be either a genome string, RangesList or GRanges")
