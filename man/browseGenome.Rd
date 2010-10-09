@@ -1,6 +1,7 @@
 \name{browseGenome}
 \alias{browseGenome}
 \alias{browseGenome,RangedDataORRangedDataList-method}
+\alias{browseGenome,GRanges-method}
 \alias{browseGenome,missing-method}
 \title{ Browse a genome }
 \description{
@@ -45,7 +46,7 @@ browseGenome(object, ...)
   ## open UCSC genome browser:
   browseGenome()
   ## to view a specific range:
-  range <- GenomicRanges("hg18", "chr22", 20000, 50000)
+  range <- GRangesForUCSCGenome("hg18", "chr22", IRanges(20000, 50000))
   browseGenome(range = range)
   ## a slightly larger range:
   browseGenome(range = range, end = 75000)

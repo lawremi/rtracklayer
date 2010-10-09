@@ -13,11 +13,11 @@ setClass("Chain",
          contains = "SimpleList")
 
 setGeneric("import.chain",
-           function(path, exclude = "_") standardGeneric("import.chain"),
+           function(con, exclude = "_") standardGeneric("import.chain"),
            signature = "path")
 
-setMethod("import.chain", "character", function(path, exclude) {
-  .Call("readChain", path, as.character(exclude), PACKAGE="rtracklayer")
+setMethod("import.chain", "character", function(con, exclude) {
+  .Call("readChain", con, as.character(exclude), PACKAGE="rtracklayer")
 })
   
 setMethod("ranges", "ChainBlock", function(x) x@ranges)

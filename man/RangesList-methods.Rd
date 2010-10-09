@@ -67,9 +67,11 @@
 \author{ Michael Lawrence }
 
 \examples{
+\dontrun{
 GenomicRanges(c(1,2,3), c(5,2,8))
 GenomicRanges(c(1,2,3), c(5,2,8), c("chr1", "chr1", "chr2"))
 GenomicRanges(c(1,2,3), c(5,2,8), genome = "hg18")
+}
 }
 \keyword{classes}
 \keyword{methods}

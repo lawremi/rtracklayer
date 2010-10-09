@@ -56,10 +56,10 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               show, "[", ucscTableQuery,
               genome, "genome<-", chrom, "chrom<-", range, "range<-",
               visible, "visible<-",
-              liftOver,
+              liftOver, offset, reversed,
               ## from IRanges
               start, end, "start<-", "end<-", score, "score<-",
-              as.data.frame,
+              as.data.frame, space,
               ## from GenomicRanges
               strand
               )

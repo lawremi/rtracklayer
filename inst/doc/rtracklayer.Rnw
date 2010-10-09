@@ -2,6 +2,18 @@
 
 %\VignetteIndexEntry{rtracklayer}
 
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rcode}[1]{{\texttt{#1}}}
+
+\newcommand{\software}[1]{\textsf{#1}}
+\newcommand{\R}{\software{R}}
+\newcommand{\IRanges}{\Rpackage{IRanges}}
+
 \title{The \textbf{rtracklayer} package}
 \author{Michael Lawrence}
 

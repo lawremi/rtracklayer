@@ -2,7 +2,7 @@
 \docType{class}
 \alias{UCSCView-class}
 \alias{range,UCSCView-method}
-\alias{range<-,UCSCView,RangesList-method}
+\alias{range<-,UCSCView-method}
 \alias{visible,UCSCView-method}
 \alias{visible<-,UCSCView-method}
 

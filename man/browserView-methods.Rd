@@ -41,7 +41,8 @@
 \examples{
 \dontrun{
   session <- browserSession()
-  browserView(session, GenomicRanges(20000, 50000, "chr2"))
+  browserView(session,
+              GRangesForUCSCGenome("hg19", "chr2", IRanges(20000, 50000)))
   ## only view "knownGene" track
   browserView(session, track = "knownGene")
 }

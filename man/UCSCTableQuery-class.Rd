@@ -171,7 +171,8 @@ genome(session) <- "mm9"
 trackNames(session) ## list the track names
 ## choose the Conservation track for a portion of mm9 chr1
 query <- ucscTableQuery(session, "Conservation",
-                        GenomicRanges(57795963, 57815592, "chr12"))
+                        GRangesForUCSCGenome("mm9", "chr12",
+                                             IRanges(57795963, 57815592))))
 ## list the table names
 tableNames(query)
 ## get the phastCons30way track

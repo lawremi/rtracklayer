@@ -2,7 +2,7 @@
 \docType{class}
 \alias{UCSCTrackModes-class}
 \alias{[,UCSCTrackModes-method}
-\alias{[<-,UCSCTrackModes-method}
+\alias{[<-,UCSCTrackModes,ANY,ANY,ANY-method}
 
 \title{Class "UCSCTrackModes"}
 \description{A vector of view modes ("hide", "dense", "full",
