@@ -14,7 +14,7 @@ setClass("Chain",
 
 setGeneric("import.chain",
            function(con, exclude = "_") standardGeneric("import.chain"),
-           signature = "path")
+           signature = "con")
 
 setMethod("import.chain", "character", function(con, exclude) {
   .Call("readChain", con, as.character(exclude), PACKAGE="rtracklayer")
