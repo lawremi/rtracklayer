@@ -209,9 +209,11 @@ setMethod("blocks", "RangedData",
             if (is.null(x$blockStarts) || is.null(x$blockSizes))
               stop("'x' must have 'blockStarts' and 'blockSizes' columns")
             starts <- unlist(strsplit(as.character(x$blockStarts), ","))
-            starts <- as.integer(starts) + 1
             sizes <- unlist(strsplit(as.character(x$blockSizes), ","))
-            split(IRanges(starts, width = sizes), x$name)
+            GRanges(rep(chrom(x), x$blockCount),
+                    IRanges(as.integer(starts) + rep(start(x), x$blockCount),
+                            width = as.integer(sizes)),
+                    tx = rep(x$name, x$blockCount))
           })
 
 setGeneric("import.bed15Lines",
