@@ -1,5 +1,7 @@
 \name{GRangesForUCSCGenome}
 \alias{GRangesForUCSCGenome}
+\alias{GRangesForBSGenome}
+
 \title{
   GRanges for a Genome
 }

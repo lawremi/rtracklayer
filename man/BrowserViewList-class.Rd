@@ -1,9 +1,9 @@
-\name{BrowserViewsList-class}
+\name{BrowserViewList-class}
 \docType{class}
-\alias{BrowserViewsList-class}
+\alias{BrowserViewList-class}
 
 % Constructor
-\alias{BrowserViewsList}
+\alias{BrowserViewList}
 
 \title{Lists of BrowserView} 
 
@@ -16,7 +16,7 @@
 
 \section{Constructor}{
   \describe{
-  \item{}{\code{BrowserViewsList(...)}: Concatenates the
+  \item{}{\code{BrowserViewList(...)}: Concatenates the
       \code{BrowserView} objects in \code{...} into a new
       \code{BrowserViewList}.  This is rarely called by the user.
     } 

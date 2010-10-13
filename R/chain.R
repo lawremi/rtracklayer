@@ -21,7 +21,7 @@ setMethod("import.chain", "character", function(con, exclude) {
 })
   
 setMethod("ranges", "ChainBlock", function(x) x@ranges)
-setMethod("offset", "ChainBlock", function(object) x@offset)
+setMethod("offset", "ChainBlock", function(object) object@offset)
 setMethod("score", "ChainBlock", function(x) Rle(x@score, x@length))
 setMethod("space", "ChainBlock", function(x) Rle(x@space, x@length))
 
