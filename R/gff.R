@@ -149,45 +149,47 @@ setMethod("import.gff", "characterORconnection",
 
   # handle missings
   table[table == "."] <- NA
+
+  attrCol <- table[,"attributes"]
   if (version == "3") {
+    table <- table[,setdiff(colnames(table), "attributes")] # decoded later
     table[table[,"strand"] == "?","strand"] <- NA
     tableDec <- urlDecode(as.vector(table))
     table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
   }
-
+  
   xd <- DataFrame(type = table[,"feature"], source = table[,"source"],
                   phase = table[,"frame"], strand = table[,"strand"])
   
-  if (!is.null(table[,"attributes"])) {
-    if (version == "1") {
-      attrList <- list(group = table[,"attributes"])
-    } else {
-      attrSplit <- strsplit(table[,"attributes"], ";")
-      lines <- rep(seq_along(attrSplit), lapply(attrSplit, length))
-      attrs <- sub(" *$", "", sub("^ *", "", unlist(attrSplit)))
-      if (version == "3") {
-        tvMat <- matrix(unlist(strsplit(attrs, "=")), nrow =  2)
-        tags <- tvMat[1,]
-        vals <- tvMat[2,]
-      } else { # split on first space (FIXME: not sensitive to quotes)
-        tags <- sub(" .*", "", attrs) # strip surrounding quotes
-        vals <- sub("^\"([^\"]*)\"$", "\\1", sub("^[^ ]* ", "", attrs))
-      }
-      attrList <- lapply(split.data.frame(cbind(lines, vals), tags),
-                         function(tag)
-                         {
-                           vals <- tag[,"vals"]
-                           coerced <- suppressWarnings(as.numeric(vals))
-                           if (!any(is.na(coerced)))
-                             vals <- coerced
-                           vec <- rep(NA, nrow(table))
-                           vec[as.numeric(tag[,"lines"])] <- vals
-                           vec
-                         })
+  if (version == "1") {
+    attrList <- list(group = attrCol)
+  } else {
+    attrSplit <- strsplit(attrCol, ";")
+    lines <- rep(seq_along(attrSplit), lapply(attrSplit, length))
+    attrs <- sub(" *$", "", sub("^ *", "", unlist(attrSplit)))
+    if (version == "3") {
+      attrs <- paste(attrs, "=", sep = "")
+      tvMat <- matrix(unlist(strsplit(attrs, "=", fixed=TRUE)), nrow =  2)
+      tags <- urlDecode(tvMat[1,])
+      vals <- urlDecode(tvMat[2,])
+    } else { # split on first space (FIXME: not sensitive to quotes)
+      tags <- sub(" .*", "", attrs) # strip surrounding quotes
+      vals <- sub("^\"([^\"]*)\"$", "\\1", sub("^[^ ]* ", "", attrs))
     }
-    xd <- DataFrame(xd, attrList)
+    attrList <- lapply(split.data.frame(cbind(lines, vals), tags),
+                       function(tag)
+                       {
+                         vals <- tag[,"vals"]
+                         coerced <- suppressWarnings(as.numeric(vals))
+                         if (!any(is.na(coerced)))
+                           vals <- coerced
+                         vec <- rep(NA, nrow(table))
+                         vec[as.numeric(tag[,"lines"])] <- vals
+                         vec
+                       })
   }
-
+  xd <- DataFrame(xd, attrList)
+  
   suppressWarnings(score <- as.numeric(table[,"score"]))
   if (!all(is.na(score)))
     xd$score <- score
