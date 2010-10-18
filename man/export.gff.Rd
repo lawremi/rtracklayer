@@ -209,6 +209,7 @@ export.bw(object, con,
   ## output multiple tracks in UCSC meta-format
   track2 <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
   ## output to WIG
+  library(IRanges)  # for the RangedDataList() constructor
   export.ucsc(RangedDataList(track, track2), dummy, subformat = "wig") 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
