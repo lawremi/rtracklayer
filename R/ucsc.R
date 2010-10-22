@@ -1262,9 +1262,13 @@ setMethod("ucscForm", "GRanges",
             scipen <- getOption("scipen")
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
-            list(position = paste(ucscNormSeqNames(seqnames(object)), ":",
-                  unlist(start(object)), "-",
-                  unlist(end(object)), sep = ""))
+            form <- list()
+            if (length(genome(object)))
+              form <- c(form, db = genome(object))
+            object <- object[1]
+            c(form, position = paste(ucscNormSeqNames(seqnames(object)), ":",
+                      unlist(start(object)), "-",
+                      unlist(end(object)), sep = ""))
           })
 
 setMethod("ucscForm", "UCSCTrackModes",
