@@ -42,10 +42,10 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       \code{\linkS4class{BrowserView}} of \code{range} with visible
       tracks specified by \code{track}. \code{track} may be an instance
       of \code{\linkS4class{UCSCTrackModes}}. Arguments in \code{...} should
-      override slots in \code{range} or else match parameters
+      match parameters
       to a \code{\link{ucscTrackModes}} method for creating a
-      \code{UCSCTrackModes} instance that will override modes indicated
-      by the \code{track} parameter. }
+      \code{UCSCTrackModes} instance that will be merged with and
+        override modes indicated by the \code{track} parameter. }
     \item{\code{\link{browserViews}}(object)}{ Gets the
       \code{\linkS4class{BrowserView}} instances for this session. }
     \item{\code{\link{range}}(x, asRangedData = TRUE)}{ Gets the

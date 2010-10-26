@@ -10,8 +10,15 @@
 \description{An object representing a view of a genome in the
   \acronym{UCSC} browser.}
 \section{Objects from the Class}{
-  Objects are created by calling \code{\link{browserView}(session, ...)}
-  where \code{session} is a \code{\linkS4class{UCSCSession}}. 
+  Calling \code{\link{browserView}(session, range = range(object), track
+    = trackNames(object), ...)}
+  creates \code{\linkS4class{BrowserView}} of \code{range} with visible
+  tracks specified by \code{track}. \code{track} may be an instance of
+  \code{\linkS4class{UCSCTrackModes}}. Arguments in \code{...} should
+  match parameters to a
+  \code{\link{ucscTrackModes}} method for creating a
+  \code{UCSCTrackModes} instance that will be merged with and override
+    modes indicated by the \code{track} parameter.
 }
 \section{Slots}{
   \describe{

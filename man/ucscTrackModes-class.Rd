@@ -15,7 +15,9 @@
   where \code{object} should be a character vector of mode names (with
   its \code{names} attribute specifying the corresponding track names).
   The other parameters should contain track names that override the
-  modes in \code{object}.
+  modes in \code{object}. Later parameters override earlier ones, so,
+  for example, if a track is named in \code{hide} and \code{full},
+  it is shown in the full view mode.
 }
 \section{Slots}{
   \describe{
