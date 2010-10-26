@@ -66,11 +66,15 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       Gets the sequence in \code{range} and \code{track}.
     }
     \item{\code{\link[=track<-]{track}(object, name = names(track),
-        format = "gff", ...) <- value}}{
+        format = "auto", ...) <- value}}{
       Loads a track, stored under \code{name} and formatted as
-      \code{format}. The arguments in \code{...} are passed on to
+      \code{format}. The "auto" format resolves to "bed" for qualitative
+        data. For quantitative data, i.e., data with a numeric \code{score}
+        column, "wig" or "bedGraph" is chosen, depending on how well the
+        data compresses into wig. The arguments in \code{...} are passed on to
       \code{\link{export.ucsc}}, so they could be slots in a
-      \code{\linkS4class{TrackLine}} subclass or parameters to pass
+      \code{\linkS4class{TrackLine}} subclass (and thus specify
+        visual attributes like color) or parameters to pass
       on to the export function for \code{format}.
     }
     \item{\code{\link{track}(object, name, range = range(object),

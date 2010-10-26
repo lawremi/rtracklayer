@@ -178,6 +178,12 @@ export.bw(object, con,
       The \dQuote{score} column is used for the quantitative values.
     }
   }
+
+  The graph formats do not encode a strand. Thus, when targeting the
+  UCSC format, if a track contains features from multiple strands, one
+  track will be output for each strand. The string "m", "p" or "NA" is
+  appended to the base track name for the minus, plus and NA/* strand,
+  respectively.
 }
 \value{
   If \code{con} is missing, a character vector containing the string
