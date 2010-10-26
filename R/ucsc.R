@@ -1034,8 +1034,10 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
               }
               if (!all(unlist(lapply(split(object, strand), isStrandDisjoint))))
               {
-                if (auto)
+                if (auto) {
                   subformat <- "bed"
+                  graphFormat <- FALSE
+                }
                 else stop("Track not compatible with WIG/bedGraph: ",
                           "Overlapping features must be on separate strands",
                           " and every feature width must be positive")
