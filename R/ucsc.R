@@ -266,6 +266,10 @@ ucscTableGet <- function(query, .parse = TRUE, tracks = FALSE, ...)
   ucscGet(browserSession(query), "tables",
           c(ucscForm(query, tracks = tracks), ...), .parse = .parse)
 
+ucscTablePost <- function(query, .parse = TRUE, tracks = FALSE, ...)
+  ucscPost(browserSession(query), "tables",
+           c(ucscForm(query, tracks = tracks), ...), .parse = .parse)
+
 ## gets the track names available from the table browser
 
 setMethod("trackNames", "UCSCTableQuery",
@@ -339,8 +343,8 @@ ucscExport <- function(object)
   hgsid <- NULL
   if (!is.null(names(object))) { # filter by names
     text <- paste(names(object), collapse = "\n")
-    output <- ucscTableGet(object, hgta_doPastedIdentiers = "submit",
-                           hgta_pastedIdentifiers = text)
+    output <- ucscTablePost(object, hgta_doPastedIdentiers = "submit",
+                            hgta_pastedIdentifiers = text)
     error <- getNodeSet(output,
                         "//script[contains(text(), '{showWarnBox')]/text()")
     if (length(error))
