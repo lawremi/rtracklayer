@@ -53,6 +53,8 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
               cat("", file = con)
             dataFormat <- match.arg(dataFormat)            
             doBlock <- function(chromData) {
+              if (!nrow(chromData))
+                return()
               if (is.unsorted(start(chromData)))
                 chromData <- chromData[order(start(chromData)),]
               starts <- start(chromData)
@@ -80,7 +82,7 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
               writer(chromData, con, dataFormat)
             }
             dataFormat <- match.arg(dataFormat)
-            lapply(object, doBlock)
+            invisible(lapply(object, doBlock))
           })
 
 setGeneric("import.wig",
