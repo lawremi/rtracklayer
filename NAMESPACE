@@ -6,7 +6,7 @@ importFrom("stats", offset)
 
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   Sequence, Annotated, DataTableORNULL, characterORNULL,
-                  RangedSelection, SimpleList)
+                  RangedSelection, SimpleList, DataFrame)
 
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
            RangesList, Rle, RangedSelection)
@@ -37,7 +37,8 @@ importFrom("BSgenome", available.genomes)
 exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
-              Bed15TrackLine, UCSCTrackModes, BigWigSelection)
+              Bed15TrackLine, UCSCTrackModes, BigWigSelection,
+              UCSCSchemaDescription, UCSCSchema, UCSCLinks)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
@@ -52,7 +53,9 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               track, trackNames, "trackNames<-", getTable,
               tableNames, trackName, "trackName<-",
               tableName, "tableName<-",
-              ucscTrackModes, "ucscTrackModes<-", coerce, initialize,
+              ucscTrackModes, "ucscTrackModes<-",
+              ucscSchemaDescription, ucscSchema,
+              coerce, initialize,
               show, "[", ucscTableQuery,
               genome, "genome<-", chrom, "chrom<-", range, "range<-",
               visible, "visible<-",

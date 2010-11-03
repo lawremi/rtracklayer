@@ -325,15 +325,79 @@ setMethod("ucscTableOutputs", "UCSCTableQuery",
             unlist(getNodeSet(doc, output_path))
           })
 
-setGeneric("ucscTableSchema",
-           function(object, ...) standardGeneric("ucscTableSchema"))
+setClass("UCSCSchema",
+         representation(genome = "character",
+                        tableName = "character",
+                        rowCount = "integer",
+                        format = "character"),
+         contains = "DataFrame")
 
-setMethod("ucscTableSchema", "UCSCTableQuery",
-          function(object)
-          {
-            doc <- ucscTableGet(object, hgta_doSchema = "describe table schema")
-### TODO: get the schema as a data.frame for the given track and table 
-          })
+setClass("UCSCLinks",
+         representation(genome = "character",
+                        tableName = "character",
+                        fieldName = "character",
+                        viaName = "character"))
+
+setClass("UCSCSchemaDescription",
+         representation(schema = "UCSCSchema", links = "UCSCLinks",
+                        sample = "DataFrame"))
+
+setGeneric("ucscSchemaDescription",
+           function(object, ...) standardGeneric("ucscSchemaDescription"))
+
+setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
+{
+  alphaNum <- function(x) gsub("[^a-zA-Z0-9()+,. -]", "", x)
+  getBoldLabeledField <- function(name) {
+    expr <- sprintf("//b[text() = '%s:']/following::text()[1]", name)
+    alphaNum(xmlValue(getNodeSet(doc, expr)[[1]]))
+  }
+  getDataFrame <- function(tableNode) {
+    getColumn <- function(ind) {
+      expr <- sprintf("tr/td[%d]//text()", ind)
+      alphaNum(sapply(getNodeSet(tableNode, expr), xmlValue))
+    }
+    columnNames <- sapply(getNodeSet(tableNode, "tr[1]/th//text()"), xmlValue)
+    columns <- lapply(seq_along(columnNames), getColumn)
+    names(columns) <- columnNames
+    DataFrame(columns)
+  }
+  doc <- ucscTableGet(object, hgta_doSchema = "describe table schema")
+  genome <- getBoldLabeledField("Database")
+  tableName <- getBoldLabeledField("Primary Table")
+  rowCount <- as.integer(gsub(",", "", getBoldLabeledField("Row Count")))
+  format <- getBoldLabeledField("Format description")
+  schemaNode <- getNodeSet(doc, "//table[tr[1]/th[3]/text() = 'SQL type']")[[1]]
+  schema <- getDataFrame(schemaNode)
+  linkNode <- getNodeSet(doc, "//b[contains(text(), 'Connected Tables and Joining Fields')]/following::table[1]/tr[2]/td[2]")[[1]]
+  linkTable <- sapply(getNodeSet(linkNode, "a/text()"), xmlValue)
+  linkText <- sapply(getNodeSet(linkNode, "text()"), xmlValue)
+  linkMat <- matrix(linkText, nrow=2)
+  linkGenome <- alphaNum(linkMat[1,])
+  linkGenome <- substring(linkGenome, 1, nchar(linkGenome)-1L)
+  linkSplit <- matrix(unlist(strsplit(linkMat[2,], " ", fixed=TRUE)), 3)
+  linkField <- substring(linkSplit[1,], 2)
+  linkVia <- sub(".*?\\.(.*?)\\)", "\\1", linkSplit[3,])
+  sampNode <- getNodeSet(doc, "//b[contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
+  sample <- getDataFrame(sampNode)
+  schema <- new("UCSCSchema", schema, genome = genome, tableName = tableName,
+                rowCount = rowCount, format = format)
+  links <- new("UCSCLinks", genome = linkGenome, tableName = linkTable,
+               fieldName = linkField, viaName = linkVia)
+  new("UCSCSchemaDescription", schema = schema, links = links, sample = sample)
+})
+
+setGeneric("ucscSchema",
+           function(object, ...) standardGeneric("ucscSchema"))
+
+setMethod("ucscSchema", "UCSCSchemaDescription", function(object) {
+  object@schema
+})
+
+setMethod("ucscSchema", "UCSCTableQuery", function(object) {
+  ucscSchema(ucscSchemaDescription(object))
+})
+
 
 ## export data from UCSC (internal utility)
 ucscExport <- function(object)
@@ -935,9 +999,10 @@ chooseGraphType <- function(from) {
   type <- "bedGraph"
   ## decide whether compression is a good idea
   steps <- diff(sort(start(r)))
-  if (length(unique(steps)) == 1 || # fixed-step makes sense
-      ((3 * length(unique(width(r)))) < length(r) && # makes sense wrt size
-       mean(steps) < 100)) # dense enough for UCSC efficiency
+  if (length(unique(width(r))) == 1L && # all spans must be the same for WIG
+      (length(unique(steps)) == 1L || # fixed-step makes sense
+       ((3L * length(unique(width(r)))) < length(r) && # makes sense wrt size
+        mean(steps) < 100))) # dense enough for UCSC efficiency
     type <- "wig"
   type
 }
