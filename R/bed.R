@@ -48,11 +48,12 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
                   stop("'blockStarts' specified without 'blockSizes'")
                 if (is.null(blockStarts))
                   stop("'blockSizes' specified without 'blockStarts'")
-                lastBlock <- function(x) sub(".*,", "", "20,20")
+                lastBlock <- function(x)
+                  as.integer(sub(".*,", "", sub(",$", "", x)))
                 lastSize <- lastBlock(blockSizes)
                 lastStart <- lastBlock(blockStarts)
                 if (any(df[[2]] + lastSize + lastStart != df[[3]]) ||
-                    any(sub(",.*", "", blockStarts) != 0))
+                    any(sub(",.*", "", blockStarts) != "0"))
                   stop("blocks must span entire feature")
                 blockCount <- length(strsplit(blockSizes, ",")[[1]])
               }
