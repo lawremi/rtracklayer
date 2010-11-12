@@ -329,8 +329,27 @@ setClass("UCSCSchema",
          representation(genome = "character",
                         tableName = "character",
                         rowCount = "integer",
-                        format = "character"),
+                        formatDescription = "character"),
          contains = "DataFrame")
+
+setMethod("genome", "UCSCSchema", function(x) {
+  x@genome
+})
+
+setMethod("tableName", "UCSCSchema", function(x) {
+  x@tableName
+})
+
+setGeneric("rowCount", function(x, ...) standardGeneric("rowCount"))
+setMethod("rowCount", "UCSCSchema", function(x) {
+  x@rowCount
+})
+
+setGeneric("formatDescription",
+           function(x, ...) standardGeneric("formatDescription"))
+setMethod("formatDescription", "UCSCSchema", function(x) {
+  x@formatDescription
+})
 
 setClass("UCSCLinks",
          representation(genome = "character",
@@ -345,9 +364,10 @@ setClass("UCSCSchemaDescription",
 setGeneric("ucscSchemaDescription",
            function(object, ...) standardGeneric("ucscSchemaDescription"))
 
+## not currently exported, just ucscSchema() is public
 setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
 {
-  alphaNum <- function(x) gsub("[^a-zA-Z0-9()+,. -]", "", x)
+  alphaNum <- function(x) gsub("^ *", "", gsub("[^a-zA-Z0-9()+,. -]", "", x))
   getBoldLabeledField <- function(name) {
     expr <- sprintf("//b[text() = '%s:']/following::text()[1]", name)
     alphaNum(xmlValue(getNodeSet(doc, expr)[[1]]))
@@ -360,6 +380,7 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
     columnNames <- sapply(getNodeSet(tableNode, "tr[1]/th//text()"), xmlValue)
     columns <- lapply(seq_along(columnNames), getColumn)
     names(columns) <- columnNames
+    columns <- columns[elementLengths(columns) > 0]
     DataFrame(columns)
   }
   doc <- ucscTableGet(object, hgta_doSchema = "describe table schema")
@@ -381,7 +402,7 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
   sampNode <- getNodeSet(doc, "//b[contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
   sample <- getDataFrame(sampNode)
   schema <- new("UCSCSchema", schema, genome = genome, tableName = tableName,
-                rowCount = rowCount, format = format)
+                rowCount = rowCount, formatDescription = format)
   links <- new("UCSCLinks", genome = linkGenome, tableName = linkTable,
                fieldName = linkField, viaName = linkVia)
   new("UCSCSchemaDescription", schema = schema, links = links, sample = sample)

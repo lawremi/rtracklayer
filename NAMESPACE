@@ -38,7 +38,7 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
               Bed15TrackLine, UCSCTrackModes, BigWigSelection,
-              UCSCSchemaDescription, UCSCSchema, UCSCLinks)
+              UCSCSchema)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
@@ -54,7 +54,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               tableNames, trackName, "trackName<-",
               tableName, "tableName<-",
               ucscTrackModes, "ucscTrackModes<-",
-              ucscSchemaDescription, ucscSchema,
+              ucscSchema,
               coerce, initialize,
               show, "[", ucscTableQuery,
               genome, "genome<-", chrom, "chrom<-", range, "range<-",

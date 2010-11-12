@@ -1,6 +1,6 @@
+- List subtracks for a supertrack in the UCSC browser
 - Up-front column selection
 - Chunked importing (pass a chunk size and callback to import)
-- Add intersection functionality to table browser
 - Attach to existing saved sessions
 - Represent formats with formal class in I/O framework, rather than ".format"
 - Port to track reading and writing to C
