@@ -390,21 +390,24 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
   format <- getBoldLabeledField("Format description")
   schemaNode <- getNodeSet(doc, "//table[tr[1]/th[3]/text() = 'SQL type']")[[1]]
   schema <- getDataFrame(schemaNode)
-  linkNode <- getNodeSet(doc, "//b[contains(text(), 'Connected Tables and Joining Fields')]/following::table[1]/tr[2]/td[2]")[[1]]
-  linkTable <- sapply(getNodeSet(linkNode, "a/text()"), xmlValue)
-  linkText <- sapply(getNodeSet(linkNode, "text()"), xmlValue)
-  linkMat <- matrix(linkText, nrow=2)
-  linkGenome <- alphaNum(linkMat[1,])
-  linkGenome <- substring(linkGenome, 1, nchar(linkGenome)-1L)
-  linkSplit <- matrix(unlist(strsplit(linkMat[2,], " ", fixed=TRUE)), 3)
-  linkField <- substring(linkSplit[1,], 2)
-  linkVia <- sub(".*?\\.(.*?)\\)", "\\1", linkSplit[3,])
+  linkNode <- getNodeSet(doc, "//b[contains(text(), 'Connected Tables and Joining Fields')]/following::table[1]/tr[2]/td[2]")
+  if (length(linkNode)) { ## this is apparently optional
+    linkNode <- linkNode[[1]]
+    linkTable <- sapply(getNodeSet(linkNode, "a/text()"), xmlValue)
+    linkText <- sapply(getNodeSet(linkNode, "text()"), xmlValue)
+    linkMat <- matrix(linkText, nrow=2)
+    linkGenome <- alphaNum(linkMat[1,])
+    linkGenome <- substring(linkGenome, 1, nchar(linkGenome)-1L)
+    linkSplit <- matrix(unlist(strsplit(linkMat[2,], " ", fixed=TRUE)), 3)
+    linkField <- substring(linkSplit[1,], 2)
+    linkVia <- sub(".*?\\.(.*?)\\)", "\\1", linkSplit[3,])
+    links <- new("UCSCLinks", genome = linkGenome, tableName = linkTable,
+                 fieldName = linkField, viaName = linkVia)
+  } else links <- new("UCSCLinks")
   sampNode <- getNodeSet(doc, "//b[contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
   sample <- getDataFrame(sampNode)
   schema <- new("UCSCSchema", schema, genome = genome, tableName = tableName,
                 rowCount = rowCount, formatDescription = format)
-  links <- new("UCSCLinks", genome = linkGenome, tableName = linkTable,
-               fieldName = linkField, viaName = linkVia)
   new("UCSCSchemaDescription", schema = schema, links = links, sample = sample)
 })
 
