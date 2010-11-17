@@ -367,7 +367,7 @@ setGeneric("ucscSchemaDescription",
 ## not currently exported, just ucscSchema() is public
 setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
 {
-  alphaNum <- function(x) gsub("^ *", "", gsub("[^a-zA-Z0-9()+,. -]", "", x))
+  alphaNum <- function(x) gsub("^ *", "", gsub("[^a-zA-Z0-9()+,. _'-]", "", x))
   getBoldLabeledField <- function(name) {
     expr <- sprintf("//b[text() = '%s:']/following::text()[1]", name)
     alphaNum(xmlValue(getNodeSet(doc, expr)[[1]]))
