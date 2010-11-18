@@ -390,6 +390,8 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
   format <- getBoldLabeledField("Format description")
   schemaNode <- getNodeSet(doc, "//table[tr[1]/th[3]/text() = 'SQL type']")[[1]]
   schema <- getDataFrame(schemaNode)
+  schema$RType <- sapply(schema$example, function(x) class(type.convert(x)))
+  schema$RType[!nzchar(schema$example)] <- "factor"
   linkNode <- getNodeSet(doc, "//b[contains(text(), 'Connected Tables and Joining Fields')]/following::table[1]/tr[2]/td[2]")
   if (length(linkNode)) { ## this is apparently optional
     linkNode <- linkNode[[1]]
