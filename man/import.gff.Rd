@@ -30,7 +30,7 @@
 }
 \usage{
 import.gff(con, version = c("1", "2", "3"), genome = "hg18",
-           asRangedData = TRUE)
+           asRangedData = TRUE, colnames = NULL)
 import.gff1(con, ...)
 import.gff2(con, ...)
 import.gff3(con, ...)
@@ -64,6 +64,11 @@ import.bw(con, selection = BigWigSelection(...), ...)
   \item{selection}{ A \linkS4class{RangedSelection} object indicating the
     intervals to retrieve from a bigWig file. Note that this retrieval
     is very efficient, due to the indexing of the bigWig format. }
+  \item{colnames}{ Character vector indicating which columns (excluding
+    the required sequence name, start and end) should be imported. If
+    \code{NULL}, all columns are imported. This allows some significant
+    optimizations, especially when it is not necessary to import GFF
+    attributes attributes, which are expensive to parse.}
   \item{\dots}{For \code{import.gff1}, \code{import.gff2} and
     \code{import.gff3}: arguments to pass to \code{import.gff}.
     For \code{import.ucsc}: arguments to pass on to

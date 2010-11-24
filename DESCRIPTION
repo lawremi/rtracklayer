@@ -1,6 +1,6 @@
 Package: rtracklayer
 Title: R interface to genome browsers and their annotation tracks
-Version: 1.11.7
+Version: 1.11.8
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
 Depends: R (>= 2.7.0), methods, RCurl (>= 1.4-2)
 Imports: XML (>= 1.98-0), IRanges (>= 1.7.25), GenomicRanges (>= 1.1.34), Biostrings (>= 2.15.22), BSgenome (>= 1.15.17)

@@ -103,12 +103,12 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
 
 setGeneric("import.gff",
            function(con, version = c("1", "2", "3"), genome = "hg18",
-                    asRangedData = TRUE)
+                    asRangedData = TRUE, colnames = NULL)
            standardGeneric("import.gff"))
            
 setMethod("import.gff", "characterORconnection",
           function(con, version = c("1", "2", "3"), genome,
-                   asRangedData = TRUE)
+                   asRangedData = TRUE, colnames = NULL)
 {
   versionMissing <- missing(version)
   version <- match.arg(version)
@@ -132,8 +132,8 @@ setMethod("import.gff", "characterORconnection",
 ### TODO: handle ontologies (store in RangedData)
 
   ## construct table
-  fields <- c("seqname", "source", "feature", "start", "end", "score", "strand",
-              "frame", "attributes")
+  fields <- c("seqname", "source", "type", "start", "end", "score", "strand",
+              "phase", "attributes")
   linesSplit <- strsplit(lines, "\t", fixed=TRUE)
   fieldCounts <- elementLengths(linesSplit)
   if (any(fieldCounts > length(fields)) ||
@@ -146,7 +146,7 @@ setMethod("import.gff", "characterORconnection",
     noAttrMat <- cbind(noAttrMat, "")
   table <- rbind(noAttrMat, haveAttrMat)
   colnames(table) <- fields
-
+  
   # handle missings
   table[table == "."] <- NA
 
@@ -157,41 +157,52 @@ setMethod("import.gff", "characterORconnection",
     tableDec <- urlDecode(as.vector(table))
     table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
   }
-  
-  xd <- DataFrame(type = table[,"feature"], source = table[,"source"],
-                  phase = table[,"frame"], strand = table[,"strand"])
-  
-  if (version == "1") {
-    attrList <- list(group = attrCol)
-  } else {
-    attrSplit <- strsplit(attrCol, ";")
-    lines <- rep(seq_along(attrSplit), lapply(attrSplit, length))
-    attrs <- sub(" *$", "", sub("^ *", "", unlist(attrSplit)))
-    if (version == "3") {
-      attrs <- paste(attrs, "=", sep = "")
-      tvMat <- matrix(unlist(strsplit(attrs, "=", fixed=TRUE)), nrow =  2)
-      tags <- urlDecode(tvMat[1,])
-      vals <- urlDecode(tvMat[2,])
-    } else { # split on first space (FIXME: not sensitive to quotes)
-      tags <- sub(" .*", "", attrs) # strip surrounding quotes
-      vals <- sub("^\"([^\"]*)\"$", "\\1", sub("^[^ ]* ", "", attrs))
+
+  extraCols <- c("type", "source", "phase", "strand")
+  if (!is.null(colnames))
+    extraCols <- intersect(extraCols, colnames)
+  xd <- as(table[,extraCols,drop=FALSE], "DataFrame")
+
+  if (is.null(colnames) || length(setdiff(colnames, c(extraCols, "score")))) {
+    if (version == "1") {
+      if (is.null(colnames) || "group" %in% colnames)
+        attrList <- list(group = attrCol)
+      else attrList <- list()
+    } else {
+      attrSplit <- strsplit(attrCol, ";")
+      lines <- rep(seq_along(attrSplit), lapply(attrSplit, length))
+      attrs <- sub(" *$", "", sub("^ *", "", unlist(attrSplit)))
+      if (version == "3") {
+        attrs <- paste(attrs, "=", sep = "")
+        tvMat <- matrix(unlist(strsplit(attrs, "=", fixed=TRUE)), nrow =  2)
+        tags <- urlDecode(tvMat[1,])
+        vals <- urlDecode(tvMat[2,])
+      } else { # split on first space (FIXME: not sensitive to quotes)
+        tags <- sub(" .*", "", attrs) # strip surrounding quotes
+        vals <- sub("^\"([^\"]*)\"$", "\\1", sub("^[^ ]* ", "", attrs))
+      }
+      if (!is.null(colnames)) {
+        keep <- tags %in% colnames
+        lines <- lines[keep]
+        vals <- vals[keep]
+        tags <- tags[keep]
+      }
+      attrList <- lapply(split.data.frame(cbind(lines, vals), tags),
+                         function(tag)
+                         {
+                           vals <- tag[,"vals"]
+                           coerced <- suppressWarnings(as.numeric(vals))
+                           if (!any(is.na(coerced)))
+                             vals <- coerced
+                           vec <- rep(NA, nrow(table))
+                           vec[as.numeric(tag[,"lines"])] <- vals
+                           vec
+                         })
     }
-    attrList <- lapply(split.data.frame(cbind(lines, vals), tags),
-                       function(tag)
-                       {
-                         vals <- tag[,"vals"]
-                         coerced <- suppressWarnings(as.numeric(vals))
-                         if (!any(is.na(coerced)))
-                           vals <- coerced
-                         vec <- rep(NA, nrow(table))
-                         vec[as.numeric(tag[,"lines"])] <- vals
-                         vec
-                       })
+    xd <- DataFrame(xd, attrList)
   }
-  xd <- DataFrame(xd, attrList)
-  
   suppressWarnings(score <- as.numeric(table[,"score"]))
-  if (!all(is.na(score)))
+  if (!all(is.na(score)) && (is.null(colnames) || "score" %in% colnames))
     xd$score <- score
 
   end <- as.integer(table[,"end"])
