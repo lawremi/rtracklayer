@@ -141,14 +141,14 @@ SEXP readChain(SEXP r_path, SEXP r_exclude) {
   exclude = r_exclude == R_NilValue ? NULL : CHAR(STRING_ELT(r_exclude, 0));
   chains = read_chain_file(stream, exclude, &nblocks);
 
-  PROTECT(ans = NEW_OBJECT(MAKE_CLASS("Alignment")));
+  PROTECT(ans = NEW_OBJECT(MAKE_CLASS("Chain")));
   ans_listData = allocVector(VECSXP, nblocks);
   SET_SLOT(ans, install("listData"), ans_listData);
   ans_names = allocVector(STRSXP, nblocks);
   SET_NAMES(ans_listData, ans_names);
   for (i = 0; i < nblocks; i++) {
     SEXP block;
-    block = NEW_OBJECT(MAKE_CLASS("AlignmentSpace"));
+    block = NEW_OBJECT(MAKE_CLASS("ChainBlock"));
     SET_VECTOR_ELT(ans_listData, i, block);
     SET_SLOT(block, install("ranges"),
 		new_IRanges_from_RangeAE("IRanges", &chains[i]->ranges));
