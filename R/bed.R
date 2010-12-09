@@ -287,7 +287,7 @@ setMethod("export.bed15Lines", "RangedData",
             object$expIds <- rep(paste(seq_along(expNames)-1, collapse=","),
                                  nrow(object))
             scores <- as.list(unlist(values(object[,expNames])))
-            scores <- do.call("paste", c(scores, sep = ","))
+            scores <- do.call(paste, c(scores, sep = ","))
             scores <- gsub("NA", "-10000", scores, fixed=TRUE)
             object$expScores <- scores
             export.bed(object, con, "bed15", ...)
