@@ -28,22 +28,50 @@ setMethod("space", "ChainBlock", function(x) Rle(x@space, x@length))
 setGeneric("reversed", function(x, ...) standardGeneric("reversed"))
 setMethod("reversed", "ChainBlock", function(x) Rle(x@reversed, x@length))
 
+flipStrandSimple <- function(strand, flip) {
+  strand <- as.vector(strand)
+  flipped <- ifelse(flip, ifelse(strand == "+", "-",
+                                 ifelse(strand == "-", "+", strand)),
+                    strand)
+  strand(flipped)
+}
+
+flipStrandTricky <- function(strand, flip) {
+  strandCodes <- c("+" = 1L, "-" = -1L, "*" = 0L)
+  strandInt <- strandCodes[as.vector(strand)]
+  flipped <- ifelse(flip, strandInt * -1L, strandInt) + 2L
+  strandRevCodes <- factor(c("-", "*", "+"), levels(strand()))
+  strandRevCodes[as.vector(flipped)]
+}
+
 setGeneric("liftOver", function(x, chain, ...) standardGeneric("liftOver"))
 setMethod("liftOver", c("GRanges", "Chain"),
           function(x, chain)
           {
-            liftOverSpace <- function(ranges, chain) {
-              ol <- findOverlaps(ranges, ranges(chain))
+            liftOverSpace <- function(gr, chain) {
+              r <- ranges(gr)
+              ol <- findOverlaps(r, ranges(chain))
               shits <- subjectHits(ol)
-              ranges <- ranges(ol, ranges, ranges(chain))
-              starts <- ifelse(reversed(chain)[shits],
-                               start(reflect(ranges, ranges(chain)[shits])),
-                               start(ranges))
-              ranges <- IRanges(starts, width=width(ranges))
+              r <- ranges(ol, r, ranges(chain))
+              rev <- as.vector(reversed(chain)[shits])
+              starts <- ifelse(rev,
+                               start(reflect(r, ranges(chain)[shits])),
+                               start(r))
+              strand <- flipStrandTricky(strand(gr)[queryHits(ol)], rev)
+              r <- IRanges(starts, width=width(r))
               offsets <- offset(chain)[shits]
               spaces <- space(chain)[shits]
               GRanges(spaces,
-                      IRanges(start(ranges) - offsets, end(ranges) - offsets))
+                      IRanges(start(r) - offsets, end(r) - offsets),
+                      strand = strand,
+                      values(gr)[queryHits(ol),])
             }
-            do.call(c, mapply(liftOverSpace, x, chain))
+            rl <- split(x, seqnames(x))
+            unchainedNames <- setdiff(names(rl), names(chain))
+            if (length(unchainedNames))
+              message("Discarding unchained sequences: ",
+                      paste(unchainedNames, collapse = ", "))
+            sharedNames <- intersect(names(rl), names(chain))
+            unlist(mseqapply(liftOverSpace, rl[sharedNames],
+                             chain[sharedNames]), use.names=FALSE)
           })
