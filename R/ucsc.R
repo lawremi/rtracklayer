@@ -1222,6 +1222,9 @@ setMethod("import.ucsc", "characterORconnection",
               ucsc
             }
             tsets <- lapply(seq_along(trackLines), makeTrackSet)
+            trackNames <- sapply(tsets, function(x) x@trackLine@name)
+            if (!any(is.na(trackNames)))
+                names(tsets) <- trackNames
             if (drop && length(tsets) == 1)
               tsets[[1]]
             else if (asRangedData)
