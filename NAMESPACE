@@ -5,7 +5,7 @@ import(RCurl, XML)
 importFrom("stats", offset)
 
 importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
-                  Sequence, Annotated, DataTableORNULL, characterORNULL,
+                  Sequence, DataTableORNULL, characterORNULL,
                   RangedSelection, SimpleList, DataFrame)
 
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
