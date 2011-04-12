@@ -67,16 +67,16 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
               if (length(starts) == 1)
                 steps <- 0
               else steps <- diff(starts)
-              ## heuristic: split into blocks with fixed span
               fixedSpan <- all(spans[1] == spans)
+              if (!fixedSpan)
+                stop("The span must be uniform for Wiggle export. ",
+                     "Consider bedGraph or bigWig as alternatives.")
               fixedStep <- all(steps[1] == steps)
               if (dataFormat == "auto") {
                 dataFormat <- "variableStep"
                 if (fixedStep)
                   dataFormat <- "fixedStep"
               }
-              if (!fixedSpan) ## split into blocks to make spans uniform
-                return(lapply(split(chromData, spans), doBlock))
               if (dataFormat != "variableStep" && !fixedStep)
                 stop("Step not uniform: consider variableStep")
               writer(chromData, con, dataFormat)
