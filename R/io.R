@@ -5,7 +5,7 @@
 ##setOldClass("connection")
 
 .connectionClasses <- c("file", "url", "gzfile", "bzfile", "unz", "pipe",
-                        "fifo", "sockconn")
+                        "fifo", "sockconn", "terminal")
 apply(cbind(.connectionClasses, "connection"), 1, setOldClass,
       where = environment())
 setClassUnion("characterORconnection", c("character", "connection"))
