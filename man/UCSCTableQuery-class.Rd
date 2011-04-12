@@ -159,6 +159,8 @@
       names of the features to retrieve. If \code{NULL}, this filter is
       disabled.
     }
+    \item{}{\code{ucscSchema(x)}: Get
+      the \code{\linkS4class{UCSCSchema}} object describing the selected table.}
   }
 }
 
@@ -186,6 +188,7 @@ getTable(query)
 genome(session) <- "hg18"
 query <- ucscTableQuery(session, "snp129",
                         names = c("rs10003974", "rs10087355", "rs10075230"))
+ucscSchema(query)
 getTable(query)
 }
 }
