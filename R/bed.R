@@ -129,21 +129,21 @@ setMethod("export.bed", "RangedDataList",
 setGeneric("import.bed",
            function(con, variant = c("base", "bedGraph", "bed15"),
                     trackLine = TRUE, genome = "hg18", asRangedData = TRUE,
-                    ...)
+                    colnames = NULL, ...)
            standardGeneric("import.bed"))
 
 setMethod("import.bed", "character",
           function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
-                   genome, asRangedData = TRUE)
+                   genome, asRangedData = TRUE, colnames = NULL)
           {
             import(file(con), format = "bed", variant = variant,
                    trackLine = trackLine, genome = genome,
-                   asRangedData = asRangedData)
+                   asRangedData = asRangedData, colnames = colnames)
           })
 
 setMethod("import.bed", "connection",
           function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
-                   genome, asRangedData = TRUE)
+                   genome, asRangedData = TRUE, colnames = NULL)
           {
             variant <- match.arg(variant)
             if (variant == "base" && trackLine) {
@@ -155,7 +155,8 @@ setMethod("import.bed", "connection",
               if (length(grep("^track", line)) > 0)
                 return(import.ucsc(con, subformat = "bed", drop = TRUE,
                                    trackLine = FALSE, genome = genome,
-                                   asRangedData = asRangedData))
+                                   asRangedData = asRangedData,
+                                   colnames = colnames))
             }
             if (variant == "bedGraph") {
               bedClasses <- c("character", "integer", "integer", "numeric")
@@ -171,21 +172,36 @@ setMethod("import.bed", "connection",
             }
             if (variant == "bed15")
               bedNames <- c(bedNames, "expCount", "expIds", "expScores")
+            normArgColnames <- function(validNames) {
+              if (is.null(colnames))
+                colnames <- validNames
+              else {
+                colnames <- unique(c(head(bedNames, 3), as.character(colnames)))
+                missingCols <- setdiff(colnames, validNames)
+                if (length(missingCols))
+                  stop("Requested column(s) ",
+                       paste("'", missingCols, "'", sep = "", collapse = ", "),
+                       " are not valid columns or were not found in the file")
+              }
+              colnames
+            }
             ## read a single line to get ncols up-front,
             ## and thus specify all col classes
             ## FIXME: reading in 'as.is' to save memory,
             if (length(line <- readLines(con, 1, warn=FALSE))) {
               pushBack(line, con)
-              bedClasses <-
-                bedClasses[seq(length(strsplit(line, "[\t ]")[[1]]))]
+              colsInFile <- seq(length(strsplit(line, "[\t ]")[[1]]))
+              colnames <- normArgColnames(bedNames[colsInFile])
+              bedClasses <- ifelse(bedNames[colsInFile] %in% colnames,
+                                   bedClasses[colsInFile], "NULL")
               bed <- DataFrame(read.table(con, colClasses = bedClasses,
                                           as.is = TRUE))
-            } else bed <- DataFrame(as.list(sapply(bedClasses, vector)))
-            colnames(bed) <- bedNames[seq_len(ncol(bed))]
-            if (variant != "bedGraph") { ## don't know column #, coerce here
-              bed$start <- as.integer(bed$start)
-              bed$end <- as.integer(bed$end)
-            } ## BED is 0-start, so add 1 to start
+            } else {
+              colnames <- normArgColnames(bedNames)
+              keepCols <- bedNames %in% colnames
+              bed <- DataFrame(as.list(sapply(bedClasses[keepCols], vector)))
+            }
+            colnames(bed) <- bedNames[bedNames %in% colnames]
             color <- bed$itemRgb
             if (is.character(color)) { # could be NULL
               spec <- color != "0"
@@ -227,7 +243,7 @@ setMethod("import.bed15Lines", "ANY",
             if (!IRanges:::isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
             bed <- import.bed(con, "bed15", genome = genome,
-                              asRangedData = asRangedData)
+                              asRangedData = asRangedData, colnames = colnames)
             if (asRangedData) {
               if (!nrow(bed))
                 return(bed)

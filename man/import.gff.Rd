@@ -36,7 +36,7 @@ import.gff2(con, ...)
 import.gff3(con, ...)
 import.bed(con, variant = c("base", "bedGraph", "bed15"),
            trackLine = TRUE, genome = "hg18",
-           asRangedData = TRUE, ...)
+           asRangedData = TRUE, colnames = NULL, ...)
 import.bed15(con, genome = "hg18", asRangedData = TRUE, ...)
 import.bedGraph(con, genome = "hg18", asRangedData = TRUE, ...)
 import.wig(con, genome = "hg18", asRangedData = TRUE, ...)
