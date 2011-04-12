@@ -75,5 +75,5 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-",
 
 ## the S4-connection compatibility layer
 exportClasses(connection,
-              file, url, gzfile, unz, pipe, sockconn,
+              file, url, gzfile, unz, pipe, sockconn, terminal,
               characterORconnection)
