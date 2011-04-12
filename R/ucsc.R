@@ -340,8 +340,7 @@ setMethod("tableName", "UCSCSchema", function(x) {
   x@tableName
 })
 
-setGeneric("rowCount", function(x, ...) standardGeneric("rowCount"))
-setMethod("rowCount", "UCSCSchema", function(x) {
+setMethod("nrow", "UCSCSchema", function(x) {
   x@rowCount
 })
 
@@ -374,8 +373,14 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
   }
   getDataFrame <- function(tableNode) {
     getColumn <- function(ind) {
-      expr <- sprintf("tr/td[%d]//text()", ind)
-      alphaNum(sapply(getNodeSet(tableNode, expr), xmlValue))
+      ## FIXME: special treatment required for missing cells
+      ## Is there a way to get child counts for every node in XPath?
+      expr <- sprintf("tr/td[%d]", ind)
+      children <- sapply(getNodeSet(tableNode, expr), xmlChildren)
+      col <- rep(NA, length(children))
+      col[elementLengths(children) > 0] <-
+        alphaNum(sapply(unlist(children), xmlValue))
+      col
     }
     columnNames <- sapply(getNodeSet(tableNode, "tr[1]/th//text()"), xmlValue)
     columns <- lapply(seq_along(columnNames), getColumn)
