@@ -2,6 +2,13 @@
 \docType{class}
 
 \alias{UCSCSchema-class}
+\alias{genome,UCSCSchema-method}
+\alias{tableName,UCSCSchema-method}
+\alias{genome,UCSCSchema-method}
+\alias{formatDescription}
+\alias{formatDescription,UCSCSchema-method}
+\alias{nrow,UCSCSchema-method}
+\alias{ucscSchema,UCSCSchemaDescription-method}
 
 % Accessors:
 

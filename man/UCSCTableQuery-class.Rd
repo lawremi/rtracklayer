@@ -20,6 +20,8 @@
 \alias{names,UCSCTableQuery-method}
 \alias{names<-,UCSCTableQuery-method}
 \alias{trackNames,UCSCTableQuery-method}
+\alias{ucscSchema}
+\alias{ucscSchema,UCSCTableQuery-method}
 
 % Query execution
 \alias{tableNames}

@@ -60,6 +60,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               genome, "genome<-", chrom, "chrom<-", range, "range<-",
               visible, "visible<-",
               liftOver, offset, reversed,
+              nrow, formatDescription,
               ## from IRanges
               start, end, "start<-", "end<-", score, "score<-",
               as.data.frame, space,
