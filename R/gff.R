@@ -206,8 +206,6 @@ setMethod("import.gff", "characterORconnection",
     xd$score <- score
 
   end <- as.integer(table[,"end"])
-  if (version == "3") ## GFF3 has right-open intervals
-    end <- end - 1
   GenomicData(IRanges(as.integer(table[,"start"]), end),
               xd, chrom = table[,"seqname"], genome = genome,
               asRangedData = asRangedData)
