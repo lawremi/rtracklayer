@@ -21,13 +21,14 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
 {
   version <- match.arg(version)
   
-  if (!append)
+  if (!append) {
     cat("", file = con) # clear any existing file
-  gffComment(con, "gff-version", version)
-  sourceVersion <- try(package.version(source), TRUE)
-  if (!inherits(sourceVersion, "try-error"))
-    gffComment(con, "source-version", source, sourceVersion)
-  gffComment(con, "date", format(Sys.time(), "%Y-%m-%d"))
+    gffComment(con, "gff-version", version)
+    sourceVersion <- try(package.version(source), TRUE)
+    if (!inherits(sourceVersion, "try-error"))
+      gffComment(con, "source-version", source, sourceVersion)
+    gffComment(con, "date", format(Sys.time(), "%Y-%m-%d"))
+  }
   
   seqname <- chrom(object)
   if (is.null(object$ID))
