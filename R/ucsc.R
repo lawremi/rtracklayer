@@ -397,7 +397,7 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
   schema <- getDataFrame(schemaNode)
   schema$RType <- sapply(schema$example, function(x) class(type.convert(x)))
   schema$RType[!nzchar(schema$example)] <- "factor"
-  linkNode <- getNodeSet(doc, "//b[contains(text(), 'Connected Tables and Joining Fields')]/following::table[1]/tr[2]/td[2]")
+  linkNode <- getNodeSet(doc, "//div[@class = 'subheadingBar' and contains(text(), 'Connected Tables and Joining Fields')]/following::table[1]/tr[2]/td[2]")
   if (length(linkNode)) { ## this is apparently optional
     linkNode <- linkNode[[1]]
     linkTable <- sapply(getNodeSet(linkNode, "a/text()"), xmlValue)
@@ -411,7 +411,7 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
     links <- new("UCSCLinks", genome = linkGenome, tableName = linkTable,
                  fieldName = linkField, viaName = linkVia)
   } else links <- new("UCSCLinks")
-  sampNode <- getNodeSet(doc, "//b[contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
+  sampNode <- getNodeSet(doc, "//div[@class = 'subheadingBar' and contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
   sample <- getDataFrame(sampNode)
   schema <- new("UCSCSchema", schema, genome = genome, tableName = tableName,
                 rowCount = rowCount, formatDescription = format)
@@ -555,8 +555,7 @@ setMethod("getTable", "UCSCTableQuery",
             ## error message, leaving only the header
             if (grepl("\\n# No results", output))
               output <- gsub("\\n.*", "", output)
-            f <- file()
-            writeLines(output, f)
+            f <- textConnection(output)
             header <- readChar(f, 1) ## strip off the '#' header prefix
             tab <- read.table(f, sep = "\t", header=TRUE, comment.char = "",
                               quote = "")
