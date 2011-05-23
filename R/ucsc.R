@@ -555,7 +555,8 @@ setMethod("getTable", "UCSCTableQuery",
             ## error message, leaving only the header
             if (grepl("\\n# No results", output))
               output <- gsub("\\n.*", "", output)
-            f <- textConnection(output)
+            f <- file()
+            writeLines(output, f)
             header <- readChar(f, 1) ## strip off the '#' header prefix
             tab <- read.table(f, sep = "\t", header=TRUE, comment.char = "",
                               quote = "")
