@@ -59,8 +59,7 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
     frame <- NA
   
   table <- data.frame(seqname, source, feature, start(object),
-                      end(object) + (version == "3"),
-                      score, strand, frame)
+                      end(object), score, strand, frame)
 
   attrs <- NULL
   if (version == "1") {
