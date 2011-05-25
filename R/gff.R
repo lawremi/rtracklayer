@@ -152,7 +152,7 @@ setMethod("import.gff", "characterORconnection",
 
   attrCol <- table[,"attributes"]
   if (version == "3") {
-    table <- table[,setdiff(colnames(table), "attributes")] # decoded later
+    table <- table[,setdiff(colnames(table), "attributes"),drop=FALSE]
     table[table[,"strand"] == "?","strand"] <- NA
     tableDec <- urlDecode(as.vector(table))
     table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
