@@ -51,7 +51,7 @@ setMethod("export.bw", "ANY",
           function(object, con,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                      "bedGraph"),
-                   seqlengths, compress, genome, ...)
+                   seqlengths, compress, genome = NULL, ...)
           {
             rd <- as(object, "RangedData")
             if (!is.null(genome))
