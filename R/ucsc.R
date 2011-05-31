@@ -1021,7 +1021,8 @@ setMethod("show", "UCSCData",
           })
 
 ucscNormSeqNames <- function(nms) {
-  nms <- gsub("^([0-9A-Z]+)$", "chr\\1", nms)
+  nochr <- !grepl("^chr", nms)
+  nms[nochr] <- paste("chr", nms[nochr], sep = "")
   nms
 }
 
