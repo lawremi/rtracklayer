@@ -1020,12 +1020,6 @@ setMethod("show", "UCSCData",
             callNextMethod()
           })
 
-ucscNormSeqNames <- function(nms) {
-  nochr <- !grepl("^chr", nms)
-  nms[nochr] <- paste("chr", nms[nochr], sep = "")
-  nms
-}
-
 chooseGraphType <- function(from) {
   r <- ranges(from)[[1]] # heuristic only needs first chromosome
   type <- "bedGraph"
@@ -1040,7 +1034,6 @@ chooseGraphType <- function(from) {
 }
 
 setAs("RangedData", "UCSCData", function(from) {
-  names(from) <- ucscNormSeqNames(names(from))
   if (is.numeric(score(from))) { # have numbers, let's plot them
     type <- chooseGraphType(from)
     line <- new("GraphTrackLine", type = type)
@@ -1357,7 +1350,7 @@ setMethod("ucscForm", "RangesList",
               on.exit(options(scipen = scipen))
               position <- chrom
               if (length(unlist(start(object))))
-                position <- paste(ucscNormSeqNames(chrom), ":",
+                position <- paste(chrom, ":",
                                   unlist(start(object)), "-",
                                   unlist(end(object)), sep = "")
               form <- c(form, position = position)
@@ -1374,7 +1367,7 @@ setMethod("ucscForm", "GRanges",
             if (length(genome(object)))
               form <- c(form, db = genome(object))
             object <- object[1]
-            c(form, position = paste(ucscNormSeqNames(seqnames(object)), ":",
+            c(form, position = paste(seqnames(object), ":",
                       unlist(start(object)), "-",
                       unlist(end(object)), sep = ""))
           })
