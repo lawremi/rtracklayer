@@ -67,7 +67,7 @@ setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
             format <- match.arg(format)
             if (length(value)) {
               ## upload values in blocks, one for each genome
-              value <- normArgTrackData(value, session)
+              value <- normArgTrackData(value, object)
               names(value) <- name
               genomes <- lapply(value, genome)
               genomes[sapply(genomes, length) == 0L] <- ""
