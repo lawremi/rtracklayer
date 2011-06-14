@@ -1,5 +1,7 @@
 useDynLib(rtracklayer, .registration = TRUE)
 
+import(zlibbioc)
+
 import(RCurl, XML)
 
 importFrom("stats", offset)
