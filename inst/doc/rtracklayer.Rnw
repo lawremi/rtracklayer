@@ -629,7 +629,8 @@ particular type of \textit{IRanges} object), to a \textit{RangedData}
 instance.
 %
 <<track-nrsf>>=
-nrsfTrack <- GenomicData(nrsfHits, strand="+", chrom="chr1", genome = "hg19")
+nrsfTrack <- GenomicData(ranges(nrsfHits), strand="+", chrom="chr1",
+                         genome = "hg19")
 @ 
 %
 \Rfunction{GenomicData} is a convenience function that by default

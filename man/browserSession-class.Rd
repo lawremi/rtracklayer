@@ -50,7 +50,7 @@
       browser (i.e. the range shown by the active view) or a default
       value (possibly \code{NULL}) if no views exist.
     }
-    \item{\emph{virtual} \code{\link[BSgenome]{getSeq}(object, range =
+    \item{\emph{virtual} \code{\link[Biostrings]{getSeq}(object, range =
         range(object), ...)}}{
       gets a genomic sequence of \code{range} from this session.}
     \item{\emph{virtual} \code{\link[=sequence<-]{sequence}(object, ...) <- value}}{

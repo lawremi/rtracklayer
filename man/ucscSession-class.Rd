@@ -62,7 +62,7 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       browser as a database, rather than a genome viewer.}
     \item{\code{\link[rtracklayer:RangedData-methods]{genome}(x) <- value}}{ 
       Sets the genome identifier on the range of session \code{x}.}
-    \item{\code{\link[BSgenome]{getSeq}(object, range, track = "Assembly")}}{
+    \item{\code{\link[Biostrings]{getSeq}(object, range, track = "Assembly")}}{
       Gets the sequence in \code{range} and \code{track}.
     }
     \item{\code{\link[=track<-]{track}(object, name = names(track),
