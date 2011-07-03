@@ -54,28 +54,31 @@ setMethod("export.bw", "ANY",
                    seqlengths, compress, genome = NULL, ...)
           {
             rd <- as(object, "RangedData")
-            if (!is.null(genome))
-              genome(rd) <- genome
-            export.bw(rd, con, dataFormat, seqlengths, compress, ...)
+            export.bw(rd, con, dataFormat, seqlengths, compress,
+                      genome = genome, ...)
           })
 
 setMethod("export.bw", c("RangedData", "character"),
           function(object, con,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                                   "bedGraph"),
-                   seqlengths, compress)
+                   seqlengths, compress, genome = NULL)
           {
             score <- score(object)
             if (!is.numeric(score) || any(is.na(score)))
               stop("The score must be numeric, without any NA's")
             if (!IRanges:::isTRUEorFALSE(compress))
               stop("'compress' must be TRUE or FALSE")
-            if (is.null(seqlengths) && !is.null(genome(object)))
-              seqlengths <- seqlengths(.genomeForID(genome(object)))
-            if (is.null(seqlengths))
-              stop("Unable to determine seqlengths; either specify ",
-                   "'seqlengths' or specify a genome on 'object' that ",
-                   "is known to BSgenome")
+            if (!is.null(genome))
+              genome(object) <- genome
+            if (is.null(seqlengths) && !is.null(genome(object))) {
+              si <- seqinfoForGenome(genome(object))
+              if (is.null(si))
+                stop("Unable to determine seqlengths; either specify ",
+                     "'seqlengths' or specify a genome on 'object' that ",
+                     "is known to BSgenome or UCSC")
+              seqlengths <- seqlengths(si)
+            }
             if (!is.numeric(seqlengths) ||
                 !all(names(object) %in% names(seqlengths)))
               stop("seqlengths must be numeric and indicate a length for ",

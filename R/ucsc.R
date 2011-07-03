@@ -41,6 +41,11 @@ setMethod("seqlengths", "UCSCSession", function(x) {
 
 setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
 
+setMethod("seqinfo", "UCSCSession", function(x) {
+  sl <- seqlengths(x)
+  Seqinfo(names(sl), sl) # no circularity information
+})
+
 normArgTrackData <- function(value, session) {
   genomes <- lapply(value, genome)
   genomes[sapply(genomes, length) == 0L] <- ""
@@ -99,20 +104,29 @@ setReplaceMethod("range", "UCSCSession",
                    x
                  })
 
+setMethod("genome", "UCSCSession", function(x) {
+  genome(ucscCart(x))
+})
+
 setReplaceMethod("genome", "UCSCSession",
                  function(x, value) {
                    ucscGet(x, "gateway", list(db = value))
+                   if (genome(x) != value)
+                     stop("Failed to set session genome to '", value, "'")
                    x
                  })
 
+seqinfoForUCSCGenome <- function(genome) {
+  tryCatch({
+    session <- browserSession("UCSC")
+    genome(session) <- genome
+    seqinfo(session)
+  }, error = function(cond) NULL)
+}
+
 GRangesForUCSCGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 {
-  if (missing(genome) || !IRanges:::isSingleString(genome))
-    stop("'genome' must be a single string identifying a genome")
-  session <- browserSession("UCSC")
-  genome(session) <- genome
-  GRangesForGenome(genome, seqlengths(session), chrom = chrom, ranges = ranges,
-                   ...)
+  GRangesForGenome(genome, chrom = chrom, ranges = ranges, method = "UCSC", ...)
 }
 
 
@@ -1259,6 +1273,8 @@ setMethod("ucscCart", "UCSCView",
           {
             ucscCart(object@session, ucscForm(object))
           })
+
+setMethod("genome", "ucscCart", function(x) x[["db"]])
 
 setMethod("range", "ucscCart",
           function(x, ..., na.rm)

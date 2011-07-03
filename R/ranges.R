@@ -158,57 +158,52 @@ setMethod("Ops", c("GRanges", "numeric"),
 ### Constructor
 ###
 
-### DEPRECATED
-GenomicRanges <- function(start = integer(), end = integer(), chrom = NULL,
-                          genome = NULL)
-{
-  .Deprecated("GRangesForBSGenome or GRangesForUCSCGenome")
-  ir <- IRanges(start, end)
-  if (!is.null(chrom)) {
-    if (!is.factor(chrom))
-      chrom <- factor(chrom, unique(chrom))
-    if (!length(ir))
-      chrom <- chrom[FALSE]
-    if (length(chrom) != length(ir))
-      stop("length of 'chrom' must equal that of 'start' and 'end'",
-           " unless 'start' and 'end' are zero length")
-    rl <- split(ir, chrom)
-  } else rl <- RangesList(ir)
-  universe(rl) <- genome
-  rl
+seqinfoForGenome <- function(genome, method = c("auto", "BSgenome", "UCSC")) {
+  method <- match.arg(method)
+  if (method == "auto" || method == "BSgenome")
+    sl <- seqinfoForBSGenome(genome)
+  if (method == "UCSC" || (method == "auto" && is.null(sl)))
+    sl <- seqinfoForUCSCGenome(genome)
+  sl
 }
 
-GRangesForBSGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
+seqinfoForBSGenome <- function(genome) {
+  bsgenome <- BSGenomeForID(genome)
+  if (!is.null(bsgenome))
+    seqinfo(bsgenome)
+  else NULL
+}
+
+GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL,
+                             method = c("auto", "BSgenome", "UCSC"), ...)
 {
   if (missing(genome) || !IRanges:::isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
-  bsgenome <- .genomeForID(genome)
-  if (is.null(bsgenome))
-    stop("genome '", genome,
-         "' does not correspond to an installed BSgenome package")
-  GRangesForGenome(genome, seqlengths(bsgenome), chrom, ranges, ...)
-}
-
-## Internal helper
-GRangesForGenome <- function(genome, seqlens, chrom = NULL, ranges = NULL, ...)
-{
-  if (!is.integer(seqlens) || is.null(names(seqlens)))
-    stop("'seqlens' must be a named integer vector of chromosome lengths")
+  si <- seqinfoForGenome(genome, match.arg(method))
+  if (is.null(si))
+    stop("Failed to obtain information for genome '", genome, "'")
   if (!is.null(ranges) && !is(ranges, "Ranges"))
     stop("'ranges' must be NULL or a Ranges object")
   if (is.null(chrom))
-    chrom <- names(seqlens)
+    chrom <- seqnames(si)
   else {
-    badChrom <- setdiff(chrom, names(seqlens))
+    badChrom <- setdiff(chrom, seqnames(si))
     if (length(badChrom))
       stop("Chromosome(s) ", paste(badChrom, collapse = ", "),
            "are invalid for: ", genome)
   }
   if (is.null(ranges))
-    ranges <- IRanges(1L, seqlens[chrom])
-  gr <- GRanges(chrom, ranges, ..., seqlengths = seqlens)
+    ranges <- IRanges(1L, seqlengths(si)[chrom])
+  gr <- GRanges(chrom, ranges, seqlengths = seqlengths(si), ...)
+  seqinfo(gr) <- si
   genome(gr) <- genome
   gr
+}
+
+GRangesForBSGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
+{
+  GRangesForGenome(genome, chrom = chrom, ranges = ranges, method = "BSgenome",
+                   ...)
 }
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -274,7 +269,7 @@ spansGenome <- function(x) {
 ### Genome-oriented conveniences for RangedSelection classes
 ### -------------------------------------------------------------------------
 
-.genomeForID <- function(genome) {
+BSGenomeForID <- function(genome) {
   pkgs <- grep("^BSgenome\\.", rownames(installed.packages()), value = TRUE)
   pkg <- grep(paste(genome, "$", sep = ""), pkgs, value = TRUE)
   if (length(pkg) == 1) {
@@ -291,11 +286,10 @@ GenomicSelection <- function(genome, chrom = NULL, colnames = character(0))
 {
   if (missing(genome) || !IRanges:::isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
-  bsgenome <- .genomeForID(genome)
-  if (is.null(bsgenome))
-    stop("genome '", genome,
-         "' does not correspond to an installed BSgenome package")
-  lens <- seqlengths(bsgenome)
+  si <- seqinfoForGenome(genome)
+  if (is.null(si))
+    stop("Failed to obtain information for genome '", genome, "'")
+  lens <- seqlengths(si)
   if (is.null(chrom))
     chrom <- names(lens)
   else {

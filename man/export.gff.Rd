@@ -50,7 +50,7 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed",
 ## not yet supported on Windows
 export.bw(object, con,
           dataFormat = c("auto", "variableStep", "fixedStep", "bedGraph"),
-          seqlengths = NULL, compress = TRUE, ...)
+          seqlengths = NULL, compress = TRUE, genome = NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -88,6 +88,8 @@ export.bw(object, con,
     \code{NULL}, the chromosome lengths are retrieved for
     the \code{genome} specified on \code{object}, if possible.
   }
+  \item{genome}{If not \code{NULL}, overrides the genome on
+    \code{object}, if any.}
   \item{append}{Logical, whether to append the output to the connection}
   \item{compress}{Logical, indicating whether to compress the bigWig output}
   \item{\dots}{For \code{export.gff1}, \code{export.gff2} and

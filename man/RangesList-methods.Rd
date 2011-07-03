@@ -2,9 +2,6 @@
 \docType{methods}
 \alias{RangesList-methods}
 
-% constructor
-\alias{GenomicRanges}
-
 % accessors
 \alias{chrom,RangesList-method}
 \alias{chrom<-,RangesList-method}
@@ -45,33 +42,7 @@
   }
 }
 
-\section{Constructor}{
-  \describe{
-    \item{}{
-      \code{GenomicRanges(start, end, chrom = NULL, genome = NULL)}:
-      
-      \strong{This function has been deprecated in favor of constructing
-        a \code{\link[GenomicRanges:GRanges-class]{GRanges}} using
-        \code{\link{GRangesForUCSCGenome}}.}
-      
-      Constructs a \code{RangesList} containing ranges specified by
-      \code{start} and \code{end}, optionally split into elements based on
-      \code{chrom}, a vector of chromosome identifiers (or \code{NULL} for no
-      splitting). The \code{genome} argument should be a
-      scalar string and is treated as the \code{RangesList}
-      universe. See the examples.
-    }
-  }
-}
-
 \author{ Michael Lawrence }
 
-\examples{
-\dontrun{
-GenomicRanges(c(1,2,3), c(5,2,8))
-GenomicRanges(c(1,2,3), c(5,2,8), c("chr1", "chr1", "chr2"))
-GenomicRanges(c(1,2,3), c(5,2,8), genome = "hg18")
-}
-}
 \keyword{classes}
 \keyword{methods}
