@@ -170,11 +170,14 @@ setMethod("import.gff", "characterORconnection",
       else attrList <- list()
     } else {
       attrSplit <- strsplit(attrCol, ";")
-      lines <- rep(seq_along(attrSplit), lapply(attrSplit, length))
+      lines <- rep(seq_along(attrSplit), elementLengths(attrSplit))
       attrs <- sub(" *$", "", sub("^ *", "", unlist(attrSplit)))
       if (version == "3") {
         attrs <- paste(attrs, "=", sep = "")
-        tvMat <- matrix(unlist(strsplit(attrs, "=", fixed=TRUE)), nrow =  2)
+        tvSplit <- strsplit(attrs, "=", fixed=TRUE)
+        if (any(elementLengths(tvSplit) != 2))
+          stop("Some attributes do not conform to the 'tag=value' format")
+        tvMat <- matrix(unlist(tvSplit), nrow = 2)
         tags <- urlDecode(tvMat[1,])
         vals <- urlDecode(tvMat[2,])
       } else { # split on first space (FIXME: not sensitive to quotes)
