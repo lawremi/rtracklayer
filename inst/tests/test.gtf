@@ -1,0 +1,4 @@
+##gff-version 3
+##date 2011-05-17
+chr1	aggregate_genes.py	aggregate_gene	564418	570350	.	-	.	aggregate_gene_id "CUFF.168931"
+chr1	aggregate_genes.py	exonic_section	564418	565718	.	-	.	exonic_section_number "001"; transcripts "CUFF.168931.1"; is_full_exon "True"; aggregate_gene_id "CUFF.168931"
