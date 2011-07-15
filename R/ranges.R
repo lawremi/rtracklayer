@@ -175,27 +175,29 @@ seqinfoForBSGenome <- function(genome) {
 }
 
 GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL,
-                             method = c("auto", "BSgenome", "UCSC"), ...)
+                             method = c("auto", "BSgenome", "UCSC"),
+                             seqinfo = NULL, ...)
 {
   if (missing(genome) || !IRanges:::isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
-  si <- seqinfoForGenome(genome, match.arg(method))
-  if (is.null(si))
+  if (is.null(seqinfo))
+    seqinfo <- seqinfoForGenome(genome, match.arg(method))
+  if (is.null(seqinfo))
     stop("Failed to obtain information for genome '", genome, "'")
   if (!is.null(ranges) && !is(ranges, "Ranges"))
     stop("'ranges' must be NULL or a Ranges object")
   if (is.null(chrom))
-    chrom <- seqnames(si)
+    chrom <- seqnames(seqinfo)
   else {
-    badChrom <- setdiff(chrom, seqnames(si))
+    badChrom <- setdiff(chrom, seqnames(seqinfo))
     if (length(badChrom))
       stop("Chromosome(s) ", paste(badChrom, collapse = ", "),
            "are invalid for: ", genome)
   }
   if (is.null(ranges))
-    ranges <- IRanges(1L, seqlengths(si)[chrom])
-  gr <- GRanges(chrom, ranges, seqlengths = seqlengths(si), ...)
-  seqinfo(gr) <- si
+    ranges <- IRanges(1L, seqlengths(seqinfo)[chrom])
+  gr <- GRanges(chrom, ranges, seqlengths = seqlengths(seqinfo), ...)
+  seqinfo(gr) <- seqinfo
   genome(gr) <- genome
   gr
 }
@@ -215,12 +217,13 @@ GRangesForBSGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 normGenomeRange <- function(range, session) {
   ## the user can specify a portion of the genome in several ways:
   ## - String identifying a genome
-  ## - RangesList, possibly constructed with deprecated GenomicRanges()
+  ## - RangesList
   ## - GRanges, the preferred way, possibly from GRangesForUCSCGenome()
   ## - We do not allow Ranges, since it does not make sense to have one range
   ##   over many chromosomes
   if (is.character(range)) {
-    return(GRangesForUCSCGenome(range))
+    genome(session) <- range
+    return(GRangesForGenome(range, seqinfo = seqinfo(session)))
   }
   genome <- genome(session)  
   if (is.null(genome(range)))
@@ -240,7 +243,7 @@ normGenomeRange <- function(range, session) {
       if (length(flatRange))
         range <- range(flatRange)
     }
-    GRangesForUCSCGenome(genome, chrom, range)
+    GRangesForGenome(genome, chrom, range, seqinfo = seqinfo(session))
   } else if (is(range, "GRanges")) {
     if (length(unique(seqnames(range))) != 1L)
       stop("'range' must contain ranges on a single chromosome")
