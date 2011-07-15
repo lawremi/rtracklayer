@@ -220,8 +220,7 @@ normGenomeRange <- function(range, session) {
   ## - We do not allow Ranges, since it does not make sense to have one range
   ##   over many chromosomes
   if (is.character(range)) {
-    genome(session) <- range
-    return(GRangesForGenome(range, seqlengths(session)))
+    return(GRangesForUCSCGenome(range))
   }
   genome <- genome(session)  
   if (is.null(genome(range)))
@@ -241,7 +240,7 @@ normGenomeRange <- function(range, session) {
       if (length(flatRange))
         range <- range(flatRange)
     }
-    GRangesForGenome(genome, seqlengths(session), chrom, range)
+    GRangesForUCSCGenome(genome, chrom, range)
   } else if (is(range, "GRanges")) {
     if (length(unique(seqnames(range))) != 1L)
       stop("'range' must contain ranges on a single chromosome")
