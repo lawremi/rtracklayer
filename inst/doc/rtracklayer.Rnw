@@ -128,8 +128,8 @@ library(GenomicRanges)
 head(targets)
 targetRanges <- IRanges(targets$start, targets$end)
 targetTrack <- with(targets, 
-                    GRangesForUCSCGenome("hg18", paste("chr", chrom, sep = ""), 
-                                         targetRanges, strand, name, target))
+                    GRangesForUCSCGenome("hg18", chrom, targetRanges, strand, 
+                                         name, target))
 @
 %
 The \Rfunction{GRangesForUCSCGenome} function constructs a
