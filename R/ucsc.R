@@ -126,7 +126,8 @@ seqinfoForUCSCGenome <- function(genome) {
 
 GRangesForUCSCGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 {
-  GRangesForGenome(genome, chrom = chrom, ranges = ranges, method = "UCSC", ...)
+  GRangesForGenome(genome, chrom = chrom, ranges = ranges, method = "UCSC",
+                   seqinfo = NULL, ...)
 }
 
 

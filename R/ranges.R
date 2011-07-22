@@ -174,9 +174,9 @@ seqinfoForBSGenome <- function(genome) {
   else NULL
 }
 
-GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL,
+GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL, ...,
                              method = c("auto", "BSgenome", "UCSC"),
-                             seqinfo = NULL, ...)
+                             seqinfo = NULL)
 {
   if (missing(genome) || !IRanges:::isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
@@ -205,7 +205,7 @@ GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL,
 GRangesForBSGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 {
   GRangesForGenome(genome, chrom = chrom, ranges = ranges, method = "BSgenome",
-                   ...)
+                   seqinfo = NULL, ...)
 }
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
