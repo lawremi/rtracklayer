@@ -74,12 +74,14 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         block->score = new_IntAE(0, 0, 0);
         block->space = new_CharAEAE(0, 0);
       } else block = value;
-      IntAE_insert_at(&block->score, block->score.nelt, atoi(header[1]));
+      IntAE_insert_at(&block->score, IntAE_get_nelt(&block->score),
+                      atoi(header[1]));
       append_string_to_CharAEAE(&block->space, header[7]);
       header_line = line;
       trc = strcmp("+", header[4]);
       qrc = strcmp("+", header[9]);
-      CharAE_insert_at(&block->rev, block->rev.nelt, trc != qrc);
+      CharAE_insert_at(&block->rev, CharAE_get_nelt(&block->rev),
+                       trc != qrc);
       tstart = atoi(header[5]) + 1; /* 0-based -> 1-based */
       if (trc)
         tstart = atoi(header[3]) - tstart + 2; /* start one too high */
@@ -93,9 +95,10 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       width = atoi(data[0]);
       tstart -= (trc ? width : 0);
       qstart -= (qrc ? width : 0);
-      RangeAE_insert_at(&block->ranges, block->ranges.start.nelt, tstart,
-                        width);
-      IntAE_insert_at(&block->offset, block->offset.nelt, tstart - qstart);
+      RangeAE_insert_at(&block->ranges, IntAE_get_nelt(&block->ranges.start),
+                        tstart, width);
+      IntAE_insert_at(&block->offset, IntAE_get_nelt(&block->offset),
+                      tstart - qstart);
       if (matches == 3) { /* normal line */
         int dt = atoi(data[1]), dq = atoi(data[2]);
         int tchange, qchange;
@@ -109,7 +112,8 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         qstart += qchange;
       } else {
         new_block = TRUE;
-        IntAE_insert_at(&block->length, block->length.nelt, line-header_line);
+        IntAE_insert_at(&block->length, IntAE_get_nelt(&block->length),
+                        line-header_line);
         //Rprintf("end of %s block, line: %d\n", block->name, line);
         fgets(linebuf, LINEBUF_SIZE, stream); /* skip empty line */
         line++;
