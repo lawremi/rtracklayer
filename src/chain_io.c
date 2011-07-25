@@ -95,7 +95,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       width = atoi(data[0]);
       tstart -= (trc ? width : 0);
       qstart -= (qrc ? width : 0);
-      RangeAE_insert_at(&block->ranges, IntAE_get_nelt(&block->ranges.start),
+      RangeAE_insert_at(&block->ranges, RangeAE_get_nelt(&block->ranges),
                         tstart, width);
       IntAE_insert_at(&block->offset, IntAE_get_nelt(&block->offset),
                       tstart - qstart);
