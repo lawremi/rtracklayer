@@ -115,6 +115,7 @@ ensemblIDs <- mappedRkeys(org.Hs.egENSEMBLTRANS[mappedEntrezIDs])
 targetMatches <- match(ensemblIDs, hsTargets$target, 0)
 ## same as data(targets)
 targets <- hsTargets[targetMatches,]
+targets$chrom <- paste("chr", targets$chrom, sep = "")
 @
 % 
 
