@@ -5,8 +5,30 @@
 #include "ucsc/bbiFile.h"
 #include "ucsc/bwgInternal.h"
 #include "ucsc/_bwgInternal.h"
+#include "ucsc/errabort.h"
 
 #include "bigWig.h"
+
+#define WARN_BUF_SIZE 512
+static void R_warnHandler(char *format, va_list args) {
+  char warn_buf[WARN_BUF_SIZE];
+  vsnprintf(warn_buf, WARN_BUF_SIZE, format, args);
+  warning(warn_buf);
+}
+
+static void R_abortHandler() {
+  error("BigWig operation failed");
+}
+
+static void pushRHandlers() {
+  pushAbortHandler(R_abortHandler);
+  pushWarnHandler(R_warnHandler);  
+}
+
+static void popRHandlers() {
+  popAbortHandler();
+  popWarnHandler();
+}
 
 static struct bwgBedGraphItem *
 createBedGraphItems(int *start, int *width, double *score, int len,
@@ -105,7 +127,8 @@ SEXP BWGSectionList_add(SEXP r_sections, SEXP r_seq, SEXP r_ranges,
     sections = R_ExternalPtrAddr(r_sections);
     lm = R_ExternalPtrAddr(R_ExternalPtrTag(r_sections));
   } else lm = lmInit(0);
-  
+
+  pushRHandlers();
   while(numLeft) {
     int numSection = numLeft > itemsPerSlot ? itemsPerSlot : numLeft;
     numLeft -= numSection;
@@ -115,6 +138,7 @@ SEXP BWGSectionList_add(SEXP r_sections, SEXP r_seq, SEXP r_ranges,
     width += numSection;
     score += numSection;
   }
+  popRHandlers();
 
   PROTECT(ans = R_MakeExternalPtr(sections, R_NilValue, R_NilValue));
   R_SetExternalPtrTag(ans, R_MakeExternalPtr(lm, R_NilValue, R_NilValue));
@@ -141,24 +165,29 @@ SEXP BWGSectionList_write(SEXP r_sections, SEXP r_seqlengths, SEXP r_compress,
     sections = R_ExternalPtrAddr(r_sections);
     slReverse(&sections);
   }
+  pushRHandlers();
   bwgCreate(sections, lenHash, blockSize, itemsPerSlot, asLogical(r_compress),
             (char *)CHAR(asChar(r_file)));
   freeHash(&lenHash);
+  popRHandlers();
   return R_NilValue;
 }
 
 /* --- .Call ENTRY POINT --- */
 SEXP BWGSectionList_cleanup(SEXP r_sections)
 {
+  pushRHandlers();
   if (r_sections != R_NilValue) {
     struct lm *lm = R_ExternalPtrAddr(R_ExternalPtrTag(r_sections));
     lmCleanup(&lm);
   }
   return R_NilValue;
+  popRHandlers();
 }
 
 /* --- .Call ENTRY POINT --- */
 SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score) {
+  pushRHandlers();
   struct bbiFile * file = bigWigFileOpen((char *)CHAR(asChar(r_filename)));
   SEXP chromNames = getAttrib(r_ranges, R_NamesSymbol);
   int nchroms = length(r_ranges);
@@ -217,5 +246,6 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score) {
 
   UNPROTECT(4);
   lmCleanup(&lm);
+  popRHandlers();
   return ans;
 }
