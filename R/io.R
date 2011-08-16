@@ -94,5 +94,18 @@ setMethod("import", c(con = "missing", text = "character"),
             obj
           })
 
-# utilities
+
+## gzip handling
+setGeneric("import.gz",
+           function(con, ...) standardGeneric("import.gz"))
+
+setMethod("import.gz", "character", function(con, ...) {
+  import(gzfile(con), file_ext(sub("\\.gz$", "", con)), ...)
+})
+
+setMethod("import.gz", "connection", function(con, ...) {
+  import(gzcon(con), ...)
+})
+
+## utilities
 file_ext <- function(con) gsub(".*\\.([^.]*)$", "\\1", con)
