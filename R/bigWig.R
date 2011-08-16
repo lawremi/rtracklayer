@@ -107,6 +107,11 @@ setGeneric("import.bw",
            function(con, selection = BigWigSelection(...), ...)
            standardGeneric("import.bw"))
 
+setMethod("import.bw", "connection",
+          function(con, selection = BigWigSelection(...), ...)
+          {
+            import.bw(summary(con)$description, selection = selection, ...)
+          })
 
 setMethod("import.bw", "character",
           function(con, selection = BigWigSelection(...), ...)
