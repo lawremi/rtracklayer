@@ -279,6 +279,13 @@ __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
+void warnWithBackTrace(char *format, ...)
+/* Issue a warning message and append backtrace. */
+#if defined(__GNUC__)
+__attribute__((format(printf, 1, 2)))
+#endif
+;
+
 void verbose(int verbosity, char *format, ...)
 /* Write printf formatted message to log (which by
  * default is stdout) if global verbose variable
@@ -288,9 +295,13 @@ __attribute__((format(printf, 2, 3)))
 #endif
     ;
 
+void verboseTimeInit(void);
+/* Initialize or reinitialize the previous time for use by verboseTime. */
+
 void verboseTime(int verbosity, char *label, ...)
-/* Print label and how long it's been since last call.  Call with
- * a NULL label to initialize.  Verbosity level 1 */
+/* Print label and how long it's been since last call.  Start time can be
+ * initialized with verboseTimeInit, otherwise the elapsed time will be
+ * zero. */
 #if defined(__GNUC__)
 __attribute__((format(printf, 2, 3)))
 #endif
@@ -306,8 +317,11 @@ void verboseSetLevel(int verbosity);
 /* Set verbosity level in log.  0 for no logging,
  * higher number for increasing verbosity. */
 
-void zeroBytes(void *vpt, int count);
+INLINE void zeroBytes(void *vpt, int count)
 /* fill a specified area of memory with zeroes */
+{
+memset(vpt, '\0', count);
+}
 
 #define ZeroVar(v) zeroBytes(v, sizeof(*v))
 
@@ -336,7 +350,7 @@ struct slList
     struct slList *next;
     };
 
-int slCount(void *list);
+int slCount(const void *list);
 /* Return # of elements in list.  */
 
 void *slElementFromIx(void *list, int ix);
@@ -453,6 +467,10 @@ double doubleMedian(int count, double *array);
 /* Return median value in array.  This will sort
  * the array as a side effect. */
 
+void doubleBoxWhiskerCalc(int count, double *array, double *retMin,
+	double *retQ1, double *retMedian, double *retQ3, double *retMax);
+/* Calculate what you need to draw a box and whiskers plot from an array of doubles. */
+
 struct slDouble
 /* List of double-precision numbers. */
     {
@@ -469,6 +487,10 @@ int slDoubleCmp(const void *va, const void *vb);
 
 double slDoubleMedian(struct slDouble *list);
 /* Return median value on list. */
+
+void slDoubleBoxWhiskerCalc(struct slDouble *list, double *retMin,
+	double *retQ1, double *retMedian, double *retQ3, double *retMax);
+/* Calculate what you need to draw a box and whiskers plot from a list of slDoubles. */
 
 void intSort(int count, int *array);
 /* Sort an array of ints. */
@@ -504,6 +526,10 @@ int slNameCmpCase(const void *va, const void *vb);
 
 int slNameCmp(const void *va, const void *vb);
 /* Compare two slNames. */
+
+int slNameCmpStringsWithEmbeddedNumbers(const void *va, const void *vb);
+/* Compare strings such as gene names that may have embedded numbers,
+ * so that bmp4a comes before bmp14a */
 
 void slNameSortCase(struct slName **pList);
 /* Sort slName list, ignore case. */
@@ -548,6 +574,10 @@ struct slName *slNameListFromString(char *s, char delimiter);
 #define slNameListFromComma(s) slNameListFromString(s, ',')
 /* Parse out comma-separated list. */
 
+struct slName *slNameListOfUniqueWords(char *text,boolean respectQuotes);
+// Return list of unique words found by parsing string delimited by whitespace.
+// If respectQuotes then ["Lucy and Ricky" 'Fred and Ethyl'] will yield 2 slNames no quotes
+
 struct slName *slNameListFromStringArray(char *stringArray[], int arraySize);
 /* Return list of slNames from an array of strings of length arraySize.
  * If a string in the array is NULL, the array will be treated as
@@ -559,6 +589,9 @@ char *slNameListToString(struct slName *list, char delimiter);
 struct slName *slNameLoadReal(char *fileName);
 /* load file lines that are not blank or start with a '#' into a slName
  * list */
+
+struct slName *slNameIntersection(struct slName *a, struct slName *b);
+/* return intersection of two slName lists.  */
 
 struct slRef
 /* Singly linked list of generic references. */
@@ -614,10 +647,53 @@ struct slPair *slPairFind(struct slPair *list, char *name);
 void *slPairFindVal(struct slPair *list, char *name);
 /* Return value associated with name in list, or NULL if not found. */
 
-struct slPair *slPairFromString(char *s);
-/* Return slPair list parsed from list in string s
- * name1=val1 name2=val2 ...
- * Returns NULL if parse error */
+struct slPair *slPairListFromString(char *str,boolean respectQuotes);
+// Return slPair list parsed from list in string like:  [name1=val1 name2=val2 ...]
+// if respectQuotes then string can have double quotes: [name1="val 1" "name 2"=val2 ...]
+//    resulting pair strips quotes: {name1}={val 1},{name 2}={val2}
+// Returns NULL if parse error.  Free this up with slPairFreeValsAndList.
+#define slPairFromString(s) slPairListFromString(s,FALSE)
+
+char *slPairListToString(struct slPair *list,boolean quoteIfSpaces);
+// Returns an allocated string of pairs in form of [name1=val1 name2=val2 ...]
+// If requested, will wrap name or val in quotes if contain spaces: [name1="val 1" "name 2"=val2]
+
+char *slPairNameToString(struct slPair *list, char delimiter,boolean quoteIfSpaces);
+// Return string created by joining all names (ignoring vals) with the delimiter.
+// If requested, will wrap name in quotes if contain spaces: [name1,"name 2" ...]
+
+int slPairCmpCase(const void *va, const void *vb);
+/* Compare two slPairs, ignore case. */
+
+void slPairSortCase(struct slPair **pList);
+/* Sort slPair list, ignore case. */
+
+int slPairCmp(const void *va, const void *vb);
+/* Compare two slPairs. */
+
+int slPairValCmpCase(const void *va, const void *vb);
+/* Case insensitive compare two slPairs on their values (must be string). */
+
+int slPairValCmp(const void *va, const void *vb);
+/* Compare two slPairs on their values (must be string). */
+
+void slPairValSortCase(struct slPair **pList);
+/* Sort slPair list on values (must be string), ignore case. */
+
+void slPairValSort(struct slPair **pList);
+/* Sort slPair list on values (must be string). */
+
+int slPairIntCmp(const void *va, const void *vb);
+// Compare two slPairs on their integer values.
+
+void slPairIntSort(struct slPair **pList);
+// Sort slPair list on integer values.
+
+int slPairAtoiCmp(const void *va, const void *vb);
+// Compare two slPairs on their strings interpreted as integer values.
+
+void slPairValAtoiSort(struct slPair **pList);
+// Sort slPair list on string values interpreted as integers.
 
 void gentleFree(void *pt);
 /* check pointer for NULL before freeing.
@@ -625,14 +701,17 @@ void gentleFree(void *pt);
 
 /*******  Some stuff for processing strings. *******/
 
-char *cloneStringZ(char *s, int size);
+char *cloneStringZ(const char *s, int size);
 /* Make a zero terminated copy of string in memory */
 
-char *cloneString(char *s);
+char *cloneString(const char *s);
 /* Make copy of string in dynamic memory */
 
 char *cloneLongString(char *s);
 /* Make clone of long string. */
+
+char *catTwoStrings(char *a, char *b);
+/* Allocate new string that is a concatenation of two strings. */
 
 int differentWord(char *s1, char *s2);
 /* strcmp ignoring case - returns zero if strings are
@@ -663,14 +742,14 @@ int differentStringNullOk(char *a, char *b);
 #define sameStringN(a,b,c) (strncmp(a,b,c)==0)
 /* Returns TRUE if two strings start with the same c characters. */
 
-#define isEmpty(string) (string == NULL || string[0] == 0)
+#define isEmpty(string) ((string) == NULL || (string)[0] == 0)
 #define isNotEmpty(string) (! isEmpty(string))
 
-int cmpStringsWithEmbeddedNumbers(char *a, char *b);
+int cmpStringsWithEmbeddedNumbers(const char *a, const char *b);
 /* Compare strings such as gene names that may have embedded numbers,
  * so that bmp4a comes before bmp14a */
 
-int cmpWordsWithEmbeddedNumbers(char *a, char *b);
+int cmpWordsWithEmbeddedNumbers(const char *a, const char *b);
 /* Case insensitive version of cmpStringsWithEmbeddedNumbers. */
 
 boolean startsWith(const char *start, const char *string);
@@ -705,6 +784,9 @@ boolean endsWith(char *string, char *end);
 
 char lastChar(char *s);
 /* Return last character in string. */
+
+char *lastNonwhitespaceChar(char *s);
+// Return pointer to last character in string that is not whitespace.
 
 char *matchingCharBeforeInLimits(char *limit, char *s, char c);
 /* Look for character c sometime before s, but going no further than limit.
@@ -751,8 +833,8 @@ char *replaceChars(char *string, char *oldStr, char *newStr);
  Return value needs to be freeMem'd.
 */
 
-int strSwapStrs(char *string, int sz,char *old, char *new);
-/* Swaps all occurnces of the old with the new in string. Need not be same size
+int strSwapStrs(char *string, int sz,char *oldStr, char *newStr);
+/* Swaps all occurrences of the oldStr with the newStr in string. Need not be same size
    Swaps in place but restricted by sz.  Returns count of swaps or -1 for sz failure.*/
 
 char * memSwapChar(char *s, int len, char oldChar, char newChar);
@@ -764,6 +846,12 @@ char * memSwapChar(char *s, int len, char oldChar, char newChar);
 
 void stripChar(char *s, char c);
 /* Remove all occurences of c from s. */
+
+char *stripEnclosingChar(char *inout,char encloser);
+// Removes enclosing char if found at both beg and end, preserving pointer
+// Note: handles brackets '(','{' and '[' by complement at end
+#define stripEnclosingDoubleQuotes(inout) stripEnclosingChar((inout),'"')
+#define stripEnclosingSingleQuotes(inout) stripEnclosingChar((inout),'\'')
 
 void stripString(char *s, char *strip);
 /* Remove all occurences of strip from s. */
@@ -777,10 +865,10 @@ int countCharsN(char *s, char c, int size);
 int countLeadingChars(char *s, char c);
 /* Count number of characters c at start of string. */
 
-int countLeadingDigits(char *s);
+int countLeadingDigits(const char *s);
 /* Return number of leading digits in s */
 
-int countLeadingNondigits(char *s);
+int countLeadingNondigits(const char *s);
 /* Count number of leading non-digit characters in s. */
 
 int countSame(char *a, char *b);
@@ -805,6 +893,15 @@ int chopByWhite(char *in, char *outArray[], int outSize);
 #define chopLine(line, words) chopByWhite(line, words, ArraySize(words))
 /* Chop line by white space. */
 
+int chopByWhiteRespectDoubleQuotes(char *in, char *outArray[], int outSize);
+/* Like chopString, but specialized for white space separators.
+ * Further, any doubleQuotes (") are respected.
+ * If doubleQuote encloses whole string, then they are removed:
+ *   "Fred and Ethyl" results in word [Fred and Ethyl]
+ * If doubleQuotes exist inside string they are retained:
+ *   Fred "and Ethyl" results in word [Fred "and Ethyl"]
+ * Special note "" is a valid, though empty word. */
+
 int chopByChar(char *in, char chopper, char *outArray[], int outSize);
 /* Chop based on a single character. */
 
@@ -814,6 +911,10 @@ int chopByChar(char *in, char chopper, char *outArray[], int outSize);
 #define chopCommas(string, words) chopByChar(string, ',', words, ArraySize(words))
 /* Chop string by commas. */
 
+
+char *skipBeyondDelimit(char *s,char delimit);
+/* Returns NULL or pointer to first char beyond one (or more contiguous) delimit char.
+   If delimit is ' ' then skips beyond first patch of whitespace. */
 
 char *skipLeadingSpaces(char *s);
 /* Return first non-white space */
@@ -857,6 +958,12 @@ char *lastWordInLine(char *line);
 char *nextWord(char **pLine);
 /* Return next word in *pLine and advance *pLine to next
  * word. Returns NULL when no more words. */
+
+char *nextWordRespectingQuotes(char **pLine);
+// return next word but respects single or double quotes surrounding sets of words.
+
+char *cloneFirstWord(char *line);
+/* Clone first word in line */
 
 char *nextTabWord(char **pLine);
 /* Return next tab-separated word. */
@@ -952,11 +1059,33 @@ void mustGetLine(FILE *file, char *buf, int charCount);
  * encountered.  The string in buf is '\0'-terminated.  (See man 3 fgets.)
  * Die if there is an error. */
 
+int mustOpenFd(char *fileName, int flags);
+/* Open a file descriptor (see man 2 open) or squawk and die. */
+
+void mustReadFd(int fd, void *buf, size_t size);
+/* Read size bytes from a file descriptor or squawk and die. */
+
 void mustWriteFd(int fd, void *buf, size_t size);
 /* Write size bytes to file descriptor fd or die.  (See man 2 write.) */
 
+off_t mustLseek(int fd, off_t offset, int whence);
+/* Seek to given offset, relative to whence (see man lseek) in file descriptor fd or errAbort.
+ * Return final offset (e.g. if this is just an (fd, 0, SEEK_CUR) query for current position). */
+
+void mustCloseFd(int *pFd);
+/* Close file descriptor *pFd if >= 0, abort if there's an error, set *pFd = -1. */
+
+#define writeOneFd(fd, var) mustWriteFd((fd), &(var), sizeof(var))
+/* Write out one variable to file descriptor fd. */
+
 #define readOne(file, var) (fread(&(var), sizeof(var), 1, (file)) == 1)
 /* Read one variable from file. Returns FALSE if can't do it. */
+
+#define readOneFd(fd, var) (read((fd), &(var), sizeof(var)) == sizeof(var))
+/* Read one variable from file. Returns FALSE if can't do it. */
+
+#define mustReadOneFd(fd, var) mustReadFd((fd), &(var), sizeof(var))
+/* Read one variable from file or die. */
 
 #define memReadOne(pPt, var) memRead((pPt), &(var), sizeof(var))
 /* Read one variable from memory. */
@@ -1011,13 +1140,10 @@ struct fileOffsetSize *fileOffsetSizeMerge(struct fileOffsetSize *inList);
 /* Returns a new list which is inList transformed to have adjacent blocks
  * merged.  Best to use this with a sorted list. */
 
-void fileOffsetSizeFindGap(struct fileOffsetSize *list, 
+void fileOffsetSizeFindGap(struct fileOffsetSize *list,
 	struct fileOffsetSize **pBeforeGap, struct fileOffsetSize **pAfterGap);
-/* Starting at list, find all items that don't have a gap between them and the previous item.  
+/* Starting at list, find all items that don't have a gap between them and the previous item.
  * Return at gap, or at end of list, returning pointers to the items before and after the gap. */
-
-void maybeSystem(char *cmd);
-/* Execute cmd using "sh -c" or die.  (See man 3 system.) warning on errors */
 
 void mustSystem(char *cmd);
 /* Execute cmd using "sh -c" or die.  (See man 3 system.) fail on errors */
@@ -1084,6 +1210,9 @@ bits64 byteSwap64(bits64 a);
 bits64 readBits64(FILE *f, boolean isSwapped);
 /* Read and optionally byte-swap 64 bit entity. */
 
+bits64 fdReadBits64(int fd, boolean isSwapped);
+/* Read and optionally byte-swap 64 bit entity. */
+
 bits64 memReadBits64(char **pPt, boolean isSwapped);
 /* Read and optionally byte-swap 64 bit entity from memory buffer pointed to by
  * *pPt, and advance *pPt past read area. */
@@ -1094,6 +1223,9 @@ bits32 byteSwap32(bits32 a);
 bits32 readBits32(FILE *f, boolean isSwapped);
 /* Read and optionally byte-swap 32 bit entity. */
 
+bits32 fdReadBits32(int fd, boolean isSwapped);
+/* Read and optionally byte-swap 32 bit entity. */
+
 bits32 memReadBits32(char **pPt, boolean isSwapped);
 /* Read and optionally byte-swap 32 bit entity from memory buffer pointed to by
  * *pPt, and advance *pPt past read area. */
@@ -1102,6 +1234,9 @@ bits16 byteSwap16(bits16 a);
 /* Swap from intel to sparc order of a 16 bit quantity. */
 
 bits16 readBits16(FILE *f, boolean isSwapped);
+/* Read and optionally byte-swap 16 bit entity. */
+
+bits16 fdReadBits16(int fd, boolean isSwapped);
 /* Read and optionally byte-swap 16 bit entity. */
 
 bits16 memReadBits16(char **pPt, boolean isSwapped);
@@ -1237,5 +1372,49 @@ void dumpStack(char *format, ...)
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
+
+// SETTING_ON set of macros are frequently used comparisons of string values for boolean questions.
+// Notice the subtle difference between NOT_ON and IS_OFF.  NOT_ON could be NULL but IS_OFF must be explicitly set
+#define SETTING_IS_ON(setting)    (setting && (sameWord(setting,"on") || sameWord(setting,"true") || sameWord(setting,"yes") || sameWord(setting,"enabled") || atoi(setting) != 0))
+#define SETTING_NOT_ON(setting)   (!SETTING_IS_ON(setting))
+#define SETTING_IS_OFF(setting)   (setting && (sameWord(setting,"off") || sameWord(setting,"false") || sameWord(setting,"no") || sameWord(setting,"disabled") || sameWord(setting,"0")))
+
+// Standard bit mask macros
+#define BITS_ADD(    flags,bits) ((flags) = ((flags) |  (bits)))
+#define BITS_REMOVE( flags,bits) ((flags) = ((flags) & ~(bits)))
+#define BITS_ARE_ON( flags,bits) (((flags) & (bits)) == (bits))
+#define BITS_ARE_OFF(flags,bits) (((flags) & (bits)) == 0)
+
+// It is sometimes useful to distinguish between 3 "boolean" states: TRUE, FALSE and UNKNOWN
+enum enumBool
+    {
+    beUnknown=0,              // Not yet set
+    ebYes=1,                  // already set to TRUE
+    ebNo=-1                   // already set to FALSE
+    };
+#define SET_TO_YES(ebool) { (ebool) = ebYes; }
+#define SET_TO_NO(ebool)  { (ebool) = ebNo; }
+#define IS_YES(ebool)     ((ebool) == ebYes)
+#define IS_NO(ebool)      ((ebool) == ebNo)
+#define IS_KNOWN(ebool)   (IS_YES(ebool) || IS_NO(ebool))
+#define IS_TRUE           IS_YES
+#define IS_FALSE          IS_NO
+
+time_t mktimeFromUtc (struct tm *t);
+/* Return time_t for tm in UTC (GMT)
+ * Useful for stuff like converting to time_t the
+ * last-modified HTTP response header
+ * which is always GMT. Returns -1 on failure of mktime */
+
+
+time_t dateToSeconds(const char *date,const char*format);
+// Convert a string date to time_t
+
+boolean dateIsOld(const char *date,const char*format);
+// Is this string date older than now?
+
+char *dateAddTo(char *date,char *format,int addYears,int addMonths,int addDays);
+/* Add years,months,days to a formatted date and returns the new date as a cloned string
+*  format is a strptime/strftime format: %F = yyyy-mm-dd */
 
 #endif /* COMMON_H */

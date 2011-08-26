@@ -49,13 +49,14 @@
  *                 sumData      4 bytes float
  *                 sumSquares   4 bytes float
  *         zoom index        	cirTree index
+ *     magic# 		4 bytes - same as magic number at start of header
  */
 
 #ifndef CIRTREE_H
 #include "cirTree.h"
 #endif
 
-#define bbiCurrentVersion 3
+#define bbiCurrentVersion 4
 /* Version history (of file format, not utilities - corresponds to version field in header)
  *    1 - Initial release
  *    1 - Unfortunately when attempting a transparent change to encoders, made the sectionCount 
@@ -66,6 +67,8 @@
  *        zoom in files made by bedToBigBed and bedGraphToBigWig.  (The older wigToBigWig was fine.)
  *        Added totalSummary section.
  *    3 - Adding zlib compression.  Only active if uncompressBufSize is non-zero in header.
+ *    4 - Fixed problem in encoder for the max field in zoom levels higher than the first one.
+ *        Added an extra sig at end of file.
  */
 
 struct bbiZoomLevel
@@ -348,5 +351,11 @@ bits64 bbiWriteSummaryAndIndex(struct bbiSummary *summaryList,
 	int blockSize, int itemsPerSlot, boolean doCompress, FILE *f);
 /* Write out summary and index to summary, returning start position of
  * summary index. */
+
+boolean bbiFileCheckSigs(char *fileName, bits32 sig, char *typeName);
+/* check file signatures at beginning and end of file */
+
+time_t bbiUpdateTime(struct bbiFile *bbi);
+/* return bbi->udc->updateTime */
 
 #endif /* BBIFILE_H */

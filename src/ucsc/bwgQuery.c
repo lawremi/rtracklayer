@@ -20,7 +20,7 @@
 #include "bigWig.h"
 #include "bigBed.h"
 
-static char const rcsid[] = "$Id: bwgQuery.c,v 1.23 2009/11/12 23:15:52 kent Exp $";
+static char const rcsid[] = "$Id: bwgQuery.c,v 1.24 2010/06/03 18:08:37 kent Exp $";
 
 struct bbiFile *bigWigFileOpen(char *fileName)
 /* Open up big wig file. */
@@ -28,17 +28,11 @@ struct bbiFile *bigWigFileOpen(char *fileName)
 return bbiFileOpen(fileName, bigWigSig, "big wig");
 }
 
-struct bwgSectionHead
-/* A header from a bigWig file section */
-    {
-    bits32 chromId;	/* Chromosome short identifier. */
-    bits32 start,end;	/* Range covered. */
-    bits32 itemStep;	/* For some section types, the # of bases between items. */
-    bits32 itemSpan;	/* For some section types, the # of bases in each item. */
-    UBYTE type;		/* Type byte. */
-    UBYTE reserved;	/* Always zero for now. */
-    bits16 itemCount;	/* Number of items in block. */
-    };
+boolean bigWigFileCheckSigs(char *fileName)
+/* check file signatures at beginning and end of file */
+{
+return bbiFileCheckSigs(fileName, bigWigSig, "big wig");
+}
 
 #ifdef OLD
 static void bwgSectionHeadRead(struct bbiFile *bwf, struct bwgSectionHead *head)
@@ -57,7 +51,7 @@ head->itemCount = udcReadBits16(udc, isSwapped);
 }
 #endif /* OLD */
 
-static void bwgSectionHeadFromMem(char **pPt, struct bwgSectionHead *head, boolean isSwapped)
+void bwgSectionHeadFromMem(char **pPt, struct bwgSectionHead *head, boolean isSwapped)
 /* Read section header. */
 {
 char *pt = *pPt;
@@ -386,5 +380,18 @@ double bigWigSingleSummary(struct bbiFile *bwf, char *chrom, int start, int end,
 double arrayOfOne = defaultVal;
 bigWigSummaryArray(bwf, chrom, start, end, summaryType, 1, &arrayOfOne);
 return arrayOfOne;
+}
+
+boolean isBigWig(char *fileName)
+/* Peak at a file to see if it's bigWig */
+{
+FILE *f = mustOpen(fileName, "rb");
+bits32 sig;
+mustReadOne(f, sig);
+fclose(f);
+if (sig == bigWigSig)
+    return TRUE;
+sig = byteSwap32(sig);
+return sig == bigWigSig;
 }
 

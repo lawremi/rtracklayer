@@ -1,4 +1,3 @@
-#ifndef WIN32 /* Unix only; may port if we need it. */
 /* pipeline.c - create a process pipeline that can be used for reading or
  * writing  */
 #include "pipeline.h"
@@ -13,7 +12,13 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-/* FIXME: add close-on-exec startup error reporting */
+enum procState
+/* process state, in order of transition */
+{
+    procStateNew,  // plProc object created
+    procStateRun,  // proccess running
+    procStateDone  // process finished (ok or failed)
+};
 
 struct plProc
 /* A single process in a pipeline */
@@ -22,7 +27,10 @@ struct plProc
     struct pipeline *pl;   /* pipeline we are associated with */
     char **cmd;            /* null-terminated command for this process */
     pid_t  pid;            /* pid for process, -1 if not running */
+    enum procState state;  /* state of process */
     int status;            /* status from wait */
+    int execPipeParent;    /* pipe to wait on for exec */
+    int execPipeChild;     /* write side is close-on-exec */
 };
 
 struct pipeline
@@ -30,6 +38,8 @@ struct pipeline
 {
     struct pipeline *next;
     struct plProc *procs;      /* list of processes */
+    int numRunning;            /* number of processes running */
+    pid_t pgid;                /* process group id, or -1 if not set. */
     char *procName;            /* name to use in error messages. */
     int pipeFd;                /* fd of pipe to/from process, -1 if none */
     unsigned options;          /* options */
@@ -78,7 +88,7 @@ return dyStringCannibalize(&str);
 }
 
 static char* joinCmds(char ***cmds)
-/* join an cmds vetor into a space and pipe seperated string */
+/* join an cmds vetor into a space and pipe separated string */
 {
 struct dyString *str = dyStringNew(512);
 int i, j;
@@ -111,6 +121,10 @@ proc->cmd = needMem((cmdLen+1)*sizeof(char*));
 for (i = 0; i < cmdLen; i++)
     proc->cmd[i] = cloneString(cmd[i]);
 proc->cmd[cmdLen] = NULL;
+proc->state = procStateNew;
+proc->execPipeParent = pipeCreate(&proc->execPipeChild);
+if (fcntl(proc->execPipeChild, F_SETFL, FD_CLOEXEC) != 0)
+    errnoAbort("fcntl set FD_cloexec failed");
 return proc;
 }
 
@@ -124,8 +138,18 @@ freeMem(proc->cmd);
 freeMem(proc);
 }
 
+static void plProcStateTrans(struct plProc *proc, enum procState newState)
+/* do state transition for process changing it to a new state  */
+{
+// States must transition in order.  New state must immediately follow the
+// current state.
+if (newState != proc->state+1)
+    errAbort("invalid state transition: %d -> %d", proc->state, newState);
+proc->state = newState;
+}
+
 static void childAbortHandler()
-/* abort handler that just exts */
+/* abort handler that just exits */
 {
 exit(100);
 }
@@ -183,9 +207,10 @@ static void plProcMemWrite(struct plProc* proc, int stdoutFd, int stderrFd, void
 /* implements child process to write memory buffer to pipeline after
  * fork */
 {
-ssize_t wrCnt;
+safeClose(&proc->execPipeChild);  // memWriter proc doesn't exec, so explicitly close
+
 plProcSetup(proc, STDIN_FILENO, stdoutFd, stderrFd);
-wrCnt = write(STDOUT_FILENO, otherEndBuf, otherEndBufSize);
+ssize_t wrCnt = write(STDOUT_FILENO, otherEndBuf, otherEndBufSize);
 if (wrCnt < 0)
     errnoAbort("pipeline input buffer write failed");
 else if (wrCnt != otherEndBufSize)
@@ -198,12 +223,10 @@ else
     }
 }
 
-static void plProcWait(struct plProc* proc)
+static void plProcWait(struct plProc* proc, int status)
 /* wait for a process in a pipeline */
 {
-if (waitpid(proc->pid, &proc->status, 0) < 0)
-    errnoAbort("process lost for: \"%s\" in pipeline \"%s\"", joinCmd(proc->cmd),
-               proc->pl->procName);
+proc->status = status;
 if (WIFSIGNALED(proc->status))
     errAbort("process terminated on signal %d: \"%s\" in pipeline \"%s\"",
              WTERMSIG(proc->status), joinCmd(proc->cmd), proc->pl->procName);
@@ -213,6 +236,7 @@ if ((WEXITSTATUS(proc->status) != 0) && !(proc->pl->options & pipelineNoAbort))
     errAbort("process exited with %d: \"%s\" in pipeline \"%s\"",
              WEXITSTATUS(proc->status), joinCmd(proc->cmd), proc->pl->procName);
 proc->pid = -1;
+plProcStateTrans(proc, procStateDone);
 }
 
 static struct pipeline* pipelineNew(char ***cmds, unsigned options)
@@ -223,6 +247,7 @@ struct pipeline *pl;
 int iCmd;
 
 AllocVar(pl);
+pl->pgid = -1;
 pl->pipeFd = -1;
 pl->options = options;
 pl->procName = joinCmds(cmds);
@@ -261,6 +286,24 @@ if (pl != NULL)
     }
 }
 
+static void execProcChild(struct pipeline* pl, struct plProc *proc,
+                          int procStdinFd, int procStdoutFd, int stderrFd,
+                          void *otherEndBuf, size_t otherEndBufSize)
+/* handle child process setup after fork.  This does not return */
+{
+if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+    errnoAbort("error ignoring SIGPIPE");
+// set process group to first subprocess id, which might be us
+pid_t pgid = (pl->pgid < 0) ? getpid() : pl->pgid;
+if (setpgid(getpid(), pgid) != 0)
+    errnoAbort("error from setpgid(%d, %d)", getpid(), pgid);
+
+if (otherEndBuf != NULL)
+    plProcMemWrite(proc, procStdoutFd, stderrFd, otherEndBuf, otherEndBufSize);
+else
+    plProcExecChild(proc, procStdinFd, procStdoutFd, stderrFd);
+}
+
 static int pipelineExecProc(struct pipeline* pl, struct plProc *proc,
                             int prevStdoutFd, int stdinFd, int stdoutFd, int stderrFd,
                             void *otherEndBuf, size_t otherEndBufSize)
@@ -281,22 +324,36 @@ else
 if ((proc->pid = fork()) < 0)
     errnoAbort("can't fork");
 if (proc->pid == 0)
-    {
-    // child
-    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
-        errnoAbort("error ignoring SIGPIPE");
-    if (otherEndBuf != NULL)
-        plProcMemWrite(proc, procStdoutFd, stderrFd, otherEndBuf, otherEndBufSize);
-    else
-        plProcExecChild(proc, procStdinFd, procStdoutFd, stderrFd);
-    }
+    execProcChild(pl, proc, procStdinFd, procStdoutFd, stderrFd, otherEndBuf, otherEndBufSize);
+
+/* parent only */
+if (pl->pgid < 0)
+    pl->pgid = proc->pid; // first process defines pgid
+
+/* record that we did this */
+plProcStateTrans(proc, procStateRun);
+pl->numRunning++;
 
 /* don't leave intermediate pipes open in parent */
 if (proc != pl->procs)
     safeClose(&procStdinFd);
 if (proc->next != NULL)
     safeClose(&procStdoutFd);
+
+safeClose(&proc->execPipeChild); // child end of execPipe
 return prevStdoutFd;
+}
+
+static void waitOnExec(struct plProc *proc)
+/* wait on exec to happen on this process */
+{
+// execPipeChild will get EOF when exec happens
+char buf[1];
+// even with (void) cast, so compilers on some systems complained
+// about the result of read not being used.  Hack to save unused result.
+ssize_t l = read(proc->execPipeParent, buf, sizeof(buf));
+l++;
+safeClose(&proc->execPipeParent);
 }
 
 static void pipelineExec(struct pipeline* pl, int stdinFd, int stdoutFd, int stderrFd,
@@ -314,6 +371,10 @@ for (proc = pl->procs; proc != NULL; proc = proc->next)
     otherEndBuf = NULL;  /* only for first process (read pipes) */
     otherEndBufSize = 0;
     }
+
+// wait on execs to happen so we know that setpgid has happened
+for (proc = pl->procs; proc != NULL; proc = proc->next)
+    waitOnExec(proc);
 }
 
 static int openRead(char *fname)
@@ -534,31 +595,55 @@ else
 pl->pipeFd = -1;
 }
 
+static struct plProc *pipelineFindProc(struct pipeline *pl, pid_t pid)
+/* find a plProc by pid */
+{
+struct plProc *proc;
+for (proc = pl->procs; proc != NULL; proc = proc->next)
+    if (proc->pid == pid)
+        return proc;
+errAbort("pid not found in pipeline: %d", (int)pid);
+return 0; // never reached
+}
+
+static int pipelineFindStatus(struct pipeline *pl)
+/* find the status of the pipeline, which is the first failed, or 0 */
+{
+// n.b. can't get here if signaled (see plProcWait)
+struct plProc *proc;
+for (proc = pl->procs; proc != NULL; proc = proc->next)
+    {
+    assert(WIFEXITED(proc->status));
+    if (WEXITSTATUS(proc->status) != 0)
+        return WEXITSTATUS(proc->status);
+    }
+return 0; // all ok
+}
+
+static void waitOnOne(struct pipeline *pl)
+/* wait on one process to finish */
+{
+int status;
+pid_t pid = waitpid(-pl->pgid, &status, 0);
+if (pid < 0)
+    errnoAbort("waitpid failed");
+plProcWait(pipelineFindProc(pl, pid), status);
+pl->numRunning--;
+assert(pl->numRunning >= 0);
+}
+
 int pipelineWait(struct pipeline *pl)
 /* Wait for processes in a pipeline to complete; normally aborts if any
  * process exists non-zero.  If pipelineNoAbort was specified, return the exit
  * code of the first process exit non-zero, or zero if none failed. */
 {
-struct plProc *proc;
-int exitCode = 0;
-
-/* must close before waits for output pipeline */
-if (pl->options & pipelineWrite)
-    closePipeline(pl);
+/* must close before waiting to so processes get pipe EOF */
+closePipeline(pl);
 
 /* wait on each process in order */
-for (proc = pl->procs; proc != NULL; proc = proc->next)
-    {
-    plProcWait(proc);
-    if ((WEXITSTATUS(proc->status) != 0) && (exitCode == 0))
-        exitCode = WEXITSTATUS(proc->status);
-    }
-
-/* must close after waits for input pipeline */
-if (pl->options & pipelineRead)
-    closePipeline(pl);
-
-return exitCode;
+while (pl->numRunning > 0)
+    waitOnOne(pl);
+return pipelineFindStatus(pl);
 }
 
 void pipelineDumpCmds(char ***cmds)
@@ -584,5 +669,3 @@ printf("<BR>\n");
  * c-file-style: "jkent-c"
  * End:
  */
-
-#endif

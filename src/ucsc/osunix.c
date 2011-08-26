@@ -11,11 +11,13 @@
 #include <termios.h>
 #include "portable.h"
 #include "portimpl.h"
+#include "_portimpl.h"
 #include <sys/wait.h>
 #include <regex.h>
+#include <utime.h>
 
 
-static char const rcsid[] = "$Id: osunix.c,v 1.44 2009/11/22 00:18:04 kent Exp $";
+static char const rcsid[] = "$Id: osunix.c,v 1.48 2010/06/03 05:14:39 kent Exp $";
 
 
 off_t fileSize(char *pathname)
@@ -75,7 +77,7 @@ char *getCurrentDir()
 static char dir[PATH_LEN];
 
 if (getcwd( dir, sizeof(dir) ) == NULL )
-    errnoAbort("can't get current directory");
+    errnoAbort("getCurrentDir: can't get current directory");
 return dir;
 }
 
@@ -83,7 +85,7 @@ void setCurrentDir(char *newDir)
 /* Set current directory.  Abort if it fails. */
 {
 if (chdir(newDir) != 0)
-    errnoAbort("can't to set current directory: %s", newDir);
+    errnoAbort("setCurrentDir: can't to set current directory: %s", newDir);
 }
 
 boolean maybeSetCurrentDir(char *newDir)
@@ -170,7 +172,6 @@ if ((err = mkdir(dirName, 0777)) < 0)
 return TRUE;
 }
 
-
 struct fileInfo *listDirXExt(char *dir, char *pattern, boolean fullPath, boolean ignoreStatFailures)
 /* Return list of files matching wildcard pattern with
  * extra info. If full path is true then the path will be
@@ -228,7 +229,7 @@ struct fileInfo *listDirX(char *dir, char *pattern, boolean fullPath)
 return listDirXExt(dir, pattern, fullPath, FALSE);
 }
 
-unsigned long fileModTime(char *pathName)
+time_t fileModTime(char *pathName)
 /* Return file last modification time.  The units of
  * these may vary from OS to OS, but you can depend on
  * later files having a larger time. */
@@ -303,6 +304,7 @@ char *s = strchr(host, '.');
 if (s != NULL)
      *s = 0;
 subChar(host, '-', '_');
+subChar(host, ':', '_');
 static char name[PATH_LEN];
 safef(name, sizeof(name), "%s_%s_%x_%x",
 	base, host, pid, num);
@@ -472,7 +474,7 @@ char *getUser()
 uid_t uid = geteuid();
 struct passwd *pw = getpwuid(uid);
 if (pw == NULL)
-    errnoAbort("can't get user name for uid %d", (int)uid);
+    errnoAbort("getUser: can't get user name for uid %d", (int)uid);
 return pw->pw_name;
 }
 
@@ -481,7 +483,7 @@ int mustFork()
 {
 int childId = fork();
 if (childId == -1)
-    errnoAbort("Unable to fork");
+    errnoAbort("mustFork: Unable to fork");
 return childId;
 }
 
@@ -503,7 +505,7 @@ if (tcsetattr(STDIN_FILENO, TCSANOW, &attr) == -1)
 
 /* Read one byte */
 if (read(STDIN_FILENO,&c,1) != 1)
-   errnoAbort("I/O error");
+   errnoAbort("rawKeyIn: I/O error");
 
 /* Put back terminal to how it was. */
 attr.c_lflag = old;
@@ -517,7 +519,7 @@ boolean isPipe(int fd)
 {
 struct stat buf;
 if (fstat(fd, &buf) < 0)
-    errnoAbort("fstat failed");
+    errnoAbort("isPipe: fstat failed");
 return S_ISFIFO(buf.st_mode);
 }
 
@@ -588,4 +590,31 @@ va_list args;
 va_start(args, format);
 vaDumpStack(format, args);
 va_end(args);
+}
+
+boolean maybeTouchFile(char *fileName)
+/* If file exists, set its access and mod times to now.  If it doesn't exist, create it.
+ * Return FALSE if we have a problem doing so (e.g. when qateam is gdb'ing and code tries 
+ * to touch some file owned by www). */
+{
+if (fileExists(fileName))
+    {
+    struct utimbuf ut;
+    ut.actime = ut.modtime = clock1();
+    int ret = utime(fileName, &ut);
+    if (ret != 0)
+	{
+	warn("utime(%s) failed (ownership?)", fileName);
+	return FALSE;
+	}
+    }
+else
+    {
+    FILE *f = fopen(fileName, "w");
+    if (f == NULL)
+	return FALSE;
+    else
+	carefulClose(&f);
+    }
+return TRUE;
 }

@@ -1,11 +1,9 @@
-#ifndef WIN32
-
 /* internet - some stuff to make it easier to use
  * internet sockets and the like. */
 #include "common.h"
 #include "internet.h"
 
-static char const rcsid[] = "$Id: internet.c,v 1.10 2005/04/10 14:41:23 markd Exp $";
+static char const rcsid[] = "$Id: internet.c,v 1.11 2010/03/11 17:54:35 angie Exp $";
 
 boolean internetIsDottedQuad(char *s)
 /* Returns TRUE if it looks like s is a dotted quad. */
@@ -29,22 +27,33 @@ bits32 internetHostIp(char *hostName)
 /* Get IP v4 address (in host byte order) for hostName.
  * Warn and return 0 if there's a problem. */
 {
-struct hostent *hostent;
 bits32 ret;
 if (internetIsDottedQuad(hostName))
-   {
-   internetDottedQuadToIp(hostName, &ret);
-   }
+    {
+    internetDottedQuadToIp(hostName, &ret);
+    }
 else
     {
-    hostent = gethostbyname(hostName);
-    if (hostent == NULL)
+    /* getaddrinfo is thread-safe and widely supported */
+    struct addrinfo hints, *res;
+    struct in_addr addr;
+    int err;
+
+    zeroBytes(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+
+    if ((err = getaddrinfo(hostName, NULL, &hints, &res)) != 0) 
 	{
-	warn("Couldn't find host %s. h_errno %d", hostName, h_errno);
+	warn("getaddrinfo() error on hostName=%s: %s\n", hostName, gai_strerror(err));
 	return 0;
 	}
-    memcpy(&ret, hostent->h_addr_list[0], sizeof(ret));
-    ret = ntohl(ret);
+
+    addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr;
+
+    ret = ntohl((uint32_t)addr.s_addr);
+
+    freeaddrinfo(res);
+
     }
 return ret;
 }
@@ -149,4 +158,3 @@ for (i=0; i<4; ++i)
 return TRUE;
 }
 
-#endif

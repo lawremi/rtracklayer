@@ -8,8 +8,9 @@
 #include "errabort.h"
 #include "portable.h"
 #include "linefile.h"
+#include "hash.h"
 
-static char const rcsid[] = "$Id: common.c,v 1.140 2009/11/24 15:36:59 kent Exp $";
+static char const rcsid[] = "$Id: common.c,v 1.151 2010/06/02 19:06:41 tdreszer Exp $";
 
 void *cloneMem(void *pt, size_t size)
 /* Allocate a new buffer of given size, and copy pt to it. */
@@ -19,7 +20,7 @@ memcpy(newPt, pt, size);
 return newPt;
 }
 
-static char *cloneStringZExt(char *s, int size, int copySize)
+static char *cloneStringZExt(const char *s, int size, int copySize)
 /* Make a zero terminated copy of string in memory */
 {
 char *d = needMem(copySize+1);
@@ -29,13 +30,13 @@ d[copySize] = 0;
 return d;
 }
 
-char *cloneStringZ(char *s, int size)
+char *cloneStringZ(const char *s, int size)
 /* Make a zero terminated copy of string in memory */
 {
 return cloneStringZExt(s, strlen(s), size);
 }
 
-char *cloneString(char *s)
+char *cloneString(const char *s)
 /* Make copy of string in dynamic memory */
 {
 int size = 0;
@@ -52,13 +53,16 @@ size_t size = strlen(s);
 return cloneMem(s, size+1);
 }
 
-
-/* fill a specified area of memory with zeroes */
-void zeroBytes(void *vpt, int count)
+char *catTwoStrings(char *a, char *b)
+/* Allocate new string that is a concatenation of two strings. */
 {
-char *pt = (char*)vpt;
-while (--count>=0)
-    *pt++=0;
+int aLen = strlen(a), bLen = strlen(b);
+int len = aLen + bLen;
+char *newBuf = needLargeMem(len+1);
+memcpy(newBuf, a, aLen);
+memcpy(newBuf+aLen, b, bLen);
+newBuf[len] = 0;
+return newBuf;
 }
 
 /* Reverse the order of the bytes. */
@@ -149,7 +153,7 @@ for (i=0; i<length; ++i)
 /** List managing routines. */
 
 /* Count up elements in list. */
-int slCount(void *list)
+int slCount(const void *list)
 {
 struct slList *pt = (struct slList *)list;
 int len = 0;
@@ -457,6 +461,24 @@ else
 return median;
 }
 
+void doubleBoxWhiskerCalc(int count, double *array, double *retMin,
+	double *retQ1, double *retMedian, double *retQ3, double *retMax)
+/* Calculate what you need to draw a box and whiskers plot from an array of doubles. */
+{
+doubleSort(count, array);
+*retMin = array[0];
+*retQ1 = array[(count+2)/4];
+int halfCount = count>>1;
+if ((count&1) == 1)
+    *retMedian = array[halfCount];
+else
+    {
+    *retMedian = (array[halfCount] + array[halfCount-1]) * 0.5;
+    }
+*retQ3 = array[(3*count+2)/4];
+*retMax = array[count-1];
+}
+
 struct slDouble *slDoubleNew(double x)
 /* Return a new double. */
 {
@@ -494,6 +516,22 @@ for (i=0, el=list; i<count; ++i, el=el->next)
 median = doubleMedian(count, array);
 freeMem(array);
 return median;
+}
+
+void slDoubleBoxWhiskerCalc(struct slDouble *list, double *retMin,
+	double *retQ1, double *retMedian, double *retQ3, double *retMax)
+/* Calculate what you need to draw a box and whiskers plot from a list of slDoubles. */
+{
+int i,count = slCount(list);
+struct slDouble *el;
+double *array;
+if (count == 0)
+    errAbort("Can't take do slDoubleBoxWhiskerCalc of empty list");
+AllocArray(array,count);
+for (i=0, el=list; i<count; ++i, el=el->next)
+    array[i] = el->val;
+doubleBoxWhiskerCalc(count, array, retMin, retQ1, retMedian, retQ3, retMax);
+freeMem(array);
 }
 
 static int intCmp(const void *va, const void *vb)
@@ -581,6 +619,17 @@ const struct slName *a = *((struct slName **)va);
 const struct slName *b = *((struct slName **)vb);
 return strcmp(a->name, b->name);
 }
+
+int slNameCmpStringsWithEmbeddedNumbers(const void *va, const void *vb)
+/* Compare strings such as gene names that may have embedded numbers,
+ * so that bmp4a comes before bmp14a */
+{
+const struct slName *a = *((struct slName **)va);
+const struct slName *b = *((struct slName **)vb);
+return cmpStringsWithEmbeddedNumbers(a->name, b->name);
+}
+
+
 
 void slNameSort(struct slName **pList)
 /* Sort slName list. */
@@ -702,6 +751,37 @@ slReverse(&list);
 return list;
 }
 
+struct slName *slNameListOfUniqueWords(char *text,boolean respectQuotes)
+// Return list of unique words found by parsing string delimited by whitespace.
+// If respectQuotes then ["Lucy and Ricky" 'Fred and Ethyl'] will yield 2 slNames no quotes
+{
+struct slName *list = NULL;
+char *word = NULL;
+while (text != NULL)
+    {
+    if (respectQuotes)
+        {
+        word = nextWordRespectingQuotes(&text);
+        if (word != NULL)
+            {
+            if (word[0] == '"')
+                stripChar(word, '"');
+            else if (word[0] == '\'')
+                stripChar(word, '\'');
+            }
+        }
+    else
+        word = nextWord(&text);
+    if (word)
+        slNameStore(&list, word);
+    else
+        break;
+    }
+
+slReverse(&list);
+return list;
+}
+
 struct slName *slNameListFromStringArray(char *stringArray[], int arraySize)
 /* Return list of slNames from an array of strings of length arraySize.
  * If a string in the array is NULL, the array will be treated as
@@ -763,6 +843,21 @@ while (lineFileNextReal(lf, &line))
 lineFileClose(&lf);
 slReverse(&lines);
 return lines;
+}
+
+struct slName *slNameIntersection(struct slName *a, struct slName *b)
+/* return intersection of two slName lists.  */
+{
+struct hash *hashA = newHash(0);
+struct slName *el, *retval = NULL;
+
+for (el = a; el != NULL; el = el->next)
+    hashAddInt(hashA, el->name, 1);
+for (el = b; el != NULL; el = el->next)
+    if(hashLookup(hashA, el->name) != NULL)
+        slNameAddHead(&retval, el->name);
+hashFree(&hashA);
+return retval;
 }
 
 struct slRef *refOnList(struct slRef *refList, void *val)
@@ -892,31 +987,294 @@ if (el == NULL)
 return el->val;
 }
 
-struct slPair *slPairFromString(char *s)
-/* Return slPair list parsed from list in string s
- * name1=val1 name2=val2 ...
- * Returns NULL if parse error */
+struct slPair *slPairListFromString(char *str,boolean respectQuotes)
+// Return slPair list parsed from list in string like:  [name1=val1 name2=val2 ...]
+// if respectQuotes then string can have double quotes: [name1="val 1" "name 2"=val2 ...]
+//    resulting pair strips quotes: {name1}={val 1},{name 2}={val2}
+// Returns NULL if parse error.  Free this up with slPairFreeValsAndList.
 {
+char *s = skipLeadingSpaces(str);  // Would like to remove this and tighten up the standard someday.
+if (isEmpty(s))
+    return NULL;
+
 struct slPair *list = NULL;
-char *name;
-char *ss = cloneString(s);
-char *word = ss;
-while((name = nextWord(&word)))
+char name[1024];
+char val[1024];
+char buf[1024];
+bool inQuote = FALSE;
+char *b = buf;
+char sep = '=';
+char c = ' ';
+int mode = 0;
+while(1)
     {
-    char *val = strchr(name,'=');
-    if (!val)
+    c = *s++;
+    if (mode == 0 || mode == 2) // reading name or val
 	{
-	warn("missing equals sign in name=value pair: name=[%s] in string=[%s]\n", name, s);
-	return NULL;
+	boolean term = FALSE;
+	if (respectQuotes && b == buf && !inQuote && c == '"')
+	    inQuote = TRUE;
+	else if (inQuote && c == '"')
+	    term = TRUE;
+	else if ((c == sep || c == 0) && !inQuote)
+	    {
+	    term = TRUE;
+	    --s;  // rewind
+	    }
+	else if (c == ' ' && !inQuote)
+	    {
+	    warn("slPairListFromString: Unexpected whitespace in %s", str);
+	    return NULL;
+	    }
+	else if (c == 0 && inQuote)
+	    {
+	    warn("slPairListFromString: Unterminated quote in %s", str);
+	    return NULL;
+	    }
+	else
+	    {
+	    *b++ = c;
+	    if ((b - buf) > sizeof buf)
+		{
+		warn("slPairListFromString: pair name or value too long in %s", str);
+		return NULL;
+		}
+	    }
+	if (term)
+	    {
+	    inQuote = FALSE;
+	    *b = 0;
+	    if (mode == 0)
+		{
+		safecpy(name, sizeof name, buf);
+		if (strlen(name)<1)
+		    {
+		    warn("slPairListFromString: Pair name cannot be empty in %s", str);
+		    return NULL;
+		    }
+		// Shall we check for name being alphanumeric, at least for the respectQuotes=FALSE case?
+		}
+	    else // mode == 2
+		{
+		safecpy(val, sizeof val, buf);
+		if (!respectQuotes && (hasWhiteSpace(name) || hasWhiteSpace(val))) // should never happen
+		    {
+		    warn("slPairListFromString() Unexpected white space in name=value pair: [%s]=[%s] in string=[%s]\n", name, val, str);
+		    break;
+		    }
+		slPairAdd(&list, name, cloneString(val));
+		}
+	    ++mode;
+	    }
 	}
-    *val++ = 0;
-    slPairAdd(&list, name, cloneString(val));
+    else if (mode == 1) // read required "=" sign
+	{
+	if (c != '=')
+	    {
+	    warn("slPairListFromString: Expected character = after name in %s", str);
+	    return NULL;
+	    }
+	++mode;
+	sep = ' ';
+	b = buf;
+	}
+    else // (mode == 3) reading optional separating space
+	{
+	if (c == 0)
+	    break;
+	if (c != ' ')
+	    {
+	    mode = 0;
+	    --s;
+	    b = buf;
+	    sep = '=';
+	    }
+	}
     }
-freez(&ss);
 slReverse(&list);
 return list;
 }
 
+char *slPairListToString(struct slPair *list,boolean quoteIfSpaces)
+// Returns an allocated string of pairs in form of [name1=val1 name2=val2 ...]
+// If requested, will wrap name or val in quotes if contain spaces: [name1="val 1" "name 2"=val2]
+{
+// Don't rely on dyString.  We should do the accounting ourselves and not create extra dependencies.
+int count = 0;
+struct slPair *pair = list;
+for(;pair != NULL; pair = pair->next)
+    {
+    assert(pair->name != NULL && pair->val != NULL); // Better assert and get this over with, complete with stack
+    count += strlen(pair->name);
+    count += strlen((char *)(pair->val));
+    count += 2; // = and ' ' delimit
+    if (quoteIfSpaces)
+        {
+        if (hasWhiteSpace(pair->name))
+            count += 2; // " and "
+        if (hasWhiteSpace((char *)(pair->val)))
+            count += 2; // " and "
+        }
+    }
+if (count == 0)
+    return NULL;
+
+char *str = needMem(count+5); // A bit of slop
+
+char *strPtr = str;
+for(pair = list; pair != NULL; pair = pair->next, strPtr += strlen(strPtr))
+    {
+    if (pair != list) // Not first cycle
+        *strPtr++ = ' ';
+    if (hasWhiteSpace(pair->name))
+        {
+        if (quoteIfSpaces)
+            sprintf(strPtr,"\"%s\"=",pair->name);
+        else
+            {
+            warn("slPairListToString() Unexpected white space in name: [%s]\n", pair->name);
+            sprintf(strPtr,"%s=",pair->name); // warn but still make string
+            }
+        }
+    else
+        sprintf(strPtr,"%s=",pair->name);
+    strPtr += strlen(strPtr);
+    if (hasWhiteSpace((char *)(pair->val)))
+        {
+        if (quoteIfSpaces)
+            sprintf(strPtr,"\"%s\"",(char *)(pair->val));
+        else
+            {
+            warn("slPairListToString() Unexpected white space in val: [%s]\n", (char *)(pair->val));
+            sprintf(strPtr,"%s",(char *)(pair->val)); // warn but still make string
+            }
+        }
+    else
+        sprintf(strPtr,"%s",(char *)(pair->val));
+    }
+return str;
+}
+
+char *slPairNameToString(struct slPair *list, char delimiter,boolean quoteIfSpaces)
+// Return string created by joining all names (ignoring vals) with the delimiter.
+// If requested, will wrap name in quotes if contain spaces: [name1,"name 2" ...]
+{
+int elCount = 0;
+int count = 0;
+struct slPair *pair = list;
+for (; pair != NULL; pair = pair->next, elCount++)
+    {
+    assert(pair->name != NULL);
+    count += strlen(pair->name);
+    if (quoteIfSpaces && hasWhiteSpace(pair->name))
+        count += 2;
+    }
+count += elCount;
+if (count == 0)
+    return NULL;
+
+char *str = needMem(count+5); // A bit of slop
+
+char *strPtr = str;
+for(pair = list; pair != NULL; pair = pair->next, strPtr += strlen(strPtr))
+    {
+    if (pair != list)
+        *strPtr++ = delimiter;
+    if (hasWhiteSpace(pair->name))
+        {
+        if (quoteIfSpaces)
+            sprintf(strPtr,"\"%s\"",pair->name);
+        else
+            {
+            if (delimiter == ' ')  // if delimied by commas, this is entirely okay!
+                warn("slPairListToString() Unexpected white space in name delimied by space: [%s]\n", pair->name);
+            sprintf(strPtr,"%s",pair->name); // warn but still make string
+            }
+        }
+    else
+        sprintf(strPtr,"%s",pair->name);
+    }
+return str;
+}
+
+int slPairCmpCase(const void *va, const void *vb)
+/* Compare two slPairs, ignore case. */
+{
+const struct slPair *a = *((struct slPair **)va);
+const struct slPair *b = *((struct slPair **)vb);
+return strcasecmp(a->name, b->name);
+}
+
+void slPairSortCase(struct slPair **pList)
+/* Sort slPair list, ignore case. */
+{
+slSort(pList, slPairCmpCase);
+}
+
+int slPairCmp(const void *va, const void *vb)
+/* Compare two slPairs. */
+{
+const struct slPair *a = *((struct slPair **)va);
+const struct slPair *b = *((struct slPair **)vb);
+return strcmp(a->name, b->name);
+}
+
+
+int slPairValCmpCase(const void *va, const void *vb)
+/* Case insensitive compare two slPairs on their values (must be string). */
+{
+const struct slPair *a = *((struct slPair **)va);
+const struct slPair *b = *((struct slPair **)vb);
+return strcasecmp((char *)(a->val), (char *)(b->val));
+}
+
+int slPairValCmp(const void *va, const void *vb)
+/* Compare two slPairs on their values (must be string). */
+{
+const struct slPair *a = *((struct slPair **)va);
+const struct slPair *b = *((struct slPair **)vb);
+return strcmp((char *)(a->val), (char *)(b->val));
+}
+
+void slPairValSortCase(struct slPair **pList)
+/* Sort slPair list on values (must be string), ignore case. */
+{
+slSort(pList, slPairValCmpCase);
+}
+
+void slPairValSort(struct slPair **pList)
+/* Sort slPair list on values (must be string). */
+{
+slSort(pList, slPairValCmp);
+}
+
+int slPairIntCmp(const void *va, const void *vb)
+// Compare two slPairs on their integer values.
+{
+const struct slPair *a = *((struct slPair **)va);
+const struct slPair *b = *((struct slPair **)vb);
+return ((char *)(a->val) - (char *)(b->val)); // cast works and val is 0 vased integer
+}
+
+void slPairIntSort(struct slPair **pList)
+// Sort slPair list on integer values.
+{
+slSort(pList, slPairIntCmp);
+}
+
+int slPairAtoiCmp(const void *va, const void *vb)
+// Compare two slPairs on their strings interpreted as integer values.
+{
+const struct slPair *a = *((struct slPair **)va);
+const struct slPair *b = *((struct slPair **)vb);
+return (atoi((char *)(a->val)) - atoi((char *)(b->val)));
+}
+
+void slPairValAtoiSort(struct slPair **pList)
+// Sort slPair list on string values interpreted as integers.
+{
+slSort(pList, slPairAtoiCmp);
+}
 
 void gentleFree(void *pt)
 {
@@ -993,7 +1351,10 @@ boolean startsWithWordByDelimiter(char *firstWord,char delimit, char *line)
 {
 if(delimit == ' ')
     return startsWithWord(firstWord,line);
-return (startsWith(firstWord,line) && line[strlen(firstWord)] == delimit);
+if (!startsWith(firstWord,line))
+    return FALSE;
+char c = line[strlen(firstWord)];
+return (c == '\0' || c == delimit);
 }
 
 char * findWordByDelimiter(char *word,char delimit, char *line)
@@ -1079,6 +1440,21 @@ char lastChar(char *s)
 if (s == NULL || s[0] == 0)
     return 0;
 return s[strlen(s)-1];
+}
+
+char *lastNonwhitespaceChar(char *s)
+// Return pointer to last character in string that is not whitespace.
+{
+if (s == NULL || s[0] == 0)
+    return NULL;
+
+char *sPos = s + (strlen(s) - 1);
+for (;sPos >= s;sPos--)
+    {
+    if (!isspace(*sPos))
+        return sPos;
+    }
+return NULL;
 }
 
 char *matchingCharBeforeInLimits(char *limit, char *s, char c)
@@ -1196,23 +1572,23 @@ strcpy(resultPtr, string);
 return result;
 }
 
-int strSwapStrs(char *string, int sz,char *old, char *new)
-/* Swaps all occurnces of the old with the new in string. Need not be same size
+int strSwapStrs(char *string, int sz,char *oldStr, char *newStr)
+/* Swaps all occurrences of the old with the new in string. Need not be same size
    Swaps in place but restricted by sz.  Returns count of swaps or -1 for sz failure. */
 {
 // WARNING: called at low level, so no errors allowed.
 int count = 0;
 char *p=NULL;
-for(p=strstr(string,old);p!=NULL;p=strstr(p+strlen(old),old))
+for(p=strstr(string,oldStr);p!=NULL;p=strstr(p+strlen(oldStr),oldStr))
     count++;
 if(count == 0)
     return 0;
-if((strlen(string)+(count*(strlen(new) - strlen(old))))>=sz)
+if((strlen(string)+(count*(strlen(newStr) - strlen(oldStr))))>=sz)
     return -1;
-for(p=strstr(string,old);p!=NULL;p=strstr(p+strlen(new),old))
+for(p=strstr(string,oldStr);p!=NULL;p=strstr(p+strlen(newStr),oldStr))
     {
-    memmove(p+strlen(new),p+strlen(old),strlen(p+strlen(old))+1); // NULL at end is also moved!
-    memcpy(p,new,strlen(new));
+    memmove(p+strlen(newStr),p+strlen(oldStr),strlen(p+strlen(oldStr))+1); // NULL at end is also moved!
+    memcpy(p,newStr,strlen(newStr));
     }
 return count;
 }
@@ -1256,6 +1632,28 @@ for (;;)
     if (b != c)
        ++out;
     }
+}
+
+char *stripEnclosingChar(char *inout,char encloser)
+// Removes enclosing char if found at both beg and end, preserving pointer
+// Note: handles brackets '(','{' and '[' by complement at end
+{
+if(inout == NULL || strlen(inout) < 2 || *inout != encloser)
+    return inout;
+
+char *end = inout + (strlen(inout) - 1);
+char closer = encloser;
+switch (closer)
+    {
+    case '(': closer = ')'; break;
+    case '{': closer = '}'; break;
+    case '[': closer = ']'; break;
+    default: break;
+    }
+if(*end  != closer)
+    return inout;
+*end = '\0';
+return memmove(inout,inout+1,strlen(inout));  // use memmove to safely copy in place
 }
 
 void stripString(char *s, char *strip)
@@ -1314,7 +1712,7 @@ while (*s++ == c)
 return count;
 }
 
-int countLeadingDigits(char *s)
+int countLeadingDigits(const char *s)
 /* Return number of leading digits in s */
 {
 int count = 0;
@@ -1326,7 +1724,7 @@ while (isdigit(*s))
 return count;
 }
 
-int countLeadingNondigits(char *s)
+int countLeadingNondigits(const char *s)
 /* Count number of leading non-digit characters in s. */
 {
 int count = 0;
@@ -1340,7 +1738,7 @@ while ((c = *s++) != 0)
 return count;
 }
 
-int cmpStringsWithEmbeddedNumbers(char *a, char *b)
+int cmpStringsWithEmbeddedNumbers(const char *a, const char *b)
 /* Compare strings such as gene names that may have embedded numbers,
  * so that bmp4a comes before bmp14a */
 {
@@ -1381,7 +1779,7 @@ for (;;)
    }
 }
 
-int cmpWordsWithEmbeddedNumbers(char *a, char *b)
+int cmpWordsWithEmbeddedNumbers(const char *a, const char *b)
 /* Case insensitive version of cmpStringsWithEmbeddedNumbers. */
 {
 char *A = cloneString(a);
@@ -1482,6 +1880,80 @@ for (;;)
 return recordCount;
 }
 
+int chopByWhiteRespectDoubleQuotes(char *in, char *outArray[], int outSize)
+/* Like chopString, but specialized for white space separators.
+ * Further, any doubleQuotes (") are respected.
+ * If doubleQuote is encloses whole string, then they are removed:
+ *   "Fred and Ethyl" results in word [Fred and Ethyl]
+ * If doubleQuotes exist inside string they are retained:
+ *   Fred" and Ethyl" results in word [Fred" and Ethyl"]
+ * Special note "" is a valid, though empty word. */
+{
+int recordCount = 0;
+char c;
+char *quoteBegins = NULL;
+boolean quoting = FALSE;
+for (;;)
+    {
+    if (outArray != NULL && recordCount >= outSize)
+        break;
+
+    /* Skip initial separators. */
+    while (isspace(*in)) ++in;
+    if (*in == 0)
+        break;
+
+    /* Store start of word and look for end of word. */
+    if (outArray != NULL)
+        {
+        outArray[recordCount] = in;
+        if((*in == '"'))
+            quoteBegins = (in+1);
+        else
+            quoteBegins = NULL;
+        }
+    recordCount += 1;
+    quoting = FALSE;
+    for (;;)
+        {
+        if ((c = *in) == 0)
+            break;
+        if(quoting)
+            {
+            if(c == '"')
+                {
+                quoting = FALSE;
+                if(quoteBegins != NULL) // implies out array
+                    {
+                    if((c = *(in+1) == 0 )|| isspace(c)) // whole word is quoted.
+                        {
+                        outArray[recordCount-1] = quoteBegins; // Fix beginning of word
+                        quoteBegins = NULL;
+                        break;
+                        }
+                    }
+                }
+            }
+        else
+            {
+            quoting = (c == '"');
+            if (isspace(c))
+                break;
+            }
+        ++in;
+        }
+    if (*in == 0)
+        break;
+
+    /* Tag end of word with zero. */
+    if (outArray != NULL)
+        *in = 0;
+    /* And skip over the zero. */
+    in += 1;
+    }
+    return recordCount;
+}
+
 int chopByChar(char *in, char chopper, char *outArray[], int outSize)
 /* Chop based on a single character. */
 {
@@ -1511,6 +1983,27 @@ return i;
 char crLfChopper[] = "\n\r";
 char whiteSpaceChopper[] = " \t\n\r";
 
+
+char *skipBeyondDelimit(char *s,char delimit)
+/* Returns NULL or pointer to first char beyond one (or more contiguous) delimit char.
+   If delimit is ' ' then skips beyond first patch of whitespace. */
+{
+if(s != NULL)
+    {
+    char *beyond = NULL;
+    if(delimit == ' ')
+        return skipLeadingSpaces(skipToSpaces(s));
+    else
+        beyond = strchr(s,delimit);
+    if(beyond != NULL)
+        {
+        for(beyond++;*beyond == delimit;beyond++);
+        if(*beyond != '\0')
+            return beyond;
+        }
+    }
+return NULL;
+}
 
 char *skipLeadingSpaces(char *s)
 /* Return first non-white space. */
@@ -1649,6 +2142,19 @@ if ((e = skipToSpaces(line)) != NULL)
 return line;
 }
 
+char *cloneFirstWord(char *line)
+/* Clone first word in line */
+{
+char *startFirstWord = skipLeadingSpaces(line);
+if (startFirstWord == NULL)
+    return NULL;
+char *endFirstWord = skipToSpaces(startFirstWord);
+if (endFirstWord == NULL)
+    return cloneString(startFirstWord);
+else
+    return cloneStringZ(startFirstWord, endFirstWord - startFirstWord);
+}
+
 char *lastWordInLine(char *line)
 /* Returns last word in line if any (white space separated).
  * Returns NULL if string is empty.  Removes any terminating white space
@@ -1682,6 +2188,35 @@ s = skipLeadingSpaces(s);
 if (s[0] == 0)
     return NULL;
 e = skipToSpaces(s);
+if (e != NULL)
+    *e++ = 0;
+*pLine = e;
+return s;
+}
+
+char *nextWordRespectingQuotes(char **pLine)
+// return next word but respects single or double quotes surrounding sets of words.
+{
+char *s = *pLine, *e;
+if (s == NULL || s[0] == 0)
+    return NULL;
+s = skipLeadingSpaces(s);
+if (s[0] == 0)
+    return NULL;
+if (s[0] == '"')
+    {
+    e = skipBeyondDelimit(s+1,'"');
+    if (e != NULL && !isspace(e[0]))
+        e = skipToSpaces(s);
+    }
+else if (s[0] == '\'')
+    {
+    e = skipBeyondDelimit(s+1,'\'');
+    if (e != NULL && !isspace(e[0]))
+        e = skipToSpaces(s);
+    }
+else
+    e = skipToSpaces(s);
 if (e != NULL)
     *e++ = 0;
 *pLine = e;
@@ -1948,12 +2483,76 @@ if (ferror(file))
     errAbort("mustGetLine: fgets failed: %s", strerror(ferror(file)));
 }
 
+int mustOpenFd(char *fileName, int flags)
+/* Open a file descriptor (see man 2 open) or squawk and die. */
+{
+if (sameString(fileName, "stdin"))
+    return STDIN_FILENO;
+if (sameString(fileName, "stdout"))
+    return STDOUT_FILENO;
+// mode is necessary when O_CREAT is given, ignored otherwise
+int mode = 00664;
+int fd = open(fileName, flags, mode);
+if (fd < 0)
+    {
+    char *modeName = "";
+    if ((flags & (O_WRONLY | O_CREAT | O_TRUNC)) == (O_WRONLY | O_CREAT | O_TRUNC))
+	modeName = " to create and truncate";
+    else if ((flags & (O_WRONLY | O_CREAT)) == (O_WRONLY | O_CREAT))
+	modeName = " to create";
+    else if ((flags & O_WRONLY) == O_WRONLY)
+	modeName = " to write";
+    else if ((flags & O_RDWR) == O_RDWR)
+	modeName = " to append";
+    else
+	modeName = " to read";
+    errnoAbort("Can't open %s%s", fileName, modeName);
+    }
+return fd;
+}
+
+void mustReadFd(int fd, void *buf, size_t size)
+/* Read size bytes from a file or squawk and die. */
+{
+long long actualSize;
+if (size != 0 && (actualSize = read(fd, buf, size)) != size)
+    {
+    if (actualSize < 0)
+	errnoAbort("Error reading %lld bytes", (long long)size);
+    else
+	errAbort("End of file reading %lld bytes (got %lld)", (long long)size, actualSize);
+    }
+}
+
 void mustWriteFd(int fd, void *buf, size_t size)
 /* Write size bytes to file descriptor fd or die.  (See man 2 write.) */
 {
 ssize_t result = write(fd, buf, size);
 if (result < size)
     errAbort("mustWriteFd: write failed: %s", strerror(errno));
+}
+
+off_t mustLseek(int fd, off_t offset, int whence)
+/* Seek to given offset, relative to whence (see man lseek) in file descriptor fd or errAbort.
+ * Return final offset (e.g. if this is just an (fd, 0, SEEK_CUR) query for current position). */
+{
+off_t ret = lseek(fd, offset, whence);
+if (ret < 0)
+    errnoAbort("lseek(%d, %lld, %s (%d)) failed", fd, (long long)offset,
+	       ((whence == SEEK_SET) ? "SEEK_SET" : (whence == SEEK_CUR) ? "SEEK_CUR" :
+		(whence == SEEK_END) ? "SEEK_END" : "invalid 'whence' value"), whence);
+return ret;
+}
+
+void mustCloseFd(int *pFd)
+/* Close file descriptor *pFd if >= 0, abort if there's an error, set *pFd = -1. */
+{
+if (pFd != NULL && *pFd >= 0)
+    {
+    if (close(*pFd) < 0)
+	errnoAbort("close failed");
+    *pFd = -1;
+    }
 }
 
 char *addSuffix(char *head, char *suffix)
@@ -2081,9 +2680,9 @@ slReverse(&newList);
 return newList;
 }
 
-void fileOffsetSizeFindGap(struct fileOffsetSize *list, 
+void fileOffsetSizeFindGap(struct fileOffsetSize *list,
 	struct fileOffsetSize **pBeforeGap, struct fileOffsetSize **pAfterGap)
-/* Starting at list, find all items that don't have a gap between them and the previous item.  
+/* Starting at list, find all items that don't have a gap between them and the previous item.
  * Return at gap, or at end of list, returning pointers to the items before and after the gap. */
 {
 struct fileOffsetSize *pt, *next;
@@ -2100,26 +2699,23 @@ for (pt = list; ; pt = next)
 }
 
 
-void maybeSystem(char *cmd)
-/* Execute cmd using "sh -c" or die.  (See man 3 system.) warn on errors */
-{
-if (cmd == NULL) // don't allow (system() supports testing for shell this way)
-    errAbort("mustSystem: called with NULL command.");
-int status = system(cmd);
-if (status != 0)
-    warn("maybeSystem: system(%s) failed (exit status %d): %s",
-	     cmd, WEXITSTATUS(status), strerror(errno));
-}
-
 void mustSystem(char *cmd)
 /* Execute cmd using "sh -c" or die.  (See man 3 system.) fail on errors */
 {
 if (cmd == NULL) // don't allow (system() supports testing for shell this way)
     errAbort("mustSystem: called with NULL command.");
 int status = system(cmd);
-if (status != 0)
-    errAbort("mustSystem: system(%s) failed (exit status %d): %s",
-	     cmd, WEXITSTATUS(status), strerror(errno));
+if (status == -1)
+    errnoAbort("error starting command: %s", cmd);
+else if (WIFSIGNALED(status))
+    errAbort("command terminated by signal %d: %s", WTERMSIG(status), cmd);
+else if (WIFEXITED(status))
+    {
+    if (WEXITSTATUS(status) != 0)
+        errAbort("command exited with %d: %s", WEXITSTATUS(status), cmd);
+    }
+else
+    errAbort("bug: invalid exit status for command: %s", cmd);
 }
 
 int roundingScale(int a, int p, int q)
@@ -2187,6 +2783,16 @@ if (isSwapped)
 return val;
 }
 
+bits64 fdReadBits64(int fd, boolean isSwapped)
+/* Read and optionally byte-swap 64 bit entity. */
+{
+bits64 val;
+mustReadOneFd(fd, val);
+if (isSwapped)
+    val = byteSwap64(val);
+return val;
+}
+
 bits64 memReadBits64(char **pPt, boolean isSwapped)
 /* Read and optionally byte-swap 64 bit entity from memory buffer pointed to by
  * *pPt, and advance *pPt past read area. */
@@ -2221,6 +2827,16 @@ if (isSwapped)
 return val;
 }
 
+bits32 fdReadBits32(int fd, boolean isSwapped)
+/* Read and optionally byte-swap 32 bit entity. */
+{
+bits32 val;
+mustReadOneFd(fd, val);
+if (isSwapped)
+    val = byteSwap32(val);
+return val;
+}
+
 bits32 memReadBits32(char **pPt, boolean isSwapped)
 /* Read and optionally byte-swap 32 bit entity from memory buffer pointed to by
  * *pPt, and advance *pPt past read area. */
@@ -2248,6 +2864,16 @@ bits16 readBits16(FILE *f, boolean isSwapped)
 {
 bits16 val;
 mustReadOne(f, val);
+if (isSwapped)
+    val = byteSwap16(val);
+return val;
+}
+
+bits16 fdReadBits16(int fd, boolean isSwapped)
+/* Read and optionally byte-swap 16 bit entity. */
+{
+bits16 val;
+mustReadOneFd(fd, val);
 if (isSwapped)
     val = byteSwap16(val);
 return val;
@@ -2481,7 +3107,10 @@ int vasafef(char* buffer, int bufSize, char *format, va_list args)
 int sz = vsnprintf(buffer, bufSize, format, args);
 /* note that some version return -1 if too small */
 if ((sz < 0) || (sz >= bufSize))
-    errAbort("buffer overflow, size %d, format: %s", bufSize, format);
+    {
+    buffer[bufSize-1] = (char) 0;
+    errAbort("buffer overflow, size %d, format: %s, buffer: '%s'", bufSize, format, buffer);
+    }
 return sz;
 }
 
@@ -2596,8 +3225,9 @@ va_list args;
 va_start(args, label);
 if (label != NULL)
     {
+    fprintf(stdout, "<span class='timing'>");
     vfprintf(stdout, label, args);
-    fprintf(stdout, ": %ld millis<BR>\n", time - lastTime);
+    fprintf(stdout, ": %ld millis<BR></span>\n", time - lastTime);
     }
 lastTime = time;
 va_end(args);
@@ -2651,3 +3281,121 @@ char *splitOffNumber(char *db)
 {
 return cloneString(skipToNumeric(db));
 }
+
+
+time_t mktimeFromUtc (struct tm *t)
+/* Return time_t for tm in UTC (GMT)
+ * Useful for stuff like converting to time_t the
+ * last-modified HTTP response header
+ * which is always GMT. Returns -1 on failure of mktime */
+{
+    time_t time;
+    char *tz;
+    char save_tz[100];
+    tz=getenv("TZ");
+    if (tz)
+        safecpy(save_tz, sizeof(save_tz), tz);
+    setenv("TZ", "GMT0", 1);
+    tzset();
+    t->tm_isdst = 0;
+    time=mktime(t);
+    if (tz)
+        setenv("TZ", save_tz, 1);
+    else
+        unsetenv("TZ");
+    tzset();
+    return (time);
+}
+
+
+time_t dateToSeconds(const char *date,const char*format)
+// Convert a string date to time_t
+{
+    struct tm storage={0,0,0,0,0,0,0,0,0};
+    if(strptime(date,format,&storage)==NULL)
+        return 0;
+    else
+        return mktime(&storage);
+}
+
+boolean dateIsOld(const char *date,const char*format)
+// Is this string date older than now?
+{
+time_t test = dateToSeconds(date,format);
+time_t now = clock1();
+return (test < now);
+}
+
+static int daysOfMonth(struct tm *tp)
+/* Returns the days of the month given the year */
+{
+int days=0;
+switch(tp->tm_mon)
+    {
+    case 3:
+    case 5:
+    case 8:
+    case 10:    days = 30;   break;
+    case 1:     days = 28;
+                if( (tp->tm_year % 4) == 0
+                && ((tp->tm_year % 20) != 0 || (tp->tm_year % 100) == 0) )
+                    days = 29;
+                break;
+    default:    days = 31;   break;
+    }
+return days;
+}
+
+static void dateAdd(struct tm *tp,int addYears,int addMonths,int addDays)
+/* Add years,months,days to a date */
+{
+tp->tm_mday  += addDays;
+tp->tm_mon   += addMonths;
+tp->tm_year  += addYears;
+int dom=28;
+while( (tp->tm_mon >11  || tp->tm_mon <0)
+    || (tp->tm_mday>dom || tp->tm_mday<1) )
+    {
+    if(tp->tm_mon>11)   // First month: tm.tm_mon is 0-11 range
+        {
+        tp->tm_year += (tp->tm_mon / 12);
+        tp->tm_mon  = (tp->tm_mon % 12);
+        }
+    else if(tp->tm_mon<0)
+        {
+        tp->tm_year += (tp->tm_mon / 12) - 1;
+        tp->tm_mon  =  (tp->tm_mon % 12) + 12;
+        }
+    else
+        {
+        dom = daysOfMonth(tp);
+        if(tp->tm_mday>dom)
+            {
+            tp->tm_mday -= dom;
+            tp->tm_mon  += 1;
+            dom = daysOfMonth(tp);
+            }
+        else if(tp->tm_mday < 1)
+            {
+            tp->tm_mon  -= 1;
+            dom = daysOfMonth(tp);
+            tp->tm_mday += dom;
+            }
+        }
+    }
+}
+
+char *dateAddTo(char *date,char *format,int addYears,int addMonths,int addDays)
+/* Add years,months,days to a formatted date and returns the new date as a cloned string
+*  format is a strptime/strftime format: %F = yyyy-mm-dd */
+{
+char *newDate = needMem(12);
+struct tm tp;
+if(strptime (date,format, &tp))
+    {
+    dateAdd(&tp,addYears,addMonths,addDays); // tp.tm_year only contains years since 1900
+    strftime(newDate,12,format,&tp);
+    }
+return cloneString(newDate);  // newDate is never freed!
+}
+

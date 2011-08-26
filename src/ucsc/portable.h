@@ -35,8 +35,6 @@ struct fileInfo *newFileInfo(char *name, off_t size, bool isDir, int statErrno,
 	time_t lastAccess);
 /* Return a new fileInfo. */
 
-int cmpFileInfo(const void *va, const void *vb);
-
 struct fileInfo *listDirXExt(char *dir, char *pattern, boolean fullPath, boolean ignoreStatFailures);
 /* Return list of files matching wildcard pattern with
  * extra info. If full path is true then the path will be
@@ -137,7 +135,7 @@ int mustFork();
 int rawKeyIn();
 /* Read in an unbuffered, unechoed character from keyboard. */
 
-unsigned long fileModTime(char *pathName);
+time_t fileModTime(char *pathName);
 /* Return file last modification time.  The units of
  * these may vary from OS to OS, but you can depend on
  * later files having a larger time. */
@@ -145,6 +143,10 @@ unsigned long fileModTime(char *pathName);
 
 boolean isPipe(int fd);
 /* determine in an open file is a pipe  */
+
+boolean maybeTouchFile(char *fileName);
+/* If file exists, set its access and mod times to now.  If it doesn't exist, create it.
+ * Return FALSE if we have a problem doing so. */
 
 #endif /* PORTABLE_H */
 

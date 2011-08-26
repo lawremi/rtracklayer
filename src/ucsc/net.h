@@ -7,16 +7,11 @@
 #ifndef NET_H
 #define NET_H
 
-#ifndef LINEFILE_H
 #include "linefile.h"
-#endif /* LINEFILE_H */
-
-#ifndef DYSTRING_H
 #include "dystring.h"
-#endif /* DYSTRING_H */
 
 int netConnect(char *hostName, int port);
-/* Start connection with a server having resolved port. */
+/* Start connection with a server having resolved port. Return < 0 if error. */
 
 int netMustConnect(char *hostName, int port);
 /* Start connection with server or die. */
@@ -124,23 +119,37 @@ void netParseUrl(char *url, struct netParsedUrl *parsed);
  * This is set up so that the http:// and the port are optional. 
  */
 
+char *urlFromNetParsedUrl(struct netParsedUrl *npu);
+/* Build URL from netParsedUrl structure */
+
 int netUrlOpen(char *url);
-/* Return socket descriptor (low-level file handle) for read()ing url data. 
- * Just close(result) when done. */
+/* Return socket descriptor (low-level file handle) for read()ing url data,
+ * or -1 if error.  Just close(result) when done. */
 
 int netUrlOpenSockets(char *url, int *retCtrlSocket);
-/* Return socket descriptor (low-level file handle) for read()ing url data. 
+/* Return socket descriptor (low-level file handle) for read()ing url data,
+ * or -1 if error. 
  * If retCtrlSocket is non-NULL and url is FTP, set *retCtrlSocket
  * to the FTP control socket which is left open for a persistent connection.
  * close(result) (and close(*retCtrlSocket) if applicable) when done. */
 
 struct hash;
 
+int netUrlHeadExt(char *url, char *method, struct hash *hash);
+/* Go get head and return status.  Return negative number if
+ * can't get head. If hash is non-null, fill it with header
+ * lines with upper cased keywords for case-insensitive lookup,
+ * including hopefully CONTENT-TYPE: . */
+
 int netUrlHead(char *url, struct hash *hash);
 /* Go get head and return status.  Return negative number if
  * can't get head. If hash is non-null, fill it with header
  * lines with upper cased keywords for case-insensitive lookup, 
  * including hopefully CONTENT-TYPE: . */
+
+long long netUrlSizeByRangeResponse(char *url);
+/* Use byteRange as a work-around alternate method to get file size (content-length).  
+ * Return negative number if can't get. */
 
 struct lineFile *netLineFileOpen(char *url);
 /* Return a lineFile attached to url.  This one
@@ -151,11 +160,22 @@ struct lineFile *netLineFileMayOpen(char *url);
 /* Same as netLineFileOpen, but warns and returns
  * null rather than aborting on problems. */
 
+struct lineFile *netLineFileSilentOpen(char *url);
+/* Open a lineFile on a URL.  Just return NULL without any user
+ * visible warning message if there's a problem. */
+
 struct dyString *netSlurpFile(int sd);
-/* Slurp file into dynamic string and return. */
+/* Slurp file into dynamic string and return.  Result will include http headers and
+ * the like. */
 
 struct dyString *netSlurpUrl(char *url);
-/* Go grab all of URL and return it as dynamic string. */
+/* Go grab all of URL and return it as dynamic string.  Result will include http headers
+ * and the like. This will errAbort if there's a problem. */
+
+char *netReadTextFileIfExists(char *url);
+/* Read entire URL and return it as a string.  URL should be text (embedded zeros will be
+ * interpreted as end of string).  If the url doesn't exist or has other problems,
+ * returns NULL. Does *not* include http headers. */
 
 struct lineFile *netHttpLineFileMayOpen(char *url, struct netParsedUrl **npu);
 /* Parse URL and open an HTTP socket for it but don't send a request yet. */
@@ -169,13 +189,14 @@ int netOpenHttpExt(char *url, char *method, char *optionalHeader);
  * may by NULL or may contain cookies and other info. */
 
 int netHttpConnect(char *url, char *method, char *protocol, char *agent, char *optionalHeader);
-/* Parse URL, connect to associated server on port,
- * and send most of the request to the server.  If
- * specified in the url send user name and password
- * too.  Typically the "method" will be "GET" or "POST"
+/* Parse URL, connect to associated server on port, and send most of
+ * the request to the server.  If specified in the url send user name
+ * and password too.  Typically the "method" will be "GET" or "POST"
  * and the agent will be the name of your program or
- * library. optionalHeader may be NULL or contain
- * additional header lines such as cookie info. */
+ * library. optionalHeader may be NULL or contain additional header
+ * lines such as cookie info. 
+ * Proxy support via hg.conf httpProxy or env var http_proxy
+ * Return data socket, or -1 if error.*/
 
 int netHttpGetMultiple(char *url, struct slName *queries, void *userData,
 		       void (*responseCB)(void *userData, char *req,
@@ -217,7 +238,11 @@ boolean netSkipHttpHeaderLinesHandlingRedirect(int sd, char *url, int *redirecte
  * can't attach a lineFile since filling the lineFile buffer reads in more than just the http header. */
 
 boolean netGetFtpInfo(char *url, long long *retSize, time_t *retTime);
-/* Return date and size of ftp url file */
+/* Return date in UTC and size of ftp url file */
+
+
+boolean parallelFetch(char *url, char *outPath, int numConnections, int numRetries, boolean newer, boolean progress);
+/* Open multiple parallel connections to URL to speed downloading */
 
 #endif /* NET_H */
 

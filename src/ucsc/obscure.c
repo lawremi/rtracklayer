@@ -11,7 +11,7 @@
 #include "obscure.h"
 #include "linefile.h"
 
-static char const rcsid[] = "$Id: obscure.c,v 1.52 2009/11/25 17:52:55 kent Exp $";
+static char const rcsid[] = "$Id: obscure.c,v 1.53 2010/01/27 21:04:04 galt Exp $";
 static int _dotForUserMod = 100; /* How often does dotForUser() output a dot. */
 
 long incCounterFile(char *fileName)
@@ -570,6 +570,25 @@ sprintLongWithCommas(ascii, l);
 fprintf(f, "%s", ascii);
 }
 
+void sprintWithGreekByte(char *s, int slength, long long size)
+/* Numbers formatted with PB, TB, GB, MB, KB, B */
+{
+char *greek[] = {"B", "KB", "MB", "GB", "TB", "PB"};
+int i = 0;
+long long d = 1;
+while ((size/d) >= 1024)
+    {
+    ++i;
+    d *= 1024;
+    }
+double result = ((double)size)/d;
+if (result < 10)
+    safef(s,slength,"%3.1f %s",((double)size)/d, greek[i]);
+else
+    safef(s,slength,"%3.0f %s",((double)size)/d, greek[i]);
+}
+
+
 void shuffleArrayOfPointers(void *pointerArray, int arraySize, int shuffleCount)
 /* Shuffle array of pointers of given size given number of times. */
 {
@@ -665,6 +684,55 @@ while ((c = *s) != 0)
     if (isspace(c))
         *s = '_';
     ++s;
+    }
+}
+
+void printVmPeak()
+/* print to stderr peak Vm memory usage (if /proc/ business exists) */
+{
+pid_t pid = getpid();
+char temp[256];
+safef(temp, sizeof(temp), "/proc/%d/status", (int) pid);
+struct lineFile *lf = lineFileMayOpen(temp, TRUE);
+if (lf)
+    {
+    char *line;
+    while (lineFileNextReal(lf, &line))
+	{
+	if (stringIn("VmPeak", line))
+	    {
+	    fprintf(stderr, "# pid=%d: %s\n", pid, line);
+	    break;
+	    }
+	}
+    lineFileClose(&lf);
+    }
+else
+    fprintf(stderr, "# printVmPeak: %s - not available\n", temp);
+fflush(stderr);
+}
+
+boolean nameInCommaList(char *name, char *commaList)
+/* Return TRUE if name is in comma separated list. */
+{
+if (commaList == NULL)
+    return FALSE;
+int nameLen = strlen(name);
+for (;;)
+    {
+    char c = *commaList;
+    if (c == 0)
+        return FALSE;
+    if (memcmp(name, commaList, nameLen) == 0)
+        {
+	c = commaList[nameLen];
+	if (c == 0 || c == ',')
+	    return TRUE;
+	}
+    commaList = strchr(commaList, ',');
+    if (commaList == NULL)
+        return FALSE;
+    commaList += 1;
     }
 }
 

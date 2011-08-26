@@ -5,8 +5,8 @@
  * To use this generally you should call the function htmShell()
  * very early inside of main().  You pass htmShell() a routine
  * which does most of the work of your web server-side applet.
- * 
- * These routines will throw errors, which are caught by 
+ *
+ * These routines will throw errors, which are caught by
  * htmShell, which then returns.  For the most part you just
  * want an error to cause an error message to be printed and
  * then terminate your CGI program, so this works fine.
@@ -41,8 +41,15 @@ void htmTextOut(FILE *f, char *s);
 void htmlTextOut(char *s);
 /* Print out string, if necessary replacing > with &gt; and the like */
 
-char *htmlEncode(char *s);
-/* Return a clone of s but if necessary replacing > with &gt; and the like */
+char *htmlTextStripTags(char *s);
+/* Returns a cloned string with all html tags stripped out */
+
+char *htmlEncodeText(char *s, boolean tagsOkay);
+/* Returns a cloned string with quotes replaced by html codes.
+   Changes ',",\n and if not tagsOkay >,<,& to code equivalents.
+   This differs from cgiEncode as it handles text that will
+   be displayed in an html page or tooltip style title.  */
+#define htmlEncode(s) htmlEncodeText(s,FALSE)
 
 void htmlMemDeath();
 /* Complain about lack of memory and abort.  */
@@ -57,8 +64,8 @@ void htmStartWithHead(FILE *f, char *head, char *title);
 /* Write the start of a stand alone .html file, plus head info */
 
 void htmStartDirDepth(FILE *f, char *title, int dirDepth);
-/* Write the start of a stand alone .html file.  dirDepth is the number of levels 
- * beneath apache root that caller's HTML will appear to the web client.  
+/* Write the start of a stand alone .html file.  dirDepth is the number of levels
+ * beneath apache root that caller's HTML will appear to the web client.
  * E.g. if writing HTML from cgi-bin, dirDepth is 1; if trash/body/, 2. */
 
 void htmlEnd();
@@ -73,7 +80,7 @@ extern char *htmlStyleUndecoratedLink;
 void htmlSetStyle(char *style);
 /* Set document wide style. A favorite style to
  * use for many purposes is htmlStyleUndecoratedLink
- * which will remove underlines from links. 
+ * which will remove underlines from links.
  * Needs to be called before htmlStart or htmShell. */
 
 void htmlSetBackground(char *imageFile);
@@ -84,10 +91,10 @@ void htmlSetBgColor(int color);
 /* Set background color - needs to be called before htmlStart
  * or htmShell. */
 
-void htmlBadVar(char *varName); 
+void htmlBadVar(char *varName);
 /* Complain about input variables. */
 
-void htmlImage(char *fileName, int width, int height); 
+void htmlImage(char *fileName, int width, int height);
 /* Display centered image file. */
 
 jmp_buf htmlRecover;  /* Error recovery jump. Exposed for cart's use. */
@@ -101,6 +108,10 @@ char *htmlWarnStartPattern();
 
 char *htmlWarnEndPattern();
 /* Return ending pattern for warning message. */
+
+void htmlWarnBoxSetup(FILE *f);
+/* Creates an invisible, empty warning box than can be filled with errors
+ * and then made visible. */
 
 void htmlAbort();
 /* Terminate HTML file.  Exposed for cart's use. */
@@ -117,22 +128,22 @@ void htmEmptyShell(void (*doMiddle)(), char *method);
 
 /* Wrap an html file around the passed in function.
  * The passed in function is already in the body. It
- * should just make paragraphs and return. 
+ * should just make paragraphs and return.
  * Method should be "query" or "get" or "post" (or NULL
  * if you don't care)..
  */
-void htmShell( char *title, void (*doMiddle)(), char *method); 
+void htmShell( char *title, void (*doMiddle)(), char *method);
 
 /* Wrap an html file around the passed in function.
  * The passed in function is already in the body. It
- * should just make paragraphs and return. 
+ * should just make paragraphs and return.
  * Method should be "query" or "get" or "post".
 param title - The HTML page title
 param head - The head text: can be a refresh directive or javascript
 param method - The function pointer to execute in the middle
 param method - The browser request method to use
  */
-void htmShellWithHead( char *title, char *head, void (*doMiddle)(), char *method); 
+void htmShellWithHead( char *title, char *head, void (*doMiddle)(), char *method);
 
 /* tell htmlOut to not escape special HTML chars '<', '>' */
 void htmlNoEscape();

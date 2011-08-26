@@ -17,6 +17,12 @@
 
 #ifndef ERRABORT_H
 #define ERRABORT_H
+
+boolean isErrAbortInProgress();  
+/* Flag to indicate that an error abort is in progress.
+ * Needed so that a warn handler can tell if it's really
+ * being called because of a warning or an error. */
+
 void errAbort(char *format, ...)
 /* Abort function, with optional (printf formatted) error message. */
 #if defined(__GNUC__)
@@ -77,6 +83,9 @@ void popWarnHandler();
 
 void pushWarnAbort();
 /* Push handler that will abort on warnings. */
+
+void pushSilentWarnHandler();
+/* Set warning handler to be quiet.  Do a popWarnHandler to restore. */
 
 void errAbortDebugnPushPopErr();
 /*  generate stack dump if there is a error in the push/pop functions */

@@ -22,6 +22,9 @@ void sprintLongWithCommas(char *s, long long l);
 void printLongWithCommas(FILE *f, long long l);
 /* Print out a long number with commas a thousands, millions, etc. */
 
+void sprintWithGreekByte(char *s, int slength, long long size);
+/* Numbers formatted with PB, TB, GB, MB, KB, B */
+
 void writeGulp(char *file, char *buf, int size);
 /* Write out a bunch of memory. */
 
@@ -115,7 +118,7 @@ struct hash *hashVarLine(char *line, int lineIx);
 /* Return a symbol table from a line of form:
  *   var1=val1 var2='quoted val2' var3="another val" */
 
-struct hash *hashThisEqThatLine(char *line, int lineIx, boolean firstStartsWIthLetter);
+struct hash *hashThisEqThatLine(char *line, int lineIx, boolean firstStartsWithLetter);
 /* Return a symbol table from a line of form:
  *   1-this1=val1 2-this='quoted val2' var3="another val" 
  * If firstStartsWithLetter is true, then the left side of the equals must start with
@@ -163,4 +166,9 @@ void rangeFromMinMaxMeanStd(double minVal, double maxVal, double mean, double st
 /* Given some basic statistical properties, set a range that will be good on a wide
  * range of biological data. */
 
+void printVmPeak();
+/* print to stderr peak Vm memory usage (if /proc/ business exists) */
+
+boolean nameInCommaList(char *name, char *commaList);
+/* Return TRUE if name is in comma separated list. */
 #endif /* OBSCURE_H */

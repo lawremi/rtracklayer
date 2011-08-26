@@ -7,6 +7,7 @@
 #include "cirTree.h"
 #include "bPlusTree.h"
 #include "bbiFile.h"
+#include "obscure.h"
 
 void bbiWriteDummyHeader(FILE *f)
 /* Write out all-zero header, just to reserve space for it. */
@@ -30,6 +31,16 @@ writeOne(f, sum->sumData);
 writeOne(f, sum->sumSquares);
 }
 
+static int bbiChromInfoCmp(const void *va, const void *vb)
+/* Sort bbiChromInfo.  Unlike most of our sorts this is single rather
+ * than double indirect. */
+{
+const struct bbiChromInfo *a = (const struct bbiChromInfo *)va;
+const struct bbiChromInfo *b = (const struct bbiChromInfo *)vb;
+return strcmp(a->name, b->name);
+}
+
+
 void bbiWriteChromInfo(struct bbiChromUsage *usageList, int blockSize, FILE *f)
 /* Write out information on chromosomes to file. */
 {
@@ -51,6 +62,9 @@ for (i=0, usage = usageList; i<chromCount; ++i, usage = usage->next)
     chromInfoArray[i].id = usage->id;
     chromInfoArray[i].size = usage->size;
     }
+
+/* Sort so the b-Tree actually works. */
+qsort(chromInfoArray, chromCount, sizeof(chromInfoArray[0]), bbiChromInfoCmp);
 
 /* Write chromosome bPlusTree */
 int chromBlockSize = min(blockSize, chromCount);
@@ -130,6 +144,9 @@ int lastStart = -1;
 bits32 id = 0;
 bits64 totalBases = 0, bedCount = 0;
 int minDiff = BIGNUM;
+
+lineFileRemoveInitialCustomTrackLines(lf);
+
 for (;;)
     {
     int rowSize = lineFileChopNext(lf, row, ArraySize(row));
@@ -139,6 +156,16 @@ for (;;)
     char *chrom = row[0];
     int start = lineFileNeedNum(lf, row, 1);
     int end = lineFileNeedNum(lf, row, 2);
+    if (start >= end)
+        {
+	if (start == end)
+	    errAbort("line %d of %s: start and end coordinates the same\n"
+	             "They need to be at least one apart"
+		     , lf->lineIx, lf->fileName);
+	else
+	    errAbort("end (%d) before start (%d) line %d of %s",
+	    	end, start, lf->lineIx, lf->fileName);
+	}
     ++bedCount;
     totalBases += (end - start);
     if (usage == NULL || differentString(usage->name, chrom))
@@ -149,10 +176,14 @@ for (;;)
 	    	lf->fileName, lf->lineIx);
 	    }
 	hashAdd(uniqHash, chrom, NULL);
+	struct hashEl *chromHashEl = hashLookup(chromSizesHash, chrom);
+	if (chromHashEl == NULL)
+	    errAbort("%s is not found in chromosome sizes file", chrom);
+	int chromSize = ptToInt(chromHashEl->val);
 	AllocVar(usage);
 	usage->name = cloneString(chrom);
 	usage->id = id++;
-	usage->size = hashIntVal(chromSizesHash, chrom);
+	usage->size = chromSize;
 	slAddHead(&usageList, usage);
 	lastStart = -1;
 	}
@@ -222,7 +253,7 @@ while (start < end)
 	newSum->minVal = minVal;
 	newSum->maxVal = maxVal;
 	sum = newSum;
-        slAddHead(pOutList, sum);
+	slAddHead(pOutList, sum);
 	}
 
     /* Figure out amount of overlap between current summary and item */
@@ -519,7 +550,7 @@ else
     twiceReduced->end = sum->end;
     twiceReduced->validCount += sum->validCount;
     if (sum->minVal < twiceReduced->minVal) twiceReduced->minVal = sum->minVal;
-    if (sum->maxVal < twiceReduced->maxVal) twiceReduced->maxVal = sum->maxVal;
+    if (sum->maxVal > twiceReduced->maxVal) twiceReduced->maxVal = sum->maxVal;
     twiceReduced->sumData += sum->sumData;
     twiceReduced->sumSquares += sum->sumSquares;
     }

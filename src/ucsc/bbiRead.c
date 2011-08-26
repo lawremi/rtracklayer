@@ -37,6 +37,44 @@ for (level = levelList; level != NULL; level = level->next)
 return closestLevel;
 }
 
+boolean bbiFileCheckSigs(char *fileName, bits32 sig, char *typeName)
+/* check file signatures at beginning and end of file */
+{
+int fd = mustOpenFd(fileName, O_RDONLY);
+bits32 magic;
+boolean isSwapped = FALSE;
+
+// look for signature at the beginning of the file
+mustReadFd(fd, &magic, sizeof(magic));
+
+if (magic != sig)
+    {
+    magic = byteSwap32(magic);
+    isSwapped = TRUE;
+    if (magic != sig)
+        return FALSE;
+    }
+
+// look for signature at the end of the file
+mustLseek(fd, -sizeof(magic), SEEK_END);
+mustReadFd(fd, &magic, sizeof(magic));
+mustCloseFd(&fd);
+
+if (isSwapped)
+    {
+    magic = byteSwap32(magic);
+    if (magic != sig)
+        return FALSE;
+    }
+else
+    {
+    if (magic != sig)
+        return FALSE;
+    }
+
+return TRUE;
+}
+
 struct bbiFile *bbiFileOpen(char *fileName, bits32 sig, char *typeName)
 /* Open up big wig or big bed file. */
 {
@@ -551,11 +589,11 @@ if (start >= end)
     return result;
 bzero(summary, summarySize * sizeof(summary[0]));
 
-/* Figure out what size of data we want.  We actually want to get 4 data points per summary
+/* Figure out what size of data we want.  We actually want to get 2 data points per summary
  * value if possible to minimize the effect of a data point being split between summary pixels. */
 bits32 baseSize = end - start; 
 int fullReduction = (baseSize/summarySize);
-int zoomLevel = fullReduction/4;
+int zoomLevel = fullReduction/2;
 if (zoomLevel < 0)
     zoomLevel = 0;
 
@@ -692,3 +730,9 @@ else if (bbi->version == 1)
 return res;
 }
 
+time_t bbiUpdateTime(struct bbiFile *bbi)
+/* return bbi->udc->updateTime */
+{
+struct udcFile *udc = bbi->udc;
+return udcUpdateTime(udc);
+}
