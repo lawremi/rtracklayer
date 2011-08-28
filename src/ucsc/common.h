@@ -997,19 +997,6 @@ int ptArrayIx(void *pt, void *array, int arraySize);
 
 #define stringIx(string, array) stringArrayIx( (string), (array), ArraySize(array))
 
-/* Some stuff that is left out of GNU .h files!? */
-#ifndef SEEK_SET
-#define SEEK_SET 0
-#endif
-
-#ifndef SEEK_CUR
-#define SEEK_CUR 1
-#endif
-
-#ifndef SEEK_END
-#define SEEK_END 2
-#endif
-
 #ifndef FILEPATH_H
 void splitPath(char *path, char dir[PATH_LEN], char name[FILENAME_LEN],
 	       char extension[FILEEXT_LEN]);
