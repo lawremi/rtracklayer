@@ -11,7 +11,7 @@ importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   RangedSelection, SimpleList, DataFrame)
 
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
-           RangesList, Rle, RangedSelection)
+           RangesList, Rle, RangedSelection, RleList)
 
 importMethodsFrom("IRanges", elementLengths, window,
                   start, end, width, range,
@@ -24,7 +24,8 @@ importMethodsFrom("IRanges", elementLengths, window,
                   "ranges<-", "values<-", "score<-",
                   space, universe, metadata,
                   "universe<-", "metadata<-",
-                  isDisjoint, queryHits, findOverlaps, reduce)
+                  isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
+                  resize)
 
 importClassesFrom("GenomicRanges", GRanges, GRangesList)
 
@@ -40,7 +41,7 @@ importFrom("BSgenome", available.genomes)
 exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
-              Bed15TrackLine, UCSCTrackModes, BigWigSelection,
+              Bed15TrackLine, UCSCTrackModes, BigWigSelection, BigWigFile,
               UCSCSchema)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
@@ -59,7 +60,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               ucscTrackModes, "ucscTrackModes<-",
               ucscSchema,
               coerce, initialize,
-              show, "[", ucscTableQuery,
+              show, summary, "[", ucscTableQuery,
               genome, "genome<-", chrom, "chrom<-", range, "range<-",
               visible, "visible<-",
               liftOver, offset, reversed,
@@ -68,14 +69,14 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               start, end, "start<-", "end<-", score, "score<-",
               as.data.frame, space,
               ## from GenomicRanges
-              strand
+              strand, seqinfo
               )
 
 export(genomeBrowsers, start, end, strand, "start<-", "end<-",
        ranges, values, GenomicData, GenomicSelection,
        IRanges, score, "score<-", as.data.frame, space,
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
-       GRangesForBSGenome)
+       GRangesForBSGenome, BigWigFile, summary, seqinfo)
 
 ## the S4-connection compatibility layer
 exportClasses(connection,

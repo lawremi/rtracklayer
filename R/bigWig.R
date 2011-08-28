@@ -1,5 +1,28 @@
 ### UCSC bigWig format 
 
+setClass("RTLFile", representation(path = "character"), contains = "VIRTUAL")
+
+path <- function(x) x@path
+
+## NOTE: could use an externalptr here, but we should profile to see
+## if that is worth it.
+setClass("BigWigFile", contains = "RTLFile")
+
+BigWigFile <- function(path) {
+  if (!IRanges:::isSingleString(path))
+    stop("'filename' must be a single string, specifying a path")
+  new("BigWigFile", path = path)
+}
+
+setMethod("show", "BigWigFile", function(object) {
+  cat(class(object), "object\npath:", object@path, "\n")
+})
+
+setMethod("seqinfo", "BigWigFile", function(x) {
+  seqlengths <- .Call(BWGFile_seqlengths, x@path)
+  Seqinfo(names(seqlengths), seqlengths) # no circularity information
+})
+
 .allowedColNames <- list(bigWig = "score")
 
 .validateColNames <- function(object, format) {
@@ -27,6 +50,8 @@ BigWigSelection <- function(ranges = GRanges(), colnames = "score") {
   if (is.character(ranges))
     new("BigWigSelection", GenomicSelection(ranges, colnames = colnames))
   else {
+    if (is(ranges, "BigWigFile"))
+      ranges <- seqinfo(ranges)
     new("BigWigSelection", ranges = as(ranges, "RangesList"),
         colnames = colnames)
   }
@@ -36,7 +61,7 @@ setAs("RangesList", "BigWigSelection", function(from) {
   new("BigWigSelection", as(from, "RangedSelection"))
 })
 
-setAs("GRanges", "BigWigSelection", function(from) {
+setAs("GenomicRanges", "BigWigSelection", function(from) {
   as(as(from, "RangesList"), "BigWigSelection")
 })
 
@@ -103,25 +128,28 @@ setMethod("export.bw", c("RangedData", "character"),
                   compress, con)
           })
 
-setGeneric("import.bw",
-           function(con, selection = BigWigSelection(...), ...)
-           standardGeneric("import.bw"))
+setGeneric("import.bw", function(con, ...) standardGeneric("import.bw"))
 
 setMethod("import.bw", "connection",
-          function(con, selection = BigWigSelection(...), ...)
+          function(con, ...)
           {
-            import.bw(summary(con)$description, selection = selection, ...)
+            import.bw(summary(con)$description, ...)
           })
 
 setMethod("import.bw", "character",
-          function(con, selection = BigWigSelection(...), ...)
+          function(con, ...)
           {
-            if (!IRanges:::isSingleString(con))
-              stop("'con' must be a single string, specifying a path")
+            import.bw(BigWigFile(con), ...)
+          })
+
+setMethod("import.bw", "BigWigFile",
+          function(con, selection = BigWigSelection(ranges, ...),
+                   ranges = con, ...)
+          {
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
             normRanges <- as(ranges(selection), "NormalIRangesList")
-            rd <- .Call(BWGFile_query, con, as.list(normRanges),
+            rd <- .Call(BWGFile_query, path(con), as.list(normRanges),
                         identical(colnames(selection), "score"))
             ## Unfortunately, the bigWig query API is such that we can
             ## end up with multiple hits.
@@ -130,4 +158,27 @@ setMethod("import.bw", "character",
               rd <- rd[!duplicated(hits),]
             }
             rd
+          })
+
+setMethod("summary", "BigWigFile",
+          function(object, ranges = as(seqinfo(object), "GenomicRanges"),
+                   size = 1L, type = c("mean", "min", "max", "coverage", "sd"),
+                   defaultValue = NA_real_)
+          {
+            ### FIXME: could do with "GenomicRanges" here, but
+            ### coercions generally only exist for GRanges specifically
+            ranges <- as(ranges, "GRanges")
+            if (!is.numeric(size))
+              stop("'size' must be numeric")
+            size <- IRanges:::recycleVector(as.integer(size), length(ranges))
+            type <- match.arg(type)
+            if (type == "sd") type <- "std"
+            if (!IRanges:::isSingleNumberOrNA(defaultValue))
+              stop("'defaultValue' must be a single number or NA")
+            summaryList <- .Call(BWGFile_summary, path(object),
+                                 as.character(seqnames(ranges)),
+                                 ranges(ranges), size, type,
+                                 as.numeric(defaultValue))
+            names(summaryList) <- names(ranges)
+            RleList(summaryList)
           })

@@ -3,6 +3,7 @@
 #include "ucsc/localmem.h"
 #include "ucsc/hash.h"
 #include "ucsc/bbiFile.h"
+#include "ucsc/bigWig.h"
 #include "ucsc/bwgInternal.h"
 #include "ucsc/_bwgInternal.h"
 #include "ucsc/errabort.h"
@@ -186,6 +187,30 @@ SEXP BWGSectionList_cleanup(SEXP r_sections)
 }
 
 /* --- .Call ENTRY POINT --- */
+SEXP BWGFile_seqlengths(SEXP r_filename) {
+  pushRHandlers();
+  struct bbiFile * file = bigWigFileOpen((char *)CHAR(asChar(r_filename)));
+  struct bbiChromInfo *chromList = bbiChromList(file);
+  struct bbiChromInfo *chrom = chromList;
+  SEXP seqlengths, seqlengthNames;
+  
+  PROTECT(seqlengths = allocVector(INTSXP, slCount(chromList)));
+  seqlengthNames = allocVector(STRSXP, length(seqlengths));
+  setAttrib(seqlengths, R_NamesSymbol, seqlengthNames);
+  
+  for(int i = 0; i < length(seqlengths); i++) {
+    INTEGER(seqlengths)[i] = chrom->size;
+    SET_STRING_ELT(seqlengthNames, i, mkChar(chrom->name));
+    chrom = chrom->next;
+  }
+  
+  bbiChromInfoFreeList(&chromList);
+  popRHandlers();
+  UNPROTECT(1);
+  return seqlengths;
+}
+
+/* --- .Call ENTRY POINT --- */
 SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score) {
   pushRHandlers();
   struct bbiFile * file = bigWigFileOpen((char *)CHAR(asChar(r_filename)));
@@ -247,5 +272,39 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score) {
   UNPROTECT(4);
   lmCleanup(&lm);
   popRHandlers();
+  return ans;
+}
+
+/* --- .Call ENTRY POINT --- */
+SEXP BWGFile_summary(SEXP r_filename, SEXP r_chrom, SEXP r_ranges,
+                     SEXP r_size, SEXP r_type, SEXP r_default_value)
+{
+  pushRHandlers();
+  struct bbiFile * file = bigWigFileOpen((char *)CHAR(asChar(r_filename)));
+  enum bbiSummaryType type =
+    bbiSummaryTypeFromString((char *)CHAR(asChar(r_type)));
+  double default_value = asReal(r_default_value);
+  int *start = INTEGER(get_IRanges_start(r_ranges));
+  int *width = INTEGER(get_IRanges_width(r_ranges));
+  SEXP ans;
+  
+  PROTECT(ans = allocVector(VECSXP, length(r_chrom)));
+  for (int i = 0; i < length(r_chrom); i++) {
+    int size = INTEGER(r_size)[i];
+    char *chrom = (char *)CHAR(STRING_ELT(r_chrom, i));
+    SEXP r_values = allocVector(REALSXP, size);
+    double *values = REAL(r_values);
+    for (int j = 0; j < size; j++)
+      values[j] = default_value;
+    SET_VECTOR_ELT(ans, i, r_values);
+    bool success = bigWigSummaryArray(file, chrom, start[i] - 1,
+                                      start[i] - 1 + width[i], type, size,
+                                      values);
+    if (!success)
+      error("Failed to summarize range %d (%s:%d-%d)", i, chrom, start[i],
+            start[i] - 1 + width[i]);
+  }
+  popRHandlers();
+  UNPROTECT(1);
   return ans;
 }
