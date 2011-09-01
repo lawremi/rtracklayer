@@ -55,7 +55,10 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
                 if (any(df[[2]] + lastSize + lastStart != df[[3]]) ||
                     any(sub(",.*", "", blockStarts) != "0"))
                   stop("blocks must span entire feature")
-                blockCount <- length(strsplit(blockSizes, ",")[[1]])
+                blockCount <- elementLengths(strsplit(blockSizes, ","))
+                if (!is.null(object$blockCount))
+                  if (!identical(blockCount, as.integer(object$blockCount)))
+                    stop("incorrect block counts given block sizes")
               }
               if (is.null(color))
                 color <- object$itemRgb
