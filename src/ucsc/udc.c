@@ -1,3 +1,6 @@
+/*** rtracklayer has #ifndef WIN32'd the http/ftp stuff here, as well as
+     the entire net.c and internet.c files. ***/
+
 /* udc - url data cache - a caching system that keeps blocks of data fetched from URLs in
  * sparse local files for quick use the next time the data is needed. 
  *
@@ -135,6 +138,8 @@ if (total < size)
     errAbort("readAndIgnore: got EOF at %lld bytes (wanted %lld)", total, size);
 }
 
+#ifndef WIN32
+
 static int connInfoGetSocket(struct connInfo *ci, char *url, bits64 offset, int size)
 /* If ci has an open socket and the given offset matches ci's current offset,
  * reuse ci->socket.  Otherwise close the socket, open a new one, and update ci,
@@ -195,6 +200,8 @@ else
     sd = ci->socket;
 return sd;
 }
+
+#endif
 
 /********* Section for local file protocol **********/
 
@@ -319,6 +326,8 @@ retInfo->size = status.st_size;
 return TRUE;
 }
 
+#ifndef WIN32
+
 /********* Section for http protocol **********/
 
 int udcDataViaHttpOrFtp(char *url, bits64 offset, int size, void *buffer, struct connInfo *ci)
@@ -439,6 +448,7 @@ retInfo->updateTime = t;
 return TRUE;
 }
 
+#endif
 
 /********* Non-protocol-specific bits **********/
 
@@ -577,6 +587,7 @@ else if (sameString(upToColon, "slow"))
     prot->fetchData = udcDataViaSlow;
     prot->fetchInfo = udcInfoViaSlow;
     }
+ #ifndef WIN32
 else if (sameString(upToColon, "http") || sameString(upToColon, "https"))
     {
     prot->fetchData = udcDataViaHttpOrFtp;
@@ -587,6 +598,7 @@ else if (sameString(upToColon, "ftp"))
     prot->fetchData = udcDataViaHttpOrFtp;
     prot->fetchInfo = udcInfoViaFtp;
     }
+ #endif
 else if (sameString(upToColon, "transparent"))
     {
     prot->fetchData = udcDataViaTransparent;

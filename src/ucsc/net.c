@@ -3,6 +3,8 @@
  * This file is copyright 2002 Jim Kent, but license is hereby
  * granted for all use - public, private or commercial. */
 
+#ifndef WIN32
+
 #include "common.h"
 #include <signal.h>
 #include <errno.h>
@@ -2589,3 +2591,4 @@ int netHttpGetMultiple(char *url, struct slName *queries, void *userData,
 } /* netHttpMultipleQueries */
 
 
+#endif
