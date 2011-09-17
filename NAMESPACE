@@ -29,7 +29,7 @@ importMethodsFrom("IRanges", elementLengths, window,
 
 importClassesFrom("GenomicRanges", GRanges, GRangesList)
 
-importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo)
+importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
 
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
                   seqinfo, "seqinfo<-")
@@ -76,7 +76,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-",
        ranges, values, GenomicData, GenomicSelection,
        IRanges, score, "score<-", as.data.frame, space,
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
-       GRangesForBSGenome, BigWigFile, summary, seqinfo)
+       GRangesForBSGenome, BigWigFile, summary, seqinfo, genome, "genome<-")
 
 ## the S4-connection compatibility layer
 exportClasses(connection,

@@ -12,12 +12,10 @@
 \alias{chrom<-}
 \alias{chrom<-,RangedData-method}
 \alias{chrom<-,GRanges-method}
-\alias{genome}
 \alias{genome,RangedData-method}
-\alias{genome,GRanges-method}
-\alias{genome<-}
+%\alias{genome,GRanges-method}
 \alias{genome<-,RangedData-method}
-\alias{genome<-,GRanges-method}
+%\alias{genome<-,GRanges-method}
 
 \title{Data on a Genome} \description{The \code{rtracklayer} package adds
 convenience methods on top of \code{RangedData} and \code{GRanges} to
@@ -38,10 +36,13 @@ Similarly the universe refers to the genome.}
     }
     \item{}{
       \code{genome(x)}, \code{genome(x) <- value}: Gets or sets the
-      genome (a single string or \code{NULL}) for
-      the ranges in \code{x}; simple wrappers around
+      genome. If \code{x} is a \code{RangedData}, this is a single string
+      or \code{NULL} and \code{genome}/\code{genome<-} are just simple
+      wrappers around
       \code{\link[IRanges:RangedData-class]{universe}} and
       \code{\link[IRanges:RangedData-class]{universe<-}}, respectively.
+      The \code{genome} and \code{genome<-} methods for \code{GRanges}
+      objects are defined and described in the GenomicRanges package.
     }
   }
 }

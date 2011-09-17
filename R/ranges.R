@@ -6,29 +6,35 @@
 ### Accessor methods.
 ###
 
-setGeneric("genome", function(x, ...) standardGeneric("genome"))
 setMethod("genome", "RangedData", function(x) universe(x))
-setMethod("genome", "GRanges",
-          function(x) {
-            if (is.null(metadata(x)) || is.character(metadata(x))) 
-              metadata(x)
-            else
-              metadata(x)$universe # 'universe' for compat with RangedData
-          })
 
-setGeneric("genome<-", function(x, value) standardGeneric("genome<-"))
+# TODO: H.P. - Sept 16, 2011.
+#   There are new "genome" method and replace method for GRanges objects
+#   defined in GenomicRanges: (1) check that they don't break things in
+#   rtracklayer, (2) evaluate other possible undesirable consequences e.g.
+#   it looks like these new methods introduce some inconsistency among the
+#   other "genome" methods defined in rtracklayer, (3) do something about (2).
+#setMethod("genome", "GRanges",
+#          function(x) {
+#            if (is.null(metadata(x)) || is.character(metadata(x))) 
+#              metadata(x)
+#            else
+#              metadata(x)$universe # 'universe' for compat with RangedData
+#          })
+
 setReplaceMethod("genome", "RangedData",
                  function(x, value) {
                    genome(x@ranges) <- value
                    x
                  })
-setReplaceMethod("genome", "GRanges",
-                 function(x, value) {
-                   if (!is.null(value) && !IRanges:::isSingleString(value)) 
-                     stop("'value' must be a single string or NULL")
-                   metadata(x)$universe <- value
-                   x
-                 })
+# TODO: See above.
+#setReplaceMethod("genome", "GRanges",
+#                 function(x, value) {
+#                   if (!is.null(value) && !IRanges:::isSingleString(value)) 
+#                     stop("'value' must be a single string or NULL")
+#                   metadata(x)$universe <- value
+#                   x
+#                 })
 
 setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
 setMethod("chrom", "RangedData", function(x) chrom(ranges(x)))
@@ -198,7 +204,13 @@ GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL, ...,
     ranges <- IRanges(1L, seqlengths(seqinfo)[chrom])
   gr <- GRanges(chrom, ranges, seqlengths = seqlengths(seqinfo), ...)
   seqinfo(gr) <- seqinfo
-  genome(gr) <- genome
+  # TODO: H.P. - Sept 16, 2011.
+  # The line below used was storing the genome string in the metadata part of
+  # 'gr' but the "genome<-" method for GRanges objects was redefined to store
+  # genome information in the Seqinfo part of the object instead, and this
+  # change broke the line below. I comment it out right now and will let
+  # Michael decide what to do about this.
+  #genome(gr) <- genome
   gr
 }
 
