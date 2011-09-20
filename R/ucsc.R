@@ -43,7 +43,7 @@ setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
 
 setMethod("seqinfo", "UCSCSession", function(x) {
   sl <- seqlengths(x)
-  Seqinfo(names(sl), sl) # no circularity information
+  Seqinfo(names(sl), sl, genome = genome(x)) # no circularity information
 })
 
 normArgTrackData <- function(value, session) {
@@ -116,7 +116,7 @@ setReplaceMethod("genome", "UCSCSession",
                    x
                  })
 
-seqinfoForUCSCGenome <- function(genome) {
+SeqinfoForUCSCGenome <- function(genome) {
   tryCatch({
     session <- browserSession("UCSC")
     genome(session) <- genome

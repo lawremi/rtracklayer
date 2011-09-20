@@ -167,13 +167,13 @@ setMethod("Ops", c("GRanges", "numeric"),
 seqinfoForGenome <- function(genome, method = c("auto", "BSgenome", "UCSC")) {
   method <- match.arg(method)
   if (method == "auto" || method == "BSgenome")
-    sl <- seqinfoForBSGenome(genome)
+    sl <- SeqinfoForBSGenome(genome)
   if (method == "UCSC" || (method == "auto" && is.null(sl)))
-    sl <- seqinfoForUCSCGenome(genome)
+    sl <- SeqinfoForUCSCGenome(genome)
   sl
 }
 
-seqinfoForBSGenome <- function(genome) {
+SeqinfoForBSGenome <- function(genome) {
   bsgenome <- BSGenomeForID(genome)
   if (!is.null(bsgenome))
     seqinfo(bsgenome)
