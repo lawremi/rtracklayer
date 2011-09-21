@@ -288,20 +288,22 @@ return ptav->errAbortInProgress;
 static struct perThreadAbortVars *getThreadVars()
 /* Return a pointer to the perThreadAbortVars for the current pthread. */
 {
- #ifndef WIN32
-static pthread_mutex_t ptavMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_lock( &ptavMutex );
-pthread_t pid = pthread_self(); //  can be a pointer or a number
- #else
-pthread_t pid = 0;
- #endif
+  // A true integer has function would be nicer, but this will do.  
+  // Don't safef, theoretically that could abort.
+  char key[64];
+  
+#ifndef WIN32
+  static pthread_mutex_t ptavMutex = PTHREAD_MUTEX_INITIALIZER;
+  pthread_mutex_lock( &ptavMutex );
+  pthread_t pid = pthread_self(); //  can be a pointer or a number
+  snprintf(key, sizeof(key), "%lld",  ptrToLL(pid));
+  key[ArraySize(key)-1] = '\0';
+#else
+  key[0] = '\0';
+#endif
+  
 static struct hash *perThreadVars = NULL;
 
-// A true integer has function would be nicer, but this will do.  
-// Don't safef, theoretically that could abort.
-char key[64];
-snprintf(key, sizeof(key), "%lld",  ptrToLL(pid));
-key[ArraySize(key)-1] = '\0';
 if (perThreadVars == NULL)
     perThreadVars = hashNew(0);
 struct hashEl *hel = hashLookup(perThreadVars, key);
