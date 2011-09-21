@@ -34,9 +34,9 @@ setMethod("export", c(con = "missing", format = "character"),
           function(object, con, format, ...)
           {
             con <- file()
+            on.exit(close(con))
             export(object, con, format, ...)
             text <- readLines(con, warn = FALSE)
-            close(con)
             text
           })
 setMethod("export", c(con = "character", format = "missing"),
