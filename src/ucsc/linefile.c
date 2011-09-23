@@ -29,6 +29,8 @@ safef(buf, sizeof(buf), "somefile.%s", ext);
 return cloneString(buf);
 }
 
+#ifndef WIN32
+
 static char **getDecompressor(char *fileName)
 /* if a file is compressed, return the command to decompress the
  * approriate format, otherwise return NULL */
@@ -49,6 +51,8 @@ else if (endsWith(fileName, ".zip"))
 else
     return NULL;
 }
+
+#endif
 
 static void metaDataAdd(struct lineFile *lf, char *line)
 /* write a line of metaData to output file
@@ -291,8 +295,10 @@ struct lineFile *lineFileMayOpen(char *fileName, bool zTerm)
 {
 if (sameString(fileName, "stdin"))
     return lineFileStdin(zTerm);
+ #ifndef WIN32
 else if (getDecompressor(fileName) != NULL)
     return lineFileDecompress(fileName, zTerm);
+ #endif
 else
     {
     int fd = open(fileName, O_RDONLY);
@@ -623,11 +629,13 @@ void lineFileClose(struct lineFile **pLf)
 struct lineFile *lf;
 if ((lf = *pLf) != NULL)
     {
+#ifndef WIN32
     if (lf->pl != NULL)
         {
         pipelineWait(lf->pl);
         pipelineFree(&lf->pl);
         }
+#endif
     else if (lf->fd > 0 && lf->fd != fileno(stdin))
 	{
 	close(lf->fd);

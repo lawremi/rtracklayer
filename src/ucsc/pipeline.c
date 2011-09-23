@@ -1,3 +1,5 @@
+#ifndef WIN32
+
 /* pipeline.c - create a process pipeline that can be used for reading or
  * writing  */
 #include "pipeline.h"
@@ -669,3 +671,5 @@ printf("<BR>\n");
  * c-file-style: "jkent-c"
  * End:
  */
+
+#endif
