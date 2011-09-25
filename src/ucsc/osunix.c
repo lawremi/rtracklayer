@@ -56,14 +56,6 @@ if (milli > 0)
     }
 }
 
-long clock1()
-/* A seconds clock. */
-{
-struct timeval tv;
-gettimeofday(&tv, NULL);
-return tv.tv_sec;
-}
-
 void uglyfBreak()
 /* Go into debugger. */
 {
@@ -590,31 +582,4 @@ va_list args;
 va_start(args, format);
 vaDumpStack(format, args);
 va_end(args);
-}
-
-boolean maybeTouchFile(char *fileName)
-/* If file exists, set its access and mod times to now.  If it doesn't exist, create it.
- * Return FALSE if we have a problem doing so (e.g. when qateam is gdb'ing and code tries 
- * to touch some file owned by www). */
-{
-if (fileExists(fileName))
-    {
-    struct utimbuf ut;
-    ut.actime = ut.modtime = clock1();
-    int ret = utime(fileName, &ut);
-    if (ret != 0)
-	{
-	warn("utime(%s) failed (ownership?)", fileName);
-	return FALSE;
-	}
-    }
-else
-    {
-    FILE *f = fopen(fileName, "w");
-    if (f == NULL)
-	return FALSE;
-    else
-	carefulClose(&f);
-    }
-return TRUE;
 }
