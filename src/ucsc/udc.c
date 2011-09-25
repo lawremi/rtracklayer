@@ -814,7 +814,9 @@ verbose(2, "udcfileOpen(%s, %s)\n", url, cacheDir);
 char *protocol = NULL, *afterProtocol = NULL, *colon;
 boolean isTransparent = FALSE;
 udcParseUrl(url, &protocol, &afterProtocol, &colon);
+#ifndef WIN32 /* force WIN32 to use transparent (local file) loading */
 if (!colon)
+#endif
     {
     freeMem(protocol);
     protocol = cloneString("transparent");
@@ -870,8 +872,10 @@ else
 	memcpy(&(file->connInfo), &(info.ci), sizeof(struct connInfo));
 	// update cache file mod times, so if we're caching we won't do this again
 	// until the timeout has expired again:
+#ifndef WIN32
 	if (udcCacheTimeout() > 0 && fileExists(file->bitmapFileName))
 	    (void)maybeTouchFile(file->bitmapFileName);
+#endif
 	}
 
     /* Make directory. */
