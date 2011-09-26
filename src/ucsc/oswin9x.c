@@ -8,6 +8,7 @@
 #include <io.h>
 #include <direct.h>
 #include "portable.h"
+#include "_portimpl.h"          /* for cmpFileInfo */
 
 static char const rcsid[] = "$Id: oswin9x.c,v 1.9 2008/06/27 18:46:53 markd Exp $";
 
@@ -25,7 +26,7 @@ _close(fd);
 return size;
 }
 
-unsigned long fileModTime(char *pathName)
+time_t fileModTime(char *pathName)
 /* Return file last modification time.  The units of
  * these may vary from OS to OS, but you can depend on
  * later files having a larger time. */

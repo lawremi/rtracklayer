@@ -631,8 +631,9 @@ if ((lf = *pLf) != NULL)
         pipelineWait(lf->pl);
         pipelineFree(&lf->pl);
         }
-#endif
-    else if (lf->fd > 0 && lf->fd != fileno(stdin))
+    else
+#endif // WIN32
+    if (lf->fd > 0 && lf->fd != fileno(stdin))
 	{
 	close(lf->fd);
 	freeMem(lf->buf);
