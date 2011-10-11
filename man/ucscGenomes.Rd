@@ -10,7 +10,7 @@ ucscGenomes()
 \value{
   A \code{data.frame} with the following columns:
   \item{db}{UCSC DB identifier (e.g. "hg18")}
-  \item{organism}{The name of the species (e.g. "Human")}
+  \item{species}{The name of the species (e.g. "Human")}
   \item{date}{The date the genome was built}
   \item{name}{The official name of the genome build}
 }

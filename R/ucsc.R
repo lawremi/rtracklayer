@@ -1326,24 +1326,41 @@ setMethod("ucscTrackModes", "ucscTracks",
 ## List available UCSC genomes
 
 ucscGenomes <- function() {
-  doc <- httpGet("http://genome.ucsc.edu/FAQ/FAQreleases")
-  table <- getNodeSet(doc, "//table[@border='1']")[[1]]
-  species <- sapply(getNodeSet(table, "tr/td[1]//text()"), xmlValue)
-  species <- sub("^ *", "", species) # attempt to strip weird characters
-  # The code below tries to detect the empty cells in the SPECIES col of
-  # the table. The real content of these cells seems to vary from one
-  # platform to the other (not clear why, maybe some sort of local issue?).
-  # There must be a simplest way.
-  # TODO: Test this on Windows!
-  is_empty_species <- species %in% c("<c2><a0>", "\xc2\xa0", "\xc3\x82\xc2\xa0")
-  species <- rep.int(species[!is_empty_species],
-                     diff(which(c(!is_empty_species, TRUE))))
-  dbs <- sapply(getNodeSet(table, "tr/td[2]//text()"), xmlValue)
-  dates <- sapply(getNodeSet(table, "tr/td[3]//text()"), xmlValue)
-  nms <- sapply(getNodeSet(table, "tr/td[4]//text()"), xmlValue)
-  df <- data.frame(db = dbs, organism = species, date = dates, name = nms)
-  status <- getNodeSet(table, "tr/td[5]//text()")
-  df <- df[sapply(status, xmlValue) == "Available",]
+  url <- "http://genome.ucsc.edu/FAQ/FAQreleases"
+  doc <- httpGet(url)
+  table <- getNodeSet(doc, "//table[@class='descTbl']")[[1L]]
+  species <- sapply(getNodeSet(table, "tr/td[1]"), xmlValue)
+  dbs <- sapply(getNodeSet(table, "tr/td[2]"), xmlValue)
+  dates <- sapply(getNodeSet(table, "tr/td[3]"), xmlValue)
+  nms <- sapply(getNodeSet(table, "tr/td[4]"), xmlValue)
+  status <- sapply(getNodeSet(table, "tr/td[5]"), xmlValue)
+  .cleanTableCells <- function(x)
+  {
+    x <- sub("^ *", "", x)
+    ## Some empty cells in the table of UCSC genome releases seem to contain
+    ## invisible junk. This junk seems to vary from one platform to the other
+    ## (not clear why, maybe some sort of local issue?).
+    ## There must be a simplest way to get rid of this junk...
+    ## TODO: Test this on Windows!
+    is_empty_cell <- x %in% c("<c2><a0>", "\xc2\xa0", "\xc3\x82\xc2\xa0")
+    x[is_empty_cell] <- ""
+    x
+  }
+  df <- data.frame(db=.cleanTableCells(dbs),
+                   species=.cleanTableCells(species),
+                   date=.cleanTableCells(dates),
+                   name=.cleanTableCells(nms),
+                   status=.cleanTableCells(status),
+                   stringsAsFactors=FALSE)
+  COLS <- c("UCSC VERSION", "SPECIES", "RELEASE DATE", "RELEASE NAME", "STATUS")
+  if (!identical(as.character(df[1L, ]), COLS))
+    stop("table of UCSC genome releases (found at ", url, "#release1) ",
+         "doesn't have expected columns ", paste(COLS, collapse=", ")) 
+  df <- df[-1L, ]
+  df <- df[df$db != "" , ]
+  not_empty <- df$species != ""
+  df$species <- rep.int(df$species[not_empty], diff(which(c(not_empty, TRUE))))
+  df <- df[df$status == "Available", -5L]
   rownames(df) <- NULL
   df
 }
