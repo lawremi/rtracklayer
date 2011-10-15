@@ -6,30 +6,9 @@
 #include "ucsc/bigWig.h"
 #include "ucsc/bwgInternal.h"
 #include "ucsc/_bwgInternal.h"
-#include "ucsc/errabort.h"
 
 #include "bigWig.h"
-
-#define WARN_BUF_SIZE 512
-static void R_warnHandler(char *format, va_list args) {
-  char warn_buf[WARN_BUF_SIZE];
-  vsnprintf(warn_buf, WARN_BUF_SIZE, format, args);
-  warning(warn_buf);
-}
-
-static void R_abortHandler() {
-  error("BigWig operation failed");
-}
-
-static void pushRHandlers() {
-  pushAbortHandler(R_abortHandler);
-  pushWarnHandler(R_warnHandler);  
-}
-
-static void popRHandlers() {
-  popAbortHandler();
-  popWarnHandler();
-}
+#include "handlers.h"
 
 static struct bwgBedGraphItem *
 createBedGraphItems(int *start, int *width, double *score, int len,

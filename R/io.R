@@ -1,4 +1,10 @@
-## import/export
+### =========================================================================
+### Import/export support
+### -------------------------------------------------------------------------
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Classes files and connections
+###
 
 ## Need to dispatch on S3 "connection"
 
@@ -9,6 +15,19 @@
 apply(cbind(.connectionClasses, "connection"), 1, setOldClass,
       where = environment())
 setClassUnion("characterORconnection", c("character", "connection"))
+
+setClass("RTLFile", representation(path = "character"), contains = "VIRTUAL")
+
+setMethod("show", "RTLFile", function(object) {
+  cat(class(object), "object\npath:", object@path, "\n")
+})
+
+path <- function(x) x@path
+##setMethod("path", "RTLFile", function(x) x@path)
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export
+###
 
 setGeneric("export",
            function(object, con, format, ...) standardGeneric("export"))
@@ -51,6 +70,10 @@ setMethod("export", c(con = "character", format = "character"),
             fun <- .exportForFormat(format)
             fun(object, con, ...)
           })
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Import
+###
 
 .importForFormat <- function(format) {
   fun <- try(match.fun(paste("import", format, sep=".")), TRUE)

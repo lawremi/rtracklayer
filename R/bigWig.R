@@ -1,9 +1,5 @@
 ### UCSC bigWig format 
 
-setClass("RTLFile", representation(path = "character"), contains = "VIRTUAL")
-
-path <- function(x) x@path
-
 ## NOTE: could use an externalptr here, but we should profile to see
 ## if that is worth it.
 setClass("BigWigFile", contains = "RTLFile")
@@ -13,10 +9,6 @@ BigWigFile <- function(path) {
     stop("'filename' must be a single string, specifying a path")
   new("BigWigFile", path = path)
 }
-
-setMethod("show", "BigWigFile", function(object) {
-  cat(class(object), "object\npath:", object@path, "\n")
-})
 
 setMethod("seqinfo", "BigWigFile", function(x) {
   seqlengths <- .Call(BWGFile_seqlengths, x@path)
@@ -97,7 +89,7 @@ setMethod("export.bw", c("RangedData", "character"),
             if (!is.null(genome))
               genome(object) <- genome
             if (is.null(seqlengths) && !is.null(genome(object))) {
-              si <- seqinfoForGenome(genome(object))
+              si <- seqinfoForGenome(singleGenome(genome(object)))
               if (is.null(si))
                 stop("Unable to determine seqlengths; either specify ",
                      "'seqlengths' or specify a genome on 'object' that ",
