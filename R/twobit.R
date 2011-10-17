@@ -50,7 +50,7 @@ setMethod("export.2bit", c("DNAStringSet", "character"), function(object, con) {
 
 ## Hidden export of a list of twoBit pointers
 .TwoBits_export <- function(object, con) {
-  if (!IRanges:::isSingleString(con))
+  if (!isSingleString(con))
     stop("'con' must be a single, non-NA string")
   if (!all(sapply(object,
                   function(x) typeof(x) == "externalptr" && is(x, "twoBit"))))
@@ -59,7 +59,7 @@ setMethod("export.2bit", c("DNAStringSet", "character"), function(object, con) {
 }
 
 .DNAString_to_twoBit <- function(object, seqname) {
-  if (!IRanges:::isSingleString(seqname))
+  if (!isSingleString(seqname))
     stop("'seqname' must be a single, non-NA string")
   if (!is(object, "DNAString"))
     stop("'object' must be a DNAString")

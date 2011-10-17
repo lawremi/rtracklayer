@@ -5,7 +5,7 @@
 setClass("BigWigFile", contains = "RTLFile")
 
 BigWigFile <- function(path) {
-  if (!IRanges:::isSingleString(path))
+  if (!isSingleString(path))
     stop("'filename' must be a single string, specifying a path")
   new("BigWigFile", path = path)
 }
@@ -84,7 +84,7 @@ setMethod("export.bw", c("RangedData", "character"),
             score <- score(object)
             if (!is.numeric(score) || any(is.na(score)))
               stop("The score must be numeric, without any NA's")
-            if (!IRanges:::isTRUEorFALSE(compress))
+            if (!isTRUEorFALSE(compress))
               stop("'compress' must be TRUE or FALSE")
             if (!is.null(genome))
               genome(object) <- genome
@@ -162,10 +162,10 @@ setMethod("summary", "BigWigFile",
             ranges <- as(ranges, "GRanges")
             if (!is.numeric(size))
               stop("'size' must be numeric")
-            size <- IRanges:::recycleVector(as.integer(size), length(ranges))
+            size <- recycleIntegerArg(size, "size", length(ranges))
             type <- match.arg(type)
             if (type == "sd") type <- "std"
-            if (!IRanges:::isSingleNumberOrNA(defaultValue))
+            if (!isSingleNumberOrNA(defaultValue))
               stop("'defaultValue' must be a single number or NA")
             summaryList <- .Call(BWGFile_summary, path(object),
                                  as.character(seqnames(ranges)),

@@ -102,7 +102,7 @@ setGeneric("import.wigLines",
 setMethod("import.wigLines", "characterORconnection",
           function(con, genome, asRangedData = TRUE)
           {
-            if (!IRanges:::isTRUEorFALSE(asRangedData))
+            if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
             lines <- readLines(con, warn = FALSE)
             formatInds <- grep("^variableStep|^fixedStep", lines)
