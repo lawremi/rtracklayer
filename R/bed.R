@@ -5,12 +5,13 @@ setGeneric("export.bed",
                     color = NULL, append = FALSE, ...)
            standardGeneric("export.bed"))
 
-
 setMethod("export.bed", "ANY",
           function(object, con, variant = c("base", "bedGraph", "bed15"), color,
                    append)
           {
             cl <- class(object)
+            if (hasMethod("asBED", class(object)))
+              object <- asBED(object)
             track <- try(as(object, "RangedData"), silent = TRUE)
             if (class(track) == "try-error") {
               track <- try(as(object, "RangedDataList"), silent = TRUE)
@@ -28,7 +29,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             variant <- match.arg(variant)
             name <- strand <- thickStart <- thickEnd <- color <- NULL
             blockCount <- blockSizes <- blockStarts <- NULL
-            df <- data.frame(chrom(object), start(object)-1, end(object))
+            df <- data.frame(chrom(object), start(object) - 1L, end(object))
             score <- score(object)
             if (!is.null(score)) {
               if (!is.numeric(score) || any(is.na(score)))
@@ -39,8 +40,16 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
                 score <- 0
               df$score <- score
             } else {
-              blockSizes <- object$blockSizes
-              blockStarts <- object$blockStarts
+              toCSV <- function(x) {
+                if (is(x, "IntegerList")) {
+                  x <- pasteCollapse(x)
+                } else if (!is.character(x) && !is.null(x))
+                  stop("Could not convert block coordinates to CSV")
+                x
+              }
+              blockSizes <- toCSV(object$blockSizes)
+              blockStarts <- toCSV(object$blockStarts)
+### TODO: accept blockStarts/Sizes as IntegerLists
               if (variant == "bed15" && is.null(blockSizes))
                 blockStarts <- blockSizes <- "" # bed15 must have all 15 cols
               if (!is.null(blockSizes) || !is.null(blockStarts)) {
@@ -229,15 +238,35 @@ setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
 setMethod("blocks", "RangedData",
           function(x)
           {
-            if (is.null(x$blockStarts) || is.null(x$blockSizes))
-              stop("'x' must have 'blockStarts' and 'blockSizes' columns")
-            starts <- unlist(strsplit(as.character(x$blockStarts), ","))
-            sizes <- unlist(strsplit(as.character(x$blockSizes), ","))
-            GRanges(rep(chrom(x), x$blockCount),
-                    IRanges(as.integer(starts) + rep(start(x), x$blockCount),
-                            width = as.integer(sizes)),
-                    tx = rep(x$name, x$blockCount))
+            blocks(as(x, "GenomicRanges"))
           })
+
+setMethod("blocks", "GenomicRanges",
+          function(x)
+          {
+            fromCSV <- function(name) {
+              b <- values(x)[[name]]
+              if (is.character(b))
+                b <- strsplit(b, ",", fixed = TRUE)
+              else if (!is(b, "IntegerList"))
+                stop("Column '", name,
+                     "' must be character (CSV) or an IntegerList")
+              b
+            }
+            starts <- fromCSV("blockStarts")
+            blockCount <- elementLengths(starts)
+            starts <- as.integer(unlist(starts))
+            sizes <- as.integer(unlist(fromCSV("blockSizes")))
+            gr <- GRanges(rep(seqnames(x), blockCount),
+                          IRanges(starts + rep(start(x), blockCount),
+                                  width = sizes))
+            if (!is.null(values(x)$name))
+              values(gr)$tx_id = rep(values(x)$name, blockCount)
+            gr
+          })
+
+## FIXME: this generic needs to be pushed up from GenomicFeatures
+##setMethod("exons", "GenomicRanges", function(x) blocks(x))
 
 setGeneric("import.bed15Lines",
            function(con, trackLine, genome = "hg18", asRangedData = TRUE, ...)
@@ -246,7 +275,7 @@ setGeneric("import.bed15Lines",
 setMethod("import.bed15Lines", "ANY",
           function(con, trackLine, genome, asRangedData = TRUE)
           {
-            if (!IRanges:::isTRUEorFALSE(asRangedData))
+            if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
             bed <- import.bed(con, "bed15", genome = genome,
                               asRangedData = asRangedData, colnames = colnames)
@@ -402,3 +431,13 @@ setMethod("export.bedGraphLines", "ANY",
           {
             export.bed(object, con, "bedGraph", ...)
           })
+
+setGeneric("asBED", function(x, ...) standardGeneric("asBED"))
+
+setMethod("asBED", "GRangesList", function(x) {
+  gr <- range(object)
+  values(gr)$name <- names(object)
+  values(gr)$blockStarts <- start(object) - do.call(IntegerList, start(gr))
+  values(gr)$blockSizes <- width(object)
+  gr
+})
