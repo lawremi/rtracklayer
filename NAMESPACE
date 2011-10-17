@@ -11,7 +11,9 @@ importClassesFrom("IRanges", RangedData, RangedDataList, DataTable,
                   RangedSelection, SimpleList, DataFrame)
 
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
-           RangesList, Rle, RangedSelection, RleList)
+           RangesList, Rle, RangedSelection, RleList, isSingleString,
+           recycleIntegerArg, recycleNumericArg,
+           isTRUEorFALSE, isSingleNumberOrNA)
 
 importMethodsFrom("IRanges", elementLengths, window,
                   start, end, width, range,
@@ -25,7 +27,7 @@ importMethodsFrom("IRanges", elementLengths, window,
                   space, universe, metadata,
                   "universe<-", "metadata<-",
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
-                  resize)
+                  resize, elementMetadata)
 
 importClassesFrom("GenomicRanges", GRanges, GRangesList)
 
@@ -34,25 +36,28 @@ importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
                   seqinfo, "seqinfo<-")
 
+importFrom("Biostrings", get_xsbasetypes_conversion_lookup)
+
 importClassesFrom("Biostrings", file, connection)
 
-importFrom("BSgenome", available.genomes)
+importFrom("BSgenome", installed.genomes, releaseDate, organism,
+           providerVersion)
 
 exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
               Bed15TrackLine, UCSCTrackModes, BigWigSelection, BigWigFile,
-              UCSCSchema)
+              UCSCSchema, TwoBitFile)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
               browserView, browserViews,
               close, export, export.bed, export.bed15,
               export.bedGraph, export.gff, export.gff1, export.gff2,
-              export.gff3, export.ucsc, export.wig, export.bw,
+              export.gff3, export.ucsc, export.wig, export.bw, export.2bit,
               import, import.bed, import.bed15, import.bedGraph,
               import.gff, import.gff1, import.gff2, import.gff3,
-              import.ucsc, import.wig, import.bw, import.chain,
+              import.ucsc, import.wig, import.bw, import.chain, import.2bit,
               "sequence<-", "track<-",
               track, trackNames, "trackNames<-", getTable,
               tableNames, trackName, "trackName<-",
@@ -65,6 +70,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               visible, "visible<-",
               liftOver, offset, reversed,
               nrow, formatDescription,
+              ## path, if we export this, Rsamtools must import
               ## from IRanges
               start, end, "start<-", "end<-", score, "score<-",
               as.data.frame, space,
@@ -76,7 +82,8 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-",
        ranges, values, GenomicData, GenomicSelection,
        IRanges, score, "score<-", as.data.frame, space,
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
-       GRangesForBSGenome, BigWigFile, summary, seqinfo, genome, "genome<-")
+       GRangesForBSGenome, BigWigFile, summary, seqinfo, genome, "genome<-",
+       TwoBitFile)
 
 ## the S4-connection compatibility layer
 exportClasses(connection,
