@@ -30,7 +30,7 @@ setReplaceMethod("genome", "RangedData",
 # TODO: See above.
 #setReplaceMethod("genome", "GRanges",
 #                 function(x, value) {
-#                   if (!is.null(value) && !IRanges:::isSingleString(value)) 
+#                   if (!is.null(value) && !isSingleString(value)) 
 #                     stop("'value' must be a single string or NULL")
 #                   metadata(x)$universe <- value
 #                   x
@@ -58,7 +58,7 @@ setReplaceMethod("chrom", "GRanges", function(x, value) {
 GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NULL,
                         asRangedData = TRUE)
 {
-  if (!IRanges:::isTRUEorFALSE(asRangedData))
+  if (!isTRUEorFALSE(asRangedData))
     stop("'asRangedData' must be TRUE or FALSE")
   if (!is(ranges, "Ranges")) {
     if (is(ranges, "data.frame") || is(ranges, "DataTable")) {
@@ -139,10 +139,7 @@ setMethod("Ops", c("GRanges", "numeric"),
           {
             if (IRanges:::anyMissing(e2))
               stop("NA not allowed as zoom factor")
-            if ((length(e1) < length(e2) && length(e1)) ||
-                (length(e1) && !length(e2)) ||
-                (length(e1) %% length(e2) != 0))
-              stop("zoom factor length not a multiple of number of ranges")
+            e2 <- recycleNumericArg(e2)
             if (.Generic == "*") {
               e2 <- ifelse(e2 < 0, abs(1/e2), e2)
               resize(e1, width(e1) / e2, fix = "center")
@@ -184,7 +181,7 @@ GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL, ...,
                              method = c("auto", "BSgenome", "UCSC"),
                              seqinfo = NULL)
 {
-  if (missing(genome) || !IRanges:::isSingleString(genome))
+  if (missing(genome) || !isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
   if (is.null(seqinfo))
     seqinfo <- seqinfoForGenome(genome, match.arg(method))
@@ -224,6 +221,17 @@ GRangesForBSGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 ### Utilities
 ###
 
+## Individual sessions/views only support a single genome at a time,
+## whereas range data structures can have multiple genomes. We try to
+## rectify this here.
+singleGenome <- function(x) {
+  x1 <- head(x, 1)
+  if (any(x != x1))
+    stop("Multiple genomes encountered; only one supported")
+  x1
+}
+
+
 ## normalize 'range', using 'session' for default genome
 ## note that is singular, i.e., only one interval should come out of this
 normGenomeRange <- function(range, session) {
@@ -234,21 +242,23 @@ normGenomeRange <- function(range, session) {
   ## - We do not allow Ranges, since it does not make sense to have one range
   ##   over many chromosomes
   if (is.character(range)) {
+    range <- singleGenome(range)
     genome(session) <- range
     return(GRangesForGenome(range, seqinfo = seqinfo(session)))
   }
-  genome <- genome(session)  
-  if (is.null(genome(range)))
+  genome <- genome(session)
+  rangeGenome <- singleGenome(genome(range))
+  if (is.null(rangeGenome))
     genome(range) <- genome
-  else if (genome(range) != genome) {
-    genome(session) <- genome(range)
+  else if (rangeGenome != genome) {
+    genome(session) <- rangeGenome
     on.exit(genome(session) <- genome)
   }
   if (is(range, "RangesList")) {
     if (length(range) > 1)
       stop("'range' must contain ranges on a single chromosome")
     chrom <- names(range)
-    genome <- genome(range)
+    genome <- rangeGenome
     ranges <- NULL
     if (!is.null(chrom)) {
       flatRange <- unlist(range)
@@ -266,7 +276,7 @@ normGenomeRange <- function(range, session) {
     if (!chr %in% names(seqlens))
       stop("'range' has invalid chromosome: ", chr)
     if (start(range) < 1L || end(range) > seqlens[chr])
-      stop("'range' is out of bounds for ", genome(range), ":", chr)
+      stop("'range' is out of bounds for ", rangeGenome, ":", chr)
     range
   }
   else stop("'range' should be either a genome string, RangesList or GRanges")
@@ -284,7 +294,7 @@ spansGenome <- function(x) {
 ### -------------------------------------------------------------------------
 
 BSGenomeForID <- function(genome) {
-  pkgs <- grep("^BSgenome\\.", rownames(installed.packages()), value = TRUE)
+  pkgs <- installed.genomes()
   pkg <- grep(paste(genome, "$", sep = ""), pkgs, value = TRUE)
   if (length(pkg) == 1) {
     org <- strsplit(pkg, ".", fixed=TRUE)[[1]][2]
@@ -298,7 +308,7 @@ BSGenomeForID <- function(genome) {
 
 GenomicSelection <- function(genome, chrom = NULL, colnames = character(0))
 {
-  if (missing(genome) || !IRanges:::isSingleString(genome))
+  if (missing(genome) || !isSingleString(genome))
     stop("'genome' must be a single string identifying a genome")
   si <- seqinfoForGenome(genome)
   if (is.null(si))

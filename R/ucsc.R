@@ -52,7 +52,7 @@ normArgTrackData <- function(value, session) {
   tapply(value, unlist(genomes),
          function(tracks)
          {
-           genome <- genome(tracks[[1]])
+           genome <- singleGenome(genome(tracks[[1]]))
            if (length(genome))
              genome(session) <- genome
            spaces <- unlist(lapply(tracks, names))
@@ -110,6 +110,8 @@ setMethod("genome", "UCSCSession", function(x) {
 
 setReplaceMethod("genome", "UCSCSession",
                  function(x, value) {
+                   if (!isSingleString(value))
+                     stop("'genome' must be a single non-NA string")
                    ucscGet(x, "gateway", list(db = value))
                    if (genome(x) != value)
                      stop("Failed to set session genome to '", value, "'")
@@ -155,7 +157,7 @@ setMethod("show", "UCSCTableQuery",
               start <- start(range)
               end <- end(range)
             }
-            cat(genome(range), ":", chrom, ":", start, "-", end, sep="")
+            cat(genome(range)[1], ":", chrom, ":", start, "-", end, sep="")
             for (itrack in names(intersectTrack(object)))
               cat(" &", itrack)
             cat("\n")
@@ -1205,7 +1207,7 @@ setGeneric("import.ucsc",
 setMethod("import.ucsc", "characterORconnection",
           function(con, subformat, drop = FALSE, asRangedData = TRUE, ...)
           {
-            if (!IRanges:::isTRUEorFALSE(asRangedData))
+            if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
             subformat <- match.arg(subformat)
             lines <- readLines(con, warn = FALSE)
@@ -1374,7 +1376,7 @@ setMethod("ucscForm", "RangesList",
           {
             form <- list()
             if (length(genome(object)))
-              form <- c(form, db = genome(object))
+              form <- c(form, db = singleGenome(genome(object)))
             chrom <- chrom(object)
             if (!is.null(chrom)) {
               if (!length(chrom))
@@ -1399,7 +1401,7 @@ setMethod("ucscForm", "GRanges",
             on.exit(options(scipen = scipen))
             form <- list()
             if (length(genome(object)))
-              form <- c(form, db = genome(object))
+              form <- c(form, db = singleGenome(genome(object)))
             object <- object[1]
             c(form, position = paste(seqnames(object), ":",
                       unlist(start(object)), "-",
@@ -1426,7 +1428,7 @@ setMethod("ucscForm", "RangedDataList",
             filename <- paste("track", format, sep = ".")
             upload <- fileUpload(filename, text, "text/plain")
             form <- list(Submit = "Submit", hgt.customFile = upload)
-            genome <- genome(object[[1]])
+            genome <- singleGenome(genome(object[[1]]))
             if (length(genome))
               form <- c(form, db = genome)
             form
