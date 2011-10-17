@@ -1,7 +1,27 @@
-# central abstraction, represents a genome browser
-setClass("BrowserSession")
+## central abstraction, represents a genome browser
 
-# a single genome view in a session
+## Question: is a browser session a database of tracks? No question
+## that a browser has a track database. The question is of
+## inheritance. Historically, browser session has had all the behavior
+## we expect from a track database. But it is so much more. In
+## particular, it has a list of views. We want to separate the data
+## from the views. It is tempting to have the model (tracks) and views
+## in separate objects, composed together in a session. However, the
+## reality is that browser sessions are monolithic: UCSC can view only
+## data UCSC knows, IGB can view only data IGB knows. Thus, we use
+## simple inheritance here, saving many refactoring headaches.
+
+setClass("BrowserSession", contains = c("TrackDb", "VIRTUAL"))
+
+## alias for names() for clarity in the session context
+setGeneric("trackNames", function(object, ...) standardGeneric("trackNames"))
+setGeneric("trackNames<-", function(object, ..., value)
+           standardGeneric("trackNames<-"))
+
+setMethod("names", "BrowserSession", function(x) trackNames(x))
+setMethod("trackNames", "BrowserSession", function(object) names(object))
+
+## a single genome view in a session
 setClass("BrowserView", representation(session = "BrowserSession"),
          contains = "VIRTUAL")
 
@@ -41,11 +61,6 @@ setMethod("show", "BrowserSession",
 setGeneric("close", function(con, ...) standardGeneric("close"))
 
 # FIXME: what about isOpen?
-
-# get/set (names of) tracks from e.g. a view
-setGeneric("trackNames", function(object, ...) standardGeneric("trackNames"))
-setGeneric("trackNames<-",
-           function(object, value) standardGeneric("trackNames<-"))
 
 # get/set visibility of view tracks
 setGeneric("visible", function(object, ...) standardGeneric("visible"))
@@ -90,60 +105,6 @@ BrowserViewList <- function(...) {
   IRanges:::newSimpleList("BrowserViewList", views)
 }
 
-setGeneric("track<-",
-           function(object, ..., value) standardGeneric("track<-"))
-## load a track into a browser
-setReplaceMethod("track", c("BrowserSession", "RangedData"),
-          function(object, name = deparse(substitute(value)), ..., value)
-                 {
-                   track(object, name, ...) <- RangedDataList(value)
-                   object
-                 })
-setReplaceMethod("track", c("BrowserSession", "ANY"),
-                 function(object, name = deparse(substitute(value)),
-                          ..., value)
-                 {
-                   track(object, name, ...) <- as(value, "RangedData")
-                   object
-                 })
-## load several tracks into a browser
-## (this may be more efficient for some implementations)
-setReplaceMethod("track", c("BrowserSession", "RangedDataList"),
-                 function(object, name = names(track), ..., value)
-                 {
-                   for (i in seq_len(length(name)))
-                     track(object, name[i], ...) <- value[[i]]
-                   object
-                 })
-
-setClassUnion("RangedDataORRangedDataList", c("RangedData", "RangedDataList"))
-
-setMethod("[[<-", c("BrowserSession", value="ANY"),
-          function(x, i, j, ..., value) {
-            if (!missing(j))
-              warning("argument 'j' ignored")
-            track(x, i, ...) <- value
-            x
-          })
-
-setMethod("$<-", c("BrowserSession", value="ANY"),
-          function(x, name, value) {
-            x[[name]] <- value
-            x
-          })
-
-setGeneric("track", function(object, ...) standardGeneric("track"))
-
-setMethod("[[", "BrowserSession", function (x, i, j, ...) {
-  if (!missing(j))
-    warning("argument 'j' ignored")
-  track(x, i, ...)
-})
-
-setMethod("$", "BrowserSession", function (x, name) {
-  x[[name]]
-})
-
 # get genome range of active view (or default if no views)
 setMethod("range", "BrowserSession",
           function(x, ..., na.rm)
@@ -161,6 +122,8 @@ setGeneric("range<-", function(x, ..., value) standardGeneric("range<-"))
 ## just the genome, for convenience
 setMethod("genome", "BrowserSession", function(x) genome(range(x)))
 setReplaceMethod("genome", "BrowserSession", function(x, value) {
+  if (!isSingleString(value))
+    stop("'genome' must be a single string")
   genome(range(x)) <- value
   x
 })
@@ -228,7 +191,7 @@ setMethod("browserSession", "missing",
 # get one from a view
 setMethod("browserSession", "BrowserView", function(object) object@session)
 
-# load a sequence into the browser
+# load a sequence into the browser (probably should remove this)
 setGeneric("sequence<-", function(object, name, ..., value)
            standardGeneric("sequence<-"))
 
