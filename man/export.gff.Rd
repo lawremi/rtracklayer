@@ -50,7 +50,7 @@ export.ucsc(object, con, subformat = c("auto", "gff1", "wig", "bed",
 ## not yet supported on Windows
 export.bw(object, con,
           dataFormat = c("auto", "variableStep", "fixedStep", "bedGraph"),
-          seqlengths = NULL, compress = TRUE, genome = NULL, ...)
+          seqlengths = GenomicRanges::seqlengths(object), compress = TRUE, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -85,11 +85,10 @@ export.bw(object, con,
     case the \code{expNames} field is taken from the track line, if it
     exists. }
   \item{seqlengths}{The lengths of each sequence in \code{object}. If
-    \code{NULL}, the chromosome lengths are retrieved for
-    the \code{genome} specified on \code{object}, if possible.
+    \code{seqinfo(object)} is missing sequence lengths, an attempt is
+    made to retrieve the sequence lengths from an installed BSgenome
+    package or UCSC, as long as there is a matching genome identifier.
   }
-  \item{genome}{If not \code{NULL}, overrides the genome on
-    \code{object}, if any.}
   \item{append}{Logical, whether to append the output to the connection}
   \item{compress}{Logical, indicating whether to compress the bigWig output}
   \item{\dots}{For \code{export.gff1}, \code{export.gff2} and

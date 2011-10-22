@@ -20,6 +20,7 @@
 \alias{import.ucsc,characterORconnection-method}
 \alias{import.bw}
 \alias{import.bw,character-method}
+\alias{import.bw,connection-method}
 
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{ Importing tracks }
@@ -29,22 +30,22 @@
   instances from connections or text.
 }
 \usage{
-import.gff(con, version = c("1", "2", "3"), genome = "hg18",
+import.gff(con, version = c("1", "2", "3"), genome = NULL,
            asRangedData = TRUE, colnames = NULL)
 import.gff1(con, ...)
 import.gff2(con, ...)
 import.gff3(con, ...)
 import.bed(con, variant = c("base", "bedGraph", "bed15"),
-           trackLine = TRUE, genome = "hg18",
+           trackLine = TRUE, genome = NULL,
            asRangedData = TRUE, colnames = NULL, ...)
-import.bed15(con, genome = "hg18", asRangedData = TRUE, ...)
-import.bedGraph(con, genome = "hg18", asRangedData = TRUE, ...)
-import.wig(con, genome = "hg18", asRangedData = TRUE, ...)
+import.bed15(con, genome = NULL, asRangedData = TRUE, ...)
+import.bedGraph(con, genome = NULL, asRangedData = TRUE, ...)
+import.wig(con, genome = NULL, asRangedData = TRUE, ...)
 import.ucsc(con,
             subformat = c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
             drop = FALSE, asRangedData = TRUE, ...)
 ## not yet supported on Windows
-import.bw(con, selection = BigWigSelection(...), ...)
+import.bw(con, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -61,9 +62,6 @@ import.bw(con, selection = BigWigSelection(...), ...)
     data. If "auto", automatic detection of the subformat is attempted. }
   \item{drop}{ If \code{TRUE} and there is only one track in the
     \acronym{UCSC} data, return the track instead of a list. }
-  \item{selection}{ A \linkS4class{RangedSelection} object indicating the
-    intervals to retrieve from a bigWig file. Note that this retrieval
-    is very efficient, due to the indexing of the bigWig format. }
   \item{colnames}{ Character vector indicating which columns (excluding
     the required sequence name, start and end) should be imported. If
     \code{NULL}, all columns are imported. This allows some significant
@@ -72,7 +70,9 @@ import.bw(con, selection = BigWigSelection(...), ...)
   \item{\dots}{For \code{import.gff1}, \code{import.gff2} and
     \code{import.gff3}: arguments to pass to \code{import.gff}.
     For \code{import.ucsc}: arguments to pass on to
-    \code{import.subformat}. For the others, arguments to pass to methods.}
+    \code{import.subformat}. For the others, arguments to pass to
+    methods. See \code{\linkS4class{BigWigFile}} for additional
+    arguments on \code{import.bw}.}
 }
 \value{
   For all but \code{import.ucsc}, an instance of

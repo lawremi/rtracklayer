@@ -1,7 +1,7 @@
 \name{UCSCData-class}
 \docType{class}
 \alias{UCSCData-class}
-\alias{export.bed,UCSCData,ANY-method}
+\alias{export.bed,UCSCData,characterORconnection-method}
 \alias{export.bed15,UCSCData-method}
 \alias{export.gff,UCSCData,characterORconnection-method}
 \alias{export.ucsc,UCSCData,characterORconnection-method}

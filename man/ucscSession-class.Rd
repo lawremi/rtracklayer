@@ -8,7 +8,9 @@
 \alias{genome,UCSCSession-method}
 \alias{genome<-,UCSCSession-method}
 \alias{range,UCSCSession-method}
+\alias{seqinfo,UCSCSession-method}
 \alias{range,ucscCart-method}
+\alias{genome,ucscCart-method}
 
 \title{Class "UCSCSession"}
 \description{An implementation of \code{\linkS4class{BrowserSession}}
@@ -53,7 +55,13 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       displayed in this session. Set \code{asRangedData}
       to \code{FALSE} to obtain a \code{GRanges} object.}
     \item{\code{\link[rtracklayer:RangedData-methods]{genome}(x)}}{Gets
-      the genome identifier of the session, i.e. \code{genome(range(x))}.}
+      the genome identifier of the session,
+      i.e. \code{genome(range(x))}.}
+    \item{\code{seqinfo}}{ Gets
+      the \code{\link[GenomicRanges:Seqinfo]{Seqinfo}} object with the
+      lengths of the chromosomes in the currenet genome. No
+      circularity information is available.
+    }
     \item{\code{range(x) <- value}}{ Sets \code{value}, usually a
       \code{GRanges} object or \code{RangesList}, as the range
       of session \code{x}. Note that

@@ -12,10 +12,9 @@
 \alias{chrom<-}
 \alias{chrom<-,RangedData-method}
 \alias{chrom<-,GRanges-method}
-\alias{genome,RangedData-method}
-%\alias{genome,GRanges-method}
-\alias{genome<-,RangedData-method}
-%\alias{genome<-,GRanges-method}
+\alias{seqinfo,RangedData-method}
+\alias{seqinfo<-,RangedData-method}
+
 
 \title{Data on a Genome} \description{The \code{rtracklayer} package adds
 convenience methods on top of \code{RangedData} and \code{GRanges} to
@@ -35,14 +34,11 @@ Similarly the universe refers to the genome.}
       \code{\link[IRanges:RangedData-class]{names}(x)}.
     }
     \item{}{
-      \code{genome(x)}, \code{genome(x) <- value}: Gets or sets the
-      genome. If \code{x} is a \code{RangedData}, this is a single string
-      or \code{NULL} and \code{genome}/\code{genome<-} are just simple
-      wrappers around
-      \code{\link[IRanges:RangedData-class]{universe}} and
-      \code{\link[IRanges:RangedData-class]{universe<-}}, respectively.
-      The \code{genome} and \code{genome<-} methods for \code{GRanges}
-      objects are defined and described in the GenomicRanges package.
+      \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the
+      sequence information as a
+      \code{\link[GenomicRanges:Seqinfo-class]{Seqinfo}} object. This is
+      just a wrapper on top of
+      \code{\link[=RangesList-methods]{seqinfo}} for \code{ranges(x)}.
     }
   }
 }
@@ -84,7 +80,7 @@ Similarly the universe refers to the genome.}
 \author{ Michael Lawrence and Patrick Aboyoun }
 
 \examples{
-  range1 <- IRanges(start=c(1,2,3), end=c(5,2,8))
+  range1 <- IRanges::IRanges(start=c(1,2,3), end=c(5,2,8))
 
   ## just ranges ##
   ## RangedData instance
@@ -121,7 +117,7 @@ Similarly the universe refers to the genome.}
   strand(gr) ## equal to 'strand'
 
   ## multiple chromosomes ##
-  range2 <- IRanges(start=c(15,45,20,1), end=c(15,100,80,5))
+  range2 <- IRanges::IRanges(start=c(15,45,20,1), end=c(15,100,80,5))
   ranges <- c(range1, range2)
   score <- c(score, c(0L, 3L, NA, 22L)) 
   chrom <- paste("chr", rep(c(1,2), c(length(range1), length(range2))), sep="")

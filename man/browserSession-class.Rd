@@ -2,19 +2,18 @@
 \docType{class}
 \alias{BrowserSession-class}
 \alias{show,BrowserSession-method}
-\alias{[[,BrowserSession-method}
-\alias{[[<-,BrowserSession-method}
-\alias{$,BrowserSession-method}
-\alias{$<-,BrowserSession-method}
 \alias{range,BrowserSession-method}
 \alias{genome,BrowserSession-method}
 \alias{genome<-,BrowserSession-method}
-
+\alias{names,BrowserSession-method}
+\alias{trackNames,BrowserSession-method}
 
 \title{Class "BrowserSession"}
-\description{An object representing a genome browser session. Each
-  session corresponds to a set of loaded tracks
-  and a set of \code{\linkS4class{BrowserView}} instances. Note that
+\description{An object representing a genome browser session. As a
+  derivative of \code{\linkS4class{TrackDb}}, each
+  session contains a set of loaded tracks. In addition, it has
+  a set of views, in the form of \code{\linkS4class{BrowserView}}
+  instances, on those tracks. Note that
   this is a virtual class; a concrete implementation is provided by each
   backend driver.}
 \section{Objects from the Class}{A virtual Class: No objects may be

@@ -28,7 +28,7 @@ MiRBase (\url{http://microrna.sanger.ac.uk/}).
 \examples{
 data(targets)
 targetTrack <- with(targets, 
-    GenomicData(IRanges(start, end), 
+    GenomicData(IRanges::IRanges(start, end), 
                 strand = strand, chrom = chrom))
 }
 \keyword{datasets}

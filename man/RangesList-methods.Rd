@@ -5,8 +5,8 @@
 % accessors
 \alias{chrom,RangesList-method}
 \alias{chrom<-,RangesList-method}
-\alias{genome,RangesList-method}
-\alias{genome<-,RangesList-method}
+\alias{seqinfo,RangesList-method}
+\alias{seqinfo<-,RangesList-method}
 
 \title{Ranges on a Genome}
 
@@ -33,11 +33,16 @@
       \code{\link[IRanges:RangesList-class]{names}(x)}.
     }
     \item{}{
-      \code{genome(x)}, \code{genome(x) <- value}: Gets or sets the
-      genome (a single string or \code{NULL}) for
-      the ranges in \code{x}; simple wrappers around
-      \code{\link[IRanges:RangesList-class]{universe}} and
-      \code{\link[IRanges:RangesList-class]{universe<-}}, respectively.
+      \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the
+      sequence information as a
+      \code{\link[GenomicRanges:Seqinfo-class]{Seqinfo}} object. If this
+      has not been set explicitly, it tries to come up with a reasonable
+      default. First, it assumes the \code{\link[IRanges]{universe}} on
+      \code{x} is a genome identifier and attempts to look up the
+      corresponding metadata an installed BSgenome package or, if that
+      fails, via UCSC. If that fails, it uses \code{names(x)} as the
+      \code{seqnames} and \code{end(range(x))} as the
+      \code{seqlengths}.
     }
   }
 }
