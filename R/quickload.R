@@ -3,34 +3,65 @@
 ### -------------------------------------------------------------------------
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Classes representing Quickload resources
+### Quickload class
 ###
 
-setClass("Quickload", representation(uri = "character"), contains = "TrackDb")
+setClass("Quickload", representation(uri = "character"))
 
 uri <- function(x, ...) x@uri
 
-.Quickload_contents <- function(x) {
-  contents_file <- file.path(uri(x), "contents.txt")
-  if (file.exists(contents_file))
-    read.table(contents_file, sep = "\t")
-  else NULL
+Quickload_contents <- function(x) {
+  read.table(contentsFile(x), sep = "\t", col.names = c("dir", "title"),
+             colClasses = "character")
 }
 
 setMethod("genome", "Quickload", function(x) {
-  contents <- .Quickload_contents(x)
-  structure(contents[[1]], names = contents[[2]])
+  contents <- Quickload_contents(x)
+  as.character(structure(contents$dir, names = contents$title))
 })
 
-Quickload <- function(uri) {
-  new("Quickload", uri = normURI(uri))
+setMethod("names", "Quickload", genome)
+
+setMethod("length", "Quickload", function(x) length(names(x)))
+
+setMethod("[[", "Quickload", function (x, i, j, ...) {
+  if (!missing(j))
+    warning("argument 'j' ignored")
+  QuickloadGenome(x, i, ...)
+})
+
+setMethod("$", "Quickload", function (x, name) {
+  QuickloadGenome(x, name)
+})
+
+Quickload <- function(uri, create = FALSE) {
+  if (!isTRUEorFALSE(create))
+    stop("'create' must be TRUE or FALSE")
+  if (create) # must create this before calling normURI (requires existence)
+    createResource(uri, dir = TRUE)
+  ql <- new("Quickload", uri = normURI(uri))
+  if (create)
+    createResource(contentsFile(ql))
+  ql
 }
 
 setAs("character", "Quickload", function(from) Quickload(from))
 
+setMethod("show", "Quickload", function(object) {
+  cat(class(object), "repository\nuri:", uri(object), "\n")
+  cat(IRanges:::labeledLine("genomes", genome(object)))
+})
+
+contentsFile <- function(x) file.path(uri(x), "contents.txt")
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### QuickloadGenome class
+###
+
 setClass("QuickloadGenome",
          representation(quickload = "Quickload",
-                        genome = "character"))
+                        genome = "character"),
+         contains = "TrackDb")
 
 setMethod("uri", "QuickloadGenome",
           function(x) file.path(uri(quickload(x)), genome(x)))
@@ -40,9 +71,22 @@ quickload <- function(x, ...) x@quickload
 setMethod("genome", "QuickloadGenome", function(x) x@genome)
 
 setMethod("seqinfo", "QuickloadGenome", function(x) {
-  chromInfo <- read.table(file.path(uri(x), "mod_chromInfo.txt"), sep = "\t")
-  Seqinfo(rownames(chromInfo), chromInfo[[1]], genome = genome(x))
+  genome_info <- read.table(genomeFile(x), sep = "\t",
+                            col.names = c("seqnames", "seqlengths"),
+                            colClasses = c("character", "integer"))
+  Seqinfo(genome_info$seqnames, genome_info$seqlengths,
+          genome = rep(genome(x), nrow(genome_info)))
 })
+
+setReplaceMethod("seqinfo", "QuickloadGenome", function(x, value)
+                 {
+                   if (uriIsWritable(genomeFile(x))) {
+                     df <- as.data.frame(value)[1]
+                     write.table(df, genomeFile(x),
+                                 quote = FALSE, col.names = FALSE, sep = "\t")
+                   } else stop("Repository is read only; cannot write seqinfo")
+                   x
+                 })
 
 setMethod("releaseDate", "QuickloadGenome", function(x) {
   sub(".*?_(.*?)_([^_]*)$", "\\1 \\2", genome(x))
@@ -52,111 +96,208 @@ setMethod("organism", "QuickloadGenome", function(x) {
   gsub("_", " ", sub("(.*?)_.*?_[^_]*$", "\\1", genome(x)))
 })
 
-.QuickloadGenome_annotFiles <- function(x) {
-  annots_file <- file.path(uri(x), "annots.xml")
-  if (file.exists(annots_file))
-    files <- xmlChildren(xmlInternalTreeParse(annots_file))$files
-  else files <- xmlNode("files")
-}
-
 setMethod("length", "QuickloadGenome", function(x) {
   length(names(x))
 })
 
+QuickloadGenome_annotFiles <- function(x) {
+  xmlChildren(xmlInternalTreeParse(annotsFile(x)))$files
+}
+
 setMethod("names", "QuickloadGenome", function(x) {
-  files <- .QuickloadGenome_annotFiles(x)
-  file_names <- getNodeSet(files, "//@name")
-  file_titles <- getNodeSet(files, "//@title")
-  structure(filenames, names = file_titles)
+  emd <- elementMetadata(x)
+  structure(as.character(emd$name), names = as.character(emd$title))
 })
 
 setMethod("elementMetadata", "QuickloadGenome", function(x) {
-  files <- .QuickloadGenome_annotFiles(x)
-  Reduce(function(x, y) merge(as.data.frame(x), as.data.frame(y), all = TRUE),
-         lapply(xmlChildren(files), xmlAttrs))
+  files <- QuickloadGenome_annotFiles(x)
+  if (!length(xmlChildren(files)))
+    new("DataFrame", nrows = length(x))
+  else
+    Reduce(function(x, y) merge(as.data.frame(as.list(x)),
+                                as.data.frame(as.list(y)), all = TRUE),
+           lapply(xmlChildren(files), xmlAttrs))
 })
 
-setMethod("track", "QuickloadGenome", function(object, name, ...) {
-  tmd <- elementMetadata(object)
-  if (!name %in% tmd$name)
-    stop("Track '", name, "' does not exist")
-  gr <- import(file.path(uri(object), name), ...)
-  metadata(gr)$quickload <- as.list(tmd[tmd$name == name,])
-  gr
+setMethod("toString", "QuickloadGenome", function(x) {
+  Quickload_contents(quickload(x))[genome(x),"title"]
 })
 
-QuickloadGenome <- function(quickload, genome) {
-  quickload <- as(quickload, "Quickload")
-  genome_id <- quickloadGenomeId(genome)
-  new("QuickloadGenome", quickload = quickload, genome = genome)
+addGenomeToContents <- function(x, title) {
+  contents <- Quickload_contents(quickload(x))
+  if (!genome(x) %in% contents$dir) {
+    contents <- rbind(contents, data.frame(genome(x), title))
+    if (uriIsWritable(contentsFile(quickload(x))))
+      write.table(contents, contentsFile(quickload(x)),
+                  quote = FALSE, row.names = FALSE, col.names = FALSE,
+                  sep = "\t")
+    else stop("Repository is read only; cannot add genome to contents")
+  } else warning("Genome '", genome(x), "' already in contents")
 }
 
+setMethod("toString", "BSgenome", function(x) {
+  paste(organism(x), provider(x), providerVersion(x))
+})
+
+## Not sure where this method should land. I'm sure it will be useful
+## for publishing adhoc genomes through Quickload.
+setMethod("seqinfo", "DNAStringSet", function(x) {
+  x_names <- names(x)
+  if (is.null(x_names))
+    x_names <- as.character(seq(length(x)))
+  Seqinfo(x_names, width(x))
+})
+
+QuickloadGenome <- function(quickload, genome, create = FALSE,
+                            seqinfo = GenomicRanges::seqinfo(genome),
+                            title = toString(genome))
+{
+  if (!isTRUEorFALSE(create))
+    stop("'create' must be TRUE or FALSE")
+  quickload <- as(quickload, "Quickload")
+  genome <- normArgGenome(genome)
+  genome_id <- quickloadGenomeId(genome)
+  qlg <- new("QuickloadGenome", quickload = quickload, genome = genome_id)
+  if (create)
+    createQuickloadGenome(qlg, seqinfo, title)
+  qlg
+}
+
+setMethod("show", "QuickloadGenome", function(object) {
+  cat(class(object), "track database\ngenome:", genome(object), "\nquickload:",
+      uri(quickload(object)), "\n")
+  cat(IRanges:::labeledLine("names", names(object)))
+})
+
+genomeFile <- function(x) file.path(uri(x), "genome.txt")
+annotsFile <- function(x) file.path(uri(x), "annots.xml")
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Export of genome sequence and range datasets to (local) Quickload
+### Import of tracks/sequence from Quickload
 ###
 
-setMethod("export", c("BSgenome", "Quickload"),
-          function(object, con, igb_jar) {
-            genome_id <- quickloadGenomeId(object)
-            genome_dir <- quickloadGenomeDir(con, genome_id)
-            write.BSgenome(object, genome_dir, "bnib", igb_jar)
-            df <- as.data.frame(seqinfo(object))[,1,drop=FALSE]
-            write.table(df, file.path(genome_dir, "mod_chromInfo.txt"),
-                        quote = FALSE, header = FALSE, sep = "\t")
-            genome_dir
+setMethod("track", "QuickloadGenome", function(object, name, ...) {
+  emd <- elementMetadata(object)
+  if (!name %in% emd$title)
+    stop("Track '", name, "' does not exist")
+  md <- as.list(emd[emd$title == name,])
+  rd <- import(file.path(uri(object), md$name), ...)
+  metadata(rd)$quickload <- md
+  rd
+})
+
+## Since a QuickloadGenome can store only a
+## single referenece genome, it is best to treat it as a "slot".
+
+setGeneric("referenceSequence",
+           function(x, ...) standardGeneric("referenceSequence"))
+
+referenceSequenceFile <- function(x) {
+  paste(file.path(uri(x), genome(x)), ".2bit", sep = "")
+}
+
+setMethod("referenceSequence", "QuickloadGenome",
+          function(x, which = as(seqinfo(x), "GenomicRanges"), ...)
+          {
+            import(referenceSequenceFile(x), which = which, ...)
           })
 
-setMethod("export", c("GenomicRangesORGRangesList",  "Quickload"),
-          function(object, con, file, ...) {
-            genome <- singleGenome(genome(object))
-            if (length(genome) != 1)
-              stop("'object' must be on a single genome")
-            genome_id <- quickloadGenomeId(genome)
-            genome_dir <- quickloadGenomeDir(con, genome_id)
-            data_file <- file.path(genome_dir, file)
-            export(object, data_file)
-            export(data_file, con, genome_id)
-          })
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export of tracks/sequence to Quickload
+###
 
-setMethod("export", c("character", "Quickload"),
-          function(object, con, genome_id) {
-            genome_dir <- quickloadGenomeDir(con, genome_id)
-            file <- basename(object)
-            dest_file <- file.path(genome_dir, file)
-            if (dest_file != object)
-              download.file(object, dest_file)
-            .QuickloadGenome_annotFiles(genome_dir)
-            ## make sure we have the three required attributes
-            attrs <- list(name = file, title = file, description = file)
-            args <- list(...)
-            attrs[names(args)] <- args  
-            files <- addChildren(files, xmlNode("file", attrs = attrs))
-            saveXML(files, annots_file)
-            dest_file
-          })
+### FIXME: check for file URI scheme
 
-quickloadGenomeDir <- function(quickload, genome_id)
-{
-  genome_dir <- file.path(uri(quickload), genome_id)
-  dir.create(genome_dir, recursive = TRUE)
-  
-  contents <- .Quickload_contents(quickload)
-  if (!genome_id %in% contents[[1]]) {
-    desc <- paste(organism(genome), providerVersion(genome))
-    contents <- rbind(contents, data.frame(genome_id, desc))
-    write.table(contents, contents_file, quote = FALSE, header = FALSE,
-                sep = "\t")
+setReplaceMethod("track",
+                 signature(object = "QuickloadGenome", value = "RangedData"),
+                 function(object, name,
+                          format = bestFileFormat(value, object), ..., value)
+                 {
+                   data_file <- file.path(uri(object),
+                                          paste(name, format, sep = "."))
+                   seqinfo(value) <- seqinfo(object)
+                   export(value, data_file)
+                   track(object, name) <- data_file
+                   object
+                 })
+
+copyResourceToQuickload <- function(object, path) {
+  filename <- basename(path)
+  dest_file <- file.path(uri(object), filename)
+  if (dest_file != path)
+    download.file(path, dest_file)
+  filename
+}
+
+setReplaceMethod("track",
+                 signature(object = "QuickloadGenome",
+                           value = "character"),
+                 function(object, name, description = name, ..., value) {
+                   file <- copyResourceToQuickload(object, value)
+                   files <- QuickloadGenome_annotFiles(object)
+                   ## make sure we have the three required attributes
+                   attrs <- c(name = file, title = name,
+                              description = description)
+                   args <- list(...)
+                   attrs[names(args)] <- args
+                   filenames <- getNodeSet(files, "//@name")
+                   if (file %in% filenames) {
+                     warning("File '", file, "' already present in Quickload")
+                     removeChildren(files, match(file, filenames))
+                   }
+                   files <- addChildren(files,
+                                        newXMLNode("file", attrs = attrs))
+                   saveXML(files, annotsFile(object))
+                   object
+                 })
+
+setReplaceMethod("track",
+                 signature(object = "QuickloadGenome",
+                           value = "ANY"),
+                 function(object, name, ..., value)
+                 {
+                   if (is(value, "RsamtoolsFile")) {
+                     track(object, name, ...) <- Rsamtools::path(value)
+                     copyResourceToQuickload(object, Rsamtools::index(value))
+                     object
+                   } else callNextMethod()
+                 })
+
+setGeneric("referenceSequence<-",
+           function(x, ..., value) standardGeneric("referenceSequence<-"))
+
+setReplaceMethod("referenceSequence",
+                 signature(x = "QuickloadGenome", value = "ANY"),
+                 function(x, name, ..., value)
+                 {
+                   export.2bit(value, referenceSequenceFile(x))
+                   x
+                 })
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Utilities
+###
+
+normArgGenome <- function(genome) {
+  if (is.character(genome)) {
+    bs_genome <- BSGenomeForID(genome)
+    if (!is.null(bs_genome))
+      genome <- bs_genome
   }
-  
-  genome_dir  
+  genome
 }
 
 quickloadGenomeId <- function(genome) {
-  if (is.character(genome))
-    genome <- BSGenomeForId(genome)
-  if (is(genome, "BSGenome")) {
-    species <- sub("BSgenome\\.([^.]*)\\..*", "\\1", bsgenomeName(genome))
+  if (!is.character(genome)) {
+    species <- sub("^(.).*? ", "\\1_", organism(genome))
     date <- sub("\\. ", "_", releaseDate(genome))
     paste(species, date, sep = "_")
   } else genome
+}
+
+createQuickloadGenome <- function(x, seqinfo, title) {
+  createResource(uri(x), dir = TRUE)
+  createResource(annotsFile(x), content = "<files/>")
+  seqinfo(x) <- seqinfo
+  addGenomeToContents(x, title)
 }
