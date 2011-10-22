@@ -102,7 +102,7 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
 })
 
 setGeneric("import.gff",
-           function(con, version = c("1", "2", "3"), genome = "hg18",
+           function(con, version = c("1", "2", "3"), genome = NULL,
                     asRangedData = TRUE, colnames = NULL)
            standardGeneric("import.gff"))
            

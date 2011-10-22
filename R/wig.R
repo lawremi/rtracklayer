@@ -86,7 +86,7 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
           })
 
 setGeneric("import.wig",
-           function(con, genome = "hg18", asRangedData = TRUE, ...)
+           function(con, genome = NULL, asRangedData = TRUE, ...)
            standardGeneric("import.wig"))
 setMethod("import.wig", "ANY",
           function(con, genome, asRangedData = TRUE)
@@ -96,7 +96,7 @@ setMethod("import.wig", "ANY",
           })
 
 setGeneric("import.wigLines",
-           function(con, genome = "hg18", asRangedData = TRUE, ...)
+           function(con, genome = NULL, asRangedData = TRUE, ...)
            standardGeneric("import.wigLines"))
 
 setMethod("import.wigLines", "characterORconnection",
