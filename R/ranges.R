@@ -6,35 +6,12 @@
 ### Accessor methods.
 ###
 
-setMethod("genome", "RangedData", function(x) universe(x))
-
-# TODO: H.P. - Sept 16, 2011.
-#   There are new "genome" method and replace method for GRanges objects
-#   defined in GenomicRanges: (1) check that they don't break things in
-#   rtracklayer, (2) evaluate other possible undesirable consequences e.g.
-#   it looks like these new methods introduce some inconsistency among the
-#   other "genome" methods defined in rtracklayer, (3) do something about (2).
-#setMethod("genome", "GRanges",
-#          function(x) {
-#            if (is.null(metadata(x)) || is.character(metadata(x))) 
-#              metadata(x)
-#            else
-#              metadata(x)$universe # 'universe' for compat with RangedData
-#          })
-
-setReplaceMethod("genome", "RangedData",
+setMethod("seqinfo", "RangedData", function(x) seqinfo(ranges(x)))
+setReplaceMethod("seqinfo", "RangedData",
                  function(x, value) {
-                   genome(x@ranges) <- value
+                   seqinfo(ranges(x)) <- value
                    x
                  })
-# TODO: See above.
-#setReplaceMethod("genome", "GRanges",
-#                 function(x, value) {
-#                   if (!is.null(value) && !isSingleString(value)) 
-#                     stop("'value' must be a single string or NULL")
-#                   metadata(x)$universe <- value
-#                   x
-#                 })
 
 setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
 setMethod("chrom", "RangedData", function(x) chrom(ranges(x)))
@@ -113,11 +90,28 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NULL,
 ### Genome-oriented methods for GRanges/RangesList classes
 ### -------------------------------------------------------------------------
 
-setMethod("genome", "RangesList", function(x) universe(x))
+setMethod("seqinfo", "RangesList", function(x) {
+  si <- metadata(x)$seqinfo
+  if (is.null(si)) {
+    genome <- singleGenome(universe(x))
+    if (!is.null(genome))
+      si <- seqinfoForGenome(genome)
+    if (is.null(si)) {
+      sn <- names(x)
+      if (is.null(sn))
+        sn <- as.character(seq(length(x)))
+      si <- Seqinfo(sn, end(range(x)))
+      if (!is.null(genome))
+        genome(si) <- rep(genome, length(x))
+    }
+  }
+  si
+})
 
-setReplaceMethod("genome", "RangesList",
+### FIXME: needs sanity checks
+setReplaceMethod("seqinfo", "RangesList",
                  function(x, value) {
-                   universe(x) <- value
+                   metadata(x)$seqinfo <- value
                    x
                  })
 
