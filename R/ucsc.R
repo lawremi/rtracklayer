@@ -1099,6 +1099,16 @@ trackLineClass <- function(subformat)
   else "BasicTrackLine"
 }
 
+setMethod("bestFileFormat", c("UCSCData", "ANY"), function(x, dest) {
+  trackLine <- x@trackLine
+  format <- "bed"
+  if (is(trackLine, "Bed15TrackLine"))
+    format <- "bed15"
+  else if (is(trackLine, "GraphTrackLine"))
+    format <- trackLine@type
+  format
+})
+
 setMethod("export.ucsc", "ANY",
           function(object, con, subformat, append, ...)
           {
@@ -1128,11 +1138,7 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
             auto <- FALSE
             if (subformat == "auto") {
               auto <- TRUE
-              subformat <- "bed"
-              if (is(object@trackLine, "Bed15TrackLine"))
-                subformat <- "bed15"
-              else if (is(object@trackLine, "GraphTrackLine"))
-                subformat <- object@trackLine@type
+              subformat <- bestFileFormat(object@trackLine, con)
             }
             graphFormat <- subformat %in% c("wig", "bedGraph")
             if (graphFormat) {
