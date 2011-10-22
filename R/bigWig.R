@@ -57,11 +57,14 @@ setAs("GenomicRanges", "BigWigSelection", function(from) {
   as(as(from, "RangesList"), "BigWigSelection")
 })
 
+### FIXME: remove 'seqlengths' and 'genome' arguments after release
+
 setGeneric("export.bw",
            function(object, con,
                     dataFormat = c("auto", "variableStep", "fixedStep",
                       "bedGraph"),
-                    seqlengths = NULL, compress = TRUE, ...)
+                    seqlengths = GenomicRanges::seqlengths(object),
+                    compress = TRUE, ...)
            standardGeneric("export.bw"))
 
 setMethod("export.bw", "ANY",
@@ -86,16 +89,14 @@ setMethod("export.bw", c("RangedData", "character"),
               stop("The score must be numeric, without any NA's")
             if (!isTRUEorFALSE(compress))
               stop("'compress' must be TRUE or FALSE")
-            if (!is.null(genome))
+            if (!is.null(genome)) {
               genome(object) <- genome
-            if (is.null(seqlengths) && !is.null(genome(object))) {
-              si <- seqinfoForGenome(singleGenome(genome(object)))
-              if (is.null(si))
-                stop("Unable to determine seqlengths; either specify ",
-                     "'seqlengths' or specify a genome on 'object' that ",
-                     "is known to BSgenome or UCSC")
-              seqlengths <- seqlengths(si)
+              seqlengths <- seqlengths(object)
             }
+            if (any(is.na(seqlengths)))
+              stop("Unable to determine seqlengths; either specify ",
+                   "'seqlengths' or specify a genome on 'object' that ",
+                   "is known to BSgenome or UCSC")
             if (!is.numeric(seqlengths) ||
                 !all(names(object) %in% names(seqlengths)))
               stop("seqlengths must be numeric and indicate a length for ",
@@ -136,7 +137,7 @@ setMethod("import.bw", "character",
 
 setMethod("import.bw", "BigWigFile",
           function(con, selection = BigWigSelection(ranges, ...),
-                   ranges = con, ...)
+                   ranges = con, asRangedData = TRUE, ...)
           {
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
@@ -149,7 +150,9 @@ setMethod("import.bw", "BigWigFile",
               hits <- queryHits(findOverlaps(ranges(rd), normRanges))
               rd <- rd[!duplicated(hits),]
             }
-            rd
+            if (!asRangedData)
+              as(rd, "GRanges")
+            else rd
           })
 
 setMethod("summary", "BigWigFile",
