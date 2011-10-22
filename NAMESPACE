@@ -36,18 +36,20 @@ importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
                   seqinfo, "seqinfo<-")
 
-importFrom("Biostrings", get_xsbasetypes_conversion_lookup)
+importFrom("Biostrings", get_xsbasetypes_conversion_lookup, masks)
 
 importClassesFrom("Biostrings", file, connection)
 
 importFrom("BSgenome", installed.genomes, releaseDate, organism,
-           providerVersion)
+           providerVersion, provider)
+
+importFrom("tools", file_path_as_absolute)
 
 exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
               Bed15TrackLine, UCSCTrackModes, BigWigSelection, BigWigFile,
-              UCSCSchema, TwoBitFile)
+              UCSCSchema, TwoBitFile, Quickload, QuickloadGenome)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
@@ -70,20 +72,26 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               visible, "visible<-",
               liftOver, offset, reversed,
               nrow, formatDescription,
-              ## path, if we export this, Rsamtools must import
+              referenceSequence, "referenceSequence<-",
+              asBED,
+              ## path, (if we export this, Rsamtools must import it)
               ## from IRanges
-              start, end, "start<-", "end<-", score, "score<-",
-              as.data.frame, space,
+              start, end, "start<-", "end<-",
+              score, "score<-",
+              as.data.frame, space, elementMetadata,
               ## from GenomicRanges
-              strand, seqinfo
+              strand, seqinfo, "seqinfo<-",
+              ## from BSgenome
+              organism, releaseDate
               )
 
-export(genomeBrowsers, start, end, strand, "start<-", "end<-",
+export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        ranges, values, GenomicData, GenomicSelection,
-       IRanges, score, "score<-", as.data.frame, space,
+       score, "score<-", as.data.frame, space,
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
        GRangesForBSGenome, BigWigFile, summary, seqinfo, genome, "genome<-",
-       TwoBitFile)
+       TwoBitFile, uri, Quickload, quickload, QuickloadGenome,
+       organism, releaseDate, elementMetadata)
 
 ## the S4-connection compatibility layer
 exportClasses(connection,
