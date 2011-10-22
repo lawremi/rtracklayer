@@ -119,7 +119,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
                         append = append)
           })
 
-setMethod("export.bed", "UCSCData",
+setMethod("export.bed", c("UCSCData", "characterORconnection"),
           function(object, con, variant = c("base", "bedGraph", "bed15"), color,
                    append, trackLine = TRUE, ...)
           {
@@ -140,7 +140,7 @@ setMethod("export.bed", "RangedDataList",
 
 setGeneric("import.bed",
            function(con, variant = c("base", "bedGraph", "bed15"),
-                    trackLine = TRUE, genome = "hg18", asRangedData = TRUE,
+                    trackLine = TRUE, genome = NULL, asRangedData = TRUE,
                     colnames = NULL, ...)
            standardGeneric("import.bed"))
 
@@ -269,7 +269,7 @@ setMethod("blocks", "GenomicRanges",
 ##setMethod("exons", "GenomicRanges", function(x) blocks(x))
 
 setGeneric("import.bed15Lines",
-           function(con, trackLine, genome = "hg18", asRangedData = TRUE, ...)
+           function(con, trackLine, genome = NULL, asRangedData = TRUE, ...)
            standardGeneric("import.bed15Lines"))
 
 setMethod("import.bed15Lines", "ANY",
@@ -316,7 +316,7 @@ setMethod("import.bed15Lines", "ANY",
           })
 
 setGeneric("import.bed15",
-           function(con, genome = "hg18", asRangedData = TRUE, ...)
+           function(con, genome = NULL, asRangedData = TRUE, ...)
            standardGeneric("import.bed15"))
 
 setMethod("import.bed15", "ANY",
@@ -392,7 +392,7 @@ setAs("character", "Bed15TrackLine",
       })
 
 setGeneric("import.bedGraph",
-           function(con, genome = "hg18", asRangedData = TRUE, ...)
+           function(con, genome = NULL, asRangedData = TRUE, ...)
            standardGeneric("import.bedGraph"))
 
 setMethod("import.bedGraph", "ANY",
@@ -403,7 +403,7 @@ setMethod("import.bedGraph", "ANY",
           })
 
 setGeneric("import.bedGraphLines",
-           function(con, genome = "hg18", asRangedData = TRUE, ...)
+           function(con, genome = NULL, asRangedData = TRUE, ...)
            standardGeneric("import.bedGraphLines"))
 
 setMethod("import.bedGraphLines", "ANY",
@@ -435,9 +435,9 @@ setMethod("export.bedGraphLines", "ANY",
 setGeneric("asBED", function(x, ...) standardGeneric("asBED"))
 
 setMethod("asBED", "GRangesList", function(x) {
-  gr <- range(object)
-  values(gr)$name <- names(object)
-  values(gr)$blockStarts <- start(object) - do.call(IntegerList, start(gr))
-  values(gr)$blockSizes <- width(object)
+  gr <- range(x)
+  values(gr)$name <- names(x)
+  values(gr)$blockStarts <- start(x) - do.call(IntegerList, as.list(start(gr)))
+  values(gr)$blockSizes <- width(x)
   gr
 })
