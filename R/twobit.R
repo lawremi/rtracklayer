@@ -9,10 +9,17 @@
 
 setClass("TwoBitFile", contains = "RTLFile")
 
+twoBitPath <- function(path) {
+  uri <- parseURI(path)
+  if (!uriIsLocal(uri))
+    stop("TwoBit driver handles only local file paths")
+  uri$path
+}
+
 TwoBitFile <- function(path) {
   if (!isSingleString(path))
     stop("'filename' must be a single string, specifying a path")
-  new("TwoBitFile", path = path)
+  new("TwoBitFile", path = twoBitPath(path))
 }
 
 setMethod("seqinfo", "TwoBitFile", function(x) {
@@ -32,20 +39,21 @@ setMethod("export.2bit", "ANY", function(object, con, ...) {
 })
 
 setMethod("export.2bit", c("BSgenome", "character"),
-          function(object, con, exclude = character(0), maskList = logical(0)) {
+          function(object, con, ...) {
             i <- 0L
             twoBits <- bsapply(new("BSParams", X = object, FUN = function(chr) {
               i <<- i + 1
               .DNAString_to_twoBit(chr, seqnames(object)[i])
-            }, exclude = exclude, maskList = maskList))
-            .TwoBits_export(as.list(twoBits), con)
+            }, ...))
+            .TwoBits_export(as.list(twoBits), twoBitPath(con))
           })
 
 setMethod("export.2bit", c("DNAStringSet", "character"), function(object, con) {
   seqnames <- names(object)
   if (is.null(seqnames))
     seqnames <- as.character(seq(length(object)))
-  .TwoBits_export(mapply(.DNAString_to_twoBit, object, seqnames), con)
+  .TwoBits_export(mapply(.DNAString_to_twoBit, object, seqnames),
+                  twoBitPath(con))
 })
 
 ## Hidden export of a list of twoBit pointers
