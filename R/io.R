@@ -130,5 +130,60 @@ setMethod("import.gz", "connection", function(con, ...) {
   import(gzcon(con), ...)
 })
 
-## utilities
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Utilities
+###
+
+setGeneric("bestFileFormat",
+           function(x, dest, ...) standardGeneric("bestFileFormat"))
+
+setMethod("bestFileFormat", c("RangedData", "ANY"), function(x, dest) {
+  if (is.numeric(score(x))) # have numbers, let's plot them
+    "bw"
+  else "bed"
+})
+
 file_ext <- function(con) gsub(".*\\.([^.]*)$", "\\1", con)
+
+normURI <- function(x) {
+  if (!isSingleString(x))
+    stop("URI must be a single, non-NA string")
+  uri <- parseURI(x)
+  if (uri$scheme == "")
+    x <- paste("file://", file_path_as_absolute(x), sep = "")
+  x
+}
+
+createResource <- function(x, dir = FALSE, content = "") {
+  uri <- parseURI(x)
+  if (uri$scheme == "file" || uri$scheme == "") {
+    if (!file.exists(uri$path)) {
+      if (dir)
+        dir.create(uri$path, recursive = TRUE)
+      else writeLines(content, uri$path)
+    } else warning("Path '", uri$path, "' already exists")
+  } else stop("Cannot create a resource that is not a local file")
+}
+
+uriExists <- function(x) {
+  uri <- parseURI(x)
+  if (uriIsLocal(uri)) {
+    exists <- file.exists(uri$path)
+  } else {
+    txt <- getURL(x, header = TRUE)
+    exists <- grepl("^HTTP/\\d+\\.\\d+ 200 OK", txt)
+  }
+  exists
+}
+
+uriIsLocal <- function(x) {
+  x$scheme == "file" || x$scheme == ""
+}
+
+uriIsWritable <- function(x) {
+  uri <- parseURI(x)
+  if (uriIsLocal(uri)) {
+    !file.access(uri$path, 2) ||
+    (!file.exists(uri$path) && uriIsWritable(dirname(uri$path)))
+  } else FALSE
+}
