@@ -45,7 +45,7 @@ flipStrandTricky <- function(strand, flip) {
 }
 
 setGeneric("liftOver", function(x, chain, ...) standardGeneric("liftOver"))
-setMethod("liftOver", c("GRanges", "Chain"),
+setMethod("liftOver", c("GenomicRanges", "Chain"),
           function(x, chain)
           {
             liftOverSpace <- function(gr, chain, subind) {
@@ -61,7 +61,7 @@ setMethod("liftOver", c("GRanges", "Chain"),
               r <- IRanges(starts, width=width(r))
               offsets <- offset(chain)[shits]
               spaces <- space(chain)[shits]
-              ind[[space(gr)[1]]] <<- subind[queryHits(ol)]
+              ind[[as.character(seqnames(gr)[1])]] <<- subind[queryHits(ol)]
               GRanges(spaces,
                       IRanges(start(r) - offsets, end(r) - offsets),
                       strand = strand,
@@ -73,9 +73,9 @@ setMethod("liftOver", c("GRanges", "Chain"),
               message("Discarding unchained sequences: ",
                       paste(unchainedNames, collapse = ", "))
             sharedNames <- intersect(names(rl), names(chain))
-            ind <- split(seq(length(x)), seqnames(x))[sharedNames]
+            ind <- split(seq(length(x)), as.vector(seqnames(x)))[sharedNames]
             lifted <- unlist(mseqapply(liftOverSpace, rl[sharedNames],
                                        chain[sharedNames], ind),
                              use.names=FALSE)
-            split(lifted, unlist(ind, use.names=FALSE))
+            split(lifted, factor(unlist(ind, use.names=FALSE), seq(length(x))))
           })

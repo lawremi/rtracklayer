@@ -35,6 +35,14 @@ liftOver(x, chain, ...)
 \references{
   \url{http://genome.ucsc.edu/cgi-bin/hgLiftOver}
 }
+\examples{
+\dontrun{
+chain <- import.chain("hg19ToHg18.over.chain")
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+tx_hg19 <- transcripts(TxDb.Hsapiens.UCSC.hg19.knownGene)
+tx_hg18 <- liftOver(tx_hg19, chain)
+}
+}
 \author{
   Michael Lawrence
 }

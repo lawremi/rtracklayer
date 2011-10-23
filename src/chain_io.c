@@ -20,7 +20,7 @@ typedef struct _ChainBlock {
 #define HEADER_SIZE 11
 #define DATA_SIZE 3
 
-/* returns NULL-terminated array of ChainBlock pointers */
+/* returns an array of ChainBlock pointers */
 ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
   /* fgets() a line
      if first or after blank, parse header
