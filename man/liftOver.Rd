@@ -1,7 +1,7 @@
 \name{liftOver}
 
 \alias{liftOver}
-\alias{liftOver,GRanges,Chain-method}
+\alias{liftOver,GenomicRanges,Chain-method}
 
 \title{
   Lift intervals between genome builds
