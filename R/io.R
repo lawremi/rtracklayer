@@ -177,7 +177,7 @@ uriExists <- function(x) {
 }
 
 uriIsLocal <- function(x) {
-  x$scheme == "file" || x$scheme == ""
+  x$scheme == "file" || nchar(x$scheme) < 2 # allow for volumes on Windows
 }
 
 uriIsWritable <- function(x) {
