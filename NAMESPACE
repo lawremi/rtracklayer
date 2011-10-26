@@ -90,7 +90,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        score, "score<-", as.data.frame, space,
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
        GRangesForBSGenome, BigWigFile, summary, seqinfo, genome, "genome<-",
-       TwoBitFile, uri, Quickload, quickload, QuickloadGenome,
+       TwoBitFile, path, uri, Quickload, quickload, QuickloadGenome,
        organism, releaseDate, elementMetadata)
 
 ## the S4-connection compatibility layer

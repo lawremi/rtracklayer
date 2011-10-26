@@ -22,8 +22,10 @@ setMethod("show", "RTLFile", function(object) {
   cat(class(object), "object\npath:", object@path, "\n")
 })
 
-path <- function(x) x@path
-##setMethod("path", "RTLFile", function(x) x@path)
+setGeneric("path",
+           function(object, ...) standardGeneric("path"))
+
+setMethod("path", "RTLFile", function(object) object@path)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Export

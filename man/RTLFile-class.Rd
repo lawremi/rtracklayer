@@ -5,6 +5,10 @@
 \alias{class:RTLFile}
 \alias{RTLFile-class}
 
+%% Accessors
+\alias{path}
+\alias{path,RTLFile-method}
+
 %% Show:
 \alias{show,RTLFile-method}
 
@@ -22,7 +26,9 @@
   
   \describe{
     \item{}{
-      
+      \code{path(x)}:
+      Gets the path, as a \code{character} vector, to the file
+      represented by the \code{RTLFile} object.
     }
   }
 }
