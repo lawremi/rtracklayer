@@ -34,11 +34,16 @@ setMethod("$", "Quickload", function (x, name) {
   QuickloadGenome(x, name)
 })
 
-Quickload <- function(uri, create = FALSE) {
+Quickload <- function(uri = "quickload", create = FALSE) {
   if (!isTRUEorFALSE(create))
     stop("'create' must be TRUE or FALSE")
-  if (create) # must create this before calling normURI (requires existence)
-    createResource(uri, dir = TRUE)
+  if (create) {
+    if (uriExists(uri)) {
+      message("URI '", uri, "' already exists; not replacing")
+      create <- FALSE
+    } ## must create this before calling normURI (requires existence)
+    else createResource(uri, dir = TRUE)
+  }
   ql <- new("Quickload", uri = normURI(uri))
   if (create)
     createResource(contentsFile(ql))
@@ -132,7 +137,7 @@ addGenomeToContents <- function(x, title) {
                   quote = FALSE, row.names = FALSE, col.names = FALSE,
                   sep = "\t")
     else stop("Repository is read only; cannot add genome to contents")
-  } else warning("Genome '", genome(x), "' already in contents")
+  } else warning("Genome '", genome(x), "' already in contents; not replaced")
 }
 
 setMethod("toString", "BSgenome", function(x) {
@@ -158,8 +163,11 @@ QuickloadGenome <- function(quickload, genome, create = FALSE,
   genome <- normArgGenome(genome)
   genome_id <- quickloadGenomeId(genome)
   qlg <- new("QuickloadGenome", quickload = quickload, genome = genome_id)
-  if (create)
+  if (create) {
+    if (is.character(genome))
+      stop("Identifier '", genome, "' not resolved to a genome")
     createQuickloadGenome(qlg, seqinfo, title)
+  }
   qlg
 }
 
@@ -209,15 +217,20 @@ setMethod("referenceSequence", "QuickloadGenome",
 ### FIXME: check for file URI scheme
 
 setReplaceMethod("track",
-                 signature(object = "QuickloadGenome", value = "RangedData"),
+                 signature(object = "QuickloadGenome", value = "ANY"),
                  function(object, name,
                           format = bestFileFormat(value, object), ..., value)
                  {
-                   data_file <- file.path(uri(object),
-                                          paste(name, format, sep = "."))
-                   seqinfo(value) <- seqinfo(object)
-                   export(value, data_file)
-                   track(object, name) <- data_file
+                   if (is(value, "RsamtoolsFile")) {
+                     track(object, name, ...) <- path(value)
+                     copyResourceToQuickload(object, Rsamtools::index(value))
+                   } else {
+                     filename <- paste(name, format, sep = ".")
+                     path <- file.path(uri(object), filename)
+                     seqinfo(value) <- seqinfo(object)
+                     export(value, path)
+                     track(object, name) <- path
+                   }
                    object
                  })
 
@@ -233,7 +246,7 @@ setReplaceMethod("track",
                  signature(object = "QuickloadGenome",
                            value = "character"),
                  function(object, name, description = name, ..., value) {
-                   file <- copyResourceToQuickload(object, value)
+                   file <- URLencode(copyResourceToQuickload(object, value))
                    files <- QuickloadGenome_annotFiles(object)
                    ## make sure we have the three required attributes
                    attrs <- c(name = file, title = name,
@@ -242,25 +255,12 @@ setReplaceMethod("track",
                    attrs[names(args)] <- args
                    filenames <- getNodeSet(files, "//@name")
                    if (file %in% filenames) {
-                     warning("File '", file, "' already present in Quickload")
                      removeChildren(files, match(file, filenames))
                    }
                    files <- addChildren(files,
                                         newXMLNode("file", attrs = attrs))
                    saveXML(files, annotsFile(object))
                    object
-                 })
-
-setReplaceMethod("track",
-                 signature(object = "QuickloadGenome",
-                           value = "ANY"),
-                 function(object, name, ..., value)
-                 {
-                   if (is(value, "RsamtoolsFile")) {
-                     track(object, name, ...) <- Rsamtools::path(value)
-                     copyResourceToQuickload(object, Rsamtools::index(value))
-                     object
-                   } else callNextMethod()
                  })
 
 setGeneric("referenceSequence<-",
@@ -296,6 +296,10 @@ quickloadGenomeId <- function(genome) {
 }
 
 createQuickloadGenome <- function(x, seqinfo, title) {
+  if (genome(x) %in% genome(quickload(x))) {
+    message("Genome '", genome(x), "' already exists; not replacing")
+    return()
+  }
   createResource(uri(x), dir = TRUE)
   createResource(annotsFile(x), content = "<files/>")
   seqinfo(x) <- seqinfo
