@@ -42,7 +42,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             } else {
               toCSV <- function(x) {
                 if (is(x, "IntegerList")) {
-                  x <- pasteCollapse(x)
+                  x <- sapply(x, paste, collapse = ",")
                 } else if (!is.character(x) && !is.null(x))
                   stop("Could not convert block coordinates to CSV")
                 x
@@ -435,9 +435,18 @@ setMethod("export.bedGraphLines", "ANY",
 setGeneric("asBED", function(x, ...) standardGeneric("asBED"))
 
 setMethod("asBED", "GRangesList", function(x) {
-  gr <- range(x)
+  x_range <- range(x)
+  if (any(elementLengths(x_range) != 1L))
+    stop("Empty or multi-strand/seqname elements not supported by BED")
+  gr <- unlist(x_range, use.names=FALSE)
+  values(gr) <- values(x)
   values(gr)$name <- names(x)
-  values(gr)$blockStarts <- start(x) - do.call(IntegerList, as.list(start(gr)))
-  values(gr)$blockSizes <- width(x)
+  x_ranges <- ranges(unlist(x, use.names=FALSE))
+  ord_start <- order(start(x_ranges))
+  x_ranges <- x_ranges[ord_start]
+  x_rl <- split(x_ranges, togroup(x)[ord_start])
+  values(gr)$blockStarts <-
+    start(x_rl) - do.call(IntegerList, as.list(start(gr)))
+  values(gr)$blockSizes <- width(x_rl)
   gr
 })
