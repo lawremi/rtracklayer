@@ -139,10 +139,26 @@ setMethod("import.gz", "connection", function(con, ...) {
 setGeneric("bestFileFormat",
            function(x, dest, ...) standardGeneric("bestFileFormat"))
 
-setMethod("bestFileFormat", c("RangedData", "ANY"), function(x, dest) {
-  if (is.numeric(score(x))) # have numbers, let's plot them
-    "bw"
-  else "bed"
+setClassUnion("RangedDataORGenomicRanges", c("RangedData", "GenomicRanges"))
+
+setMethod("bestFileFormat", c("RangedDataORGenomicRanges", "ANY"),
+          function(x, dest) {
+            ## have numbers on a single strand, use BigWig
+            if (is.numeric(score(x)) && length(unique(strand(x))) == 1L)
+              "bw"
+            else "bed"
+          })
+
+setMethod("bestFileFormat", c("GRangesList", "ANY"), function(x, dest) {
+  "bed" # need hierarchical structure
+})
+
+setMethod("bestFileFormat", c("RleList", "ANY"), function(x, dest) {
+  "bw" # e.g., coverage
+})
+
+setMethod("bestFileFormat", c("RangesList", "ANY"), function(x, dest) {
+  "bed" # just ranges...
 })
 
 file_ext <- function(con) gsub(".*\\.([^.]*)$", "\\1", con)
