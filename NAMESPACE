@@ -30,7 +30,7 @@ importMethodsFrom("IRanges", elementLengths, window,
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
                   resize, elementMetadata)
 
-importClassesFrom("GenomicRanges", GRanges, GRangesList)
+importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList)
 
 importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
 
