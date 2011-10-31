@@ -151,6 +151,11 @@ setMethod("Ops", c("GRanges", "numeric"),
           }
           )
 
+setMethod("score", "ANY", function(x) NULL)
+setMethod("score", "GenomicRangesORGRangesList", function(x) {
+  values(x)$score
+})
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Constructor
 ###
