@@ -62,13 +62,13 @@
         Those items are necessary for constructing the canonical
         Quickload genome string (G_Species_Month_Year).
 
-        If \code{create} is \code{TRUE}, the genome will be created
-        (with a bunch of warnings if it already exists), using
-        \code{seqinfo} for the sequence lengths and \code{title} for the
-        display name of the genome in a UI. Creation only works
-        if the repository is local and writeable. Reasonable defaults
-        are used for \code{seqinfo} and \code{title} when the necessary
-        methods are available (and they are for \code{BSgenome}).
+        If \code{create} is \code{TRUE}, and the genome does not already
+        exist, the genome will be created, using \code{seqinfo} for the
+        sequence lengths and \code{title} for the display name of the
+        genome in a UI. Creation only works if the repository is local
+        and writeable. Reasonable defaults are used for \code{seqinfo}
+        and \code{title} when the necessary methods are available (and
+        they are for \code{BSgenome}).
     }
   }
 }
@@ -133,7 +133,8 @@
         to the repository).  If not a file name, \code{value} is written
         in \code{format}. For generic interval data, this means a BigWig
         file (if there is a numeric \dQuote{score} column) or a BED file
-        otherwise. For \code{UCSCData} values, the format is chosen
+        otherwise. An \code{RleList} (e.g., coverage) is output as
+        BigWig. For \code{UCSCData} values, the format is chosen
         according to the type of track line. For \code{RsamtoolsFile}
         objects, the file and its index are copied.
 

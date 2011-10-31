@@ -32,6 +32,19 @@
   accessible to the Integrated Genome Browser (IGB).
 }
 
+\section{Constructor}{
+  \describe{
+    \item{}{
+      \code{Quickload(uri = "quickload", create = FALSE)}: Constructs a
+      new \code{Quickload} object, representing a repository at
+      \code{uri}. If \code{create} is \code{TRUE}, and \code{uri} is
+      writeable (i.e., local), the repository is created if it does not
+      already exist. If it does exist, then a message is emitted to
+      indicate that the repository was not recreated.
+    }
+  }
+}
+
 \section{Accessor Methods}{
   In the code snippets below, \code{x} represents a \code{Quickload}
   object.

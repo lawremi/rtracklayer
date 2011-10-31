@@ -14,17 +14,18 @@
 \alias{chrom<-,GRanges-method}
 \alias{seqinfo,RangedData-method}
 \alias{seqinfo<-,RangedData-method}
-
+\alias{score,ANY-method}
+\alias{score,GenomicRangesORGRangesList-method}
 
 \title{Data on a Genome} \description{The \code{rtracklayer} package adds
-convenience methods on top of \code{RangedData} and \code{GRanges} to
+convenience methods on top of \code{RangedData} and \code{GenomicRanges} to
 manipulate data on genomic ranges. For \code{RangedData} the spaces are
 now called chromosomes (but could still refer to some other type of sequence).
 Similarly the universe refers to the genome.}
 
 \section{Accessors}{
   In the code snippets below,
-  \code{x} is a \code{RangedData} or \code{GRanges} object.
+  \code{x} is a \code{RangedData} or \code{GenomicRanges} object.
 
   \describe{
     \item{}{
@@ -39,6 +40,14 @@ Similarly the universe refers to the genome.}
       \code{\link[GenomicRanges:Seqinfo-class]{Seqinfo}} object. This is
       just a wrapper on top of
       \code{\link[=RangesList-methods]{seqinfo}} for \code{ranges(x)}.
+    }
+    \item{}{
+      \code{score(x)}: Gets the \dQuote{score} column from the element
+      metadata of a \code{GenomicRanges} or \code{GRangesList}. Many
+      track formats have a score column, so this is often used during
+      export. The IRanges package defines a method for
+      \code{RangedData}. The \code{ANY} fallback for this method simply
+      returns \code{NULL}.
     }
   }
 }
