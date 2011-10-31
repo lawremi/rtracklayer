@@ -10,17 +10,11 @@ setClass("TrackDb")
 setGeneric("track<-",
            function(object, ..., value) standardGeneric("track<-"))
 ## load a track into a database
-setReplaceMethod("track", c("TrackDb", "RangedData"),
+setReplaceMethod("track", c("TrackDb", "ANY"),
                  function(object, name = deparse(substitute(value)), ..., value)
                  {
-                   track(object, name, ...) <- RangedDataList(value)
-                   object
-                 })
-setReplaceMethod("track", c("TrackDb", "ANY"),
-                 function(object, name = deparse(substitute(value)),
-                          ..., value)
-                 {
-                   track(object, name, ...) <- as(value, "RangedData")
+                   track(object, name, ...) <-
+                     RangedDataList(as(value, "RangedData"))
                    object
                  })
 ## load several tracks into a database
