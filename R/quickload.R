@@ -164,8 +164,8 @@ QuickloadGenome <- function(quickload, genome, create = FALSE,
   genome_id <- quickloadGenomeId(genome)
   qlg <- new("QuickloadGenome", quickload = quickload, genome = genome_id)
   if (create) {
-    if (is.character(genome))
-      stop("Identifier '", genome, "' not resolved to a genome")
+    if (is.character(genome) && missing(seqinfo))
+      stop("No seqinfo for genome '", genome, "'")
     createQuickloadGenome(qlg, seqinfo, title)
   }
   qlg
@@ -177,7 +177,7 @@ setMethod("show", "QuickloadGenome", function(object) {
   cat(IRanges:::labeledLine("names", names(object)))
 })
 
-genomeFile <- function(x) file.path(uri(x), "genome.txt")
+genomeFile <- function(x) file.path(uri(x), "mod_chromInfo.txt")
 annotsFile <- function(x) file.path(uri(x), "annots.xml")
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
