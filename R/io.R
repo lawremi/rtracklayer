@@ -106,8 +106,14 @@ setMethod("import", c("character", "missing"),
 setMethod("import", c("character", "character"),
           function(con, format, text, ...)
           {
-            fun <- .importForFormat(format)
-            fun(con, ...)
+            if (file_ext(con) == "gz") {
+              if (format == "gz") # should only happen if user did not specify
+                format <- file_ext(sub("\\.gz$", "", con))
+              import(gzfile(con), format, ...)
+            } else {
+              fun <- .importForFormat(format)
+              fun(con, ...)
+            }
           })
 setMethod("import", c(con = "missing", text = "character"),
           function(con, format, text, ...)
@@ -121,16 +127,16 @@ setMethod("import", c(con = "missing", text = "character"),
 
 
 ## gzip handling
-setGeneric("import.gz",
-           function(con, ...) standardGeneric("import.gz"))
+## setGeneric("import.gz",
+##            function(con, ...) standardGeneric("import.gz"))
 
-setMethod("import.gz", "character", function(con, ...) {
-  import(gzfile(con), file_ext(sub("\\.gz$", "", con)), ...)
-})
+## setMethod("import.gz", "character", function(con, ...) {
+##   import(gzfile(con), file_ext(sub("\\.gz$", "", con)), ...)
+## })
 
-setMethod("import.gz", "connection", function(con, ...) {
-  import(gzcon(con), ...)
-})
+## setMethod("import.gz", "connection", function(con, ...) {
+##   import(gzcon(con), ...)
+## })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
