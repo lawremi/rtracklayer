@@ -39,7 +39,7 @@ Quickload <- function(uri = "quickload", create = FALSE) {
     stop("'create' must be TRUE or FALSE")
   if (create) {
     if (uriExists(uri)) {
-      message("URI '", uri, "' already exists; not replacing")
+      message("NOTE: '", uri, "' already exists")
       create <- FALSE
     } ## must create this before calling normURI (requires existence)
     else createResource(uri, dir = TRUE)
@@ -216,25 +216,63 @@ setMethod("referenceSequence", "QuickloadGenome",
 
 ### FIXME: check for file URI scheme
 
+haveRsamtools <- function() {
+  isTRUE(try(packageVersion("Rsamtools") >= "1.7.0", silent = TRUE))
+}
+
+indexTrack <- function(track, uri, format) {
+  indexed <- NULL
+  if (haveRsamtools()) { ## a bunch of heuristics to get an index, if possible
+    formats <- eval(formals(Rsamtools::indexTabix)$format)
+    parsed_uri <- parseURI(uri)
+    multi <- (is(track, "RangedDataList") ||
+              is(track, "SimpleGenomicRangesList")) && length(track) > 1
+    if (format %in% formats && uriIsLocal(parsed_uri) && !multi) {
+      original_path <- parsed_uri$path
+      path <- Rsamtools::bgzip(original_path, overwrite = TRUE)
+      skip <- if (!is.null(scanTrackLine(uri))) 1L else 0L
+      Rsamtools::indexTabix(path, format, skip = skip)
+      indexed <- Rsamtools::TabixFile(path)
+      unlink(original_path)
+    }
+  }
+  indexed
+}
+
+.exportToQuickload <-function(object, name,
+                              format = bestFileFormat(value, object),
+                              index = TRUE, metadata = character(), ..., value)
+{
+  if (is(value, "RsamtoolsFile")) {
+    if (missing(name))
+      name <- basename(path(value))
+    track(object, name, metadata = metadata) <- path(value)
+    copyResourceToQuickload(object, Rsamtools::index(value))
+  } else {
+    if (is(object, "Annotated")) {
+      value_metadata <- metadata(value)$quickload
+      value_metadata[names(metadata)] <- metadata
+      metadata <- value_metadata
+    }
+    filename <- paste(name, format, sep = ".")
+    path <- file.path(uri(object), filename)
+    seqinfo(value) <- seqinfo(object)
+    export(value, path, format = format, ...)
+    if (index && !is.null(indexed <- indexTrack(value, path, format)))
+      track(object, name, index = FALSE, metadata = metadata) <- indexed
+    else track(object, name, metadata = metadata) <- path
+  }
+  object
+}
+
 setReplaceMethod("track",
                  signature(object = "QuickloadGenome", value = "ANY"),
-                 function(object, name,
-                          format = bestFileFormat(value, object), ..., value)
-                 {
-                   if (is(value, "RsamtoolsFile")) {
-                     track(object, name, ...) <- path(value)
-                     copyResourceToQuickload(object, Rsamtools::index(value))
-                   } else {
-                     filename <- paste(name, format, sep = ".")
-                     path <- file.path(uri(object), filename)
-                     seqinfo(value) <- seqinfo(object)
-                     export(value, path)
-                     track(object, name) <- path
-                   }
-                   object
-                 })
+                 .exportToQuickload)
 
 copyResourceToQuickload <- function(object, path) {
+  uri <- parseURI(path)
+  if (uri$scheme == "")
+    path <- paste("file://", path, sep = "")
   filename <- basename(path)
   dest_file <- file.path(uri(object), filename)
   if (dest_file != path)
@@ -245,14 +283,14 @@ copyResourceToQuickload <- function(object, path) {
 setReplaceMethod("track",
                  signature(object = "QuickloadGenome",
                            value = "character"),
-                 function(object, name, description = name, ..., value) {
+                 function(object, name = basename(object),
+                          metadata = character(), value)
+                 {
                    file <- URLencode(copyResourceToQuickload(object, value))
                    files <- QuickloadGenome_annotFiles(object)
                    ## make sure we have the three required attributes
-                   attrs <- c(name = file, title = name,
-                              description = description)
-                   args <- list(...)
-                   attrs[names(args)] <- args
+                   attrs <- c(name = file, title = name)
+                   attrs[names(metadata)] <- metadata
                    filenames <- getNodeSet(files, "//@name")
                    if (file %in% filenames) {
                      removeChildren(files, match(file, filenames))
@@ -273,6 +311,15 @@ setReplaceMethod("referenceSequence",
                    export.2bit(value, referenceSequenceFile(x))
                    x
                  })
+
+### Not exported yet
+setGeneric("synonyms", function(x, ...) standardGeneric("synonyms"))
+
+synonymFile <- function(x) file.path(uri(x), "synonyms.txt")
+
+setMethod("synonyms", "QuickloadGenome", function(x) {
+  CharacterList(strsplit(readLines(synonymFile(x)), "\t"))
+})
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
@@ -297,7 +344,7 @@ quickloadGenomeId <- function(genome) {
 
 createQuickloadGenome <- function(x, seqinfo, title) {
   if (genome(x) %in% genome(quickload(x))) {
-    message("Genome '", genome(x), "' already exists; not replacing")
+    message("NOTE: Genome '", genome(x), "' already exists")
     return()
   }
   createResource(uri(x), dir = TRUE)
