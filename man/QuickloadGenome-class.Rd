@@ -171,7 +171,7 @@ qlg$bedData
 
 \dontrun{
 ## populating the test repository
-ql <- Quickload(file.path(tests_dir, "quickload")), create = TRUE)
+ql <- Quickload(file.path(tests_dir, "quickload"), create = TRUE)
 reference_seq <- import(file.path(tests_dir, "test.2bit"))
 names(reference_seq) <- "test"
 qlg <- QuickloadGenome(ql, "T_species_Oct_2011", create = TRUE,
