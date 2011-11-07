@@ -17,15 +17,6 @@ setReplaceMethod("track", c("TrackDb", "ANY"),
                      RangedDataList(as(value, "RangedData"))
                    object
                  })
-## load several tracks into a database
-## (this may be more efficient for some implementations)
-setReplaceMethod("track", c("TrackDb", "RangedDataList"),
-                 function(object, name = names(track), ..., value)
-                 {
-                   for (i in seq_len(length(name)))
-                     track(object, name[i], ...) <- value[[i]]
-                   object
-                 })
 
 setClassUnion("RangedDataORRangedDataList", c("RangedData", "RangedDataList"))
 
