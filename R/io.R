@@ -11,7 +11,8 @@
 ##setOldClass("connection")
 
 .connectionClasses <- c("file", "url", "gzfile", "bzfile", "unz", "pipe",
-                        "fifo", "sockconn", "terminal", "textConnection")
+                        "fifo", "sockconn", "terminal", "textConnection",
+                        "gzcon")
 apply(cbind(.connectionClasses, "connection"), 1, setOldClass,
       where = environment())
 setClassUnion("characterORconnection", c("character", "connection"))
@@ -109,7 +110,11 @@ setMethod("import", c("character", "character"),
             if (file_ext(con) == "gz") {
               if (format == "gz") # should only happen if user did not specify
                 format <- file_ext(sub("\\.gz$", "", con))
-              import(gzfile(con), format, ...)
+              uri <- parseURI(con)
+              if (uri$scheme != "")
+                con <- gzcon(url(con))
+              else con <- gzfile(con)
+              import(con, format, ...)
             } else {
               fun <- .importForFormat(format)
               fun(con, ...)
