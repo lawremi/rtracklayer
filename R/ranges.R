@@ -127,30 +127,6 @@ setReplaceMethod("chrom", "RangesList", function(x, value) {
   x
 })
 
-## zooming (symmetrically scales the width)
-setMethod("Ops", c("GRanges", "numeric"),
-          function(e1, e2)
-          {
-            if (IRanges:::anyMissing(e2))
-              stop("NA not allowed as zoom factor")
-            e2 <- recycleNumericArg(e2)
-            if (.Generic == "*") {
-              e2 <- ifelse(e2 < 0, abs(1/e2), e2)
-              resize(e1, width(e1) / e2, fix = "center")
-            } else {
-              if (.Generic == "-") {
-                e2 <- -e2
-                .Generic <- "+"
-              }
-              if (.Generic == "+") {
-                if (any(-e2*2 > width(e1)))
-                  stop("adjustment would result in ranges with negative widths")
-                resize(e1, width(e1) + e2*2, fix = "center")
-              }
-            }
-          }
-          )
-
 setMethod("score", "ANY", function(x) NULL)
 setMethod("score", "GenomicRangesORGRangesList", function(x) {
   values(x)$score
