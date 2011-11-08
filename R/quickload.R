@@ -111,7 +111,8 @@ QuickloadGenome_annotFiles <- function(x) {
 
 setMethod("names", "QuickloadGenome", function(x) {
   emd <- elementMetadata(x)
-  structure(as.character(emd$name), names = as.character(emd$title))
+  structure(sapply(as.character(emd$name), URLdecode),
+            names = as.character(emd$title))
 })
 
 setMethod("elementMetadata", "QuickloadGenome", function(x) {
@@ -274,9 +275,12 @@ copyResourceToQuickload <- function(object, path) {
   if (uri$scheme == "")
     path <- paste("file://", path, sep = "")
   filename <- basename(path)
-  dest_file <- file.path(uri(object), filename)
-  if (dest_file != path)
-    download.file(path, dest_file)
+  object_uri <- parseURI(uri(object))
+  if (uriIsLocal(object_uri)) {
+    dest_file <- file.path(object_uri$path, filename)
+    if (dest_file != path)
+      download.file(path, dest_file)
+  } else stop("Quickload is not local; cannot copy track")
   filename
 }
 
