@@ -169,7 +169,8 @@ setMethod("import.bed", "connection",
             variant <- match.arg(variant)
             if (variant == "base") {
               ## check for a track line
-              if (!is.null(line <- scanTrackLine(con))) {
+              line <- scanTrackLine(con)
+              if (!is.null(line)) {
                 if (trackLine) {
                   pushBack(line, con)
                   return(import.ucsc(con, subformat = "bed", drop = TRUE,
