@@ -159,7 +159,10 @@ scanTrackLine <- function(con) {
     line <- readLines(con, 1, warn = FALSE)
   if (length(grep("^track", line)) > 0)
     line
-  else NULL
+  else {
+    pushBack(line, con)
+    NULL
+  }
 }
 
 setMethod("import.bed", "connection",
@@ -170,15 +173,13 @@ setMethod("import.bed", "connection",
             if (variant == "base") {
               ## check for a track line
               line <- scanTrackLine(con)
-              if (!is.null(line)) {
-                if (trackLine) {
-                  pushBack(line, con)
-                  return(import.ucsc(con, subformat = "bed", drop = TRUE,
-                                     trackLine = FALSE, genome = genome,
-                                     asRangedData = asRangedData,
-                                     colnames = colnames))
-                }
-              } else pushBack(line, con)
+              if (!is.null(line) && trackLine) {
+                pushBack(line, con)
+                return(import.ucsc(con, subformat = "bed", drop = TRUE,
+                                   trackLine = FALSE, genome = genome,
+                                   asRangedData = asRangedData,
+                                   colnames = colnames))
+              }
             }
             if (variant == "bedGraph") {
               bedClasses <- c("character", "integer", "integer", "numeric")
