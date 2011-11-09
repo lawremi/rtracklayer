@@ -255,7 +255,7 @@ indexTrack <- function(track, uri, format) {
       value_metadata[names(metadata)] <- metadata
       metadata <- value_metadata
     }
-    filename <- paste(name, format, sep = ".")
+    filename <- URLencode(paste(name, format, sep = "."))
     path <- file.path(uri(object), filename)
     seqinfo(value) <- seqinfo(object)
     export(value, path, format = format, ...)
@@ -290,7 +290,7 @@ setReplaceMethod("track",
                  function(object, name = basename(object),
                           metadata = character(), value)
                  {
-                   file <- URLencode(copyResourceToQuickload(object, value))
+                   file <- copyResourceToQuickload(object, value)
                    files <- QuickloadGenome_annotFiles(object)
                    ## make sure we have the three required attributes
                    attrs <- c(name = file, title = name)
