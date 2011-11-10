@@ -13,6 +13,8 @@ setReplaceMethod("seqinfo", "RangedData",
                    x
                  })
 
+setMethod("seqnames", "RangedData", function(x) space(x))
+
 setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
 setMethod("chrom", "RangedData", function(x) chrom(ranges(x)))
 setMethod("chrom", "GRanges", function(x) seqnames(x))
@@ -125,6 +127,10 @@ setMethod("chrom", "RangesList", function(x) {
 setReplaceMethod("chrom", "RangesList", function(x, value) {
   names(x) <- value
   x
+})
+
+setMethod("seqnames", "RangesList", function(x) {
+  seqsplit(space(x), rep(names(x), elementLengths(x)))
 })
 
 setMethod("score", "ANY", function(x) NULL)
