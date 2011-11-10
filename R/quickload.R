@@ -240,6 +240,20 @@ indexTrack <- function(track, uri, format) {
   indexed
 }
 
+setGeneric("sortBySeqnameAndStart",
+           function(x) standardGeneric("sortBySeqnameAndStart"))
+
+## Seems not really possible for GRangesList
+
+setMethod("sortBySeqnameAndStart", "RangedDataORGenomicRanges", function(x) {
+  x[order(seqnames(x), start(x)),]
+})
+
+setMethod("sortBySeqnameAndStart", "RangesList", function(x) {
+  value_flat <- unlist(value, use.names=FALSE)
+  relist(value_flat[order(space(value), start(value_flat))], value)
+})
+
 .exportToQuickload <-function(object, name,
                               format = bestFileFormat(value, object),
                               index = TRUE, metadata = character(), ..., value)
@@ -255,13 +269,17 @@ indexTrack <- function(track, uri, format) {
       value_metadata[names(metadata)] <- metadata
       metadata <- value_metadata
     }
-    filename <- URLencode(paste(name, format, sep = "."))
-    path <- file.path(uri(object), filename)
+    filename <- paste(name, format, sep = ".")
+    path <- paste(uri(object), filename, sep = "/")
     seqinfo(value) <- seqinfo(object)
+    if (index) { # make some attempt to sort the output for tabix
+      value <- sortBySeqnameAndStart(value)
+    }
     export(value, path, format = format, ...)
-    if (index && !is.null(indexed <- indexTrack(value, path, format)))
+    uri <- URLencode(path) # apparently url() does not decode, so encode here
+    if (index && !is.null(indexed <- indexTrack(value, uri, format)))
       track(object, name, index = FALSE, metadata = metadata) <- indexed
-    else track(object, name, metadata = metadata) <- path
+    else track(object, name, metadata = metadata) <- uri
   }
   object
 }
