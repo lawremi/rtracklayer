@@ -6,6 +6,8 @@ import(RCurl, XML)
 
 importFrom("stats", offset)
 
+importFrom("BiocGenerics", rbind, cbind)
+
 importClassesFrom("IRanges", file, connection,
                   RangedData, RangedDataList, DataTable,
                   Annotated, Vector, List, DataTableORNULL, characterORNULL,
@@ -21,7 +23,7 @@ importMethodsFrom("IRanges", elementLengths, window,
                   "start<-", "end<-", "width<-",
                   split, lapply, unlist, unique,
                   as.vector, as.list, as.data.frame,
-                  rbind, cbind, colnames,  rownames,
+                  colnames,  rownames,
                   "colnames<-","rownames<-",
                   ranges, values, score,
                   "ranges<-", "values<-", "score<-",
