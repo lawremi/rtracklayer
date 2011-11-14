@@ -1383,7 +1383,7 @@ setMethod("ucscForm", "RangesList",
             form <- list()
             if (length(genome(object)))
               form <- c(form, db = singleGenome(genome(object)))
-            chrom <- chrom(object)
+            chrom <- space(object)
             if (!is.null(chrom)) {
               if (!length(chrom))
                 chrom <- levels(chrom)[1]

@@ -34,7 +34,7 @@ setReplaceMethod("chrom", "GRanges", function(x, value) {
 ### Constructor.
 ###
 
-GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NULL,
+GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
                         asRangedData = TRUE)
 {
   if (!isTRUEorFALSE(asRangedData))
@@ -51,7 +51,8 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NULL,
       stop("length of 'chrom' greater than length of 'ranges'")
     if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))
       stop("length of 'ranges' not a multiple of 'chrom' length")
-    if (!is.null(genome) && (length(genome) != 1 || !is.character(genome)))
+    if (!is.null(genome) && !is.na(genome) &&
+        (length(genome) != 1 || !is.character(genome)))
       stop("'genome' must be a single string")
     if (asRangedData) {
       if (!is.null(strand)) {
@@ -82,7 +83,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NULL,
         strand <- Rle("*", length(ranges))
       gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, ...)
       if (!is.null(genome))
-        metadata(gd) <- list(universe = genome)
+        genome(gd) <- genome
     }
   }
   gd
@@ -96,13 +97,13 @@ setMethod("seqinfo", "RangesList", function(x) {
   si <- metadata(x)$seqinfo
   if (is.null(si)) {
     genome <- singleGenome(universe(x))
-    if (!is.null(genome))
+    if (!is.null(genome) && !is.na(genome))
       si <- seqinfoForGenome(genome)
     if (is.null(si)) {
       sn <- names(x)
       if (is.null(sn))
         sn <- as.character(seq(length(x)))
-      si <- Seqinfo(sn, end(range(x)))
+      si <- Seqinfo(sn, end(unlist(range(x), use.names = FALSE)))
       if (!is.null(genome))
         genome(si) <- rep(genome, length(x))
     }
@@ -118,10 +119,7 @@ setReplaceMethod("seqinfo", "RangesList",
                  })
 
 setMethod("chrom", "RangesList", function(x) {
-  chrom <- names(x)
-  if (!is.null(chrom))
-    chrom <- rep(factor(chrom, chrom), unlist(lapply(x, length)))
-  chrom
+  names(x)
 })
 
 setReplaceMethod("chrom", "RangesList", function(x, value) {
@@ -130,7 +128,7 @@ setReplaceMethod("chrom", "RangesList", function(x, value) {
 })
 
 setMethod("seqnames", "RangesList", function(x) {
-  seqsplit(space(x), rep(names(x), elementLengths(x)))
+  seqsplit(Rle(space(x)), rep(names(x), elementLengths(x)))
 })
 
 setMethod("score", "ANY", function(x) NULL)

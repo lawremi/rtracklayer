@@ -71,7 +71,7 @@ setMethod("export.bw", "ANY",
           function(object, con,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                      "bedGraph"),
-                   seqlengths, compress, genome = NULL, ...)
+                   seqlengths, compress, genome = NA, ...)
           {
             rd <- as(object, "RangedData")
             export.bw(rd, con, dataFormat, seqlengths, compress,
@@ -82,14 +82,14 @@ setMethod("export.bw", c("RangedData", "character"),
           function(object, con,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                                   "bedGraph"),
-                   seqlengths, compress, genome = NULL)
+                   seqlengths, compress, genome = NA)
           {
             score <- score(object)
             if (!is.numeric(score) || any(is.na(score)))
               stop("The score must be numeric, without any NA's")
             if (!isTRUEorFALSE(compress))
               stop("'compress' must be TRUE or FALSE")
-            if (!is.null(genome)) {
+            if (!is.null(genome) && !is.na(genome)) {
               genome(object) <- genome
               seqlengths <- seqlengths(object)
             }

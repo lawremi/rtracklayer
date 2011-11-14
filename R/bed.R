@@ -29,7 +29,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             variant <- match.arg(variant)
             name <- strand <- thickStart <- thickEnd <- color <- NULL
             blockCount <- blockSizes <- blockStarts <- NULL
-            df <- data.frame(chrom(object), start(object) - 1L, end(object))
+            df <- data.frame(seqnames(object), start(object) - 1L, end(object))
             score <- score(object)
             if (!is.null(score)) {
               if (!is.numeric(score) || any(is.na(score)))
@@ -140,15 +140,24 @@ setMethod("export.bed", "RangedDataList",
 
 setGeneric("import.bed",
            function(con, variant = c("base", "bedGraph", "bed15"),
-                    trackLine = TRUE, genome = NULL, asRangedData = TRUE,
+                    trackLine = TRUE, genome = NA, asRangedData = TRUE,
                     colnames = NULL, ...)
            standardGeneric("import.bed"))
+
+connectionForFile <- function(x) {
+  if (file_ext(x) == "gz")
+    gzfile(x)
+  else file(x)
+}
 
 setMethod("import.bed", "character",
           function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
                    genome, asRangedData = TRUE, colnames = NULL)
           {
-            import(file(con), format = "bed", variant = variant,
+            con <- connectionForFile(con)
+            open(con)
+            on.exit(close(con))
+            import(con, format = "bed", variant = variant,
                    trackLine = trackLine, genome = genome,
                    asRangedData = asRangedData, colnames = colnames)
           })
@@ -277,7 +286,7 @@ setMethod("blocks", "GenomicRanges",
 ##setMethod("exons", "GenomicRanges", function(x) blocks(x))
 
 setGeneric("import.bed15Lines",
-           function(con, trackLine, genome = NULL, asRangedData = TRUE, ...)
+           function(con, trackLine, genome = NA, asRangedData = TRUE, ...)
            standardGeneric("import.bed15Lines"))
 
 setMethod("import.bed15Lines", "ANY",
@@ -324,7 +333,7 @@ setMethod("import.bed15Lines", "ANY",
           })
 
 setGeneric("import.bed15",
-           function(con, genome = NULL, asRangedData = TRUE, ...)
+           function(con, genome = NA, asRangedData = TRUE, ...)
            standardGeneric("import.bed15"))
 
 setMethod("import.bed15", "ANY",
@@ -400,7 +409,7 @@ setAs("character", "Bed15TrackLine",
       })
 
 setGeneric("import.bedGraph",
-           function(con, genome = NULL, asRangedData = TRUE, ...)
+           function(con, genome = NA, asRangedData = TRUE, ...)
            standardGeneric("import.bedGraph"))
 
 setMethod("import.bedGraph", "ANY",
@@ -411,7 +420,7 @@ setMethod("import.bedGraph", "ANY",
           })
 
 setGeneric("import.bedGraphLines",
-           function(con, genome = NULL, asRangedData = TRUE, ...)
+           function(con, genome = NA, asRangedData = TRUE, ...)
            standardGeneric("import.bedGraphLines"))
 
 setMethod("import.bedGraphLines", "ANY",

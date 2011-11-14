@@ -30,7 +30,7 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
     gffComment(con, "date", format(Sys.time(), "%Y-%m-%d"))
   }
   
-  seqname <- chrom(object)
+  seqname <- seqnames(object)
   if (is.null(object$ID))
     object$ID <- rownames(object)
   if (version == "3")
@@ -102,7 +102,7 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
 })
 
 setGeneric("import.gff",
-           function(con, version = c("1", "2", "3"), genome = NULL,
+           function(con, version = c("1", "2", "3"), genome = NA,
                     asRangedData = TRUE, colnames = NULL)
            standardGeneric("import.gff"))
            

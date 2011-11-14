@@ -231,7 +231,7 @@ indexTrack <- function(track, uri, format) {
     if (format %in% formats && uriIsLocal(parsed_uri) && !multi) {
       original_path <- parsed_uri$path
       path <- Rsamtools::bgzip(original_path, overwrite = TRUE)
-      skip <- if (!is.null(scanTrackLine(uri))) 1L else 0L
+      skip <- if (!is.null(scanTrackLine(original_path))) 1L else 0L
       Rsamtools::indexTabix(path, format, skip = skip)
       indexed <- Rsamtools::TabixFile(path)
       unlink(original_path)
@@ -261,8 +261,8 @@ setMethod("sortBySeqnameAndStart", "RangesList", function(x) {
   if (is(value, "RsamtoolsFile")) {
     if (missing(name))
       name <- basename(path(value))
-    track(object, name, metadata = metadata) <- path(value)
-    copyResourceToQuickload(object, Rsamtools::index(value))
+    track(object, name, metadata = metadata) <- URLencode(path(value))
+    copyResourceToQuickload(object, URLencode(Rsamtools::index(value)))
   } else {
     if (is(object, "Annotated")) {
       value_metadata <- metadata(value)$quickload
@@ -276,7 +276,8 @@ setMethod("sortBySeqnameAndStart", "RangesList", function(x) {
       value <- sortBySeqnameAndStart(value)
     }
     export(value, path, format = format, ...)
-    uri <- URLencode(path) # apparently url() does not decode, so encode here
+    ## FIXME: We decode here, rather than above, due to bug in R
+    uri <- URLencode(path) 
     if (index && !is.null(indexed <- indexTrack(value, uri, format)))
       track(object, name, index = FALSE, metadata = metadata) <- indexed
     else track(object, name, metadata = metadata) <- uri
@@ -288,16 +289,17 @@ setReplaceMethod("track",
                  signature(object = "QuickloadGenome", value = "ANY"),
                  .exportToQuickload)
 
-copyResourceToQuickload <- function(object, path) {
-  uri <- parseURI(path)
-  if (uri$scheme == "")
-    path <- paste("file://", path, sep = "")
-  filename <- basename(path)
+copyResourceToQuickload <- function(object, uri) {
+  parsed_uri <- parseURI(uri)
+  if (parsed_uri$scheme == "")
+    uri <- paste("file://", uri, sep = "")
+  filename <- basename(uri)
   object_uri <- parseURI(uri(object))
   if (uriIsLocal(object_uri)) {
     dest_file <- file.path(object_uri$path, filename)
-    if (dest_file != path)
-      download.file(path, dest_file)
+    if (paste(uri(object), filename, sep = "/") != uri)
+### FIXME: URLdecode() here because of R bug
+      download.file(URLdecode(uri), dest_file)
   } else stop("Quickload is not local; cannot copy track")
   filename
 }

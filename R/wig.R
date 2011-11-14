@@ -86,17 +86,32 @@ setMethod("export.wigLines", c("RangedData", "characterORconnection"),
           })
 
 setGeneric("import.wig",
-           function(con, genome = NULL, asRangedData = TRUE, ...)
+           function(con, genome = NA, asRangedData = TRUE, ...)
            standardGeneric("import.wig"))
-setMethod("import.wig", "ANY",
+
+setMethod("import.wig", "character",
           function(con, genome, asRangedData = TRUE)
           {
-            import.ucsc(con, "wig", TRUE, genome = genome,
-                        asRangedData = asRangedData)
+            con <- connectionForFile(con)
+            open(con)
+            on.exit(close(con))
+            import.wig(con, genome = genome,
+                       asRangedData = asRangedData)
+          })
+setMethod("import.wig", "connection",
+          function(con, genome, asRangedData = TRUE)
+          {
+            line <- scanTrackLine(con)
+            if (!is.null(line)) {
+              pushBack(line, con)
+              import.ucsc(con, "wig", TRUE, genome = genome,
+                          asRangedData = asRangedData)
+            } else import.wigLines(con, genome = genome,
+                                   asRangedData = asRangedData)
           })
 
 setGeneric("import.wigLines",
-           function(con, genome = NULL, asRangedData = TRUE, ...)
+           function(con, genome = NA, asRangedData = TRUE, ...)
            standardGeneric("import.wigLines"))
 
 setMethod("import.wigLines", "characterORconnection",
@@ -109,17 +124,31 @@ setMethod("import.wigLines", "characterORconnection",
             formatLines <- lines[formatInds]
             starts <- formatInds + 1L
             ends <- c(tail(formatInds, -1) - 1L, length(lines))
+            format <- gsub("^([^ ]*) .*", "\\1", formatLines[i])
+            parsedFormat <- lapply(formatLines, ucscParsePairs)
+            seqlevels <- sapply(parsedFormat, `[[`, "chrom")
             if (length(formatLines)) {
               parseData <- function(i) {
+                ## parse format line
+                formatVals <- parsedFormat[[i]]
                 # parse the data values
                 con <- file()
-                writeLines(window(lines, starts[i], ends[i]), con)
+                block_lines <- window(lines, starts[i], ends[i])
+                if (!length(block_lines)) {
+                  if (asRangedData) {
+                    rl <- RangesList(IRanges())
+                    names(rl) <- formatVals[["chrom"]]
+                    return(RangedData(rl, score = numeric()))
+                  } else {
+                    gr <- GRanges(score = numeric())
+                    seqlevels(gr) <- seqlevels
+                    return(gr)
+                  }
+                }
+                writeLines(block_lines, con)
                 data <- read.table(con)
                 close(con)
-                # parse format line
-                format <- gsub("^([^ ]*) .*", "\\1", formatLines[i])
-                formatVals <- ucscParsePairs(formatLines[i])
-                if (format == "variableStep") {
+                if (format[i] == "variableStep") {
                   start <- data[,1]
                   score <- data[,2]
                 } else {
@@ -132,16 +161,19 @@ setMethod("import.wigLines", "characterORconnection",
                 if (is.na(span))
                   span <- 1
                 end <- start + as.integer(span) - 1
-                GenomicData(IRanges(start, end), score = score,
-                            chrom = formatVals[["chrom"]],
-                            asRangedData = asRangedData)
+                gd <- GenomicData(IRanges(start, end), score = score,
+                                  chrom = formatVals[["chrom"]],
+                                  asRangedData = asRangedData)
+                seqlevels(gd) <- seqlevels
+                gd
               }
               resultList <- lapply(seq_along(formatInds), parseData)
               if (asRangedData)
                 gd <- do.call(rbind, resultList)
               else
                 gd <- do.call(c, resultList)
-              genome(gd) <- genome
+              if (!is.null(genome))
+                genome(gd) <- genome
               gd
             } else {
               import(text = lines, format = "bed", variant = "bedGraph",
