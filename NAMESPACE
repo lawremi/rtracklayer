@@ -2,9 +2,14 @@ useDynLib(rtracklayer, .registration = TRUE)
 
 import(zlibbioc)
 
-import(RCurl, XML)
-
 importFrom("stats", offset)
+
+importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
+           xmlInternalTreeParse, parseURI, newXMLNode, xmlChildren,
+           addChildren, removeChildren, saveXML)
+
+importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
+           postForm)
 
 importFrom("BiocGenerics", rbind, cbind)
 

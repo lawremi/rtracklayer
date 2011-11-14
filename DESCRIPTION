@@ -2,14 +2,18 @@ Package: rtracklayer
 Title: R interface to genome browsers and their annotation tracks
 Version: 1.15.1
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
-Depends: R (>= 2.7.0), methods, RCurl (>= 1.4-2)
-Imports: XML (>= 1.98-0), BiocGenerics (>= 0.1.0), IRanges (>= 1.13.4), GenomicRanges (>= 1.7.3), Biostrings (>= 2.23.2), BSgenome (>= 1.23.1), zlibbioc
-Suggests: humanStemCell, microRNA (>= 1.1.1), genefilter, limma, org.Hs.eg.db, BSgenome.Hsapiens.UCSC.hg19, TxDb.Hsapiens.UCSC.hg19.knownGene, hgu133plus2.db, Rsamtools
+Depends: R (>= 2.7.0), methods, GenomicRanges
+Imports: XML (>= 1.98-0), BiocGenerics (>= 0.1.0), IRanges (>= 1.13.4),
+         GenomicRanges (>= 1.7.3), Biostrings (>= 2.23.2), BSgenome (>= 1.23.1),
+         zlibbioc, RCurl (>= 1.4-2)
+Suggests: humanStemCell, microRNA (>= 1.1.1), genefilter, limma, org.Hs.eg.db,
+          BSgenome.Hsapiens.UCSC.hg19, TxDb.Hsapiens.UCSC.hg19.knownGene,
+          hgu133plus2.db, Rsamtools
 LinkingTo: IRanges
 Description: Extensible framework for interacting with multiple genome 
   browsers (currently UCSC built-in) and manipulating 
   annotation tracks in various formats (currently GFF, BED, bedGraph, BED15,
-  WIG, and BigWig built-in). The user may export/import tracks to/from the
+  WIG, BigWig and 2bit built-in). The user may export/import tracks to/from the
   supported browsers, as well as query and modify the browser state, such as the
   current viewport.
 Maintainer: Michael Lawrence <michafla@gene.com>
