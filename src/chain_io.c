@@ -135,7 +135,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
 SEXP readChain(SEXP r_path, SEXP r_exclude) {
   const char *path, *exclude;
   FILE *stream;
-  SEXP ans, ans_names, ans_listData;
+  SEXP ans, ans_names, ans_listData, chain_class, chainBlock_class;
   ChainBlock **chains;
   int i, nblocks;
 
@@ -145,14 +145,17 @@ SEXP readChain(SEXP r_path, SEXP r_exclude) {
   exclude = r_exclude == R_NilValue ? NULL : CHAR(STRING_ELT(r_exclude, 0));
   chains = read_chain_file(stream, exclude, &nblocks);
 
-  PROTECT(ans = NEW_OBJECT(MAKE_CLASS("Chain")));
+  PROTECT(chain_class = MAKE_CLASS("Chain"));
+  PROTECT(chainBlock_class = MAKE_CLASS("ChainBlock"));
+  
+  PROTECT(ans = NEW_OBJECT(chain_class));
   ans_listData = allocVector(VECSXP, nblocks);
   SET_SLOT(ans, install("listData"), ans_listData);
   ans_names = allocVector(STRSXP, nblocks);
   SET_NAMES(ans_listData, ans_names);
   for (i = 0; i < nblocks; i++) {
     SEXP block;
-    block = NEW_OBJECT(MAKE_CLASS("ChainBlock"));
+    block = NEW_OBJECT(chainBlock_class);
     SET_VECTOR_ELT(ans_listData, i, block);
     SET_SLOT(block, install("ranges"),
 		new_IRanges_from_RangeAE("IRanges", &chains[i]->ranges));
@@ -169,7 +172,7 @@ SEXP readChain(SEXP r_path, SEXP r_exclude) {
     SET_STRING_ELT(ans_names, i, mkChar(chains[i]->name));
   }
 
-  UNPROTECT(1);
+  UNPROTECT(3);
 
   return ans;
 }
