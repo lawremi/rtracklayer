@@ -161,8 +161,8 @@ SEXP BWGSectionList_cleanup(SEXP r_sections)
     struct lm *lm = R_ExternalPtrAddr(R_ExternalPtrTag(r_sections));
     lmCleanup(&lm);
   }
-  return R_NilValue;
   popRHandlers();
+  return R_NilValue;
 }
 
 /* --- .Call ENTRY POINT --- */
