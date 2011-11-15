@@ -7,6 +7,7 @@
 \alias{chrom<-,RangesList-method}
 \alias{seqinfo,RangesList-method}
 \alias{seqinfo<-,RangesList-method}
+\alias{seqnames,RangesList-method}
 
 \title{Ranges on a Genome}
 
@@ -31,6 +32,11 @@
       \code{chrom(x), chrom(x) <- value}: Gets or sets the chromosome
       names for \code{x}. This is an alias for
       \code{\link[IRanges:RangesList-class]{names}(x)}.
+    }
+    \item{}{
+      \code{seqnames(x)}: Gets the sequence names for the ranges in
+      \code{x}, as an \code{RleList} of length equal to the length
+      of \code{x}.
     }
     \item{}{
       \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the

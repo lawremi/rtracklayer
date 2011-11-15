@@ -14,10 +14,13 @@
 \alias{chrom<-,GRanges-method}
 \alias{seqinfo,RangedData-method}
 \alias{seqinfo<-,RangedData-method}
+\alias{seqnames,RangedData-method}
 \alias{score,ANY-method}
 \alias{score,GenomicRangesORGRangesList-method}
 
-\title{Data on a Genome} \description{The \code{rtracklayer} package adds
+\title{Data on a Genome}
+
+\description{The \code{rtracklayer} package adds
 convenience methods on top of \code{RangedData} and \code{GenomicRanges} to
 manipulate data on genomic ranges. For \code{RangedData} the spaces are
 now called chromosomes (but could still refer to some other type of sequence).
@@ -29,10 +32,16 @@ Similarly the universe refers to the genome.}
 
   \describe{
     \item{}{
-      \code{chrom(x), chrom(x) <- value}: Gets or sets the chromosome
-      names for \code{x}. The length of \code{value} should equal the
-      length of \code{x}. This is an alias for
+      \code{chrom(x), chrom(x) <- value}: Gets or
+      sets the chromosome names for \code{x}. The length of \code{value}
+      should equal the length of \code{x}. This is an alias for
       \code{\link[IRanges:RangedData-class]{names}(x)}.
+    }
+    \item{}{
+      \code{seqnames(x)}: Gets the sequence names for \code{x}. The
+      length of the return value equals the number of rows in \code{x}.
+      This is an alias for
+      \code{\link[IRanges:RangedData-class]{space}(x)}.
     }
     \item{}{
       \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the
