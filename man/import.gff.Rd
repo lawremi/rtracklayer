@@ -30,17 +30,17 @@
   instances from connections or text.
 }
 \usage{
-import.gff(con, version = c("1", "2", "3"), genome = NULL,
+import.gff(con, version = c("1", "2", "3"), genome = NA,
            asRangedData = TRUE, colnames = NULL)
 import.gff1(con, ...)
 import.gff2(con, ...)
 import.gff3(con, ...)
 import.bed(con, variant = c("base", "bedGraph", "bed15"),
-           trackLine = TRUE, genome = NULL,
+           trackLine = TRUE, genome = NA,
            asRangedData = TRUE, colnames = NULL, ...)
-import.bed15(con, genome = NULL, asRangedData = TRUE, ...)
-import.bedGraph(con, genome = NULL, asRangedData = TRUE, ...)
-import.wig(con, genome = NULL, asRangedData = TRUE, ...)
+import.bed15(con, genome = NA, asRangedData = TRUE, ...)
+import.bedGraph(con, genome = NA, asRangedData = TRUE, ...)
+import.wig(con, genome = NA, asRangedData = TRUE, ...)
 import.ucsc(con,
             subformat = c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
             drop = FALSE, asRangedData = TRUE, ...)
