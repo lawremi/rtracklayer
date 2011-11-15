@@ -51,10 +51,11 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
       stop("length of 'chrom' greater than length of 'ranges'")
     if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))
       stop("length of 'ranges' not a multiple of 'chrom' length")
-    if (!is.null(genome) && !is.na(genome) &&
-        (length(genome) != 1 || !is.character(genome)))
-      stop("'genome' must be a single string")
+    if (!is.null(genome) && !isSingleStringOrNA(genome))
+      stop("'genome' must be a single string, or NULL, or NA")
     if (asRangedData) {
+      if (is.na(genome))
+        genome <- NULL # universe expects NULL if unknown
       if (!is.null(strand)) {
         if (!all(strand[!is.na(strand)] %in% levels(strand())))
           stop("strand values should be 'NA', '-', '+' or '*'")
