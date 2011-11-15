@@ -42,14 +42,16 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             } else {
               toCSV <- function(x) {
                 if (is(x, "IntegerList")) {
-                  x <- sapply(x, paste, collapse = ",")
+                  x <- unlist(lapply(x, paste, collapse = ","), use.names=FALSE)
                 } else if (!is.character(x) && !is.null(x))
                   stop("Could not convert block coordinates to CSV")
                 x
               }
-              blockSizes <- toCSV(object$blockSizes)
-              blockStarts <- toCSV(object$blockStarts)
-### TODO: accept blockStarts/Sizes as IntegerLists
+              blockSizes <- blockStarts <- NULL
+              if (!is.null(object$blocks)) {
+                blockSizes <- toCSV(width(object$blocks))
+                blockStarts <- toCSV(start(object$blocks) - 1L)
+              }
               if (variant == "bed15" && is.null(blockSizes))
                 blockStarts <- blockSizes <- "" # bed15 must have all 15 cols
               if (!is.null(blockSizes) || !is.null(blockStarts)) {
@@ -64,7 +66,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
                 if (any(df[[2]] + lastSize + lastStart != df[[3]]) ||
                     any(sub(",.*", "", blockStarts) != "0"))
                   stop("blocks must span entire feature")
-                blockCount <- elementLengths(strsplit(blockSizes, ","))
+                blockCount <- elementLengths(object$blocks)
                 if (!is.null(object$blockCount))
                   if (!identical(blockCount, as.integer(object$blockCount)))
                     stop("incorrect block counts given block sizes")
@@ -80,7 +82,12 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
                 color[nacol] <- "0"
               }
               thickStart <- object$thickStart
-              thickEnd <- object$thickEnd ## color requires thick ranges
+              thickEnd <- object$thickEnd
+              if (!is.null(object$thick)) {
+                thickStart <- start(object$thick)
+                thickEnd <- end(object$thick)
+              }
+              ## color requires thick ranges
               if (is.null(thickStart) && !is.null(color)) {
                 thickStart <- start(object)
                 thickEnd <- end(object)
@@ -99,7 +106,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
               df$name <- name
               df$score <- score
               df$strand <- strand
-              df$thickStart <- thickStart
+              df$thickStart <- thickStart - 1L
               df$thickEnd <- thickEnd
               df$itemRgb <- color
               df$blockCount <- blockCount
@@ -234,6 +241,10 @@ setMethod("import.bed", "connection",
               bed <- DataFrame(as.list(sapply(bedClasses[keepCols], vector)))
             }
             colnames(bed) <- bedNames[bedNames %in% colnames]
+            if (!is.null(bed$thickStart)) {
+              bed$thick <- IRanges(bed$thickStart + 1L, bed$thickEnd)
+              bed$thickStart <- bed$thickEnd <- NULL
+            }
             color <- bed$itemRgb
             if (is.character(color)) { # could be NULL
               spec <- color != "0"
@@ -243,6 +254,17 @@ setMethod("import.bed", "connection",
               color <- rep(NA, nrow(bed))
               color[spec] <- rgb(cols[1,], cols[2,], cols[3,], max = 255)
               bed$itemRgb <- color              
+            }
+            fromCSV <- function(b) {
+              as.integer(unlist(strsplit(b, ",", fixed = TRUE)))
+            }
+            if (!is.null(bed$blockStarts)) {
+              blocks <- seqsplit(IRanges(fromCSV(bed$blockStarts) + 1L,
+                                         width = fromCSV(bed$blockSizes)),
+                                 togroup(PartitioningByWidth(bed$blockCount)))
+              names(blocks) <- bed$chrom
+              bed$blockStarts <- bed$blockSizes <- bed$blockCount <- NULL
+              bed$blocks <- blocks
             }
             GenomicData(IRanges(bed$start + 1L, bed$end),
                         bed[,tail(colnames(bed), -3),drop=FALSE],
@@ -261,22 +283,7 @@ setMethod("blocks", "RangedData",
 setMethod("blocks", "GenomicRanges",
           function(x)
           {
-            fromCSV <- function(name) {
-              b <- values(x)[[name]]
-              if (is.character(b))
-                b <- strsplit(b, ",", fixed = TRUE)
-              else if (!is(b, "IntegerList"))
-                stop("Column '", name,
-                     "' must be character (CSV) or an IntegerList")
-              b
-            }
-            starts <- fromCSV("blockStarts")
-            blockCount <- elementLengths(starts)
-            starts <- as.integer(unlist(starts))
-            sizes <- as.integer(unlist(fromCSV("blockSizes")))
-            gr <- GRanges(rep(seqnames(x), blockCount),
-                          IRanges(starts + rep(start(x), blockCount),
-                                  width = sizes))
+            gr <- as(values(x)$blocks, "GenomicRanges")
             if (!is.null(values(x)$name))
               values(gr)$tx_id = rep(values(x)$name, blockCount)
             gr
@@ -460,10 +467,7 @@ setMethod("asBED", "GRangesList", function(x) {
   values(gr)$name <- names(x)
   x_ranges <- ranges(unlist(x, use.names=FALSE))
   ord_start <- order(start(x_ranges))
-  x_ranges <- x_ranges[ord_start]
-  x_rl <- split(x_ranges, togroup(x)[ord_start])
-  values(gr)$blockStarts <-
-    start(x_rl) - do.call(IntegerList, as.list(start(gr)))
-  values(gr)$blockSizes <- width(x_rl)
+  x_ranges <- shift(x_ranges, 1L - rep(start(gr), elementLengths(x)))[ord_start]
+  values(gr)$blocks <- split(x_ranges, togroup(x)[ord_start])
   gr
 })
