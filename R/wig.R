@@ -124,7 +124,7 @@ setMethod("import.wigLines", "characterORconnection",
             formatLines <- lines[formatInds]
             starts <- formatInds + 1L
             ends <- c(tail(formatInds, -1) - 1L, length(lines))
-            format <- gsub("^([^ ]*) .*", "\\1", formatLines[i])
+            format <- gsub("^([^ ]*) .*", "\\1", formatLines)
             parsedFormat <- lapply(formatLines, ucscParsePairs)
             seqlevels <- sapply(parsedFormat, `[[`, "chrom")
             if (length(formatLines)) {
