@@ -18,5 +18,6 @@ Description: Extensible framework for interacting with multiple genome
   current viewport.
 Maintainer: Michael Lawrence <michafla@gene.com>
 License: Artistic-2.0
-Collate: io.R web.R ranges.R trackDb.R browser.R gff.R ucsc.R bed.R wig.R utils.R bigWig.R chain.R quickload.R twobit.R
+Collate: io.R web.R ranges.R trackDb.R browser.R gff.R ucsc.R bed.R wig.R
+         utils.R bigWig.R chain.R quickload.R twobit.R fasta.R
 biocViews: Annotation,Visualization,DataImport
