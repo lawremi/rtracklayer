@@ -7,7 +7,7 @@ setGeneric("export.bed",
 
 setMethod("export.bed", "ANY",
           function(object, con, variant = c("base", "bedGraph", "bed15"), color,
-                   append)
+                   append, ...)
           {
             cl <- class(object)
             if (hasMethod("asBED", class(object)))
@@ -19,16 +19,18 @@ setMethod("export.bed", "ANY",
                 stop("cannot export object of class '", cl, "'")
             }
             export.bed(track, con=con, variant=variant, color=color,
-                       append=append)
+                       append=append, ...)
           })
 
 setMethod("export.bed", c("RangedData", "characterORconnection"),
           function(object, con, variant = c("base", "bedGraph", "bed15"), color,
-                   append)
+                   append, index = FALSE)
           {
             variant <- match.arg(variant)
             name <- strand <- thickStart <- thickEnd <- color <- NULL
             blockCount <- blockSizes <- blockStarts <- NULL
+            if (index)
+              object <- sortBySeqnameAndStart(object)
             df <- data.frame(seqnames(object), start(object) - 1L, end(object))
             score <- score(object)
             if (!is.null(score)) {
@@ -124,6 +126,9 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             write.table(df, con, sep = "\t", col.names = FALSE,
                         row.names = FALSE, quote = FALSE, na = ".",
                         append = append)
+            if (index)
+              indexTrack(object, con, "bed")
+            invisible(NULL)
           })
 
 setMethod("export.bed", c("UCSCData", "characterORconnection"),

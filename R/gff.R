@@ -6,18 +6,19 @@ setGeneric("export.gff",
            standardGeneric("export.gff"))
 
 setMethod("export.gff", "ANY",
-          function(object, con, version, source, append)
+          function(object, con, version, source, append, ...)
           {
             cl <- class(object)
             object <- try(as(object, "RangedData"), silent = TRUE)
             if (class(object) == "try-error")
               stop("cannot export object of class '", cl, "'")
             export.gff(object, con=con, version=version, source=source,
-                       append=append)
+                       append=append, ...)
           })
 
 setMethod("export.gff", c("RangedData", "characterORconnection"),
-          function(object, con, version = c("1", "2", "3"), source, append)
+          function(object, con, version = c("1", "2", "3"), source, append,
+                   index = FALSE)
 {
   version <- match.arg(version)
   
@@ -29,7 +30,10 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
       gffComment(con, "source-version", source, sourceVersion)
     gffComment(con, "date", format(Sys.time(), "%Y-%m-%d"))
   }
-  
+
+  if (index)
+    object <- sortBySeqnameAndStart(object)
+
   seqname <- seqnames(object)
   if (is.null(object$ID))
     object$ID <- rownames(object)
@@ -99,11 +103,14 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
   
   write.table(table, con, sep = "\t", na = ".", quote = FALSE,
               col.names = FALSE, row.names = FALSE, append = TRUE)
+  if (index)
+    indexTrack(object, con, "gff")
+  invisible(NULL)
 })
 
 setGeneric("import.gff",
            function(con, version = c("1", "2", "3"), genome = NA,
-                    asRangedData = TRUE, colnames = NULL)
+                    asRangedData = TRUE, colnames = NULL, ...)
            standardGeneric("import.gff"))
            
 setMethod("import.gff", "characterORconnection",
