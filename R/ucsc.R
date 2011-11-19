@@ -802,7 +802,7 @@ setClass("BasicTrackLine",
          representation(itemRgb = "logical", useScore = "logical",
                         group = "character", db = "character",
                         offset = "numeric", url = "character",
-                        htmlUrl = "character"),
+                        htmlUrl = "character", colorByStrand = "matrix"),
          contains = "TrackLine")
 
 ucscPair <- function(key, value) paste(key, value, sep = "=")
@@ -869,6 +869,12 @@ setAs("BasicTrackLine", "character",
         htmlUrl <- from@htmlUrl
         if (length(htmlUrl))
           str <- paste(str, " htmlUrl=", htmlUrl, sep="")
+        colorByStrand <- from@colorByStrand
+        if (length(colorByStrand)) {
+          colors <- paste(colorByStrand[1,], colorByStrand[2,],
+                          colorByStrand[3,], sep = ",", collapse = " ")
+          str <- paste(str, " colorByStrand=", colors)
+        }
         str
       })
 
@@ -930,12 +936,17 @@ setAs("character", "BasicTrackLine",
           line@url <- vals["url"]
         if (!is.na(vals["htmlUrl"]))
           line@htmlUrl <- vals["htmlUrl"]
+        if (!is.na(vals["colorByStrand"])) {
+          colorToken <- strsplit(strsplit(vals["colorByStrand"], " ")[[1]], ",")
+          line@colorByStrand <- matrix(as.integer(unlist(colorToken)), nrow = 3)
+        }
         line
       })
 
 
 setClass("GraphTrackLine",
          representation(altColor = "integer", autoScale = "logical",
+                        alwaysZero = "logical",
                         gridDefault = "logical", maxHeightPixels = "numeric",
                         graphType = "character", viewLimits = "numeric",
                         yLineMark = "numeric", yLineOnOff = "logical",
@@ -955,6 +966,9 @@ setAs("GraphTrackLine", "character",
         autoScale <- from@autoScale
         if (length(autoScale) && !autoScale)
           str <- paste(str, "autoScale=off")
+        alwaysZero <- from@alwaysZero
+        if (isTRUE(alwaysZero))
+          str <- paste(str, "alwaysZero=on")
         gridDefault <- from@gridDefault
         if (length(gridDefault) && gridDefault)
           str <- paste(str, "gridDefault=On")
@@ -997,6 +1011,8 @@ setAs("character", "GraphTrackLine",
           line@altColor <- as.integer(strsplit(vals["altColor"], ",")[[1]])
         if (!is.na(vals["autoScale"]))
           line@autoScale <- vals["autoScale"] == "On"
+        if (!is.na(vals["alwaysZero"]))
+          line@alwaysZero <- vals["alwaysZero"] == "On"
         if (!is.na(vals["gridDefault"]))
           line@gridDefault <- vals["gridDefault"] == "On"
         if (!is.na(vals["maxHeightPixels"]))

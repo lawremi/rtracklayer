@@ -39,6 +39,9 @@ Objects can be created by calls of the form \code{new("BasicTrackLine",
       \code{\linkS4class{UCSCTrackModes}}.}
     \item{\code{color}:}{Object of class \code{"integer"} representing the
       track color (as from \code{\link{col2rgb}}). }
+    \item{\code{colorByStrand}:}{Object of class \code{"matrix"}
+       with two columns, as from \code{col2rgb}. The two colors
+       indicate the color for each strand (positive, negative). }
     \item{\code{priority}:}{Object of class \code{"numeric"} specifying
       the rank of the track. }
   }

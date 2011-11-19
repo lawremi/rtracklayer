@@ -20,6 +20,8 @@
       alternate color, as from \code{\link{col2rgb}}.}
     \item{\code{autoScale}:}{Object of class \code{"logical"} indicating
       whether to automatically scale to min/max of the data.}
+    \item{\code{alwaysZero}:}{Object of class \code{"logical"} indicating
+      whether to fix the lower limit of the Y axis at zero.}
     \item{\code{gridDefault}:}{Object of class \code{"logical"}
       indicating whether a grid should be drawn. }
     \item{\code{maxHeightPixels}:}{Object of class \code{"numeric"} of
