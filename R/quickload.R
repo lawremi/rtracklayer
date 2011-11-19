@@ -217,26 +217,28 @@ setMethod("referenceSequence", "QuickloadGenome",
 
 ### FIXME: check for file URI scheme
 
-haveRsamtools <- function() {
-  isTRUE(try(packageVersion("Rsamtools") >= "1.7.0", silent = TRUE))
-}
-
-indexTrack <- function(track, uri, format) {
+indexTrack <- function(track, con, format) {
   indexed <- NULL
-  if (haveRsamtools()) { ## a bunch of heuristics to get an index, if possible
-    formats <- eval(formals(Rsamtools::indexTabix)$format)
-    parsed_uri <- parseURI(uri)
-    multi <- (is(track, "RangedDataList") ||
-              is(track, "SimpleGenomicRangesList")) && length(track) > 1
-    if (format %in% formats && uriIsLocal(parsed_uri) && !multi) {
-      original_path <- parsed_uri$path
-      path <- Rsamtools::bgzip(original_path, overwrite = TRUE)
-      skip <- if (!is.null(scanTrackLine(original_path))) 1L else 0L
-      Rsamtools::indexTabix(path, format, skip = skip)
-      indexed <- Rsamtools::TabixFile(path)
-      unlink(original_path)
-    }
-  }
+  if (!is.character(con))
+    stop("'con' must be a path to a local file")
+  ## a bunch of heuristics to get an index, if possible
+  uri <- con
+  formats <- eval(formals(indexTabix)$format)
+  parsed_uri <- parseURI(uri)
+  multi <- (is(track, "RangedDataList") ||
+            is(track, "SimpleGenomicRangesList")) && length(track) > 1
+  if (multi)
+    stop("Cannot index multiple tracks in a single file")
+  if (!uriIsLocal(parsed_uri))
+    stop("'con' must be a path to a local file")
+  if (!format %in% formats)
+    stop("'", format, "' is not a supported format; try 'bed' or 'gff'")
+  original_path <- parsed_uri$path
+  path <- bgzip(original_path, overwrite = TRUE)
+  skip <- if (!is.null(scanTrackLine(original_path))) 1L else 0L
+  indexTabix(path, format, skip = skip)
+  indexed <- TabixFile(path)
+  unlink(original_path)
   indexed
 }
 
@@ -254,40 +256,49 @@ setMethod("sortBySeqnameAndStart", "RangesList", function(x) {
   relist(value_flat[order(space(value), start(value_flat))], value)
 })
 
-.exportToQuickload <-function(object, name,
-                              format = bestFileFormat(value, object),
-                              index = TRUE, metadata = character(), ..., value)
+.exportToQuickload <- function(object, name,
+                               format = bestFileFormat(value, object),
+                               index = TRUE, metadata = character(), ..., value)
 {
-  if (is(value, "RsamtoolsFile")) {
-    if (missing(name))
-      name <- basename(path(value))
-    track(object, name, metadata = metadata) <- URLencode(path(value))
-    copyResourceToQuickload(object, URLencode(Rsamtools::index(value)))
-  } else {
-    if (is(object, "Annotated")) {
-      value_metadata <- metadata(value)$quickload
-      value_metadata[names(metadata)] <- metadata
-      metadata <- value_metadata
-    }
-    filename <- paste(name, format, sep = ".")
-    path <- paste(uri(object), filename, sep = "/")
-    seqinfo(value) <- seqinfo(object)
-    if (index) { # make some attempt to sort the output for tabix
-      value <- sortBySeqnameAndStart(value)
-    }
-    export(value, path, format = format, ...)
-    ## FIXME: We decode here, rather than above, due to bug in R
-    uri <- URLencode(path) 
-    if (index && !is.null(indexed <- indexTrack(value, uri, format)))
-      track(object, name, index = FALSE, metadata = metadata) <- indexed
-    else track(object, name, metadata = metadata) <- uri
+  if (is(object, "Annotated")) {
+    value_metadata <- metadata(value)$quickload
+    value_metadata[names(metadata)] <- metadata
+    metadata <- value_metadata
   }
+  filename <- paste(name, format, sep = ".")
+  path <- paste(uri(object), filename, sep = "/")
+  seqinfo(value) <- seqinfo(object)
+  if (index) { # make some attempt to sort the output for tabix
+    value <- sortBySeqnameAndStart(value)
+  }
+  export(value, path, format = format, ...)
+  ## FIXME: We decode here, rather than above, due to bug in R
+  uri <- URLencode(path)
+  indexed <- NULL
+  if (index)
+    indexed <- tryCatch(indexTrack(value, uri, format),
+                        error = function(x) NULL)
+  if (!is.null(indexed))
+    track(object, name, index = FALSE, metadata = metadata) <- indexed
+  else track(object, name, metadata = metadata) <- uri
   object
 }
 
 setReplaceMethod("track",
                  signature(object = "QuickloadGenome", value = "ANY"),
                  .exportToQuickload)
+
+setReplaceMethod("track",
+                 signature(object = "QuickloadGenome", value = "RsamtoolsFile"),
+                 function(object, name, metadata = character(), ..., value)
+                 {
+                   if (missing(name))
+                     name <- basename(path(value))
+                   track(object, name, metadata = metadata) <-
+                     URLencode(path(value))
+                   copyResourceToQuickload(object, URLencode(index(value)))
+                   object
+                 })
 
 copyResourceToQuickload <- function(object, uri) {
   parsed_uri <- parseURI(uri)

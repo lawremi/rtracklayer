@@ -13,7 +13,7 @@ importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
 
 importFrom("BiocGenerics", rbind, cbind)
 
-importClassesFrom("IRanges", file, connection,
+importClassesFrom("IRanges",
                   RangedData, RangedDataList, DataTable,
                   Annotated, Vector, List, DataTableORNULL, characterORNULL,
                   RangedSelection, SimpleList, DataFrame)
@@ -49,6 +49,11 @@ importFrom("Biostrings", get_xsbasetypes_conversion_lookup, masks)
 importFrom("BSgenome", installed.genomes, releaseDate, organism,
            providerVersion, provider)
 
+importFrom("Rsamtools", path, indexTabix, headerTabix, scanTabix, bgzip,
+           TabixFile, index)
+
+importClassesFrom("Rsamtools", RsamtoolsFile)
+
 importFrom("tools", file_path_as_absolute)
 
 exportClasses(BrowserSession, BrowserView, BrowserViewList,
@@ -80,7 +85,6 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               nrow, formatDescription,
               referenceSequence, "referenceSequence<-",
               asBED,
-              ## path, (if we export this, Rsamtools must import it)
               ## from IRanges
               start, end, "start<-", "end<-",
               score, "score<-",
@@ -96,10 +100,6 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        score, "score<-", as.data.frame, space,
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
        GRangesForBSGenome, BigWigFile, summary, seqinfo, genome, "genome<-",
-       TwoBitFile, path, uri, Quickload, quickload, QuickloadGenome,
+       TwoBitFile, uri, Quickload, quickload, QuickloadGenome,
        organism, releaseDate, elementMetadata)
 
-## the S4-connection compatibility layer
-exportClasses(connection,
-              file, url, gzfile, unz, pipe, sockconn, terminal, textConnection,
-              characterORconnection)

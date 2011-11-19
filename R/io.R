@@ -6,25 +6,11 @@
 ### Classes files and connections
 ###
 
-## Need to dispatch on S3 "connection"
-
-##setOldClass("connection")
-
-.connectionClasses <- c("file", "url", "gzfile", "bzfile", "unz", "pipe",
-                        "fifo", "sockconn", "terminal", "textConnection",
-                        "gzcon")
-apply(cbind(.connectionClasses, "connection"), 1, setOldClass,
-      where = environment())
-setClassUnion("characterORconnection", c("character", "connection"))
-
 setClass("RTLFile", representation(path = "character"), contains = "VIRTUAL")
 
 setMethod("show", "RTLFile", function(object) {
   cat(class(object), "object\npath:", object@path, "\n")
 })
-
-setGeneric("path",
-           function(object, ...) standardGeneric("path"))
 
 setMethod("path", "RTLFile", function(object) object@path)
 
