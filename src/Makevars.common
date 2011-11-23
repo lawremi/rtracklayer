@@ -8,5 +8,5 @@ UCSC_OBJECTS = \
   rangeTree.o rbTree.o memalloc.o dlist.o udc.o net.o bits.o twoBit.o \
   _cheapcgi.o internet.o https.o base64.o verbose.o os.o wildcmp.o _portimpl.o
 
-PKG_CFLAGS = -g -Dinline=""
+PKG_CFLAGS = -g
 
