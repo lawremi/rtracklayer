@@ -97,9 +97,9 @@ setMethod("import", c("character", "character"),
               if (format == "gz") # should only happen if user did not specify
                 format <- file_ext(sub("\\.gz$", "", con))
               uri <- parseURI(con)
-              if (uri$scheme != "")
+              if (uri$scheme != "" && uri$scheme != "file")
                 con <- gzcon(url(con))
-              else con <- gzfile(con)
+              else con <- gzfile(uri$path)
               import(con, format, ...)
             } else {
               fun <- .importForFormat(format)
