@@ -72,20 +72,31 @@ setMethod("export.gff", c("RangedData", "characterORconnection"),
       attrs <- seqname
   } else {
     builtin <- c("type", "strand", "score", "phase", "source")
-    custom <- !(colnames(object) %in% builtin)  
-    if (any(custom)) {
-      attrs <- as.matrix(as.data.frame(unlist(values(object)))[,custom])
-      tvsep <- " "
-      attrsVec <- sub(" *$", "", sub("^ *", "", as.character(attrs))) # trim
-      if (version == "3") {
-        tvsep <- "="
-        attrsVec <- urlEncode(attrsVec, "\t\n\r;=%&", FALSE)
-      }
-      attrs <- matrix(attrsVec, ncol = ncol(attrs), dimnames = dimnames(attrs))
-      attrs <- apply(attrs, 1, function(row) {
-        paste(colnames(attrs)[!is.na(row)], row[!is.na(row)], sep = tvsep,
-              collapse="; ")
-      })
+    custom <- setdiff(colnames(object), builtin)
+    if (length(custom)) {
+      if (version == "3") tvsep <- "=" else tvsep <- " "
+      attrs <- unlist(values(object))
+      attrs <- as.data.frame(sapply(custom, function(name) {
+        x <- attrs[[name]]
+        x_flat <- if (is(x, "List")) unlist(x, use.names=FALSE) else x
+        x_char <- as.character(x_flat)
+        x_char <- sub(" *$", "", sub("^ *", "", as.character(x_char))) # trim
+        if (version == "3")
+          x_char <- urlEncode(x_char, "\t\n\r;=%&,", FALSE)
+        if (is(x, "List")) {
+          x_char[is.na(x_char)] <- "."
+          x_char <- pasteCollapse(relist(x_char, x))
+          x_char[elementLengths(x) == 0] <- NA
+        }
+        x_char[is.na(x_char)] <- "\r"
+        paste(name, x_char, sep = tvsep)
+      }, simplify = FALSE))
+      attrs <- do.call(paste, c(attrs, sep = ";"))
+      attrs <- gsub("[^;]*?\r(;|$)", "", attrs)
+      ## attrs <- apply(attrs, 1, function(row) {
+      ##   paste(colnames(attrs)[!is.na(row)], row[!is.na(row)], sep = tvsep,
+      ##         collapse="; ")
+      ## })
       attrs[nchar(attrs) == 0] <- NA
     }
   }
@@ -197,17 +208,24 @@ setMethod("import.gff", "characterORconnection",
         vals <- vals[keep]
         tags <- tags[keep]
       }
-      attrList <- lapply(split.data.frame(cbind(lines, vals), tags),
-                         function(tag)
-                         {
-                           vals <- tag[,"vals"]
-                           coerced <- suppressWarnings(as.numeric(vals))
-                           if (!any(is.na(coerced)))
-                             vals <- coerced
-                           vec <- rep(NA, nrow(table))
-                           vec[as.numeric(tag[,"lines"])] <- vals
-                           vec
-                         })
+      lineValByTag <- split.data.frame(cbind(lines, vals), tags)
+      attrList <- lapply(lineValByTag, function(tag) {
+        vals <- tag[,"vals"]
+        if (any(grepl(",", vals))) {
+          vals <- CharacterList(strsplit(vals, ",", fixed=TRUE))
+          coerced <- suppressWarnings(as(vals, "NumericList"))
+          if (!any(any(is.na(coerced))))
+            vals <- coerced
+          vec <- as(rep(list(character()), nrow(table)), class(vals))
+        } else {
+          coerced <- suppressWarnings(as.numeric(vals))
+          if (!any(is.na(coerced)))
+            vals <- coerced
+          vec <- rep(NA, nrow(table))
+        }
+        vec[as.integer(tag[,"lines"])] <- vals
+        vec
+      })
     }
     xd <- DataFrame(xd, attrList)
   }
@@ -252,6 +270,39 @@ setGeneric("import.gff3",
 setMethod("import.gff3", "ANY",
           function(con, ...) import.gff(con, "3", ...))
 
+
+## Conversion to GFF-like structure
+
+setGeneric("asGFF", function(x, ...) standardGeneric("asGFF"))
+
+setMethod("asGFF", "GRangesList",
+          function(x, parentType = "mRNA", childType = "exon") {
+            parent_range <- range(x)
+            if (!all(elementLengths(parent_range) == 1))
+              stop("Elements in a group must be on same sequence and strand")
+            parents <- unlist(parent_range, use.names = FALSE)
+            children <- unlist(x, use.names = FALSE)
+            makeId <- function(x, prefix) {
+                paste(prefix, seq_len(length(x)), sep = "")
+            }
+            parentIds <- makeId(parents, parentType)
+            values(parents)$type <- parentType
+            values(parents)$ID <- parentIds
+            values(parents)$Name <- names(x)
+            values(children)$type <- childType
+            values(children)$ID <- makeId(children, childType)
+            values(children)$Name <- names(children)
+            values(children)$Parent <- rep(parentIds, elementLengths(x))
+            allColumns <- union(colnames(values(parents)),
+                                colnames(values(children)))
+            rectifyDataFrame <- function(x) {
+              x[setdiff(allColumns, colnames(x))] <- DataFrame(NA)
+              x[allColumns]
+            }
+            values(children) <- rectifyDataFrame(values(children))
+            values(parents) <- rectifyDataFrame(values(parents))
+            c(parents, children)
+          })
 
 # utilities
 

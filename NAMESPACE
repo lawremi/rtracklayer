@@ -11,7 +11,7 @@ importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
 importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
            postForm)
 
-importFrom("BiocGenerics", rbind, cbind)
+importFrom("BiocGenerics", rbind, cbind, lapply, sapply)
 
 importClassesFrom("IRanges",
                   RangedData, RangedDataList, DataTable,
@@ -26,7 +26,7 @@ importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
 importMethodsFrom("IRanges", elementLengths, window,
                   start, end, width, range,
                   "start<-", "end<-", "width<-",
-                  split, lapply, unlist, unique,
+                  split, lapply, sapply, unlist, unique,
                   as.vector, as.list, as.data.frame,
                   colnames,  rownames,
                   "colnames<-","rownames<-",
@@ -84,7 +84,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               liftOver, offset, reversed,
               nrow, formatDescription,
               referenceSequence, "referenceSequence<-",
-              asBED,
+              asBED, asGFF,
               ## from IRanges
               start, end, "start<-", "end<-",
               score, "score<-",
@@ -101,5 +101,5 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
        GRangesForBSGenome, BigWigFile, summary, seqinfo, genome, "genome<-",
        TwoBitFile, uri, Quickload, quickload, QuickloadGenome,
-       organism, releaseDate, elementMetadata)
+       organism, releaseDate, elementMetadata, pasteCollapse)
 
