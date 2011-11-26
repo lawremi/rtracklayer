@@ -1,6 +1,7 @@
 #include "rtracklayer.h"
 #include "bigWig.h"
 #include "twoBit.h"
+#include "utils.h"
 
 #include <R_ext/Rdynload.h>
 
@@ -19,6 +20,8 @@ static const R_CallMethodDef callMethods[] = {
   CALLMETHOD_DEF(TwoBits_write, 2),
   CALLMETHOD_DEF(TwoBitFile_seqlengths, 1),
   CALLMETHOD_DEF(TwoBitFile_read, 4),
+  /* utils.c */
+  CALLMETHOD_DEF(CharacterList_pasteCollapse, 2),
   {NULL, NULL, 0}
 };
 
