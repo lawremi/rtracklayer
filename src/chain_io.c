@@ -72,6 +72,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         block->offset = new_IntAE(0, 0, 0);
         block->length = new_IntAE(0, 0, 0);
         block->score = new_IntAE(0, 0, 0);
+        block->rev = new_CharAE(0);
         block->space = new_CharAEAE(0, 0);
       } else block = value;
       IntAE_insert_at(&block->score, IntAE_get_nelt(&block->score),
