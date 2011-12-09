@@ -254,6 +254,10 @@ setGeneric("export.gff3",
 setMethod("export.gff3", "ANY",
           function(object, con, ...) export.gff(object, con, "3", ...))
 
+setGeneric("export.gtf",
+           function(object, con, ...) standardGeneric("export.gtf"))
+setMethod("export.gtf", "ANY",
+          function(object, con, ...) export.gff(object, con, "2", ...))
 
 setGeneric("import.gff1",
            function(con, ...) standardGeneric("import.gff1"))
@@ -270,6 +274,10 @@ setGeneric("import.gff3",
 setMethod("import.gff3", "ANY",
           function(con, ...) import.gff(con, "3", ...))
 
+setGeneric("import.gtf",
+           function(con, ...) standardGeneric("import.gtf"))
+setMethod("import.gtf", "ANY",
+          function(con, ...) import.gff(con, "2", ...))
 
 ## Conversion to GFF-like structure
 
