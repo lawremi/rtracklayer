@@ -120,19 +120,18 @@ setMethod("import.wigLines", "characterORconnection",
             if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
             lines <- readLines(con, warn = FALSE)
-            formatInds <- grep("^variableStep|^fixedStep", lines)
+            formatInds <- grep("chrom=", lines, fixed=TRUE)
             formatLines <- lines[formatInds]
             starts <- formatInds + 1L
             ends <- c(tail(formatInds, -1) - 1L, length(lines))
             format <- gsub("^([^ ]*) .*", "\\1", formatLines)
             parsedFormat <- lapply(formatLines, ucscParsePairs)
-            seqlevels <- sapply(parsedFormat, `[[`, "chrom")
+            seqlevels <- unique(sapply(parsedFormat, `[[`, "chrom"))
             if (length(formatLines)) {
               parseData <- function(i) {
                 ## parse format line
                 formatVals <- parsedFormat[[i]]
                 # parse the data values
-                con <- file()
                 block_lines <- window(lines, starts[i], ends[i])
                 if (!length(block_lines)) {
                   if (asRangedData) {
@@ -145,17 +144,20 @@ setMethod("import.wigLines", "characterORconnection",
                     return(gr)
                   }
                 }
-                writeLines(block_lines, con)
-                data <- read.table(con)
-                close(con)
+                block_lines <- grep("^#", block_lines, invert = TRUE,
+                                    value = TRUE)
                 if (format[i] == "variableStep") {
-                  start <- data[,1]
-                  score <- data[,2]
+                  ## assume the same white space for every row
+                  sep <- sub(".*?([[:space:]]+).*", "\\1", block_lines[1])
+                  split_lines <- strsplit(block_lines, sep, fixed=TRUE)
+                  mat <- matrix(as.integer(unlist(split_lines)), nrow = 2)
+                  start <- mat[1,]
+                  score <- mat[2,]
                 } else {
                   start <- seq(as.integer(formatVals["start"]),
                                by = as.integer(formatVals["step"]),
-                               length.out = nrow(data))
-                  score <- data[,1]
+                               length.out = length(block_lines))
+                  score <- as.integer(block_lines)
                 }
                 span <- formatVals["span"]
                 if (is.na(span))
@@ -168,8 +170,12 @@ setMethod("import.wigLines", "characterORconnection",
                 gd
               }
               resultList <- lapply(seq_along(formatInds), parseData)
-              if (asRangedData)
-                gd <- do.call(rbind, resultList)
+              if (asRangedData) {
+                rl <- do.call(c, lapply(resultList, ranges))
+                gd <- RangedData(unlist(rl, use.names=FALSE),
+                                 score = unlist(lapply(resultList, score)),
+                                 space = names(rl)[togroup(rl)])
+              }
               else
                 gd <- do.call(c, resultList)
               if (!is.null(genome))
