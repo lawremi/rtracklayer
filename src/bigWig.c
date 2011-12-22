@@ -150,7 +150,7 @@ SEXP BWGSectionList_write(SEXP r_sections, SEXP r_seqlengths, SEXP r_compress,
             (char *)CHAR(asChar(r_file)));
   freeHash(&lenHash);
   popRHandlers();
-  return R_NilValue;
+  return r_file;
 }
 
 /* --- .Call ENTRY POINT --- */
@@ -286,4 +286,21 @@ SEXP BWGFile_summary(SEXP r_filename, SEXP r_chrom, SEXP r_ranges,
   popRHandlers();
   UNPROTECT(1);
   return ans;
+}
+
+#include "ucsc/verbose.h"
+
+SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_seqlengths, SEXP r_outfile) {
+  pushRHandlers();
+  struct lm *lm = lmInit(0);
+  struct hash *lenHash = createIntHash(r_seqlengths);
+  struct bwgSection *sections =
+    bwgParseWig((char *)CHAR(asChar(r_infile)), FALSE, lenHash, itemsPerSlot,
+                lm);
+  bwgCreate(sections, lenHash, blockSize, itemsPerSlot, TRUE,
+            (char *)CHAR(asChar(r_outfile)));
+  lmCleanup(&lm);
+  freeHash(&lenHash);
+  popRHandlers();
+  return r_outfile;
 }

@@ -57,50 +57,38 @@ setAs("GenomicRanges", "BigWigSelection", function(from) {
   as(as(from, "RangesList"), "BigWigSelection")
 })
 
-### FIXME: remove 'seqlengths' and 'genome' arguments after release
-
 setGeneric("export.bw",
            function(object, con,
                     dataFormat = c("auto", "variableStep", "fixedStep",
                       "bedGraph"),
-                    seqlengths = GenomicRanges::seqlengths(object),
                     compress = TRUE, ...)
            standardGeneric("export.bw"))
 
 setMethod("export.bw", "ANY",
           function(object, con,
                    dataFormat = c("auto", "variableStep", "fixedStep",
-                     "bedGraph"),
-                   seqlengths, compress, genome = NA, ...)
+                     "bedGraph"), compress, ...)
           {
             rd <- as(object, "RangedData")
-            export.bw(rd, con, dataFormat, seqlengths, compress,
-                      genome = genome, ...)
+            export.bw(rd, con, dataFormat, compress, ...)
           })
 
 setMethod("export.bw", c("RangedData", "character"),
           function(object, con,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                                   "bedGraph"),
-                   seqlengths, compress, genome = NA)
+                   compress)
           {
             score <- score(object)
             if (!is.numeric(score) || any(is.na(score)))
               stop("The score must be numeric, without any NA's")
             if (!isTRUEorFALSE(compress))
               stop("'compress' must be TRUE or FALSE")
-            if (!is.null(genome) && !is.na(genome)) {
-              genome(object) <- genome
-              seqlengths <- seqlengths(object)
-            }
+            seqlengths <- seqlengths(object)
             if (any(is.na(seqlengths)))
               stop("Unable to determine seqlengths; either specify ",
                    "'seqlengths' or specify a genome on 'object' that ",
                    "is known to BSgenome or UCSC")
-            if (!is.numeric(seqlengths) ||
-                !all(names(object) %in% names(seqlengths)))
-              stop("seqlengths must be numeric and indicate a length for ",
-                   "each sequence in 'object'")
             sectionPtr <- NULL # keep adding to the same linked list
             .bigWigWriter <- function(chromData, con, dataFormat) {
               sectionPtr <<- .Call(BWGSectionList_add, sectionPtr,
@@ -117,8 +105,8 @@ setMethod("export.bw", c("RangedData", "character"),
               lapply(object, .bigWigWriter, con, dataFormat)
             else export.wigLines(object, con, dataFormat, .bigWigWriter)
             storage.mode(seqlengths) <- "integer"
-            .Call(BWGSectionList_write, sectionPtr, seqlengths,
-                  compress, con)
+            invisible(BigWigFile(.Call(BWGSectionList_write, sectionPtr,
+                                       seqlengths, compress, con)))
           })
 
 setGeneric("import.bw", function(con, ...) standardGeneric("import.bw"))
@@ -177,3 +165,20 @@ setMethod("summary", "BigWigFile",
             names(summaryList) <- names(ranges)
             RleList(summaryList)
           })
+
+wigToBigWig <-
+  function(x, seqinfo,
+           dest = paste(file_path_sans_ext(x, TRUE), "bw", sep = "."))
+  {
+    if (!isSingleString(x))
+      stop("'x' must be a single string, the path to a WIG file")
+    if (!isSingleString(dest))
+      stop("'dest' must be a single string, the path to the BigWig output")
+    if (!is(seqinfo, "Seqinfo"))
+      stop("'seqinfo' must be NULL or a Seqinfo object")
+    seqlengths <- seqlengths(seqinfo)
+    if (any(is.na(seqlengths)))
+      stop("'seqlengths(seqinfo)' must not contain any 'NA' values")
+    ans <- .Call(BWGFile_fromWIG, x, seqlengths, dest)
+    invisible(BigWigFile(ans))
+  }
