@@ -11,7 +11,7 @@ importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
 importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
            postForm)
 
-importFrom("BiocGenerics", rbind, cbind, lapply, sapply)
+importFrom("BiocGenerics", rbind, cbind, lapply, sapply, unique)
 
 importClassesFrom("IRanges",
                   RangedData, RangedDataList, DataTable,
@@ -35,14 +35,14 @@ importMethodsFrom("IRanges", elementLengths, window,
                   space, universe, metadata,
                   "universe<-", "metadata<-",
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
-                  resize, elementMetadata)
+                  resize, elementMetadata, togroup)
 
 importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList)
 
 importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
 
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
-                  seqinfo, "seqinfo<-")
+                  seqinfo, "seqinfo<-", "seqlevels<-")
 
 importFrom("Biostrings", get_xsbasetypes_conversion_lookup, masks)
 
@@ -54,7 +54,7 @@ importFrom("Rsamtools", path, indexTabix, headerTabix, scanTabix, bgzip,
 
 importClassesFrom("Rsamtools", RsamtoolsFile)
 
-importFrom("tools", file_path_as_absolute)
+importFrom("tools", file_path_as_absolute, file_path_sans_ext)
 
 exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
@@ -102,5 +102,6 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
        GRangesForBSGenome, BigWigFile, summary, seqinfo, genome, "genome<-",
        TwoBitFile, uri, Quickload, quickload, QuickloadGenome,
-       organism, releaseDate, elementMetadata, pasteCollapse)
+       organism, releaseDate, elementMetadata, pasteCollapse, wigToBigWig,
+       SeqinfoForBSGenome, SeqinfoForUCSCGenome)
 
