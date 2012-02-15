@@ -84,6 +84,8 @@
 }
 
 \examples{
+if (.Platform$OS.type != "windows") {
+
 bwf <- BigWigFile(system.file("tests", "test.bw", package = "rtracklayer"))
 seqinfo(bwf)
 track <- import.bw(bwf, asRangedData = FALSE)
@@ -91,6 +93,8 @@ summary(bwf) # for each sequence, average all values into one
 summary(bwf, range(head(track))) # just average the first few features
 summary(bwf, size = GenomicRanges::seqlengths(bwf) / 10) # 10X reduction
 summary(bwf, type = "min") # min instead of mean
+
+}
 }
 
 \keyword{methods}
