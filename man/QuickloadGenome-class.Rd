@@ -167,7 +167,9 @@ organism(qlg)
 releaseDate(qlg)
 names(qlg)
 elementMetadata(qlg)
+if (.Platform$OS.type != "windows") { # temporary
 qlg$bedData
+}
 
 \dontrun{
 ## populating the test repository
