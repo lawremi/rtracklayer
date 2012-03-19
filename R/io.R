@@ -6,13 +6,58 @@
 ### Classes files and connections
 ###
 
-setClass("RTLFile", representation(path = "character"), contains = "VIRTUAL")
+### RTLFile is a base class for high-level file abstractions, where
+### subclasses are associated with a particular file format/type. It
+### wraps a low-level representation of a file, currently either a
+### path/URL or connection.
 
-setMethod("show", "RTLFile", function(object) {
-  cat(class(object), "object\npath:", object@path, "\n")
+setClass("RTLFile", representation(resource = "characterORconnection"),
+         contains = "VIRTUAL")
+
+resource <- function(x) x@resource
+
+connection <- function(x, open = "") {
+  connectionForResource(resource(x), open = open)
+}
+
+fileFormat <- function(x) {
+  tolower(sub("File$", "", class(x)))
+}
+
+setMethod("path", "RTLFile", function(object) {
+  r <- resource(object)
+  if (!is.character(r))
+    stop("Connection resource requested as a path")
+  r
 })
 
-setMethod("path", "RTLFile", function(object) object@path)
+setMethod("show", "RTLFile", function(object) {
+  r <- resource(object)
+  if (!isSingleString(r))
+    r <- summary(r)$description
+  cat(class(object), "object\nresource:", r, "\n")
+})
+
+FileForFormat <- function(path, format = file_ext(path)) {
+  fileClasses <- c(getClass("RTLFile")@subclasses,
+                   getClass("RsamtoolsFile")@subclasses)
+  fileClassName <- paste(format, "File", sep = "")
+  fileClassIndex <- match(tolower(fileClassName), tolower(names(fileClasses)))
+  if (is.na(fileClassIndex))
+    stop("Format '", format, "' unsupported")
+  pkg <- packageSlot(fileClasses[fileClassIndex])
+  if (is.null(pkg))
+    ns <- topenv()
+  else ns <- getNamespace(pkg[1])
+  constructorName <- names(fileClasses)[fileClassIndex]
+  if(!exists(constructorName, ns)) {
+    parentClassNames <- names(getClass(constructorName)@contains)
+    constructorName <- names(which(sapply(parentClassNames, exists, ns)))[1]
+    if (is.na(constructorName))
+      stop("No constructor found for ", names(fileClasses)[fileClassIndex])
+  }
+  get(constructorName, ns)(path)
+}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Export
@@ -21,23 +66,19 @@ setMethod("path", "RTLFile", function(object) object@path)
 setGeneric("export",
            function(object, con, format, ...) standardGeneric("export"))
 
-.exportForFormat <- function(format) {
-  fun <- try(match.fun(paste("export", format, sep=".")), TRUE)
-  if (is.character(fun))
-    stop("No export function for '", format, "' found")
-  fun
-}
-
 setMethod("export", c(con = "connection", format = "character"),
           function(object, con, format, ...)
           {
-            if (!isOpen(con)) {
-              open(con, "w")
-              on.exit(close(con))
-            }
-            fun <- .exportForFormat(format)
-            fun(object, con, ...)
+            export(object, FileForFormat(con, format), ...)
           })
+
+setMethod("export", c(con = "connection", format = "missing"),
+          function(object, con, format, ...)
+          {
+            format <- file_ext(summary(con)$description)
+            export(object, con, format, ...)
+          })
+
 setMethod("export", c(con = "missing", format = "character"),
           function(object, con, format, ...)
           {
@@ -50,26 +91,17 @@ setMethod("export", c(con = "missing", format = "character"),
 setMethod("export", c(con = "character", format = "missing"),
           function(object, con, format, ...)
           {
-            ext <- file_ext(con)
-            export(object, con, ext, ...)
+            export(object, FileForFormat(con), ...)
           })
 setMethod("export", c(con = "character", format = "character"),
           function(object, con, format, ...)
           {
-            fun <- .exportForFormat(format)
-            fun(object, con, ...)
+            export(object, FileForFormat(con, format), ...)
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import
 ###
-
-.importForFormat <- function(format) {
-  fun <- try(match.fun(paste("import", format, sep=".")), TRUE)
-  if (is.character(fun))
-    stop("No import function for '", format, "' found")
-  fun
-}
 
 setGeneric("import",
            function(con, format, text, ...) standardGeneric("import"))
@@ -77,57 +109,33 @@ setGeneric("import",
 setMethod("import", c("connection", "character"),
           function(con, format, text, ...)
           {
-            fun <- .importForFormat(format)
-            if (!isOpen(con)) {
-              open(con, "r")
-              on.exit(close(con))
-            }
-            fun(con, ...)
+            import(FileForFormat(con, format), ...)
+          })
+setMethod("import", c("connection", "missing"),
+          function(con, format, text, ...)
+          {
+            format <- file_ext(summary(con)$description)
+            import(con, format, ...)
           })
 setMethod("import", c("character", "missing"),
           function(con, format, text, ...)
           {
-            ext <- file_ext(con)
-            import(con, ext, ...)
+            import(FileForFormat(con), ...)
           })
 setMethod("import", c("character", "character"),
           function(con, format, text, ...)
           {
-            if (file_ext(con) == "gz") {
-              if (format == "gz") # should only happen if user did not specify
-                format <- file_ext(sub("\\.gz$", "", con))
-              uri <- parseURI(con)
-              if (uri$scheme != "" && uri$scheme != "file")
-                con <- gzcon(url(con))
-              else con <- gzfile(uri$path)
-              import(con, format, ...)
-            } else {
-              fun <- .importForFormat(format)
-              fun(con, ...)
-            }
+            import(FileForFormat(con, format), ...)
           })
 setMethod("import", c(con = "missing", text = "character"),
           function(con, format, text, ...)
           {
             con <- file()
+            on.exit(close(con))
             writeLines(text, con)
-            obj <- import(con, format, ...)
-            close(con)
+            obj <- import(FileForFormat(con, format), ...)
             obj
           })
-
-
-## gzip handling
-## setGeneric("import.gz",
-##            function(con, ...) standardGeneric("import.gz"))
-
-## setMethod("import.gz", "character", function(con, ...) {
-##   import(gzfile(con), file_ext(sub("\\.gz$", "", con)), ...)
-## })
-
-## setMethod("import.gz", "connection", function(con, ...) {
-##   import(gzcon(con), ...)
-## })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
@@ -201,4 +209,57 @@ uriIsWritable <- function(x) {
     !file.access(uri$path, 2) ||
     (!file.exists(uri$path) && uriIsWritable(dirname(uri$path)))
   } else FALSE
+}
+
+checkArgFormat <- function(con, format) {
+  if (toupper(format) !=
+      substring(toupper(sub("File$", "", class(con))), 1, nchar(format)))
+    stop("Cannot treat a '", class(con), "' as format '", format, "'")
+}
+
+connectionForResource <- function(x, open = "") {
+  resource <- decompress(x)
+  if (is.character(resource)) {
+    uri <- parseURI(resource)
+    if (uri$scheme != "")
+      con <- url(resource)
+    else con <- file(resource)
+    con <- manage(con)
+  } else con <- resource
+  if (!isOpen(con) && nzchar(open)) {
+    open(con, open)
+  }
+  con
+}
+
+## Connection management (similar to memory management)
+
+manage <- function(con) {
+  if (!is.null(attr(con, "finalizerEnv")))
+    return(con)
+  env <- new.env()
+  finalizer <- function(obj) {
+    if (exists("con")) {
+      close(con)
+      rm(con, inherits = TRUE)
+      TRUE
+    } else FALSE
+  }
+  env$finalizer <- finalizer
+  reg.finalizer(env, finalizer)
+  attr(con, "finalizerEnv") <- env
+  rm(env)
+  con
+}
+
+unmanage <- function(con) {
+  attr(con, "finalizerEnv") <- NULL
+  con
+}
+
+release <- function(con) {
+  env <- attr(con, "finalizerEnv")
+  if (!is.null(env))
+    env$finalizer()
+  else FALSE
 }

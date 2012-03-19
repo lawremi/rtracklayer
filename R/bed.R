@@ -1,14 +1,45 @@
-# Import/export of Browser Extended Display (BED) data
+### =========================================================================
+### BED (Browser Extended Display) support (including bedGraph and BED15)
+### -------------------------------------------------------------------------
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Classes
+###
+
+setClass("BEDFile", contains = "RTLFile")
+BEDFile <- function(resource) {
+  new("BEDFile", resource = resource)
+}
+
+setClass("BEDGraphFile", contains = "BEDFile")
+BEDGraphFile <- function(resource) {
+  new("BEDGraphFile", resource = resource)
+}
+
+setClass("BED15File", contains = "BEDFile")
+BED15File <- function(resource) {
+  new("BED15File", resource = resource)
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export
+###
 
 setGeneric("export.bed",
-           function(object, con, variant = c("base", "bedGraph", "bed15"),
-                    color = NULL, append = FALSE, ...)
-           standardGeneric("export.bed"))
+           function(object, con, append = FALSE, ...)
+           standardGeneric("export.bed"),
+           signature = c("object", "con"))
 
 setMethod("export.bed", "ANY",
-          function(object, con, variant = c("base", "bedGraph", "bed15"), color,
-                   append, ...)
+          function(object, con, append, ...) {
+            export(object, con, "bed", append = append, ...)
+          })
+
+setMethod("export", c("ANY", "BEDFile"),
+          function(object, con, format, append = FALSE, ...)
           {
+            if (!missing(format))
+              checkArgFormat(con, format)
             cl <- class(object)
             if (hasMethod("asBED", class(object)))
               object <- asBED(object)
@@ -18,15 +49,14 @@ setMethod("export.bed", "ANY",
               if (class(track) == "try-error")
                 stop("cannot export object of class '", cl, "'")
             }
-            export.bed(track, con=con, variant=variant, color=color,
-                       append=append, ...)
+            export(track, con, append = append, ...)
           })
 
-setMethod("export.bed", c("RangedData", "characterORconnection"),
-          function(object, con, variant = c("base", "bedGraph", "bed15"), color,
-                   append, index = FALSE)
+setMethod("export", c("RangedData", "BEDFile"),
+          function(object, con, format, append = FALSE, index = FALSE)
           {
-            variant <- match.arg(variant)
+            if (!missing(format))
+              checkArgFormat(con, format)
             name <- strand <- thickStart <- thickEnd <- color <- NULL
             blockCount <- blockSizes <- blockStarts <- NULL
             if (index)
@@ -37,7 +67,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
               if (!is.numeric(score) || any(is.na(score)))
                 stop("Scores must be non-NA numeric values")
             }
-            if (variant == "bedGraph") {
+            if (is(con, "BEDGraphFile")) {
               if (is.null(score)) ## bedGraph requires score
                 score <- 0
               df$score <- score
@@ -54,7 +84,7 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
                 blockSizes <- toCSV(width(object$blocks))
                 blockStarts <- toCSV(start(object$blocks) - 1L)
               }
-              if (variant == "bed15" && is.null(blockSizes))
+              if (is(con, "BED15File") && is.null(blockSizes))
                 blockStarts <- blockSizes <- "" # bed15 must have all 15 cols
               if (!is.null(blockSizes) || !is.null(blockStarts)) {
                 if (is.null(blockSizes))
@@ -108,13 +138,14 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
               df$name <- name
               df$score <- score
               df$strand <- strand
-              df$thickStart <- thickStart - 1L
+              df$thickStart <-
+                if (!is.null(thickStart)) thickStart - 1L else NULL
               df$thickEnd <- thickEnd
               df$itemRgb <- color
               df$blockCount <- blockCount
               df$blockSizes <- blockSizes
               df$blockStarts <- blockStarts
-              if (variant == "bed15") {
+              if (is(con, "BED15File")) {
                 df$expCount <- object$expCount
                 df$expIds <- object$expIds
                 df$expScores <- object$expScores
@@ -123,58 +154,54 @@ setMethod("export.bed", c("RangedData", "characterORconnection"),
             scipen <- getOption("scipen")
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
+            file <- con
+            con <- connection(con, if (append) "a" else "w")
+            on.exit(release(con))
             write.table(df, con, sep = "\t", col.names = FALSE,
-                        row.names = FALSE, quote = FALSE, na = ".",
-                        append = append)
+                        row.names = FALSE, quote = FALSE, na = ".")
+            release(con)
             if (index)
-              indexTrack(object, con, "bed")
-            invisible(NULL)
+              invisible(indexTrack(file))
+            else invisible(file)
           })
 
-setMethod("export.bed", c("UCSCData", "characterORconnection"),
-          function(object, con, variant = c("base", "bedGraph", "bed15"), color,
-                   append, trackLine = TRUE, ...)
+setMethod("export", c("UCSCData", "BEDFile"),
+          function(object, con, format, trackLine = TRUE, ...)
           {
-            variant <- match.arg(variant)
-            if (variant == "base" && trackLine) {
-              export.ucsc(object, con, "bed", append, variant, color, ...)
+            if (!missing(format))
+              checkArgFormat(con, format)
+            if (trackLine) {
+              export.ucsc(object, con, ...)
             } else {
-              callNextMethod(object, con, variant, color, append)
+              callNextMethod()
             }
           })
 
-setMethod("export.bed", "RangedDataList",
-          function(object, con, variant = c("base", "bedGraph", "bed15"), color,
-                   append, ...)
-          {
-            export.ucsc(object, con, "bed", append, variant, color, ...)
-          })
+setMethod("export", c("RangedDataList", "BEDFile"),
+          .export_RangedDataList_RTLFile)
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Import
+###
 
 setGeneric("import.bed",
-           function(con, variant = c("base", "bedGraph", "bed15"),
-                    trackLine = TRUE, genome = NA, asRangedData = TRUE,
-                    colnames = NULL, ...)
-           standardGeneric("import.bed"))
+           function(con, trackLine = TRUE, genome = NA,
+                    asRangedData = TRUE, colnames = NULL, which = NULL, ...)
+           standardGeneric("import.bed"),
+           signature = "con")
 
-connectionForFile <- function(x) {
-  if (file_ext(x) == "gz")
-    gzfile(x)
-  else file(x)
-}
-
-setMethod("import.bed", "character",
-          function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
-                   genome, asRangedData = TRUE, colnames = NULL)
+setMethod("import.bed", "ANY",
+          function(con, trackLine, genome, asRangedData = TRUE, colnames = NULL,
+                   which = NULL)
           {
-            con <- connectionForFile(con)
-            open(con)
-            on.exit(close(con))
-            import(con, format = "bed", variant = variant,
+            import(con, format = "bed",
                    trackLine = trackLine, genome = genome,
-                   asRangedData = asRangedData, colnames = colnames)
+                   asRangedData = asRangedData, colnames = colnames,
+                   which = which)
           })
 
 scanTrackLine <- function(con) {
+  con <- connectionForResource(con, "r")
   line <- "#"
   while(length(grep("^ *#", line))) # skip initial comments
     line <- readLines(con, 1, warn = FALSE)
@@ -186,23 +213,30 @@ scanTrackLine <- function(con) {
   }
 }
 
-setMethod("import.bed", "connection",
-          function(con, variant = c("base", "bedGraph", "bed15"), trackLine,
-                   genome, asRangedData = TRUE, colnames = NULL)
+setMethod("import", "BEDFile",
+          function(con, format, text, trackLine = TRUE,
+                   genome = NA, asRangedData = TRUE, colnames = NULL,
+                   which = NULL, seqinfo = NULL)
           {
-            variant <- match.arg(variant)
-            if (variant == "base") {
-              ## check for a track line
-              line <- scanTrackLine(con)
-              if (!is.null(line) && trackLine) {
-                pushBack(line, con)
-                return(import.ucsc(con, subformat = "bed", drop = TRUE,
-                                   trackLine = FALSE, genome = genome,
-                                   asRangedData = asRangedData,
-                                   colnames = colnames))
-              }
+            if (!missing(format))
+              checkArgFormat(con, format)
+            file <- con
+            con <- queryForConnection(con, which)
+            if (attr(con, "usedWhich"))
+              which <- NULL
+            if (is.null(seqinfo))
+              seqinfo <- attr(con, "seqinfo")
+            ## check for a track line
+            line <- scanTrackLine(con)
+            if (!is.null(line) && trackLine) {
+              pushBack(line, con)
+              return(import.ucsc(initialize(file, resource = con), drop = TRUE,
+                                 trackLine = FALSE, genome = genome,
+                                 asRangedData = asRangedData,
+                                 colnames = colnames,
+                                 which = which, seqinfo = seqinfo))
             }
-            if (variant == "bedGraph") {
+            if (is(file, "BEDGraphFile")) {
               bedClasses <- c("character", "integer", "integer", "numeric")
               bedNames <- c("chrom", "start", "end", "score")
             } else {
@@ -214,13 +248,19 @@ setMethod("import.bed", "connection",
                               "numeric", "character", "integer", "integer",
                               "character", "integer", "character", "character")
             }
-            if (variant == "bed15")
+            if (is(file, "BED15File"))
               bedNames <- c(bedNames, "expCount", "expIds", "expScores")
             normArgColnames <- function(validNames) {
               if (is.null(colnames))
                 colnames <- validNames
               else {
                 colnames <- unique(c(head(bedNames, 3), as.character(colnames)))
+                if ("thick" %in% colnames)
+                  colnames <- c(setdiff(colnames, "thick"), "thickStart",
+                                "thickEnd")
+                if ("blocks" %in% colnames)
+                  colnames <- c(setdiff(colnames, "blocks"), "blockStarts",
+                                "blockSizes", "blockCount")
                 missingCols <- setdiff(colnames, validNames)
                 if (length(missingCols))
                   stop("Requested column(s) ",
@@ -241,7 +281,9 @@ setMethod("import.bed", "connection",
               bed <- DataFrame(read.table(con, colClasses = bedClasses,
                                           as.is = TRUE))
             } else {
-              colnames <- normArgColnames(bedNames)
+              if (is.null(colnames))
+                colnames <- character()
+              else colnames <- normArgColnames(bedNames)
               keepCols <- bedNames %in% colnames
               bed <- DataFrame(as.list(sapply(bedClasses[keepCols], vector)))
             }
@@ -267,47 +309,33 @@ setMethod("import.bed", "connection",
               blocks <- seqsplit(IRanges(fromCSV(bed$blockStarts) + 1L,
                                          width = fromCSV(bed$blockSizes)),
                                  togroup(PartitioningByWidth(bed$blockCount)))
-              names(blocks) <- bed$chrom
+              names(blocks) <- NULL
               bed$blockStarts <- bed$blockSizes <- bed$blockCount <- NULL
               bed$blocks <- blocks
             }
             GenomicData(IRanges(bed$start + 1L, bed$end),
                         bed[,tail(colnames(bed), -3),drop=FALSE],
                         chrom = bed$chrom, genome = genome,
-                        asRangedData = asRangedData)
+                        seqinfo = seqinfo,
+                        asRangedData = asRangedData, which = which)
           })
 
-setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### BED15 (Microarray) Support
+###
 
-setMethod("blocks", "RangedData",
-          function(x)
+setMethod("import", "BED15File",
+          function(con, format, text, trackLine = NULL, genome = NA,
+                   asRangedData = TRUE, which = NULL)
           {
-            blocks(as(x, "GenomicRanges"))
-          })
-
-setMethod("blocks", "GenomicRanges",
-          function(x)
-          {
-            gr <- as(values(x)$blocks, "GenomicRanges")
-            if (!is.null(values(x)$name))
-              values(gr)$tx_id = rep(values(x)$name, blockCount)
-            gr
-          })
-
-## FIXME: this generic needs to be pushed up from GenomicFeatures
-##setMethod("exons", "GenomicRanges", function(x) blocks(x))
-
-setGeneric("import.bed15Lines",
-           function(con, trackLine, genome = NA, asRangedData = TRUE, ...)
-           standardGeneric("import.bed15Lines"))
-
-setMethod("import.bed15Lines", "ANY",
-          function(con, trackLine, genome, asRangedData = TRUE)
-          {
+            if (!missing(format))
+              checkArgFormat(con, format)
             if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
-            bed <- import.bed(con, "bed15", genome = genome,
-                              asRangedData = asRangedData, colnames = colnames)
+            if (is.null(trackLine))
+              return(import.ucsc(con, TRUE, genome = genome,
+                                 asRangedData = asRangedData, which = which))
+            bed <- callNextMethod()
             if (asRangedData) {
               if (!nrow(bed))
                 return(bed)
@@ -345,23 +373,42 @@ setMethod("import.bed15Lines", "ANY",
           })
 
 setGeneric("import.bed15",
-           function(con, genome = NA, asRangedData = TRUE, ...)
-           standardGeneric("import.bed15"))
+           function(con, genome = NA, asRangedData = TRUE, which = NULL, ...)
+           standardGeneric("import.bed15"),
+           signature = "con")
 
 setMethod("import.bed15", "ANY",
-          function(con, genome, asRangedData = TRUE)
+          function(con, genome, asRangedData = TRUE, which = NULL)
           {
-            import.ucsc(con, "bed15", TRUE, genome = genome,
-                        asRangedData = asRangedData)
+            import(con, "bed15", genome = genome, asRangedData = asRangedData,
+                   which = which)
           })
 
-setGeneric("export.bed15Lines",
-           function(object, con, trackLine, ...)
-           standardGeneric("export.bed15Lines"))
+setGeneric("export.bed15",
+           function(object, con, expNames = NULL, ...)
+           standardGeneric("export.bed15"),
+           signature = c("object", "con"))
 
-setMethod("export.bed15Lines", "RangedData",
-          function(object, con, trackLine, ...)
+setMethod("export.bed15", "ANY",
+          function(object, con, expNames = NULL, ...) {
+            export(object, con, "bed15", expNames = expNames,
+                   trackLine = trackLine, ...)
+          })
+
+### FIXME: dispatch will break when 'object' is a UCSCData
+### Possible solution: just merge this code with the main BEDFile method?
+setMethod("export", c("RangedData", "BED15File"),
+          function(object, con, format, expNames = NULL, trackLine = NULL, ...)
           {
+            if (!missing(format))
+              checkArgFormat(con, format)
+            if (is.null(trackLine)) {
+              ## ensure we do not override existing track line parameter
+              if (is.null(expNames) && is(object, "UCSCData") &&
+                  is(object@trackLine, "Bed15TrackLine"))
+                expNames <- object@trackLine@expNames
+              return(export.ucsc(object, con, expNames = expNames, ...))
+            }
             expNames <- trackLine@expNames
             object$expCount <- rep(length(expNames), nrow(object))
             object$expIds <- rep(paste(seq_along(expNames)-1, collapse=","),
@@ -370,26 +417,7 @@ setMethod("export.bed15Lines", "RangedData",
             scores <- do.call(paste, c(scores, sep = ","))
             scores <- gsub("NA", "-10000", scores, fixed=TRUE)
             object$expScores <- scores
-            export.bed(object, con, "bed15", ...)
-          })
-
-setGeneric("export.bed15",
-           function(object, con, expNames = NULL, ...)
-           standardGeneric("export.bed15"))
-
-setMethod("export.bed15", "ANY",
-          function(object, con, expNames, ...)
-          {
-            export.ucsc(object, con, "bed15", expNames = expNames, ...)
-          })
-
-setMethod("export.bed15", "UCSCData",
-          function(object, con, expNames, ...)
-          {
-            ## ensure we do not override existing track line parameter
-            if (missing(expNames) && is(object@trackLine, "Bed15TrackLine"))
-              expNames <- object@trackLine@expNames
-            export.ucsc(object, con, "bed15", expNames = expNames, ...)
+            callNextMethod(object, con, ...)
           })
 
 setClass("Bed15TrackLine",
@@ -414,31 +442,28 @@ setAs("character", "Bed15TrackLine",
       {
         line <- new("Bed15TrackLine", as(from, "TrackLine"))
         vals <- ucscParsePairs(from)
-        line@expScale <- as.numeric(vals["expScale"])
-        line@expStep <- as.numeric(vals["expStep"])
-        line@expNames <- strsplit(vals["expNames"], ",", fixed=TRUE)[[1]]
+        line@expScale <- as.numeric(vals[["expScale"]])
+        line@expStep <- as.numeric(vals[["expStep"]])
+        line@expNames <- strsplit(vals[["expNames"]], ",", fixed=TRUE)[[1]]
         line
       })
 
+setMethod("fileFormat", "Bed15TrackLine", function(x) "bed15")
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### bedGraph (formerly subset of WIG) support
+###
+
 setGeneric("import.bedGraph",
-           function(con, genome = NA, asRangedData = TRUE, ...)
-           standardGeneric("import.bedGraph"))
+           function(con, genome = NA, asRangedData = TRUE, which = NULL, ...)
+           standardGeneric("import.bedGraph"),
+           signature = "con")
 
 setMethod("import.bedGraph", "ANY",
-          function(con, genome, asRangedData = TRUE)
+          function(con, genome, asRangedData = TRUE, which = NULL)
           {
-            import.ucsc(con, "bedGraph", TRUE, genome = genome,
-                        asRangedData = asRangedData)
-          })
-
-setGeneric("import.bedGraphLines",
-           function(con, genome = NA, asRangedData = TRUE, ...)
-           standardGeneric("import.bedGraphLines"))
-
-setMethod("import.bedGraphLines", "ANY",
-          function(con, genome, asRangedData = TRUE) {
-            import.bed(con, variant = "bedGraph", genome = genome,
-                       asRangedData = asRangedData)
+            import(con, "bedGraph", genome = genome,
+                   asRangedData = asRangedData, which = which)
           })
 
 setGeneric("export.bedGraph",
@@ -448,18 +473,12 @@ setGeneric("export.bedGraph",
 setMethod("export.bedGraph", "ANY",
           function(object, con, ...)
           {
-            export.ucsc(object, con, "bedGraph", ...)
+            export(object, con, "bedGraph", ...)
           })
 
-setGeneric("export.bedGraphLines",
-           function(object, con, ...)
-           standardGeneric("export.bedGraphLines"))
-
-setMethod("export.bedGraphLines", "ANY",
-          function(object, con, ...)
-          {
-            export.bed(object, con, "bedGraph", ...)
-          })
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Coercion
+###
 
 setGeneric("asBED", function(x, ...) standardGeneric("asBED"))
 
@@ -476,3 +495,27 @@ setMethod("asBED", "GRangesList", function(x) {
   values(gr)$blocks <- split(x_ranges, togroup(x)[ord_start])
   gr
 })
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Utilities
+###
+
+setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
+
+setMethod("blocks", "RangedData",
+          function(x)
+          {
+            blocks(as(x, "GenomicRanges"))
+          })
+
+setMethod("blocks", "GenomicRanges",
+          function(x)
+          {
+            gr <- as(values(x)$blocks, "GenomicRanges")
+            if (!is.null(values(x)$name))
+              values(gr)$tx_id = rep(values(x)$name, blockCount)
+            gr
+          })
+
+## FIXME: this generic needs to be pushed up from GenomicFeatures
+##setMethod("exons", "GenomicRanges", function(x) blocks(x))

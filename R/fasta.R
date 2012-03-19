@@ -5,6 +5,12 @@
 ### Since we have 2bit, we might as well have FASTA
 ###
 
+setClass("FastaFile", contains = "RTLFile")
+
+FastaFile <- function(resource) {
+  new("FastaFile", resource = resource)
+}
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Export
 ###
@@ -13,23 +19,29 @@ setGeneric("export.fasta",
            function(object, con, ...) standardGeneric("export.fasta"))
 
 setMethod("export.fasta", "ANY", function(object, con, ...) {
-  export.fasta(as(object, "DNAStringSet"), con, ...)
+  export(object, con, "fasta", ...)
 })
 
-setMethod("export.fasta", c("BSgenome", "character"),
-          function(object, con) {
+setMethod("export", c("ANY", "FastaFile"), function(object, con, ...) {
+  export(as(object, "DNAStringSet"), con, ...)
+})
+
+setMethod("export", c("BSgenome", "FastaFile"),
+          function(object, con, format) {
             append <- FALSE
             for (seqname in seqnames(object)) {
-              writeFASTA(list(object[[seqname]]), con, desc = list(seqname),
-                         append = append)
+              dna <- DNAStringSet(object[[seqname]])
+              names(dna) <- seqname
+              write.XStringSet(dna, path(con), append = append)
               append <- TRUE
             }
-            file
           })
 
-setMethod("export.fasta", c("DNAStringSet", "character"), function(object, con)
+setMethod("export", c("DNAStringSet", "FastaFile"),
+          function(object, con, format, append = append)
           {
-            write.XStringSet(object, con, format = "fasta")
+            write.XStringSet(object, path(con), format = "fasta",
+                             append = append)
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -38,16 +50,18 @@ setMethod("export.fasta", c("DNAStringSet", "character"), function(object, con)
 
 setGeneric("import.fasta", function(con, ...) standardGeneric("import.fasta"))
 
-setMethod("import.fasta", "connection",
+setMethod("import.fasta", "ANY",
           function(con, ...)
           {
-            import.fasta(summary(con)$description, ...)
+            import(con, "fasta", ...)
           })
 
-setMethod("import.fasta", "character",
-          function(con, type = c("DNA", "RNA", "AA", "B"), ...)
+setMethod("import", "FastaFile",
+          function(con, format, text, type = c("DNA", "RNA", "AA", "B"), ...)
           {
+            if (!missing(format))
+              checkArgFormat(con, format)
             readFun <- get(paste("read.", match.arg(type), "StringSet",
                                  sep = ""))
-            readFun(con, format = "fasta", ...)
+            readFun(path(con), format = "fasta", ...)
           })

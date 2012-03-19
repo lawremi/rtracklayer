@@ -1,41 +1,14 @@
 ### =========================================================================
-### Genome-oriented methods for GRanges/RangedData classes
+### Genome-oriented methods for GRanges/RangedData/RangesList classes
 ### -------------------------------------------------------------------------
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Accessor methods.
-###
-
-setMethod("seqinfo", "RangedData", function(x) seqinfo(ranges(x)))
-setReplaceMethod("seqinfo", "RangedData",
-                 function(x, value) {
-                   seqinfo(ranges(x)) <- value
-                   x
-                 })
-
-setMethod("seqnames", "RangedData", function(x) space(x))
-
-setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
-setMethod("chrom", "RangedData", function(x) chrom(ranges(x)))
-setMethod("chrom", "GRanges", function(x) seqnames(x))
-
-setGeneric("chrom<-", function(x, ..., value) standardGeneric("chrom<-"))
-setReplaceMethod("chrom", "RangedData", function(x, value) {
-  chrom(ranges(x)) <- value
-  x
-})
-setReplaceMethod("chrom", "GRanges", function(x, value) {
-  seqnames(x) <- value
-  x
-})
-
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Constructor.
+### RangedData/GRanges convenience constructor
 ###
 
 GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
-                        asRangedData = TRUE)
+                        seqinfo = NULL,
+                        asRangedData = TRUE, which = NULL)
 {
   if (!isTRUEorFALSE(asRangedData))
     stop("'asRangedData' must be TRUE or FALSE")
@@ -53,6 +26,19 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
       stop("length of 'ranges' not a multiple of 'chrom' length")
     if (!is.null(genome) && !isSingleStringOrNA(genome))
       stop("'genome' must be a single string, or NULL, or NA")
+    if (!is.null(seqinfo)) {
+      if (is.na(genome))
+        genome <- singleGenome(genome(seqinfo))
+      else if (!all(genome == genome(seqinfo)))
+        stop("'genome' ", genome, "' does not match that in 'seqinfo'")
+    }
+    if (is.null(seqinfo)) {
+      if (!is.null(genome) && !is.na(genome))
+        seqinfo <- seqinfoForGenome(genome)
+      else seqinfo <- Seqinfo(as.character(unique(chrom)))
+    }
+    if (!is.factor(chrom))
+      chrom <- factor(chrom, seqnames(seqinfo))
     if (asRangedData) {
       if (is.na(genome))
         genome <- NULL # universe expects NULL if unknown
@@ -77,68 +63,27 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
           dots[["strand"]] <- NULL
           return(GenomicData(ranges = ranges, dots, strand = strand,
                              chrom = chrom, genome = genome,
-                             asRangedData = asRangedData))
+                             asRangedData = asRangedData, which = which))
         }
       }
       if (is.null(strand))
         strand <- Rle("*", length(ranges))
+      if (!is.null(seqinfo))
+        chrom <- factor(chrom, seqlevels(seqinfo))
       gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, ...)
       if (!is.null(genome))
         genome(gd) <- genome
     }
   }
+  if (!is.null(seqinfo))
+    seqinfo(gd) <- seqinfo
+  if (!is.null(which))
+    gd <- subsetByOverlaps(gd, which)
   gd
 }
 
-### =========================================================================
-### Genome-oriented methods for GRanges/RangesList classes
-### -------------------------------------------------------------------------
-
-setMethod("seqinfo", "RangesList", function(x) {
-  si <- metadata(x)$seqinfo
-  if (is.null(si)) {
-    genome <- singleGenome(universe(x))
-    if (!is.null(genome) && !is.na(genome))
-      si <- seqinfoForGenome(genome)
-    if (is.null(si)) {
-      sn <- names(x)
-      if (is.null(sn))
-        sn <- as.character(seq(length(x)))
-      si <- Seqinfo(sn, end(unlist(range(x), use.names = FALSE)))
-      if (!is.null(genome))
-        genome(si) <- rep(genome, length(x))
-    }
-  }
-  si
-})
-
-### FIXME: needs sanity checks
-setReplaceMethod("seqinfo", "RangesList",
-                 function(x, value) {
-                   metadata(x)$seqinfo <- value
-                   x
-                 })
-
-setMethod("chrom", "RangesList", function(x) {
-  names(x)
-})
-
-setReplaceMethod("chrom", "RangesList", function(x, value) {
-  names(x) <- value
-  x
-})
-
-setMethod("seqnames", "RangesList", function(x) {
-  seqsplit(Rle(space(x)), rep(names(x), elementLengths(x)))
-})
-
-setMethod("score", "ANY", function(x) NULL)
-setMethod("score", "GenomicRangesORGRangesList", function(x) {
-  values(x)$score
-})
-
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Constructor
+### Automatic seqinfo lookup
 ###
 
 seqinfoForGenome <- function(genome, method = c("auto", "BSgenome", "UCSC")) {
@@ -150,12 +95,25 @@ seqinfoForGenome <- function(genome, method = c("auto", "BSgenome", "UCSC")) {
   sl
 }
 
+BSGenomeForID <- function(genome) {
+  pkgs <- installed.genomes()
+  pkg <- grep(paste(genome, "$", sep = ""), pkgs, value = TRUE)
+  if (length(pkg) == 1) {
+    org <- strsplit(pkg, ".", fixed=TRUE)[[1]][2]
+    get(org, getNamespace(pkg))
+  } else NULL
+}
+
 SeqinfoForBSGenome <- function(genome) {
   bsgenome <- BSGenomeForID(genome)
   if (!is.null(bsgenome))
     seqinfo(bsgenome)
   else NULL
 }
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Convience constructor for GRanges over an entire genome
+###
 
 GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL, ...,
                              method = c("auto", "BSgenome", "UCSC"),
@@ -181,13 +139,6 @@ GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL, ...,
     ranges <- IRanges(1L, seqlengths(seqinfo)[chrom])
   gr <- GRanges(chrom, ranges, seqlengths = seqlengths(seqinfo), ...)
   seqinfo(gr) <- seqinfo
-  # TODO: H.P. - Sept 16, 2011.
-  # The line below used was storing the genome string in the metadata part of
-  # 'gr' but the "genome<-" method for GRanges objects was redefined to store
-  # genome information in the Seqinfo part of the object instead, and this
-  # change broke the line below. I comment it out right now and will let
-  # Michael decide what to do about this.
-  #genome(gr) <- genome
   gr
 }
 
@@ -198,6 +149,66 @@ GRangesForBSGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 }
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### score: for internal convenience
+###
+
+setMethod("score", "ANY", function(x) NULL)
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### chrom(): Returns chromosome name vector of length 'length(x)'.
+###          Not to be confused with 'seqnames', which returns a List for
+###          RangesList and a vector of length 'nrow(x)' for RangedData.
+###          More or less a pre-GenomicRanges relic.
+###
+
+setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
+setMethod("chrom", "RangedData", function(x) chrom(ranges(x)))
+setMethod("chrom", "GRanges", function(x) seqnames(x))
+setMethod("chrom", "RangesList", function(x) {
+  names(x)
+})
+
+setGeneric("chrom<-", function(x, ..., value) standardGeneric("chrom<-"))
+setReplaceMethod("chrom", "RangedData", function(x, value) {
+  chrom(ranges(x)) <- value
+  x
+})
+setReplaceMethod("chrom", "GRanges", function(x, value) {
+  seqnames(x) <- value
+  x
+})
+
+### =========================================================================
+### Genome-oriented conveniences for RangedSelection classes
+### -------------------------------------------------------------------------
+
+## One could imagine the BSgenome object having a coerce method to
+## Ranges and RangesList, and this function could use that. But would
+## the coercion consider masks?
+
+GenomicSelection <- function(genome, chrom = NULL, colnames = character(0))
+{
+  if (missing(genome) || !isSingleString(genome))
+    stop("'genome' must be a single string identifying a genome")
+  si <- seqinfoForGenome(genome)
+  if (is.null(si))
+    stop("Failed to obtain information for genome '", genome, "'")
+  lens <- seqlengths(si)
+  if (is.null(chrom))
+    chrom <- names(lens)
+  else {
+    if (!is.character(chrom))
+      stop("'chrom' must be NULL or a character vector")
+    invalidChroms <- setdiff(chrom, names(lens))
+    if (length(invalidChroms))
+      stop("'chrom' contains invalid chromosomes: ",
+           paste(invalidChroms, collapse = ", "))
+    lens <- lens[chrom]
+  }
+  RangedSelection(split(IRanges(1, lens), factor(chrom, chrom)), colnames)
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
 ###
 
@@ -205,9 +216,9 @@ GRangesForBSGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 ## whereas range data structures can have multiple genomes. We try to
 ## rectify this here.
 singleGenome <- function(x) {
-  x1 <- head(x, 1)
-  if (any(x != x1))
-    stop("Multiple genomes encountered; only one supported")
+  x1 <- unname(x[1])
+  if (!all(is.na(x)) && (any(is.na(x)) || any(x != x1)))
+      stop("Multiple genomes encountered; only one supported")
   x1
 }
 
@@ -228,7 +239,7 @@ normGenomeRange <- function(range, session) {
   }
   genome <- genome(session)
   rangeGenome <- singleGenome(genome(range))
-  if (is.null(rangeGenome))
+  if (is.na(rangeGenome))
     genome(range) <- genome
   else if (rangeGenome != genome) {
     genome(session) <- rangeGenome
@@ -267,45 +278,6 @@ spansGenome <- function(x) {
   x <- reduce(x)
   w <- structure(width(x), names = as.character(seqnames(x)))
   identical(w[names(seqlengths(x))], seqlengths(x))
-}
-
-### =========================================================================
-### Genome-oriented conveniences for RangedSelection classes
-### -------------------------------------------------------------------------
-
-BSGenomeForID <- function(genome) {
-  pkgs <- installed.genomes()
-  pkg <- grep(paste(genome, "$", sep = ""), pkgs, value = TRUE)
-  if (length(pkg) == 1) {
-    org <- strsplit(pkg, ".", fixed=TRUE)[[1]][2]
-    get(org, getNamespace(pkg))
-  } else NULL
-}
-
-## One could imagine the BSgenome object having a coerce method to
-## Ranges and RangesList, and this function could use that. But would
-## the coercion consider masks?
-
-GenomicSelection <- function(genome, chrom = NULL, colnames = character(0))
-{
-  if (missing(genome) || !isSingleString(genome))
-    stop("'genome' must be a single string identifying a genome")
-  si <- seqinfoForGenome(genome)
-  if (is.null(si))
-    stop("Failed to obtain information for genome '", genome, "'")
-  lens <- seqlengths(si)
-  if (is.null(chrom))
-    chrom <- names(lens)
-  else {
-    if (!is.character(chrom))
-      stop("'chrom' must be NULL or a character vector")
-    invalidChroms <- setdiff(chrom, names(lens))
-    if (length(invalidChroms))
-      stop("'chrom' contains invalid chromosomes: ",
-           paste(invalidChroms, collapse = ", "))
-    lens <- lens[chrom]
-  }
-  RangedSelection(split(IRanges(1, lens), factor(chrom, chrom)), colnames)
 }
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,3 +1,11 @@
+### =========================================================================
+### Chain file parsing and lift over
+### -------------------------------------------------------------------------
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Classes
+###
+
 setClass("ChainBlock",
          representation(ranges = "IRanges", # start in A, width
                         offset = "integer", # offset to start in B
@@ -12,14 +20,36 @@ setClass("Chain",
          prototype = prototype(elementType = "ChainBlock"),
          contains = "SimpleList")
 
+setClass("ChainFile", contains = "RTLFile")
+
+ChainFile <- function(path) {
+  if (!isSingleString(path))
+    stop("'filename' must be a single string, specifying a path")
+  new("ChainFile", resource = path)
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Import
+###
+
 setGeneric("import.chain",
            function(con, exclude = "_") standardGeneric("import.chain"),
            signature = "con")
 
-setMethod("import.chain", "character", function(con, exclude) {
-  .Call("readChain", con, as.character(exclude), PACKAGE="rtracklayer")
+setMethod("import.chain", "ANY", function(con, exclude) {
+  import(con, "chain", exclude = exclude)
 })
-  
+
+setMethod("import", "ChainFile", function(con, format, text, exclude = "_") {
+  if (!missing(format))
+    checkArgFormat(con, format)
+  .Call("readChain", path(con), as.character(exclude), PACKAGE="rtracklayer")
+})
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Accessors
+###
+
 setMethod("ranges", "ChainBlock", function(x) x@ranges)
 setMethod("offset", "ChainBlock", function(object) object@offset)
 setMethod("score", "ChainBlock", function(x) Rle(x@score, x@length))
@@ -27,6 +57,10 @@ setMethod("space", "ChainBlock", function(x) Rle(x@space, x@length))
 
 setGeneric("reversed", function(x, ...) standardGeneric("reversed"))
 setMethod("reversed", "ChainBlock", function(x) Rle(x@reversed, x@length))
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Liftover
+###
 
 flipStrandSimple <- function(strand, flip) {
   strand <- as.vector(strand)

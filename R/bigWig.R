@@ -1,17 +1,23 @@
-### UCSC bigWig format 
+### =========================================================================
+### BigWig support
+### -------------------------------------------------------------------------
 
-## NOTE: could use an externalptr here, but we should profile to see
-## if that is worth it.
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Classes
+###
+
 setClass("BigWigFile", contains = "RTLFile")
+setClass("BWFile", contains = "BigWigFile")
 
 BigWigFile <- function(path) {
   if (!isSingleString(path))
     stop("'filename' must be a single string, specifying a path")
-  new("BigWigFile", path = path)
+  new("BigWigFile", resource = path)
 }
+BWFile <- BigWigFile
 
 setMethod("seqinfo", "BigWigFile", function(x) {
-  seqlengths <- .Call(BWGFile_seqlengths, x@path)
+  seqlengths <- .Call(BWGFile_seqlengths, path(x))
   Seqinfo(names(seqlengths), seqlengths) # no circularity information
 })
 
@@ -35,7 +41,7 @@ setValidity("BigWigSelection",
               .validateColNames(object, "bigWig")
             })
 
-BigWigSelection <- function(ranges = GRanges(), colnames = "score") {
+BigWigSelection <- function(ranges = RangesList(), colnames = "score") {
   if (!is.character(colnames) ||
       (length(colnames) && !identical(colnames, "score")))
     stop("'score' is the only valid column for BigWig")
@@ -57,28 +63,44 @@ setAs("GenomicRanges", "BigWigSelection", function(from) {
   as(as(from, "RangesList"), "BigWigSelection")
 })
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export
+###
+
 setGeneric("export.bw",
            function(object, con,
                     dataFormat = c("auto", "variableStep", "fixedStep",
                       "bedGraph"),
                     compress = TRUE, ...)
-           standardGeneric("export.bw"))
+           standardGeneric("export.bw"),
+           signature = c("object", "con"))
 
 setMethod("export.bw", "ANY",
           function(object, con,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                      "bedGraph"), compress, ...)
           {
-            rd <- as(object, "RangedData")
-            export.bw(rd, con, dataFormat, compress, ...)
+            export(rd, con, "BigWig", dataFormat = match.arg(dataFormat),
+                   compress = compress, ...)
           })
 
-setMethod("export.bw", c("RangedData", "character"),
+setMethod("export", c("ANY", "BigWigFile"),
+          function(object, con,
+                   dataFormat = c("auto", "variableStep", "fixedStep",
+                     "bedGraph"), compress = TRUE, ...)
+          {
+            rd <- as(object, "RangedData")
+            export(rd, con, match.arg(dataFormat), compress, ...)
+          })
+
+setMethod("export", c("RangedData", "BigWigFile"),
           function(object, con,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                                   "bedGraph"),
-                   compress)
+                   compress = TRUE)
           {
+            con <- path(con)
+            object <- sortBySeqnameAndStart(object)
             score <- score(object)
             if (!is.numeric(score) || any(is.na(score)))
               stop("The score must be numeric, without any NA's")
@@ -90,7 +112,9 @@ setMethod("export.bw", c("RangedData", "character"),
                    "'seqlengths' or specify a genome on 'object' that ",
                    "is known to BSgenome or UCSC")
             sectionPtr <- NULL # keep adding to the same linked list
-            .bigWigWriter <- function(chromData, con, dataFormat) {
+            .bigWigWriter <- function(chromData, con, dataFormat, append) {
+              if (any(tail(start(chromData), -1) <= head(end(chromData), -1)))
+                stop("BigWig ranges cannot overlap")
               sectionPtr <<- .Call(BWGSectionList_add, sectionPtr,
                                    names(chromData)[1],
                                    as(ranges(chromData)[[1]], "IRanges"),
@@ -103,68 +127,84 @@ setMethod("export.bw", c("RangedData", "character"),
             on.exit(.Call(BWGSectionList_cleanup, sectionPtr))
             if (format == "bedGraph")
               lapply(object, .bigWigWriter, con, dataFormat)
-            else export.wigLines(object, con, dataFormat, .bigWigWriter)
+            else export.wig(object, con, dataFormat, writer = .bigWigWriter,
+                            trackLine = FALSE)
             storage.mode(seqlengths) <- "integer"
             invisible(BigWigFile(.Call(BWGSectionList_write, sectionPtr,
                                        seqlengths, compress, con)))
           })
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Import
+###
+
 setGeneric("import.bw", function(con, ...) standardGeneric("import.bw"))
 
-setMethod("import.bw", "connection",
+setMethod("import.bw", "ANY",
           function(con, ...)
           {
-            import.bw(summary(con)$description, ...)
+            import(con, "BigWig", ...)
           })
 
-setMethod("import.bw", "character",
-          function(con, ...)
+setMethod("import", "BigWigFile",
+          function(con, format, text, selection = BigWigSelection(which, ...),
+                   which = con, asRangedData = TRUE, ...)
           {
-            import.bw(BigWigFile(con), ...)
-          })
-
-setMethod("import.bw", "BigWigFile",
-          function(con, selection = BigWigSelection(ranges, ...),
-                   ranges = con, asRangedData = TRUE, ...)
-          {
+            if (!missing(format))
+              checkArgFormat(con, format)
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
-            normRanges <- as(ranges(selection), "NormalIRangesList")
+            si <- seqinfo(con)
+            which <- ranges(selection)
+            badSpaces <- setdiff(names(which), seqnames(si))
+            if (length(badSpaces))
+              stop("'which' contains sequence names not known to BigWig file: ",
+                   paste(badSpaces, collapse = ", "))
+            flatWhich <- unlist(which, use.names = FALSE)
+            if (is.null(flatWhich))
+              flatWhich <- IRanges()
+            which <- split(flatWhich, factor(space(which), seqnames(si)))
+            normRanges <- as(which, "NormalIRangesList")
             rd <- .Call(BWGFile_query, path(con), as.list(normRanges),
                         identical(colnames(selection), "score"))
-            ## Unfortunately, the bigWig query API is such that we can
-            ## end up with multiple hits.
-            if (any(width(rd) > 2)) {
-              hits <- queryHits(findOverlaps(ranges(rd), normRanges))
-              rd <- rd[!duplicated(hits),]
-            }
-            if (!asRangedData)
+            seqinfo(rd) <- si
+            if (!asRangedData) {
+              strand(rd) <- "*"
               as(rd, "GRanges")
+            }
             else rd
           })
 
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Summary
+###
+
 setMethod("summary", "BigWigFile",
-          function(object, ranges = as(seqinfo(object), "GenomicRanges"),
+          function(object, which = as(seqinfo(object), "GenomicRanges"),
                    size = 1L, type = c("mean", "min", "max", "coverage", "sd"),
                    defaultValue = NA_real_)
           {
             ### FIXME: could do with "GenomicRanges" here, but
             ### coercions generally only exist for GRanges specifically
-            ranges <- as(ranges, "GRanges")
+            which <- as(which, "GRanges")
             if (!is.numeric(size))
               stop("'size' must be numeric")
-            size <- recycleIntegerArg(size, "size", length(ranges))
+            size <- recycleIntegerArg(size, "size", length(which))
             type <- match.arg(type)
             if (type == "sd") type <- "std"
             if (!isSingleNumberOrNA(defaultValue))
               stop("'defaultValue' must be a single number or NA")
             summaryList <- .Call(BWGFile_summary, path(object),
-                                 as.character(seqnames(ranges)),
-                                 ranges(ranges), size, type,
+                                 as.character(seqnames(which)),
+                                 ranges(which), size, type,
                                  as.numeric(defaultValue))
-            names(summaryList) <- names(ranges)
+            names(summaryList) <- names(which)
             RleList(summaryList)
           })
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Conversion
+###
 
 wigToBigWig <-
   function(x, seqinfo,

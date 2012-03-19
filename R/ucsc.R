@@ -47,13 +47,13 @@ setMethod("seqinfo", "UCSCSession", function(x) {
 })
 
 normArgTrackData <- function(value, session) {
-  genomes <- lapply(value, genome)
-  genomes[sapply(genomes, length) == 0L] <- ""
+  genomes <- sapply(value, function(x) singleGenome(genome(x)))
+  genomes[is.na(genomes)] <- ""
   tapply(value, unlist(genomes),
          function(tracks)
          {
            genome <- singleGenome(genome(tracks[[1]]))
-           if (length(genome))
+           if (!is.na(genome))
              genome(session) <- genome
            spaces <- unlist(lapply(tracks, names))
            badSpaces <- setdiff(spaces, seqnames(session))
@@ -66,16 +66,16 @@ normArgTrackData <- function(value, session) {
 
 setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
           function(object, name = names(value),
-                   format = c("auto", "bed", "wig", "gff1", "bed15"), ...,
-                   value)
+                   format = c("auto", "bed", "wig", "gff1", "bed15",
+                     "bedGraph"), ..., value)
           {
             format <- match.arg(format)
             if (length(value)) {
               ## upload values in blocks, one for each genome
               value <- normArgTrackData(value, object)
               names(value) <- name
-              genomes <- lapply(value, genome)
-              genomes[sapply(genomes, length) == 0L] <- ""
+              genomes <- sapply(value, function(x) singleGenome(genome(x)))
+              genomes[is.na(genomes)] <- ""
               tapply(value, unlist(genomes),
                      function(tracks)
                      {
@@ -536,7 +536,8 @@ setMethod("track", "UCSCTableQuery",
             outputType(object) <- output
             tableName(object) <- table
             output <- ucscExport(object)
-            import(text = output, format = format, asRangedData = asRangedData)
+            import(text = output, format = format, asRangedData = asRangedData,
+                   genome = singleGenome(genome(range(object))))
           })
 
 ## grab sequences for features in 'track' at 'range'
@@ -849,11 +850,11 @@ setAs("BasicTrackLine", "character",
       {
         str <- as(as(from, "TrackLine"), "character")
         itemRgb <- from@itemRgb
-        if (length(itemRgb) && itemRgb)
-          str <- paste(str, "itemRgb=On")
+        if (length(itemRgb))
+          str <- paste(str, " itemRgb=", if (itemRgb) "On" else "Off", sep = "")
         useScore <- from@useScore
-        if (length(useScore) && useScore)
-          str <- paste(str, "useScore=1")
+        if (length(useScore))
+          str <- paste(str, " useScore=", if (useScore) "1" else "0", sep = "")
         group <- from@group
         if (length(group))
           str <- paste(str, " group=", group, sep="")
@@ -873,7 +874,7 @@ setAs("BasicTrackLine", "character",
         if (length(colorByStrand)) {
           colors <- paste(colorByStrand[1,], colorByStrand[2,],
                           colorByStrand[3,], sep = ",", collapse = " ")
-          str <- paste(str, " colorByStrand=", colors)
+          str <- paste(str, " colorByStrand=", colors, sep = "")
         }
         str
       })
@@ -905,15 +906,15 @@ setAs("character", "TrackLine",
         line <- new("TrackLine")
         vals <- ucscParsePairs(from)
         if (!is.na(vals["name"]))
-          line@name <- vals["name"]
+          line@name <- vals[["name"]]
         if (!is.na(vals["description"]))
-          line@description <- vals["description"]
+          line@description <- vals[["description"]]
         if (!is.na(vals["visibility"]))
-          line@visibility <- vals["visibility"]
+          line@visibility <- vals[["visibility"]]
         if (!is.na(vals["color"]))
-          line@color <- as.integer(strsplit(vals["color"], ",")[[1]])
+          line@color <- as.integer(strsplit(vals[["color"]], ",")[[1]])
         if (!is.na(vals["priority"]))
-          line@priority <- as.numeric(vals["priority"])
+          line@priority <- as.numeric(vals[["priority"]])
         line
       })
 
@@ -923,21 +924,22 @@ setAs("character", "BasicTrackLine",
         line <- new("BasicTrackLine", as(from, "TrackLine"))
         vals <- ucscParsePairs(from)
         if (!is.na(vals["itemRgb"]))
-          line@itemRgb <- vals["itemRgb"] == "On"
+          line@itemRgb <- vals[["itemRgb"]] == "On"
         if (!is.na(vals["useScore"]))
-          line@useScore <- vals["useScore"] == "1"
+          line@useScore <- vals[["useScore"]] == "1"
         if (!is.na(vals["group"]))
-          line@group <- vals["group"]
+          line@group <- vals[["group"]]
         if (!is.na(vals["db"]))
-          line@db <- vals["db"]
+          line@db <- vals[["db"]]
         if (!is.na(vals["offset"]))
-          line@offset <- vals["offset"]
+          line@offset <- as.integer(vals[["offset"]])
         if (!is.na(vals["url"]))
-          line@url <- vals["url"]
+          line@url <- vals[["url"]]
         if (!is.na(vals["htmlUrl"]))
-          line@htmlUrl <- vals["htmlUrl"]
+          line@htmlUrl <- vals[["htmlUrl"]]
         if (!is.na(vals["colorByStrand"])) {
-          colorToken <- strsplit(strsplit(vals["colorByStrand"], " ")[[1]], ",")
+          colorToken <- strsplit(strsplit(vals[["colorByStrand"]], " ")[[1]],
+                                 ",")
           line@colorByStrand <- matrix(as.integer(unlist(colorToken)), nrow = 3)
         }
         line
@@ -947,7 +949,7 @@ setAs("character", "BasicTrackLine",
 setClass("GraphTrackLine",
          representation(altColor = "integer", autoScale = "logical",
                         alwaysZero = "logical",
-                        gridDefault = "logical", maxHeightPixels = "numeric",
+                        gridDefault = "logical", maxHeightPixels = "integer",
                         graphType = "character", viewLimits = "numeric",
                         yLineMark = "numeric", yLineOnOff = "logical",
                         windowingFunction = "character",
@@ -964,16 +966,17 @@ setAs("GraphTrackLine", "character",
         if (length(color))
           str <- paste(str, " altColor=", paste(color, collapse=","), sep="")
         autoScale <- from@autoScale
-        if (length(autoScale) && !autoScale)
-          str <- paste(str, "autoScale=off")
+        onoff <- function(x) if (x) "on" else "off"
+        if (length(autoScale))
+          str <- paste(str, "autoScale=", onoff(autoScale), sep = "")
         alwaysZero <- from@alwaysZero
-        if (isTRUE(alwaysZero))
-          str <- paste(str, "alwaysZero=on")
+        if (length(alwaysZero))
+          str <- paste(str, "alwaysZero=", onoff(alwaysZero), sep = "")
         gridDefault <- from@gridDefault
-        if (length(gridDefault) && gridDefault)
-          str <- paste(str, "gridDefault=On")
+        if (length(gridDefault))
+          str <- paste(str, "gridDefault=", onoff(gridDefault), sep = "")
         maxHeightPixels <- from@maxHeightPixels
-        if (length(maxHeightPixels) && maxHeightPixels)
+        if (length(maxHeightPixels))
           str <- paste(str, " maxHeightPixels=",
                        paste(maxHeightPixels, collapse=":"), sep = "")
         graphType <- from@graphType
@@ -987,8 +990,8 @@ setAs("GraphTrackLine", "character",
         if (length(yLineMark))
           str <- paste(str, " yLineMark=", yLineMark, sep = "")
         yLineOnOff <- from@yLineOnOff
-        if (length(yLineOnOff) && yLineOnOff)
-          str <- paste(str, "yLineOnOff=On")
+        if (length(yLineOnOff))
+          str <- paste(str, "yLineOnOff=", onoff(yLineOnOff), sep = "")
         windowingFunction <- from@windowingFunction
         if (length(windowingFunction))
           str <- paste(str, " windowingFunction=", windowingFunction, sep = "")
@@ -1003,34 +1006,34 @@ setAs("character", "GraphTrackLine",
       {
         line <- new("GraphTrackLine", as(from, "TrackLine"))
         vals <- ucscParsePairs(from)
-        type <- vals["type"]
+        type <- vals[["type"]]
         if (!(type %in% c("wiggle_0", "bedGraph")))
           stop("Unknown graph track type: ", type)
         line@type <- if (type == "wiggle_0") "wig" else "bedGraph"
         if (!is.na(vals["altColor"]))
-          line@altColor <- as.integer(strsplit(vals["altColor"], ",")[[1]])
+          line@altColor <- as.integer(strsplit(vals[["altColor"]], ",")[[1]])
         if (!is.na(vals["autoScale"]))
-          line@autoScale <- vals["autoScale"] == "On"
+          line@autoScale <- vals[["autoScale"]] == "On"
         if (!is.na(vals["alwaysZero"]))
-          line@alwaysZero <- vals["alwaysZero"] == "On"
+          line@alwaysZero <- vals[["alwaysZero"]] == "On"
         if (!is.na(vals["gridDefault"]))
-          line@gridDefault <- vals["gridDefault"] == "On"
+          line@gridDefault <- vals[["gridDefault"]] == "On"
         if (!is.na(vals["maxHeightPixels"]))
           line@maxHeightPixels <-
-            as.numeric(strsplit(vals["maxHeightPixels"], ":")[[1]])
+            as.integer(strsplit(vals[["maxHeightPixels"]], ":")[[1]])
         if (!is.na(vals["graphType"]))
-          line@graphType <- vals["graphType"]
+          line@graphType <- vals[["graphType"]]
         if (!is.na(vals["viewLimits"]))
           line@viewLimits <-
-            as.numeric(strsplit(vals["viewLimits"], ":")[[1]])
+            as.numeric(strsplit(vals[["viewLimits"]], ":")[[1]])
         if (!is.na(vals["yLineMark"]))
-          line@yLineMark <- as.numeric(vals["yLineMark"])
+          line@yLineMark <- as.numeric(vals[["yLineMark"]])
         if (!is.na(vals["yLineOnOff"]))
-          line@yLineOnOff <- vals["yLineOnOff"] == "On"
+          line@yLineOnOff <- vals[["yLineOnOff"]] == "On"
         if (!is.na(vals["windowingFunction"]))
-          line@windowingFunction <- vals["windowingFunction"]
+          line@windowingFunction <- vals[["windowingFunction"]]
         if (!is.na(vals["smoothingWindow"]))
-          line@smoothingWindow <- as.numeric(vals["smoothingWindow"])
+          line@smoothingWindow <- as.numeric(vals[["smoothingWindow"]])
         line
       })
 
@@ -1070,27 +1073,61 @@ setAs("RangedData", "UCSCData", function(from) {
   if (is.numeric(score(from))) { # have numbers, let's plot them
     type <- chooseGraphType(from)
     line <- new("GraphTrackLine", type = type)
-  } else line <- new("BasicTrackLine")
+  } else {
+    line <- new("BasicTrackLine")
+    db <- unique(genome(from))
+    if (length(db) == 1 && !is.na(db))
+      line@db <- db
+  }
   new("UCSCData", from, trackLine = line)
 })
 
-# the 'ucsc' format is a meta format with a track line followed by
-# tracks formatted as 'wig', 'bed', 'bed15', 'bedGraph', 'gff', 'gtf', or 'psl'.
-# 'gtf' and 'psl' are not yet supported
-setGeneric("export.ucsc",
-           function(object, con,
-                    subformat = c("auto", "gff1", "wig", "bed", "bed15",
-                      "bedGraph"),
-                    append = FALSE, ...)
-           standardGeneric("export.ucsc"))
+setAs("UCSCData", "GRanges", function(from) {
+  gr <- as(as(from, "RangedData"), "GRanges")
+  metadata(gr)$trackLine <- from@trackLine
+  gr
+})
 
-setMethod("export.ucsc", "RangedDataList",
-          function(object, con,
-                   subformat = c("auto", "gff1", "wig", "bed", "bed15",
-                     "bedGraph"),
-                   append, trackNames, ...)
+setClass("UCSCFile", contains = "RTLFile")
+
+UCSCFile <- function(resource) {
+  new("UCSCFile", resource = resource)
+}
+
+## the 'ucsc' format is a meta format with a track line followed by
+## features formatted as 'wig', 'bed', 'bed15', 'bedGraph', 'gff', or
+## really any text track format.
+setGeneric("export.ucsc",
+           function(object, con, subformat = "auto", append = FALSE, ...)
+           standardGeneric("export.ucsc"),
+           signature = c("object", "con"))
+
+setMethod("export.ucsc", c("ANY", "RTLFile"),
+          function(object, con, subformat, append, trackNames, ...)
           {
-            subformat <- match.arg(subformat)
+            if (subformat == "auto" && !is(con, "UCSCFile"))
+              subformat <- fileFormat(con)
+            export(object, UCSCFile(resource(con)), subformat = subformat,
+                   append = append, ...)
+          })
+
+setMethod("export.ucsc", c("ANY", "ANY"),
+          function(object, con, subformat, append, trackNames, ...)
+          {
+            export(object, con, "ucsc", subformat = subformat,
+                   append = append, ...)
+          })
+
+.export_RangedDataList_RTLFile <- function(object, con, format, ...) {
+  export(object, UCSCFile(resource(con)), subformat = fileFormat(con), ...)
+}
+
+setMethod("export", c("RangedDataList", "UCSCFile"),
+          function(object, con, format, subformat = "auto",
+                   append = FALSE, trackNames, index = FALSE, ...)
+          {
+            if (index && length(object) > 1)
+              stop("Cannot index multiple tracks in a single file")
             if (missing(trackNames)) {
               trackNames <- names(object)
               if (is.null(trackNames))
@@ -1100,8 +1137,8 @@ setMethod("export.ucsc", "RangedDataList",
               trackNames[ucsc] <- as.character(sapply(lines, slot, "name"))
             }
             for (i in seq_len(length(object))) {
-              export.ucsc(object[[i]], con, subformat, name = trackNames[i],
-                          append = append, ...)
+              export(object[[i]], con, subformat = subformat,
+                     name = trackNames[i], append = append, ...)
               append <- TRUE
             }
           })
@@ -1115,18 +1152,17 @@ trackLineClass <- function(subformat)
   else "BasicTrackLine"
 }
 
+setGeneric("fileFormat", function(x) standardGeneric("fileFormat"))
+
+setMethod("fileFormat", "TrackLine", function(x) "bed")
+setMethod("fileFormat", "GraphTrackLine", function(x) x@type)
+
 setMethod("bestFileFormat", c("UCSCData", "ANY"), function(x, dest) {
-  trackLine <- x@trackLine
-  format <- "bed"
-  if (is(trackLine, "Bed15TrackLine"))
-    format <- "bed15"
-  else if (is(trackLine, "GraphTrackLine"))
-    format <- trackLine@type
-  format
+  fileFormat(x@trackLine)
 })
 
-setMethod("export.ucsc", "ANY",
-          function(object, con, subformat, append, ...)
+setMethod("export", c("ANY", "UCSCFile"),
+          function(object, con, format, subformat = "auto", append = FALSE, ...)
           {
             cl <- class(object)
             track <- try(as(object, "RangedData"), silent = TRUE)
@@ -1135,26 +1171,25 @@ setMethod("export.ucsc", "ANY",
               if (class(track) == "try-error")
                 stop("cannot export object of class '", cl, "'")
             }
-            export.ucsc(track, con = con, subformat = subformat,
-                        append = append, ...)
+            export(track, con = con, subformat = subformat,
+                   append = append, ...)
           })
 
-setMethod("export.ucsc", "RangedData",
-          function(object, con, subformat, append, ...)
+setMethod("export", c("RangedData", "UCSCFile"),
+          function(object, con, format, subformat = "auto", append = FALSE, ...)
           {
             object <- as(object, "UCSCData")
-            subformat <- match.arg(subformat)
-            export.ucsc(object, con, subformat, append, ...)
+            export(object, con, subformat = subformat, append = append, ...)
            })
 
-setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
-          function(object, con, subformat, append, ...)
+setMethod("export", c("UCSCData", "UCSCFile"),
+          function(object, con, format, subformat = "auto", append = FALSE,
+                   index = FALSE, ...)
           {
-            subformat <- match.arg(subformat)
             auto <- FALSE
             if (subformat == "auto") {
               auto <- TRUE
-              subformat <- bestFileFormat(object@trackLine, con)
+              subformat <- bestFileFormat(object)
             }
             graphFormat <- subformat %in% c("wig", "bedGraph")
             if (graphFormat) {
@@ -1185,10 +1220,11 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
             lineArgs <- names(args) %in% slotNames(lineClass)
             for (argName in names(args)[lineArgs])
               slot(object@trackLine, argName) <- args[[argName]]
+            if (is(object@trackLine, "BasicTrackLine") &&
+                length(object@trackLine@offset))
+              ranges(object) <- shift(ranges(object), -object@trackLine@offset)
             trackLine <- NULL
             if (graphFormat) {
-              subformatOrig <- subformat
-              subformat <- paste(subformat, "Lines", sep = "")
               strand <- as.character(strand(object))
               strand[is.na(strand)] <- "NA"
               if (!all(strand[1] == strand)) {
@@ -1196,81 +1232,126 @@ setMethod("export.ucsc", c("UCSCData", "characterORconnection"),
                 strand <- factor(strand)
                 name <- paste(object@trackLine@name, nameMap[levels(strand)])
                 tracks <- split(object, strand)
-                export.ucsc(tracks, con, subformatOrig, append,
-                            trackNames = name, ...)
+                export(tracks, con, subformat, append,
+                       trackNames = name, ...)
                 return()
               }
             } else if (subformat == "bed15") {
-              subformat <- "bed15Lines"
               if (is.null(object@trackLine@expNames))
                 object@trackLine@expNames <- colnames(object)
               trackLine <- object@trackLine
             }
-            cat(as(object@trackLine, "character"), "\n", file=con, sep = "",
-                append = append)
-            do.call(export, c(list(as(object, "RangedData"), con, subformat),
-                                args[!lineArgs], trackLine = trackLine,
-                              append = TRUE))
-          })
-
-# for GFF, the track line should go in a comment
-setMethod("export.gff", c("UCSCData", "characterORconnection"),
-          function(object, con, version, source, append)
-          {
-            gffComment(con, as(object@trackLine, "character"))
-            callNextMethod()
+            file <- con
+            con <- connection(con, if (append) "a" else "w")
+            on.exit(release(con))
+            cat(as(object@trackLine, "character"), "\n", file=con, sep = "")
+            do.call(export, c(list(as(object, "RangedData"), unmanage(con),
+                                   subformat),
+                              args[!lineArgs], trackLine = trackLine))
+            if (index)
+              indexTrack(FileForFormat(resource(file), subformat), skip = 1L)
+            else invisible(file)
           })
 
 setGeneric("import.ucsc",
-           function(con, subformat =
-                   c("auto", "gff1", "wig", "bed", "bed15", "bedGraph"),
+           function(con, subformat = "auto",
                     drop = FALSE, asRangedData = TRUE, ...)
-           standardGeneric("import.ucsc"))
-setMethod("import.ucsc", "characterORconnection",
+           standardGeneric("import.ucsc"),
+           signature = "con")
+
+setMethod("import.ucsc", "ANY",
           function(con, subformat, drop = FALSE, asRangedData = TRUE, ...)
+          {
+            import(con, "ucsc", subformat = subformat,
+                   drop = drop, asRangedData = asRangedData, ...)
+          })
+
+setMethod("import.ucsc", "RTLFile",
+          function(con, subformat, drop = FALSE, asRangedData = TRUE, ...)
+          {
+            if (!is(con, "UCSCFile")) {
+              format <- fileFormat(con)
+              if (subformat != "auto" && format != subformat)
+                stop("Attempt to import '", class(con), "' as ", subformat)
+              subformat <- format
+            }
+            import.ucsc(resource(con), subformat,
+                        drop = drop, asRangedData = asRangedData, ...)
+          })
+
+parseFormatFromTrackLine <- function(x) {
+  if (!grepl("type=", x))
+    NULL
+  else {
+    type <- sub(".*type=\"(.*?)\".*", "\\1", x)
+    if (type == "array")
+      "bed15"
+    else if (type == "wiggle_0")
+      "wig"
+    else type
+  }
+}
+
+setMethod("import", "UCSCFile",
+          function(con, format, text, subformat = "auto", drop = FALSE,
+                   asRangedData = TRUE, genome = NA, ...)
           {
             if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
-            subformat <- match.arg(subformat)
-            lines <- readLines(con, warn = FALSE)
+            lines <- readLines(resource(con), warn = FALSE)
             tracks <- grep("^track", lines)
             trackLines <- lines[tracks]
             starts <- tracks + 1L
             ends <- c(tail(tracks, -1) - 1L, length(lines))
             makeTrackSet <- function(i)
             {
+              if (subformat == "auto") {
+                subformat <- parseFormatFromTrackLine(trackLines[i])
+                if (is.null(subformat)) {
+                  p <- resource(con)
+                  if (is(p, "connection"))
+                    p <- summary(p)$description
+                  subformat <- file_ext(p)
+                }
+              }
               line <- as(trackLines[i], trackLineClass(subformat))
-              if (subformat == "wig" || subformat == "bedGraph")
-                subformat <- paste(subformat, "Lines", sep = "")
               if (starts[i] <= ends[i])
                 text <- window(lines, starts[i], ends[i])
               else
                 text <- character()
+              if (is.na(genome) && is(line, "BasicTrackLine") &&
+                  length(line@db))
+                genome <- line@db
               if (subformat == "bed15") # need to pass track line
-                ucsc <- import(format = "bed15Lines", text = text,
+                ucsc <- import(format = "bed15", text = text,
                                trackLine = line,
-                               asRangedData = asRangedData, ...)
+                               asRangedData = asRangedData,
+                               genome = genome, ...)
               else
                 ucsc <- import(format = subformat, text = text,
-                               asRangedData = asRangedData, ...)
+                               asRangedData = asRangedData,
+                               genome = genome, ...)
+              if (is(line, "BasicTrackLine") && length(line@offset))
+                ranges(ucsc) <- shift(ranges(ucsc), line@offset)
               if (asRangedData) {
                 ucsc <- as(ucsc, "UCSCData", FALSE)
                 ucsc@trackLine <- line
-              }
+              } else metadata(ucsc)$trackLine <- line
               ucsc
             }
             tsets <- lapply(seq_along(trackLines), makeTrackSet)
-            if (asRangedData) {
+            if (asRangedData) 
               trackNames <- sapply(tsets, function(x) x@trackLine@name)
-              if (!any(is.na(trackNames)))
-                names(tsets) <- trackNames
-            }
+            else trackNames <- sapply(tsets,
+                                      function(x) metadata(x)$trackLine@name)
+            if (!any(is.na(trackNames)))
+              names(tsets) <- trackNames
             if (drop && length(tsets) == 1)
               tsets[[1]]
             else if (asRangedData)
               do.call(RangedDataList, tsets)
             else
-              do.call(GRangesList, tsets)
+              do.call(GenomicRangesList, tsets)
           })
 
 ############ INTERNAL API ############
@@ -1397,8 +1478,9 @@ setMethod("ucscForm", "RangesList",
           function(object)
           {
             form <- list()
-            if (length(genome(object)))
-              form <- c(form, db = singleGenome(genome(object)))
+            genome <- singleGenome(genome(object))
+            if (!is.na(genome))
+              form <- c(form, db = genome)
             chrom <- space(object)
             if (!is.null(chrom)) {
               if (!length(chrom))
@@ -1422,8 +1504,9 @@ setMethod("ucscForm", "GRanges",
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
             form <- list()
-            if (length(genome(object)))
-              form <- c(form, db = singleGenome(genome(object)))
+            genome <- singleGenome(genome(object))
+            if (!is.na(genome))
+              form <- c(form, db = genome)
             object <- object[1]
             c(form, position = paste(seqnames(object), ":",
                       unlist(start(object)), "-",
@@ -1450,8 +1533,8 @@ setMethod("ucscForm", "RangedDataList",
             filename <- paste("track", format, sep = ".")
             upload <- fileUpload(filename, text, "text/plain")
             form <- list(Submit = "Submit", hgt.customFile = upload)
-            genome <- singleGenome(genome(object[[1]]))
-            if (length(genome))
+            genome <- singleGenome(genome(object))
+            if (!is.na(genome))
               form <- c(form, db = genome)
             form
           })

@@ -40,7 +40,7 @@ export.gff1(object, con, ...)
 export.gff2(object, con, ...)
 export.gff3(object, con, ...)
 export.bed(object, con, variant = c("base", "bedGraph", "bed15"),
-           color = NULL, append = FALSE, ...)
+           append = FALSE, ...)
 export.bed15(object, con, expNames = NULL, ...)
 export.bedGraph(object, con, ...)
 export.wig(object, con,
@@ -68,12 +68,9 @@ export.bw(object, con,
   \item{source}{ The source of the GFF information, for \acronym{GFF}. }
   \item{variant}{ Which variant of BED lines to output,
     not for the user. }
-  \item{color}{Recycled vector of colors, as interpreted by
-    \code{\link{col2rgb}} for BED features. If \code{NULL}, the
-    \code{color} column in the \code{featureData} is used, if any.}
   \item{dataFormat}{ The format of the data lines for \acronym{WIG}
     tracks, see references. The "auto" format uses the most efficient
-    format possible.}
+    format possible and is almost always the best choice.}
   \item{subformat}{ The format of the tracks within the \acronym{UCSC}
     container. If "auto", the type is determined from the
     trackline. If \code{object} is not a \code{UCSCData}, this
@@ -90,7 +87,8 @@ export.bw(object, con,
     package or UCSC, as long as there is a matching genome identifier.
   }
   \item{append}{Logical, whether to append the output to the connection}
-  \item{compress}{Logical, indicating whether to compress the bigWig output}
+  \item{compress}{Logical, indicating whether to compress the bigWig
+    output. Virtually always best left to \code{TRUE}.}
   \item{\dots}{For \code{export.gff1}, \code{export.gff2} and
     \code{export.gff3}: arguments to pass to \code{export.gff}. For
     \code{export.bed}: arguments to pass to methods. For

@@ -1,4 +1,4 @@
-edit_test.fa	.	gene	500	2610	.	+	.	ID=newGene
+edit_test.fa	.	gene	500	2610	.	+	.	ID=newGene;Alias=NewGene,new_gene
 edit_test.fa	.	mRNA	500	2385	.	+	.	Parent=newGene;Namo=reinhard+did+this;Name=t1%28newGene%29;ID=t1;uri=http%3A//www.yahoo.com
 edit_test.fa	.	five_prime_UTR	500	802	.	+	.	Parent=t1
 edit_test.fa	.	CDS	803	1012	.	+	.	Parent=t1

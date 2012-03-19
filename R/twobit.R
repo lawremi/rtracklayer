@@ -8,6 +8,7 @@
 ###
 
 setClass("TwoBitFile", contains = "RTLFile")
+setClass("2BitFile", contains = "TwoBitFile")
 
 twoBitPath <- function(path) {
   uri <- parseURI(path)
@@ -19,8 +20,9 @@ twoBitPath <- function(path) {
 TwoBitFile <- function(path) {
   if (!isSingleString(path))
     stop("'filename' must be a single string, specifying a path")
-  new("TwoBitFile", path = twoBitPath(path))
+  new("TwoBitFile", resource = twoBitPath(path))
 }
+`2BitFile` <- TwoBitFile
 
 setMethod("seqinfo", "TwoBitFile", function(x) {
   seqlengths <- .Call(TwoBitFile_seqlengths, path(x))
@@ -35,25 +37,41 @@ setGeneric("export.2bit",
            function(object, con, ...) standardGeneric("export.2bit"))
 
 setMethod("export.2bit", "ANY", function(object, con, ...) {
-  export.2bit(as(object, "DNAStringSet"), con, ...)
+  export(object, con, "2bit", ...)
 })
 
-setMethod("export.2bit", c("BSgenome", "character"),
-          function(object, con, ...) {
+setMethod("export", c("ANY", "TwoBitFile"), function(object, con, format, ...) {
+  export(as(object, "DNAStringSet"), con, ...)
+})
+
+setMethod("export", c("BSgenome", "character", "missing"),
+          function(object, con, format, ...) {
+            invisible(export(object, TwoBitFile(con), ...))
+          })
+
+setMethod("export", c("DNAStringSet", "character", "missing"),
+          function(object, con, format, ...) {
+            invisible(export(object, TwoBitFile(con), ...))
+          })
+
+setMethod("export", c("BSgenome", "TwoBitFile"),
+          function(object, con, format, ...) {
+            if (!missing(format))
+              checkArgFormat(con, format)
             i <- 0L
             twoBits <- bsapply(new("BSParams", X = object, FUN = function(chr) {
               i <<- i + 1
               .DNAString_to_twoBit(chr, seqnames(object)[i])
             }, ...))
-            .TwoBits_export(as.list(twoBits), twoBitPath(con))
+            invisible(.TwoBits_export(as.list(twoBits), twoBitPath(path(con))))
           })
 
-setMethod("export.2bit", c("DNAStringSet", "character"), function(object, con) {
+setMethod("export", c("DNAStringSet", "TwoBitFile"), function(object, con) {
   seqnames <- names(object)
   if (is.null(seqnames))
     seqnames <- as.character(seq(length(object)))
-  .TwoBits_export(mapply(.DNAString_to_twoBit, object, seqnames),
-                  twoBitPath(con))
+  invisible(.TwoBits_export(mapply(.DNAString_to_twoBit, object, seqnames),
+                            twoBitPath(path(con))))
 })
 
 ## Hidden export of a list of twoBit pointers
@@ -69,7 +87,7 @@ setMethod("export.2bit", c("DNAStringSet", "character"), function(object, con) {
 .DNAString_to_twoBit <- function(object, seqname) {
   if (!isSingleString(seqname))
     stop("'seqname' must be a single, non-NA string")
-  if (!is(object, "DNAString"))
+  if (!is(object, "DNAString") && !is(object, "MaskedDNAString"))
     stop("'object' must be a DNAString")
   object_masks <- masks(object)
   if (!is.null(object_masks)) {
@@ -85,20 +103,15 @@ setMethod("export.2bit", c("DNAStringSet", "character"), function(object, con) {
 
 setGeneric("import.2bit", function(con, ...) standardGeneric("import.2bit"))
 
-setMethod("import.2bit", "connection",
+setMethod("import.2bit", "ANY",
           function(con, ...)
           {
-            import.2bit(summary(con)$description, ...)
+            import(con, "2bit", ...)
           })
 
-setMethod("import.2bit", "character",
-          function(con, ...)
-          {
-            import.2bit(TwoBitFile(con), ...)
-          })
-
-setMethod("import.2bit", "TwoBitFile",
-          function(con, which = as(seqinfo(con), "GenomicRanges"), ...)
+setMethod("import", "TwoBitFile",
+          function(con, format, text, which = as(seqinfo(con), "GenomicRanges"),
+                   ...)
           {
             lkup <- get_xsbasetypes_conversion_lookup("B", "DNA")
             ans <- .Call(TwoBitFile_read, as.character(path(con)),

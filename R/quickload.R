@@ -217,38 +217,13 @@ setMethod("referenceSequence", "QuickloadGenome",
 
 ### FIXME: check for file URI scheme
 
-indexTrack <- function(track, con, format) {
-  indexed <- NULL
-  if (!is.character(con))
-    stop("'con' must be a path to a local file")
-  ## a bunch of heuristics to get an index, if possible
-  uri <- con
-  formats <- eval(formals(indexTabix)$format)
-  parsed_uri <- parseURI(uri)
-  multi <- (is(track, "RangedDataList") ||
-            is(track, "SimpleGenomicRangesList")) && length(track) > 1
-  if (multi)
-    stop("Cannot index multiple tracks in a single file")
-  if (!uriIsLocal(parsed_uri))
-    stop("'con' must be a path to a local file")
-  if (!format %in% formats)
-    stop("'", format, "' is not a supported format; try 'bed' or 'gff'")
-  original_path <- parsed_uri$path
-  path <- bgzip(original_path, overwrite = TRUE)
-  skip <- if (!is.null(scanTrackLine(original_path))) 1L else 0L
-  indexTabix(path, format, skip = skip)
-  indexed <- TabixFile(path)
-  unlink(original_path)
-  indexed
-}
-
 setGeneric("sortBySeqnameAndStart",
            function(x) standardGeneric("sortBySeqnameAndStart"))
 
 ## Seems not really possible for GRangesList
 
 setMethod("sortBySeqnameAndStart", "RangedDataORGenomicRanges", function(x) {
-  x[order(seqnames(x), start(x)),]
+  x[order(as.factor(seqnames(x)), start(x)),]
 })
 
 setMethod("sortBySeqnameAndStart", "RangesList", function(x) {
@@ -268,19 +243,8 @@ setMethod("sortBySeqnameAndStart", "RangesList", function(x) {
   filename <- paste(name, format, sep = ".")
   path <- paste(uri(object), filename, sep = "/")
   seqinfo(value) <- seqinfo(object)
-  if (index) { # make some attempt to sort the output for tabix
-    value <- sortBySeqnameAndStart(value)
-  }
-  export(value, path, format = format, ...)
-  ## FIXME: We decode here, rather than above, due to bug in R
-  uri <- URLencode(path)
-  indexed <- NULL
-  if (index)
-    indexed <- tryCatch(indexTrack(value, uri, format),
-                        error = function(x) NULL)
-  if (!is.null(indexed))
-    track(object, name, index = FALSE, metadata = metadata) <- indexed
-  else track(object, name, metadata = metadata) <- uri
+  file <- export(value, path, format = format, index = index, ...)
+  track(object, name, index = FALSE, metadata = metadata) <- file
   object
 }
 
@@ -297,6 +261,17 @@ setReplaceMethod("track",
                    track(object, name, metadata = metadata) <-
                      URLencode(path(value))
                    copyResourceToQuickload(object, URLencode(index(value)))
+                   object
+                 })
+
+setReplaceMethod("track",
+                 signature(object = "QuickloadGenome", value = "RTLFile"),
+                 function(object, name, metadata = character(), ..., value)
+                 {
+                   if (missing(name))
+                     name <- basename(path(value))
+                   track(object, name, metadata = metadata) <-
+                     URLencode(path(value))
                    object
                  })
 
@@ -319,7 +294,7 @@ setReplaceMethod("track",
                  signature(object = "QuickloadGenome",
                            value = "character"),
                  function(object, name = basename(object),
-                          metadata = character(), value)
+                          metadata = character(), ..., value)
                  {
                    file <- copyResourceToQuickload(object, value)
                    files <- QuickloadGenome_annotFiles(object)

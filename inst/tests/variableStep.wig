@@ -1,0 +1,16 @@
+track type=wiggle_0 name="variableStep" description="variable step" visibility=full autoScale=off viewLimits=0:1000 color=0,200,100 maxHeightPixels=100:50:20 graphType=points priority=30
+variableStep chrom=chr19
+59304701 10.0
+59304901 12.5
+59305401 15.0
+59305601 17.5
+59305901 20.0
+59306081 17.5
+59306301 15.0
+59306691 12.5
+59307871 10.0
+variableStep chrom=chr5 span=300
+59302600 -0.50
+variableStep chrom=chr1 span=300
+59302000 -1.0
+59302300 -0.75

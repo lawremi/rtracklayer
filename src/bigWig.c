@@ -216,6 +216,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score) {
       struct bbiInterval *queryHits =
         bigWigIntervalQuery(file, (char *)CHAR(STRING_ELT(chromNames, i)),
                             start[j] - 1, start[j] - 1 + width[j], lm);
+      slReverse(&queryHits);
       hits = slCat(queryHits, hits);
     }
     int nhits = slCount(hits);
@@ -226,7 +227,8 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score) {
       PROTECT(ans_score_l = mkNamed(VECSXP, var_names));
       ans_score = allocVector(REALSXP, nhits);
       SET_VECTOR_ELT(ans_score_l, 0, ans_score);
-    } else PROTECT(ans_score_l = allocVector(VECSXP, 0));
+    } else PROTECT(ans_score_l = mkNamed(VECSXP, var_names + 1));
+    slReverse(&hits);
     for (int j = 0; j < nhits; j++, hits = hits->next) {
       INTEGER(ans_start)[j] = hits->start + 1;
       INTEGER(ans_width)[j] = hits->end - hits->start;

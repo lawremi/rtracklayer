@@ -122,7 +122,7 @@ import.bw(con, ...)
   # bigWig
 \dontrun{
   bw <- import(system.file("tests", "test.bw", package = "rtracklayer"),
-               ranges = GenomicRanges::GRanges("chr19", IRanges(1, 6e7)))
+               which = GenomicRanges::GRanges("chr19", IRanges(1, 6e7)))
 }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

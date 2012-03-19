@@ -1,0 +1,34 @@
+##gff-version 3
+##source-version rtracklayer 1.15.4
+##date 2011-12-06
+chr10	rtracklayer	gene	92828	95504	.	-	.	ID=GeneID:347688;Name=TUBB8;geneName=tubulin%2c beta 8;Alias=FLJ40100,TUBB8
+chr10	rtracklayer	mRNA	92828	95178	.	-	.	Parent=GeneID:347688;ID=873;Name=TUBB8;
+chr10	rtracklayer	mRNA	92828	95504	.	-	.	Parent=GeneID:347688;ID=872;Name=TUBB8;
+chr10	rtracklayer	exon	92828	94054	.	-	.	Parent=872,873;
+chr10	rtracklayer	CDS	92997	94054	.	-	.	Parent=872,873;
+chr10	rtracklayer	exon	94555	94665	.	-	.	Parent=872;
+chr10	rtracklayer	exon	94555	94665	.	-	.	Parent=873;
+chr10	rtracklayer	CDS	94555	94615	.	-	.	Parent=872;
+chr10	rtracklayer	CDS	94555	94665	.	-	.	Parent=873;
+chr10	rtracklayer	exon	94744	94852	.	-	.	Parent=872;
+chr10	rtracklayer	exon	94744	94852	.	-	.	Parent=873;
+chr10	rtracklayer	CDS	94744	94852	.	-	.	Parent=873;
+chr10	rtracklayer	exon	95122	95178	.	-	.	Parent=873;
+chr10	rtracklayer	CDS	95122	95178	.	-	.	Parent=873;
+chr10	rtracklayer	exon	95348	95504	.	-	.	Parent=872;
+chr12	rtracklayer	gene	87984	91263	.	+	.	ID=GeneID:100288778;Name=LOC100288778;geneName=WAS protein family homolog 1 pseudogene;Alias=LOC100288778
+chr12	rtracklayer	mRNA	87984	91263	.	+	.	Parent=GeneID:100288778;ID=4644;Name=LOC100288778;
+chr12	rtracklayer	exon	87984	88017	.	+	.	Parent=4644;
+chr12	rtracklayer	CDS	87984	88017	.	+	.	Parent=4644;
+chr12	rtracklayer	exon	88257	88392	.	+	.	Parent=4644;
+chr12	rtracklayer	CDS	88257	88392	.	+	.	Parent=4644;
+chr12	rtracklayer	exon	88570	88771	.	+	.	Parent=4644;
+chr12	rtracklayer	CDS	88570	88771	.	+	.	Parent=4644;
+chr12	rtracklayer	exon	88860	89018	.	+	.	Parent=4644;
+chr12	rtracklayer	CDS	88860	89018	.	+	.	Parent=4644;
+chr12	rtracklayer	exon	89675	89827	.	+	.	Parent=4644;
+chr12	rtracklayer	CDS	89675	89827	.	+	.	Parent=4644;
+chr12	rtracklayer	exon	90587	90655	.	+	.	Parent=4644;
+chr12	rtracklayer	CDS	90587	90655	.	+	.	Parent=4644;
+chr12	rtracklayer	exon	90796	91263	.	+	.	Parent=4644;
+chr12	rtracklayer	CDS	90796	91263	.	+	.	Parent=4644;

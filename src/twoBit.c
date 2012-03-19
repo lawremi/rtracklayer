@@ -101,14 +101,16 @@ SEXP TwoBitFile_read(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges, SEXP lkup)
   PROTECT(r_seq = allocVector(RAWSXP, total_width));
   PROTECT(r_ans_start = allocVector(INTSXP, frag_count));
   for (int i = 0; i < frag_count; i++) {
-    struct dnaSeq *frag =
-      twoBitReadSeqFrag(file, (char *)CHAR(STRING_ELT(r_seqnames, i)),
-                        frag_start[i] - 1, frag_start[i] + frag_width[i] - 1);
-    Ocopy_bytes_to_i1i2_with_lkup(offset, offset + frag->size - 1,
-                                  RAW(r_seq), total_width,
-                                  frag->dna, frag->size,
-                                  INTEGER(lkup), LENGTH(lkup));
-    freeDnaSeq(&frag);
+    if (frag_width[i]) { // UCSC library does not like zero width ranges
+      struct dnaSeq *frag =
+        twoBitReadSeqFrag(file, (char *)CHAR(STRING_ELT(r_seqnames, i)),
+                          frag_start[i] - 1, frag_start[i] + frag_width[i] - 1);
+      Ocopy_bytes_to_i1i2_with_lkup(offset, offset + frag->size - 1,
+                                    RAW(r_seq), total_width,
+                                    frag->dna, frag->size,
+                                    INTEGER(lkup), LENGTH(lkup));
+      freeDnaSeq(&frag);
+    }
     INTEGER(r_ans_start)[i] = offset + 1;
     offset += frag_width[i];
   }

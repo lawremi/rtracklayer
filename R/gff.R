@@ -1,285 +1,380 @@
-# input and output for the GFF format
+### =========================================================================
+### GFF (General Feature Format) support (all three versions, plus GTF)
+### -------------------------------------------------------------------------
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Classes
+###
+
+setClass("GFFFile", contains = "RTLFile")
+
+## private
+GFFFile <- function(resource, version = c("", "1", "2", "3")) {
+  version <- match.arg(version)
+  new(gffFileClass(version), resource = resource)
+}
+
+setClass("GFF1File", contains = "GFFFile")
+GFF1File <- function(resource) {
+  GFFFile(resource, "1")
+}
+
+setClass("GFF2File", contains = "GFFFile")
+GFF2File <- function(resource) {
+  GFFFile(resource, "2")
+}
+
+setClass("GFF3File", contains = "GFFFile")
+GFF3File <- function(resource) {
+  GFFFile(resource, "3")
+}
+
+setClass("GTFFile", contains = "GFF2File")
+GTFFile <- function(resource) {
+  new("GTFFile", GFF2File(resource))
+}
+
+setClass("GVFFile", contains = "GFF3File")
+GVFFile <- function(resource) {
+  new("GVFFile", GFF3File(resource))
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export
+###
 
 setGeneric("export.gff",
            function(object, con, version = c("1", "2", "3"),
                     source = "rtracklayer", append = FALSE, ...)
-           standardGeneric("export.gff"))
+           standardGeneric("export.gff"),
+           signature = c("object", "con"))
 
 setMethod("export.gff", "ANY",
-          function(object, con, version, source, append, ...)
+          function(object, con, version = c("1", "2", "3"), source, append, ...)
           {
-            cl <- class(object)
-            object <- try(as(object, "RangedData"), silent = TRUE)
-            if (class(object) == "try-error")
-              stop("cannot export object of class '", cl, "'")
-            export.gff(object, con=con, version=version, source=source,
-                       append=append, ...)
+            export(object, con, paste("gff", match.arg(version), sep = ""),
+                   source = source, append = append, ...)
           })
 
-setMethod("export.gff", c("RangedData", "characterORconnection"),
-          function(object, con, version = c("1", "2", "3"), source, append,
-                   index = FALSE)
-{
-  version <- match.arg(version)
-  
-  if (!append) {
-    cat("", file = con) # clear any existing file
-    gffComment(con, "gff-version", version)
-    sourceVersion <- try(package.version(source), TRUE)
-    if (!inherits(sourceVersion, "try-error"))
-      gffComment(con, "source-version", source, sourceVersion)
-    gffComment(con, "date", format(Sys.time(), "%Y-%m-%d"))
-  }
+setMethod("export", c("ANY", "GFFFile"),
+          function(object, con, format, version = c("1", "2", "3"),
+                   source = "rtracklayer", append = FALSE, index = FALSE)
+          {
+            if (hasMethod("asGFF", class(object)))
+              object <- asGFF(object)
+            object <- try(as(object, "RangedData"), silent = TRUE)
+            if (class(object) == "try-error")
+              stop("cannot export object of class '", class(object), "'")
+            if (!missing(format))
+              checkArgFormat(con, format)
+            if (!missing(version))
+              con <- asGFFVersion(con, match.arg(version))
+            export(object, con, source = source, append = append, index = index)
+          })
 
-  if (index)
-    object <- sortBySeqnameAndStart(object)
+setMethod("export", c("RangedData", "GFFFile"),
+          function(object, con, format, version = c("1", "2", "3"),
+                   source = "rtracklayer", append = FALSE, index = FALSE)
+          {
+            if (!missing(format))
+              checkArgFormat(con, format)
+            if (!missing(version) || !length(gffFileVersion(con)))
+              con <- asGFFVersion(con, match.arg(version))
+            version <- gffFileVersion(con)
+            
+            file <- con
+            con <- resource(con)
+            
+            if (!append) {
+              cat("", file = con) # clear any existing file
+              gffComment(con, "gff-version", version)
+              sourceVersion <- try(package.version(source), TRUE)
+              if (!inherits(sourceVersion, "try-error"))
+                gffComment(con, "source-version", source, sourceVersion)
+              gffComment(con, "date", base::format(Sys.time(), "%Y-%m-%d"))
+            }
+            
+            if (index)
+              object <- sortBySeqnameAndStart(object)
 
-  seqname <- seqnames(object)
-  if (is.null(object$ID))
-    object$ID <- rownames(object)
-  if (version == "3")
-    seqname <- urlEncode(seqname, "a-zA-Z0-9.:^*$@!+_?|-")
-  if (!is.null(object$source))
-    source <- object$source
-  if (version == "3")
-    source <- urlEncode(source, "\t\n\r;=%&,", FALSE)
-  feature <- object$type
-  if (is.null(feature))
-    feature <- "sequence"
-  score <- score(object)
-  if (is.null(score)) {
-    if (version == "1")
-      score <- 0
-    else score <- NA
-  } else {
-    if (!("score" %in% colnames(object)))
-      colnames(object)[1] <- "score" ## avoid outputting as attribute
-  }
-  strand <- strand(object)
-  if (is.null(strand))
-    strand <- NA
-  frame <- object$phase
-  if (is.null(frame))
-    frame <- NA
-  
-  table <- data.frame(seqname, source, feature, start(object),
-                      end(object), score, strand, frame)
+            seqname <- seqnames(object)
+            if (is.null(object$ID))
+              object$ID <- rownames(object)
+            if (version == "3")
+              seqname <- urlEncode(seqname, "a-zA-Z0-9.:^*$@!+_?|-")
+            if (!is.null(object$source))
+              source <- object$source
+            if (version == "3")
+              source <- urlEncode(source, "\t\n\r;=%&,", FALSE)
+            feature <- object$type
+            if (is.null(feature))
+              feature <- "sequence"
+            score <- score(object)
+            if (is.null(score)) {
+              score <- NA
+            } else {
+              if (!("score" %in% colnames(object)))
+                colnames(object)[1] <- "score" ## avoid outputting as attribute
+            }
+            strand <- strand(object)
+            if (is.null(strand))
+              strand <- NA
+            frame <- object$phase
+            if (is.null(frame))
+              frame <- NA
+            
+            table <- data.frame(seqname, source, feature, start(object),
+                                end(object), score, strand, frame)
 
-  attrs <- NULL
-  if (version == "1") {
-    attrs <- object$group
-    if (is.null(attrs))
-      attrs <- seqname
-  } else {
-    builtin <- c("type", "strand", "score", "phase", "source")
-    custom <- setdiff(colnames(object), builtin)
-    if (length(custom)) {
-      if (version == "3") tvsep <- "=" else tvsep <- " "
-      attrs <- unlist(values(object))
-      attrs <- as.data.frame(sapply(custom, function(name) {
-        x <- attrs[[name]]
-        x_flat <- if (is(x, "List")) unlist(x, use.names=FALSE) else x
-        x_char <- as.character(x_flat)
-        x_char <- sub(" *$", "", sub("^ *", "", as.character(x_char))) # trim
-        if (version == "3")
-          x_char <- urlEncode(x_char, "\t\n\r;=%&,", FALSE)
-        if (is(x, "List")) {
-          x_char[is.na(x_char)] <- "."
-          x_char <- pasteCollapse(relist(x_char, x))
-          x_char[elementLengths(x) == 0] <- NA
-        }
-        x_char[is.na(x_char)] <- "\r"
-        paste(name, x_char, sep = tvsep)
-      }, simplify = FALSE))
-      attrs <- do.call(paste, c(attrs, sep = ";"))
-      attrs <- gsub("[^;]*?\r(;|$)", "", attrs)
-      ## attrs <- apply(attrs, 1, function(row) {
-      ##   paste(colnames(attrs)[!is.na(row)], row[!is.na(row)], sep = tvsep,
-      ##         collapse="; ")
-      ## })
-      attrs[nchar(attrs) == 0] <- NA
-    }
-  }
-  
-  scipen <- getOption("scipen")
-  options(scipen = 100) # prevent use of scientific notation
-  on.exit(options(scipen = scipen))
-  
-  if (!is.null(attrs)) { # write out the rows with attributes first
-    write.table(cbind(table, attrs)[!is.na(attrs),], con, sep = "\t", na = ".",
-                quote = FALSE, col.names = FALSE, row.names = FALSE,
-                append = TRUE)
-    table <- table[is.na(attrs),]
-  }
-  
-  write.table(table, con, sep = "\t", na = ".", quote = FALSE,
-              col.names = FALSE, row.names = FALSE, append = TRUE)
-  if (index)
-    indexTrack(object, con, "gff")
-  invisible(NULL)
-})
+            attrs <- NULL
+            if (version == "1") {
+              attrs <- object$group
+              if (is.null(attrs))
+                attrs <- seqname
+            } else {
+              builtin <- c("type", "strand", "score", "phase", "source")
+              custom <- setdiff(colnames(object), builtin)
+              if (length(custom)) {
+                if (version == "3") tvsep <- "=" else tvsep <- " "
+                attrs <- unlist(values(object))
+                attrs <- as.data.frame(sapply(custom, function(name) {
+                  x <- attrs[[name]]
+                  x_flat <- if (is(x, "List")) unlist(x, use.names=FALSE) else x
+                  x_char <- as.character(x_flat)
+                  x_char <- sub(" *$", "", sub("^ *", "", as.character(x_char)))
+                  if (version == "3")
+                    x_char <- urlEncode(x_char, "\t\n\r;=%&,", FALSE)
+                  if (is(x, "List")) {
+                    x_char[is.na(x_char)] <- "."
+                    x_char <- pasteCollapse(relist(x_char, x))
+                    x_char[elementLengths(x) == 0] <- NA
+                  }
+                  x_char[is.na(x_char)] <- "\r"
+                  paste(name, x_char, sep = tvsep)
+                }, simplify = FALSE))
+                attrs <- do.call(paste, c(attrs, sep = ";"))
+                attrs <- gsub("[^;]*?\r(;|$)", "", attrs)
+                attrs[nchar(attrs) == 0] <- NA
+              }
+            }
+            
+            scipen <- getOption("scipen")
+            options(scipen = 100) # prevent use of scientific notation
+            on.exit(options(scipen = scipen))
+            
+            if (!is.null(attrs)) { # write out the rows with attributes first
+              write.table(cbind(table, attrs)[!is.na(attrs),], con, sep = "\t",
+                          na = ".", quote = FALSE, col.names = FALSE,
+                          row.names = FALSE, append = TRUE)
+              table <- table[is.na(attrs),]
+            }
+            
+            write.table(table, con, sep = "\t", na = ".", quote = FALSE,
+                        col.names = FALSE, row.names = FALSE, append = TRUE)
+            if (index)
+              indexTrack(file)
+            invisible(NULL)
+          })
 
-setGeneric("import.gff",
-           function(con, version = c("1", "2", "3"), genome = NA,
-                    asRangedData = TRUE, colnames = NULL, ...)
-           standardGeneric("import.gff"))
-           
-setMethod("import.gff", "characterORconnection",
-          function(con, version = c("1", "2", "3"), genome,
-                   asRangedData = TRUE, colnames = NULL)
-{
-  versionMissing <- missing(version)
-  version <- match.arg(version)
-  lines <- readLines(con, warn = FALSE) # unfortunately, not a table
-  lines <- lines[nzchar(lines)]
-  
-  # check our version
-  versionLine <- lines[grep("^##gff-version", lines)]
-  if (length(versionLine)) {
-    specVersion <- sub("^##gff-version *", "", versionLine)
-    if (!versionMissing && specVersion != version)
-      warning("gff-version directive indicates version is ", specVersion,
-              ", not ", version)
-    else version <- specVersion 
-  }
-
-  ## strip comments
-  notComments <- grep("^[^#]", lines)
-  lines <- lines[notComments]
-  
-### TODO: handle ontologies (store in RangedData)
-
-  ## construct table
-  fields <- c("seqname", "source", "type", "start", "end", "score", "strand",
-              "phase", "attributes")
-  linesSplit <- strsplit(lines, "\t", fixed=TRUE)
-  fieldCounts <- elementLengths(linesSplit)
-  if (any(fieldCounts > length(fields)) ||
-      any(fieldCounts < (length(fields) - 1)))
-    stop("GFF files must have ", length(fields), " tab-separated columns")
-  haveAttr <- fieldCounts == length(fields)
-  haveAttrMat <- do.call(rbind, linesSplit[haveAttr])
-  noAttrMat <- do.call(rbind, linesSplit[!haveAttr])
-  if (!is.null(noAttrMat))
-    noAttrMat <- cbind(noAttrMat, "")
-  table <- rbind(noAttrMat, haveAttrMat)
-  colnames(table) <- fields
-  
-  # handle missings
-  table[table == "."] <- NA
-
-  attrCol <- table[,"attributes"]
-  if (version == "3") {
-    table <- table[,setdiff(colnames(table), "attributes"),drop=FALSE]
-    table[table[,"strand"] == "?","strand"] <- NA
-    tableDec <- urlDecode(as.vector(table))
-    table <- matrix(tableDec, ncol=ncol(table), dimnames=dimnames(table))
-  }
-
-  extraCols <- c("type", "source", "phase", "strand")
-  if (!is.null(colnames))
-    extraCols <- intersect(extraCols, colnames)
-  xd <- as(table[,extraCols,drop=FALSE], "DataFrame")
-
-  if (is.null(colnames) || length(setdiff(colnames, c(extraCols, "score")))) {
-    if (version == "1") {
-      if (is.null(colnames) || "group" %in% colnames)
-        attrList <- list(group = attrCol)
-      else attrList <- list()
-    } else {
-      attrSplit <- strsplit(attrCol, ";")
-      lines <- rep(seq_along(attrSplit), elementLengths(attrSplit))
-      attrs <- sub(" *$", "", sub("^ *", "", unlist(attrSplit)))
-      if (version == "3") {
-        attrs <- paste(attrs, "=", sep = "")
-        tvSplit <- strsplit(attrs, "=", fixed=TRUE)
-        if (any(elementLengths(tvSplit) != 2))
-          stop("Some attributes do not conform to the 'tag=value' format")
-        tvMat <- matrix(unlist(tvSplit), nrow = 2)
-        tags <- urlDecode(tvMat[1,])
-        vals <- urlDecode(tvMat[2,])
-      } else { # split on first space (FIXME: not sensitive to quotes)
-        tags <- sub(" .*", "", attrs) # strip surrounding quotes
-        vals <- sub("^\"([^\"]*)\"$", "\\1", sub("^[^ ]* ", "", attrs))
-      }
-      if (!is.null(colnames)) {
-        keep <- tags %in% colnames
-        lines <- lines[keep]
-        vals <- vals[keep]
-        tags <- tags[keep]
-      }
-      lineValByTag <- split.data.frame(cbind(lines, vals), tags)
-      attrList <- lapply(lineValByTag, function(tag) {
-        vals <- tag[,"vals"]
-        if (any(grepl(",", vals))) {
-          vals <- CharacterList(strsplit(vals, ",", fixed=TRUE))
-          coerced <- suppressWarnings(as(vals, "NumericList"))
-          if (!any(any(is.na(coerced))))
-            vals <- coerced
-          vec <- as(rep(list(character()), nrow(table)), class(vals))
-        } else {
-          coerced <- suppressWarnings(as.numeric(vals))
-          if (!any(is.na(coerced)))
-            vals <- coerced
-          vec <- rep(NA, nrow(table))
-        }
-        vec[as.integer(tag[,"lines"])] <- vals
-        vec
-      })
-    }
-    xd <- DataFrame(xd, attrList)
-  }
-  suppressWarnings(score <- as.numeric(table[,"score"]))
-  if (!all(is.na(score)) && (is.null(colnames) || "score" %in% colnames))
-    xd$score <- score
-
-  end <- as.integer(table[,"end"])
-  GenomicData(IRanges(as.integer(table[,"start"]), end),
-              xd, chrom = table[,"seqname"], genome = genome,
-              asRangedData = asRangedData)
-})
+setMethod("export", c("RangedDataList", "GFFFile"),
+          .export_RangedDataList_RTLFile)
 
 setGeneric("export.gff1",
            function(object, con, ...) standardGeneric("export.gff1"))
 setMethod("export.gff1", "ANY",
-          function(object, con, ...) export.gff(object, con, "1", ...))
+          function(object, con, ...) export(object, con, "gff1", ...))
 
 setGeneric("export.gff2",
            function(object, con, ...) standardGeneric("export.gff2"))
 setMethod("export.gff2", "ANY",
-          function(object, con, ...) export.gff(object, con, "2", ...))
+          function(object, con, ...) export(object, con, "gff2", ...))
 
 setGeneric("export.gff3",
            function(object, con, ...) standardGeneric("export.gff3"))
 setMethod("export.gff3", "ANY",
-          function(object, con, ...) export.gff(object, con, "3", ...))
+          function(object, con, ...) export(object, con, "gff3", ...))
 
-setGeneric("export.gtf",
-           function(object, con, ...) standardGeneric("export.gtf"))
-setMethod("export.gtf", "ANY",
-          function(object, con, ...) export.gff(object, con, "2", ...))
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Import
+###
+
+setGeneric("import.gff",
+           function(con, version = c("", "1", "2", "3"), genome = NA,
+                    asRangedData = TRUE, colnames = NULL, which = NULL, ...)
+           standardGeneric("import.gff"),
+           signature = "con")
+
+setMethod("import.gff", "ANY",
+          function(con, version = c("", "1", "2", "3"), genome,
+                   asRangedData = TRUE, colnames = NULL, which = NULL)
+          {
+            import(con, paste("gff", match.arg(version), sep = ""),
+                   genome = genome, asRangedData = asRangedData,
+                   colnames = colnames, which = which)
+          })
+
+setMethod("import", "GFFFile",
+          function(con, format, text, version = c("1", "2", "3"),
+                   genome = NA, asRangedData = TRUE, colnames = NULL,
+                   which = NULL)
+          {
+            if (!missing(format))
+              checkArgFormat(con, format)
+            if (!missing(version))
+              con <- asGFFVersion(con, match.arg(version))
+
+            sniffed <- sniffGFFVersion(resource(con))
+            version <- gffFileVersion(con)
+            if (!length(version) && !is.null(sniffed)) {
+              con <- asGFFVersion(con, sniffed)
+            }
+            
+            if (length(version) && !is.null(sniffed) &&
+                !identical(sniffed, version))
+              warning("gff-version directive indicates version is ", sniffed,
+                      ", not ", version)
+
+### FIXME: a queryForLines() function would be more efficient
+            file <- con
+            con <- queryForResource(con, which)
+            lines <- readLines(con, warn = FALSE) # unfortunately, not a table
+            lines <- lines[nzchar(lines)]
+            
+            ## strip comments
+            notComments <- grep("^[^#]", lines)
+            lines <- lines[notComments]
+            
+### TODO: handle ontologies (store in RangedData)
+
+            ## construct table
+            fields <- c("seqname", "source", "type", "start", "end", "score",
+                        "strand", "phase", "attributes")
+            linesSplit <- strsplit(lines, "\t", fixed=TRUE)
+            fieldCounts <- elementLengths(linesSplit)
+            if (any(fieldCounts > length(fields)) ||
+                any(fieldCounts < (length(fields) - 1)))
+              stop("GFF files must have ", length(fields),
+                   " tab-separated columns")
+            haveAttr <- fieldCounts == length(fields)
+            haveAttrMat <- do.call(rbind, linesSplit[haveAttr])
+            noAttrMat <- do.call(rbind, linesSplit[!haveAttr])
+            if (!is.null(noAttrMat))
+              noAttrMat <- cbind(noAttrMat, "")
+            table <- rbind(noAttrMat, haveAttrMat)
+            colnames(table) <- fields
+  
+            ## handle missings
+            table[table == "."] <- NA
+            
+            attrCol <- table[,"attributes"]
+            if (is(file, "GFF3File")) {
+              table <- table[,setdiff(colnames(table), "attributes"),drop=FALSE]
+              table[table[,"strand"] == "?","strand"] <- NA
+              tableVec <- as.vector(table)
+              tableDec <- ifelse(is.na(tableVec), NA, urlDecode(tableVec))
+              table <- matrix(tableDec, ncol = ncol(table),
+                              dimnames = dimnames(table))
+            }
+            
+            extraCols <- c("source", "type", "score", "strand", "phase")
+            if (!is.null(colnames))
+              extraCols <- intersect(extraCols, colnames)
+            xd <- as(table[,extraCols,drop=FALSE], "DataFrame")
+
+            if (!is.null(xd$phase))
+              xd$phase <- as.integer(as.character(xd$phase))
+            if (!is.null(xd$strand))
+              xd$strand <- strand(xd$strand)
+            if (!is.null(xd$score))
+              suppressWarnings(xd$score <- as.numeric(xd$score))
+
+            if (is.null(colnames) || length(setdiff(colnames, extraCols))) {
+              if (is(file, "GFF1File")) {
+                if (is.null(colnames) || "group" %in% colnames)
+                  attrList <- list(group = factor(attrCol))
+                else attrList <- list()
+              } else {
+                attrSplit <- strsplit(attrCol, ";")
+                lines <- rep(seq_along(attrSplit), elementLengths(attrSplit))
+                attrs <- sub(" *$", "", sub("^ *", "", unlist(attrSplit)))
+                if (is(file, "GFF3File")) {
+                  attrs <- paste(attrs, "=", sep = "")
+                  tvSplit <- strsplit(attrs, "=", fixed=TRUE)
+                  if (any(elementLengths(tvSplit) != 2))
+                    stop("Some attributes do not conform to 'tag=value' format")
+                  tvMat <- matrix(unlist(tvSplit), nrow = 2)
+                  tags <- tvMat[1,]
+                  vals <- tvMat[2,]
+                } else { # split on first space (FIXME: not sensitive to quotes)
+                  tags <- sub(" .*", "", attrs) # strip surrounding quotes
+                  vals <- sub("^\"([^\"]*)\"$", "\\1",
+                              sub("^[^ ]* ", "", attrs))
+                }
+                if (!is.null(colnames)) {
+                  keep <- tags %in% colnames
+                  lines <- lines[keep]
+                  vals <- vals[keep]
+                  tags <- urlDecode(tags[keep])
+                }
+                lineValByTag <- split.data.frame(cbind(lines, vals), tags)
+                ## FIXME: Parent, Alias, Note, DBxref,
+                ## Ontology_term are allowed to have multiple
+                ## values. We should probably always return them as a
+                ## CharacterList.
+                multiTags <- c("Parent", "Alias", "Note", "DBxref",
+                               "Ontology_term")
+                attrList <- sapply(names(lineValByTag), function(tagName) {
+                  tag <- lineValByTag[[tagName]]
+                  vals <- tag[,"vals"]
+                  if (is(file, "GFF3File") &&
+                      (any(grepl(",", vals)) || tagName %in% multiTags)) {
+                    vals <- CharacterList(strsplit(vals, ",", fixed=TRUE))
+                    vals <- relist(urlDecode(unlist(vals)), vals)
+                    coerced <- suppressWarnings(as(vals, "NumericList"))
+                    if (!any(any(is.na(coerced))))
+                      vals <- coerced
+                    vec <- as(rep(list(character()), nrow(table)), class(vals))
+                  } else {
+                    coerced <- suppressWarnings(as.numeric(vals))
+                    if (!any(is.na(coerced)))
+                      vals <- coerced
+                    if (is(file, "GFF3File"))
+                      vals <- urlDecode(vals)
+                    vec <- rep(NA, nrow(table))
+                  }
+                  vec[as.integer(tag[,"lines"])] <- vals
+                  vec
+                }, simplify = FALSE)
+              }
+              xd <- DataFrame(xd, attrList)
+            }
+            
+            end <- as.integer(table[,"end"])
+            GenomicData(IRanges(as.integer(table[,"start"]), end),
+                        xd, chrom = table[,"seqname"], genome = genome,
+                        seqinfo = attr(con, "seqinfo"),
+                        asRangedData = asRangedData,
+                        which = if (attr(con, "usedWhich")) NULL else which)
+          })
 
 setGeneric("import.gff1",
            function(con, ...) standardGeneric("import.gff1"))
 setMethod("import.gff1", "ANY",
-          function(con, ...) import.gff(con, "1", ...))
+          function(con, ...) import(con, "gff1", ...))
 
 setGeneric("import.gff2",
            function(con, ...) standardGeneric("import.gff2"))
 setMethod("import.gff2", "ANY",
-          function(con, ...) import.gff(con, "2", ...))
+          function(con, ...) import(con, "gff2", ...))
 
 setGeneric("import.gff3",
            function(con, ...) standardGeneric("import.gff3"))
 setMethod("import.gff3", "ANY",
-          function(con, ...) import.gff(con, "3", ...))
+          function(con, ...) import(con, "gff3", ...))
 
-setGeneric("import.gtf",
-           function(con, ...) standardGeneric("import.gtf"))
-setMethod("import.gtf", "ANY",
-          function(con, ...) import.gff(con, "2", ...))
-
-## Conversion to GFF-like structure
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Coercion
+###
 
 setGeneric("asGFF", function(x, ...) standardGeneric("asGFF"))
 
@@ -312,7 +407,43 @@ setMethod("asGFF", "GRangesList",
             c(parents, children)
           })
 
-# utilities
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Utilities
+###
 
-gffComment <- function(con, ...)
-    cat("##", paste(...), "\n", sep = "", file = con, append = TRUE)
+gffComment <- function(con, ...) 
+  cat("##", paste(...), "\n", sep = "", file = con, append = TRUE)
+
+sniffGFFVersion <- function(con) {
+  con <- connectionForResource(con, "r")
+  version <- NULL
+  lines <- line <- readLines(con, n = 1)
+  while(grepl("^#", line)) {
+    if (grepl("^##gff-version", line)) {
+      version <- sub("^##gff-version ", "", line)
+      break
+    }
+    line <- readLines(con, n = 1)
+    lines <- c(lines, line)
+  }
+  pushBack(lines, con)
+  version
+}
+
+gffFileClass <- function(version) {
+  paste("GFF", version, "File", sep = "")
+}
+
+gffFileVersion <- function(file) {
+  versions <- c("1", "2", "3")
+  unlist(Filter(function(v) is(file, gffFileClass(v)), versions))
+}
+
+asGFFVersion <- function(con, version) {
+  if (!is(con, gffFileClass(version))) {
+    if (class(con) != "GFFFile")
+      warning("Treating a '", class(con), "' as GFF version '", version, "'")
+    con <- GFFFile(resource(con), version)
+  }
+  con
+}
