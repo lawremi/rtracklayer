@@ -67,15 +67,10 @@ setMethod("export", c("ANY", "WIGFile"),
 setMethod("export", c("RangedData", "WIGFile"),
           function(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep"),
-                   writer = .wigWriter, append = FALSE, trackLine = TRUE)
+                   writer = .wigWriter, append = FALSE)
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            if (trackLine) {
-              return(export.ucsc(object, con,
-                                 dataFormat = match.arg(dataFormat),
-                                 trackLine = FALSE, append = append))
-            }
             if (!is.numeric(score(object)) || any(is.na(score(object))))
               stop("The score must be numeric, without any NA's")
             scipen <- getOption("scipen")
@@ -114,7 +109,21 @@ setMethod("export", c("RangedData", "WIGFile"),
               ans
             }
             dataFormat <- match.arg(dataFormat)
-            invisible(lapply(object, doBlock))
+            lapply(object, doBlock)
+            invisible(con)
+          })
+
+setMethod("export", c("UCSCData", "WIGFile"),
+          function(object, con, format, trackLine = TRUE, ...)
+          {
+            if (!missing(format))
+              checkArgFormat(con, format)
+            if (trackLine) {
+              export.ucsc(object, con, ...)
+            } else {
+              callNextMethod()
+            }
+            invisible(con)
           })
 
 setMethod("export", c("RangedDataList", "WIGFile"),
@@ -138,8 +147,10 @@ setMethod("import.wig", "ANY",
 
 setMethod("import", "WIGFile",
           function(con, format, text, genome = NA, asRangedData = TRUE,
-                   trackLine = TRUE, which = NULL)
+                   trackLine = TRUE, which = NULL, ...)
           {
+            if (!missing(format))
+              checkArgFormat(con, format)
             file <- con
             con <- connection(con, "r")
             ## check for a track line
@@ -148,7 +159,8 @@ setMethod("import", "WIGFile",
               pushBack(line, con)
               return(import.ucsc(initialize(file, resource = con), drop = TRUE,
                                  trackLine = FALSE, genome = genome,
-                                 asRangedData = asRangedData))
+                                 asRangedData = asRangedData, which = which,
+                                 ...))
             }
             if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
@@ -160,7 +172,12 @@ setMethod("import", "WIGFile",
             format <- gsub("^([^ ]*) .*", "\\1", formatLines)
             parsedFormat <- lapply(formatLines, ucscParsePairs)
             chrom <- sapply(parsedFormat, `[[`, "chrom")
-            seqlevels <- unique(chrom)
+            seqinfo <- NULL
+            if (!is.null(genome) && !is.na(genome))
+              seqinfo <- seqinfoForGenome(genome)
+            if (!is.null(seqinfo))
+              seqlevels <- seqlevels(seqinfo)
+            else seqlevels <- unique(chrom)
             if (length(formatLines)) {
               parseData <- function(i) {
                 ## parse format line
@@ -207,8 +224,9 @@ setMethod("import", "WIGFile",
               parseInds <- seq_along(formatInds)
               if (!is.null(which)) {
                 message("For efficiency, consider converting this WIG file",
-                        " to a BigWig file; see ?wigToBigWig")
-                parseInds <- parseInds[chrom %in% seqnames(which)]
+                        " to a BigWig file;\nsee ?wigToBigWig")
+                which <- as(which, "RangesList")
+                parseInds <- parseInds[chrom %in% names(which)]
               }
               resultList <- lapply(parseInds, parseData)
               if (asRangedData) {
@@ -217,14 +235,17 @@ setMethod("import", "WIGFile",
                                  score = unlist(lapply(resultList, score)),
                                  space = factor(names(rl)[togroup(rl)],
                                    seqlevels))
+                universe(gd) <- if (is.na(genome)) NULL else genome
               }
               else
                 gd <- do.call(c, resultList)
-              if (!is.null(genome))
+              if (!is.null(seqinfo))
+                seqinfo(gd) <- seqinfo
+              else if (!is.null(genome))
                 genome(gd) <- genome
               gd
             } else {
-              import(text = lines, format = "bed", variant = "bedGraph",
+              import(text = lines, format = "bedGraph",
                      genome = genome, asRangedData = asRangedData,
                      which = which)
             }

@@ -175,6 +175,7 @@ setMethod("export", c("UCSCData", "BEDFile"),
             } else {
               callNextMethod()
             }
+            invisible(con)
           })
 
 setMethod("export", c("RangedDataList", "BEDFile"),

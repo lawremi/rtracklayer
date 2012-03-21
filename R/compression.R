@@ -22,11 +22,13 @@ setMethod("decompress", "CompressedFile", function(con, ...) {
 
 setMethod("decompress", "character",
           function(con, ...) {
-            file <- FileForFormat(con)
-            decompressed <- decompress(file)
-            if (identical(file, decompressed))
-              con # was not decompressed, just return original 'con'
-            else decompressed
+            file <- try(FileForFormat(con), silent = TRUE)
+            if (!is(file, "try-error")) {
+              decompressed <- decompress(file)
+              if (!identical(file, decompressed))
+                con <- decompressed
+            }
+            con
           })
 
 ## should only happen internally (user would not give compression as format)

@@ -851,7 +851,7 @@ setAs("BasicTrackLine", "character",
         str <- as(as(from, "TrackLine"), "character")
         itemRgb <- from@itemRgb
         if (length(itemRgb))
-          str <- paste(str, " itemRgb=", if (itemRgb) "On" else "Off", sep = "")
+          str <- paste(str, " itemRgb=", if (itemRgb) "on" else "off", sep = "")
         useScore <- from@useScore
         if (length(useScore))
           str <- paste(str, " useScore=", if (useScore) "1" else "0", sep = "")
@@ -924,7 +924,7 @@ setAs("character", "BasicTrackLine",
         line <- new("BasicTrackLine", as(from, "TrackLine"))
         vals <- ucscParsePairs(from)
         if (!is.na(vals["itemRgb"]))
-          line@itemRgb <- vals[["itemRgb"]] == "On"
+          line@itemRgb <- tolower(vals[["itemRgb"]]) == "on"
         if (!is.na(vals["useScore"]))
           line@useScore <- vals[["useScore"]] == "1"
         if (!is.na(vals["group"]))
@@ -968,13 +968,13 @@ setAs("GraphTrackLine", "character",
         autoScale <- from@autoScale
         onoff <- function(x) if (x) "on" else "off"
         if (length(autoScale))
-          str <- paste(str, "autoScale=", onoff(autoScale), sep = "")
+          str <- paste(str, " autoScale=", onoff(autoScale), sep = "")
         alwaysZero <- from@alwaysZero
         if (length(alwaysZero))
-          str <- paste(str, "alwaysZero=", onoff(alwaysZero), sep = "")
+          str <- paste(str, " alwaysZero=", onoff(alwaysZero), sep = "")
         gridDefault <- from@gridDefault
         if (length(gridDefault))
-          str <- paste(str, "gridDefault=", onoff(gridDefault), sep = "")
+          str <- paste(str, " gridDefault=", onoff(gridDefault), sep = "")
         maxHeightPixels <- from@maxHeightPixels
         if (length(maxHeightPixels))
           str <- paste(str, " maxHeightPixels=",
@@ -991,7 +991,7 @@ setAs("GraphTrackLine", "character",
           str <- paste(str, " yLineMark=", yLineMark, sep = "")
         yLineOnOff <- from@yLineOnOff
         if (length(yLineOnOff))
-          str <- paste(str, "yLineOnOff=", onoff(yLineOnOff), sep = "")
+          str <- paste(str, " yLineOnOff=", onoff(yLineOnOff), sep = "")
         windowingFunction <- from@windowingFunction
         if (length(windowingFunction))
           str <- paste(str, " windowingFunction=", windowingFunction, sep = "")
@@ -1013,11 +1013,11 @@ setAs("character", "GraphTrackLine",
         if (!is.na(vals["altColor"]))
           line@altColor <- as.integer(strsplit(vals[["altColor"]], ",")[[1]])
         if (!is.na(vals["autoScale"]))
-          line@autoScale <- vals[["autoScale"]] == "On"
+          line@autoScale <- tolower(vals[["autoScale"]]) == "on"
         if (!is.na(vals["alwaysZero"]))
-          line@alwaysZero <- vals[["alwaysZero"]] == "On"
+          line@alwaysZero <- tolower(vals[["alwaysZero"]]) == "on"
         if (!is.na(vals["gridDefault"]))
-          line@gridDefault <- vals[["gridDefault"]] == "On"
+          line@gridDefault <- tolower(vals[["gridDefault"]]) == "on"
         if (!is.na(vals["maxHeightPixels"]))
           line@maxHeightPixels <-
             as.integer(strsplit(vals[["maxHeightPixels"]], ":")[[1]])
@@ -1029,7 +1029,7 @@ setAs("character", "GraphTrackLine",
         if (!is.na(vals["yLineMark"]))
           line@yLineMark <- as.numeric(vals[["yLineMark"]])
         if (!is.na(vals["yLineOnOff"]))
-          line@yLineOnOff <- vals[["yLineOnOff"]] == "On"
+          line@yLineOnOff <- tolower(vals[["yLineOnOff"]]) == "on"
         if (!is.na(vals["windowingFunction"]))
           line@windowingFunction <- vals[["windowingFunction"]]
         if (!is.na(vals["smoothingWindow"]))
@@ -1145,7 +1145,8 @@ setMethod("export", c("RangedDataList", "UCSCFile"),
 
 trackLineClass <- function(subformat)
 {
-  if (subformat == "wig" || subformat == "bedGraph")
+  subformat <- tolower(subformat)
+  if (subformat == "wig" || subformat == "bedgraph")
     "GraphTrackLine"
   else if (subformat == "bed15")
     "Bed15TrackLine"
@@ -1191,7 +1192,7 @@ setMethod("export", c("UCSCData", "UCSCFile"),
               auto <- TRUE
               subformat <- bestFileFormat(object)
             }
-            graphFormat <- subformat %in% c("wig", "bedGraph")
+            graphFormat <- tolower(subformat) %in% c("wig", "bedgraph")
             if (graphFormat) {
               strand <- as.character(strand(object))
               strand[is.na(strand)] <- "NA"
