@@ -44,21 +44,16 @@ GVFFile <- function(resource) {
 ###
 
 setGeneric("export.gff",
-           function(object, con, version = c("1", "2", "3"),
-                    source = "rtracklayer", append = FALSE, ...)
-           standardGeneric("export.gff"),
-           signature = c("object", "con"))
+           function(object, con, ...) standardGeneric("export.gff"))
 
 setMethod("export.gff", "ANY",
-          function(object, con, version = c("1", "2", "3"), source, append, ...)
+          function(object, con, ...)
           {
-            export(object, con, paste("gff", match.arg(version), sep = ""),
-                   source = source, append = append, ...)
+            export(object, con, ...)
           })
 
 setMethod("export", c("ANY", "GFFFile"),
-          function(object, con, format, version = c("1", "2", "3"),
-                   source = "rtracklayer", append = FALSE, index = FALSE)
+          function(object, con, format, ...)
           {
             if (hasMethod("asGFF", class(object)))
               object <- asGFF(object)
@@ -67,9 +62,7 @@ setMethod("export", c("ANY", "GFFFile"),
               stop("cannot export object of class '", class(object), "'")
             if (!missing(format))
               checkArgFormat(con, format)
-            if (!missing(version))
-              con <- asGFFVersion(con, match.arg(version))
-            export(object, con, source = source, append = append, index = index)
+            export(object, con, ...)
           })
 
 setMethod("export", c("RangedData", "GFFFile"),
@@ -102,13 +95,13 @@ setMethod("export", c("RangedData", "GFFFile"),
               object$ID <- rownames(object)
             if (version == "3")
               seqname <- urlEncode(seqname, "a-zA-Z0-9.:^*$@!+_?|-")
-            if (!is.null(object$source))
+            if (!is.null(object$source) && missing(source))
               source <- object$source
             if (version == "3")
               source <- urlEncode(source, "\t\n\r;=%&,", FALSE)
             feature <- object$type
             if (is.null(feature))
-              feature <- "sequence"
+              feature <- "sequence_feature"
             score <- score(object)
             if (is.null(score)) {
               score <- NA
@@ -198,23 +191,16 @@ setMethod("export.gff3", "ANY",
 ### Import
 ###
 
-setGeneric("import.gff",
-           function(con, version = c("", "1", "2", "3"), genome = NA,
-                    asRangedData = TRUE, colnames = NULL, which = NULL, ...)
-           standardGeneric("import.gff"),
-           signature = "con")
+setGeneric("import.gff", function(con, ...) standardGeneric("import.gff"))
 
 setMethod("import.gff", "ANY",
-          function(con, version = c("", "1", "2", "3"), genome,
-                   asRangedData = TRUE, colnames = NULL, which = NULL)
+          function(con, ...)
           {
-            import(con, paste("gff", match.arg(version), sep = ""),
-                   genome = genome, asRangedData = asRangedData,
-                   colnames = colnames, which = which)
+            import(con, "gff", ...)
           })
 
 setMethod("import", "GFFFile",
-          function(con, format, text, version = c("1", "2", "3"),
+          function(con, format, text, version = c("", "1", "2", "3"),
                    genome = NA, asRangedData = TRUE, colnames = NULL,
                    which = NULL)
           {
@@ -225,7 +211,9 @@ setMethod("import", "GFFFile",
 
             sniffed <- sniffGFFVersion(resource(con))
             version <- gffFileVersion(con)
-            if (!length(version) && !is.null(sniffed)) {
+            if (!length(version)) {
+              if (is.null(sniffed))
+                sniffed <- "1"
               con <- asGFFVersion(con, sniffed)
             }
             
