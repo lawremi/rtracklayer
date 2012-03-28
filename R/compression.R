@@ -35,8 +35,9 @@ setMethod("decompress", "character",
 setMethod("import", c("CompressedFile", "missing"),
           function(con, format, text, ...)
           {
+            desc <- resourceDescription(con)
             con <- FileForFormat(resource(con),
-                                 file_ext(file_path_sans_ext(path(con))))
+                                 file_ext(file_path_sans_ext(desc)))
             import(con, ...)
           })
 
@@ -47,8 +48,9 @@ compress <- decompress
 setMethod("export", c("ANY", "CompressedFile", "missing"),
           function(object, con, format, ...)
           {
+            desc <- resourceDescription(con)
             con <- FileForFormat(resource(con),
-                                 file_ext(file_path_sans_ext(path(con))))
+                                 file_ext(file_path_sans_ext(desc)))
             export(object, con, ...)
           })
 
