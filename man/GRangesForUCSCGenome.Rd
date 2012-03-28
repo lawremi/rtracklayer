@@ -1,18 +1,23 @@
 \name{GRangesForUCSCGenome}
 \alias{GRangesForUCSCGenome}
 \alias{GRangesForBSGenome}
+\alias{SeqinfoForUCSCGenome}
+\alias{SeqinfoForBSGenome}
 
 \title{
   GRanges for a Genome
 }
 \description{
   These functions assist in the creation of
-  \code{\link[GenomicRanges:GRanges-class]{GRanges}} in the context of a
-  genome. 
+  \code{\link[GenomicRanges:Seqinfo-class]{Seqinfo}} or
+  \code{\link[GenomicRanges:GRanges-class]{GRanges}} for a genome.
 }
 \usage{
 GRangesForUCSCGenome(genome, chrom = NULL, ranges = NULL, ...)
 GRangesForBSGenome(genome, chrom = NULL, ranges = NULL, ...)
+
+SeqinfoForUCSCGenome(genome)
+SeqinfoForBSGenome(genome)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -45,9 +50,12 @@ GRangesForBSGenome(genome, chrom = NULL, ranges = NULL, ...)
   exist for the genome of interest.
 }
 \value{
-  A \code{GRanges} object, with the appropriate
-  \code{\link[GenomicRanges:seqlengths]{seqlengths}} and
+  For the \code{GRangesFor*} functions, a \code{GRanges} object, with the
+  appropriate \code{\link[GenomicRanges:seqlengths]{seqlengths}} and
   \code{\link{genome}} ID.
+
+  The \code{SeqinfoFor*} functions return a \code{Seqinfo} for the
+  indicated genome.
 }
 \author{
   Michael Lawrence

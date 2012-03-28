@@ -4,30 +4,109 @@
 %% Classes:
 \alias{class:BigWigFile}
 \alias{BigWigFile-class}
+\alias{class:BWFile}
+\alias{BWFile-class}
 
 %% Constructor:
 \alias{BigWigFile}
+\alias{BWFile}
 
 %% Accessors:
 \alias{seqinfo,BigWigFile-method}
 
 %% Import:
-\alias{import.bw,BigWigFile-method}
+\alias{import.bw}
+\alias{import.bw,ANY-method}
+\alias{import,BigWigFile,ANY,ANY-method}
+
+%% Export:
+\alias{export.bw}
+\alias{export.bw,ANY-method}
+\alias{export,ANY,BigWigFile,ANY-method}
+\alias{export,RangedData,BigWigFile,ANY-method}
 
 %% Utilites:
 \alias{summary,BigWigFile-method}
 
-\title{BigWigFile objects}
+\title{BigWig Import and Export}
 
 \description{
-  A \code{BigWigFile} object is a reference to a BigWig file. It exists
-  to support methods with behavior particular to BigWig files.
+  These functions support the import and export of the UCSC BigWig
+  format, a compressed, binary form of WIG/BEDGraph with a spatial index
+  and precomputed summaries.
 }
 
-\section{Accessor Methods}{
-  In the code snippets below, \code{x} represents a \code{BigWigFile}
-  object.
-  
+\usage{
+\S4method{import}{BigWigFile,ANY,ANY}(con, format, text,
+                   selection = BigWigSelection(which, ...),
+                   which = con, asRangedData = TRUE, ...)
+import.bw(con, ...)
+
+\S4method{export}{ANY,BigWigFile,ANY}(object, con, format, ...)
+\S4method{export}{RangedData,BigWigFile,ANY}(object, con, format,
+                   dataFormat = c("auto", "variableStep", "fixedStep",
+                     "bedGraph"), compress = TRUE)
+export.bw(object, con, ...)
+}
+
+\arguments{
+  \item{con}{A path, URL or \code{BigWigFile} object. Connections are
+    not supported. For the functions ending in \code{.bw}, the file
+    format is indicated by the function name. For the \code{export}
+    and \code{import} methods, the format must be indicated another
+    way. If \code{con} is a path, or URL, either the file
+    extension or the \code{format} argument needs to be \dQuote{bigWig}
+    or \dQuote{bw}.
+  }
+  \item{object}{The object to export, should be a \code{RangedData} or
+    something coercible to a \code{RangedData}, like a
+    \code{GRanges}.
+  }
+  \item{format}{If not missing, should be \dQuote{bigWig} or \dQuote{bw}
+    (case insensitive).
+  }
+  \item{text}{Not supported.}
+  \item{asRangedData}{If \code{FALSE}, a \code{GRanges} is returned,
+    instead of a \code{RangedData}.
+  }
+  \item{selection}{A \code{\linkS4class{BigWigSelection}} object
+    indicating the ranges to load.
+  }
+  \item{which}{A range data structure coercible to \code{RangesList},
+    like a \code{GRanges}, or a \code{BigWigFile}. Only the intervals in
+    the file overlapping the given ranges are returned. By default, the
+    value is the \code{BigWigFile} itself. Its \code{Seqinfo} object is
+    extracted and coerced to a \code{RangesList} that represents the
+    entirety of the file.
+  }
+  \item{dataFormat}{Probably best left to \dQuote{auto}. Exists only
+    for historical reasons.
+  }
+  \item{compress}{If \code{TRUE}, compress the data. No reason to change this.
+  } 
+  \item{...}{Arguments to pass down to methods to other methods. For
+    import, the flow eventually reaches the \code{BigWigFile} method on
+    \code{import}. For export, the \code{RangedData}, \code{BigWigFile}
+    method on \code{export} is the sink. 
+  }
+}
+
+\value{
+  A \code{RangedData} (or \code{GRanges} if the \code{asRangedData} is
+  \code{FALSE}), with the score values in the \code{score} column, which
+  is accessible via the \code{score} function.
+}
+
+\section{\code{BigWigFile} objects}{
+  A \code{BigWigFile} object, an extension of
+  \code{\linkS4class{RTLFile}} is a reference to a BigWig file. To cast
+  a path, URL or connection to a \code{BigWigFile}, pass it to the
+  \code{BigWigFile} constructor.
+
+  BigWig files are more complex than most track files, and there are a
+  number of methods on \code{BigWigFile} for accessing the additional
+  information:
+
   \describe{
     \item{}{
       \code{seqinfo(x)}:
@@ -35,26 +114,6 @@
       indicating the lengths of the sequences for the intervals in the
       file. No circularity or genome information is available.
     }
-  }
-}
-
-\section{Import}{
-  \describe{
-    \item{}{
-      \code{import.bw(con, selection = BigWigSelection(ranges, ...),
-        ranges = con, ...)}: Imports the intervals from a big wig file
-        \code{con}, according to \code{selection}, a
-        \linkS4class{RangedSelection} object indicating the intervals to
-        retrieve from a bigWig file. Supported types of \code{con}
-        include a \code{BigWigFile} and a file name. Note that this
-        retrieval is very efficient, due to the indexing of the bigWig
-        format.
-    }
-  }
-}
-
-\section{Utilities}{
-  \describe{
     \item{}{
       \code{summary(ranges = as(seqinfo(object), "GenomicRanges"), size
         = 1L, type = c("mean", "min", "max", "coverage", "sd"),
@@ -74,26 +133,40 @@
         multi-level summaries present in every BigWig file.
     }
   }
+
 }
 
 \author{Michael Lawrence}
 
 \seealso{
-  \code{\link{import.bw}} and \code{\link{export.bw}} for reading and
-  writing BigWig files, respectively.
+  \code{\link{wigToBigWig}} for converting a WIG file to BigWig.
 }
 
 \examples{
 if (.Platform$OS.type != "windows") {
+  test_path <- system.file("tests", package = "rtracklayer")
+  test_bw <- file.path(test_path, "test.bw")
 
-bwf <- BigWigFile(system.file("tests", "test.bw", package = "rtracklayer"))
-seqinfo(bwf)
-track <- import.bw(bwf, asRangedData = FALSE)
-summary(bwf) # for each sequence, average all values into one
-summary(bwf, range(head(track))) # just average the first few features
-summary(bwf, size = GenomicRanges::seqlengths(bwf) / 10) # 10X reduction
-summary(bwf, type = "min") # min instead of mean
+  test <- import(test_bw)
+  test
 
+  which <- GRanges(c("chr2", "chr2"), IRanges(c(1, 300), c(400, 1000)))
+  import(test_bw, which = which)
+
+\dontrun{
+  test_bw_out <- file.path(tempdir(), "test_out.bw")
+  export(test, test_bw_out)
+}
+
+  bwf <- BigWigFile(test_bw)
+  track <- import(bwf, asRangedData = FALSE)
+
+  seqinfo(bwf)  
+
+  summary(bwf) # for each sequence, average all values into one
+  summary(bwf, range(head(track))) # just average the first few features
+  summary(bwf, size = GenomicRanges::seqlengths(bwf) / 10) # 10X reduction
+  summary(bwf, type = "min") # min instead of mean
 }
 }
 

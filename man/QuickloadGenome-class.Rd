@@ -25,6 +25,8 @@
 \alias{track,QuickloadGenome-method}
 \alias{track<-,QuickloadGenome,ANY-method}
 \alias{track<-,QuickloadGenome,RangedData-method}
+\alias{track<-,QuickloadGenome,RTLFile-method}
+\alias{track<-,QuickloadGenome,RsamtoolsFile-method}
 \alias{track<-,QuickloadGenome,character-method}
 \alias{referenceSequence}
 \alias{referenceSequence<-}
@@ -129,14 +131,17 @@
         scheme.
 
         Currently, supported \code{value} types include a
-        \code{GenomicRanges}, \code{GRangesList}, or a file name (copied
-        to the repository).  If not a file name, \code{value} is written
-        in \code{format}. For generic interval data, this means a BigWig
-        file (if there is a numeric \dQuote{score} column) or a BED file
-        otherwise. An \code{RleList} (e.g., coverage) is output as
-        BigWig. For \code{UCSCData} values, the format is chosen
-        according to the type of track line. For \code{RsamtoolsFile}
-        objects, the file and its index are copied.
+        \code{GenomicRanges}, \code{GRangesList}, or a file resource
+        (copied to the repository).  The file resource may be
+        represented as a path, URL, \code{\linkS4class{RTLFile}} or
+        \code{\link[Rsamtools:RsamtoolsFile-class]{RsamtoolsFile}}. If
+        not a file name, \code{value} is written in \code{format}. For
+        generic interval data, this means a BigWig file (if there is a
+        numeric \dQuote{score} column) or a BED file otherwise. An
+        \code{RleList} (e.g., coverage) is output as BigWig. For
+        \code{UCSCData} values, the format is chosen according to the
+        type of track line. For \code{RsamtoolsFile} objects, the file
+        and its index are copied.
 
         The arguments in \code{...} become attributes in the XML
         metadata. The \dQuote{description} attribute is standard and is

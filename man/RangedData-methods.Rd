@@ -98,7 +98,7 @@ Similarly the universe refers to the genome.}
 \author{ Michael Lawrence and Patrick Aboyoun }
 
 \examples{
-  range1 <- IRanges::IRanges(start=c(1,2,3), end=c(5,2,8))
+  range1 <- IRanges::RangesList(chr1 = IRanges::IRanges(c(1,2,3), c(5,2,8)))
 
   ## just ranges ##
   ## RangedData instance
@@ -119,38 +119,22 @@ Similarly the universe refers to the genome.}
   score <- c(10L, 2L, NA)
   strand <- factor(c("+", NA, "-"), levels = levels(strand()))
   ## RangedData instance
-  rd <- GenomicData(range1, score, genome = "hg18")
+  rd <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18")
   rd[["score"]]
   strand(rd) ## all NA
-  rd <- GenomicData(range1, score, filt = filter, strand = strand)
+  rd <- GenomicData(range1[[1]], score, chrom = "chr1", filt = filter,
+                    strand = strand)
   rd[["filt"]]
   strand(rd) ## equal to 'strand'
   ## GRanges instance
-  gr <- GenomicData(range1, score, genome = "hg18", asRangedData = FALSE)
+  gr <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18",
+                    asRangedData = FALSE)
   values(gr)[["score"]]
   strand(gr) ## all '*'
-  gr <- GenomicData(range1, score, filt = filter, strand = strand,
-                    asRangedData = FALSE)
+  gr <- GenomicData(range1[[1]], score, filt = filter, strand = strand,
+                    chrom = "chr1", asRangedData = FALSE)
   values(gr)[["filt"]]
   strand(gr) ## equal to 'strand'
-
-  ## multiple chromosomes ##
-  range2 <- IRanges::IRanges(start=c(15,45,20,1), end=c(15,100,80,5))
-  ranges <- c(range1, range2)
-  score <- c(score, c(0L, 3L, NA, 22L)) 
-  chrom <- paste("chr", rep(c(1,2), c(length(range1), length(range2))), sep="")
-  ## RangedData instance
-  rd <- GenomicData(ranges, score, chrom = chrom, genome = "hg18")
-  chrom(rd) # equal to 'chrom'
-  rd[["score"]] # unlists over the chromosomes
-  score(rd)
-  rd[1][["score"]] # equal to score[1:3]
-  ## GRanges instance
-  gr <- GenomicData(ranges, score, chrom = chrom, genome = "hg18",
-                    asRangedData = FALSE)
-  chrom(gr) # equal to 'chrom'
-  values(gr)[["score"]]
-  values(gr[chrom(gr) == "chr1"])[["score"]]
 
   ## coercion from data.frame ##
   df <- as.data.frame(rd)

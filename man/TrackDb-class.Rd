@@ -8,8 +8,8 @@
 %% Accessors:
 \alias{$,TrackDb-method}
 \alias{$<-,TrackDb-method}
-\alias{[[,TrackDb-method}
-\alias{[[<-,TrackDb-method}
+\alias{[[,TrackDb,ANY,ANY-method}
+\alias{[[<-,TrackDb,ANY,ANY-method}
 
 %% Data Access:
 \alias{track<-,TrackDb,ANY-method}

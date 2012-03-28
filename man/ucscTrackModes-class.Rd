@@ -1,7 +1,7 @@
 \name{UCSCTrackModes-class}
 \docType{class}
 \alias{UCSCTrackModes-class}
-\alias{[,UCSCTrackModes-method}
+\alias{[,UCSCTrackModes,ANY,ANY-method}
 \alias{[<-,UCSCTrackModes,ANY,ANY,ANY-method}
 
 \title{Class "UCSCTrackModes"}

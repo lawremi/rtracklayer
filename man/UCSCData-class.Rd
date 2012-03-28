@@ -8,6 +8,7 @@
 \alias{initialize,UCSCData-method}
 \alias{show,UCSCData-method}
 \alias{coerce,RangedData,UCSCData-method}
+\alias{coerce,UCSCData,GRanges-method}
 
 \title{Class "UCSCData"}
 \description{Each track in \acronym{UCSC} has an associated

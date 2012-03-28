@@ -6,10 +6,14 @@
 \alias{Chain-class}
 \alias{ChainBlock-class}
 \alias{class:ChainBlock}
+\alias{class:ChainFile}
+\alias{ChainFile-class}
 
 %% Constructor:
 \alias{import.chain}
-\alias{import.chain,character-method}
+\alias{import.chain,ANY-method}
+\alias{import,ChainFile,ANY,ANY-method}
+\alias{ChainFile}
 
 %% Generics and methods:
 \alias{ranges,ChainBlock-method}
@@ -67,13 +71,21 @@
 }
 
 \section{Import}{
+  A \code{Chain} object can be loaded from a UCSC chain format file
+  simply by passing the path \code{import} function. If the file
+  extension is not \dQuote{chain}, then either pass \dQuote{chain} to
+  the \code{format} argument, or cast the path to a \code{ChainFile}
+  object. The \code{import.chain} function is provided as a (slight)
+  convenience. It is documented below, along with the extra
+  \code{exclude} argument to the \code{import} method.
+  
   \describe{
     \item{}{
       \code{import.chain(con, exclude = "_", ...)}:
       Imports a chain file named \code{con} as a \code{Chain} object, a
       list of \code{ChainBlock}s. Alignments for chromosomes matching the
       \code{exclude} pattern are not imported.
-    }  
+    }
   }
 }
 

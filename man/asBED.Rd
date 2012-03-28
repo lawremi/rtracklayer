@@ -34,7 +34,7 @@ asBED(x, ...)
 }
 
 \value{
-  A \code{GRangesList} like \code{object}, with the columns \code{name},
+  A \code{GRanges}, with the columns \code{name},
   \code{blockStarts} and \code{blockSizes} added.
 }
 

@@ -10,7 +10,7 @@
 
 %% Accessors:
 \alias{$,Quickload-method}
-\alias{[[,Quickload-method}
+\alias{[[,Quickload,ANY,ANY-method}
 \alias{genome,Quickload-method}
 \alias{length,Quickload-method}
 \alias{uri}
