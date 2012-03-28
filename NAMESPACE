@@ -107,7 +107,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
        GRangesForBSGenome, summary, seqinfo, genome, "genome<-",
        uri, Quickload, quickload, QuickloadGenome,
-       organism, releaseDate, elementMetadata, pasteCollapse, wigToBigWig,
+       organism, releaseDate, elementMetadata, wigToBigWig,
        SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path)
 
 export(GFFFile, UCSCFile, BEDFile, WIGFile,
