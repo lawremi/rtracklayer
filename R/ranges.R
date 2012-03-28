@@ -12,11 +12,25 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
 {
   if (!isTRUEorFALSE(asRangedData))
     stop("'asRangedData' must be TRUE or FALSE")
+  if (is.null(genome))
+    genome <- NA
+  if (!isSingleStringOrNA(genome))
+    stop("'genome' must be a single string, or NULL, or NA")
+  if (!is.null(seqinfo)) {
+    if (is.na(genome))
+      genome <- singleGenome(genome(seqinfo))
+    else if (!all(genome == genome(seqinfo)))
+      stop("'genome' ", genome, "' does not match that in 'seqinfo'")
+  }
+  if (is.null(seqinfo) && !is.na(genome))
+    seqinfo <- seqinfoForGenome(genome)
   if (!is(ranges, "Ranges")) {
     if (is(ranges, "data.frame") || is(ranges, "DataTable")) {
       colnames(ranges)[match("chrom", colnames(ranges))] <- "space"
     }
-    gd <- RangedData(ranges) # direct coercion
+    if (is.na(genome))
+      genome <- NULL # universe expects NULL if unknown
+    gd <- RangedData(ranges, universe = genome) # direct coercion
     if (!asRangedData)
       gd <- as(gd, "GRanges")
   } else {
@@ -24,21 +38,10 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
       stop("length of 'chrom' greater than length of 'ranges'")
     if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))
       stop("length of 'ranges' not a multiple of 'chrom' length")
-    if (!is.null(genome) && !isSingleStringOrNA(genome))
-      stop("'genome' must be a single string, or NULL, or NA")
-    if (!is.null(seqinfo)) {
-      if (is.na(genome))
-        genome <- singleGenome(genome(seqinfo))
-      else if (!all(genome == genome(seqinfo)))
-        stop("'genome' ", genome, "' does not match that in 'seqinfo'")
-    }
-    if (is.null(seqinfo)) {
-      if (!is.null(genome) && !is.na(genome))
-        seqinfo <- seqinfoForGenome(genome)
-      else seqinfo <- Seqinfo(as.character(unique(chrom)))
-    }
+    if (is.null(seqinfo))
+      seqinfo <- Seqinfo(as.character(unique(chrom)), genome = genome)
     if (!is.factor(chrom))
-      chrom <- factor(chrom, seqnames(seqinfo))
+      chrom <- factor(chrom, seqlevels(seqinfo))
     if (asRangedData) {
       if (is.na(genome))
         genome <- NULL # universe expects NULL if unknown
