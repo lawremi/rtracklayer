@@ -41,17 +41,20 @@ setMethod("export.2bit", "ANY", function(object, con, ...) {
 })
 
 setMethod("export", c("ANY", "TwoBitFile"), function(object, con, format, ...) {
-  export(as(object, "DNAStringSet"), con, ...)
+  object <- as(object, "DNAStringSet")
+  callGeneric()
 })
 
-setMethod("export", c("BSgenome", "character", "missing"),
+setMethod("export", c("BSgenome", "character"),
           function(object, con, format, ...) {
-            invisible(export(object, TwoBitFile(con), ...))
+            con <- TwoBitFile(con)
+            callGeneric()
           })
 
-setMethod("export", c("DNAStringSet", "character", "missing"),
+setMethod("export", c("DNAStringSet", "character"),
           function(object, con, format, ...) {
-            invisible(export(object, TwoBitFile(con), ...))
+            con <- TwoBitFile(con)
+            callGeneric()
           })
 
 setMethod("export", c("BSgenome", "TwoBitFile"),
@@ -66,13 +69,17 @@ setMethod("export", c("BSgenome", "TwoBitFile"),
             invisible(.TwoBits_export(as.list(twoBits), twoBitPath(path(con))))
           })
 
-setMethod("export", c("DNAStringSet", "TwoBitFile"), function(object, con) {
-  seqnames <- names(object)
-  if (is.null(seqnames))
-    seqnames <- as.character(seq(length(object)))
-  invisible(.TwoBits_export(mapply(.DNAString_to_twoBit, object, seqnames),
-                            twoBitPath(path(con))))
-})
+setMethod("export", c("DNAStringSet", "TwoBitFile"),
+          function(object, con, format) {
+            if (!missing(format))
+              checkArgFormat(con, format)  
+            seqnames <- names(object)
+            if (is.null(seqnames))
+              seqnames <- as.character(seq(length(object)))
+            invisible(.TwoBits_export(mapply(.DNAString_to_twoBit, object,
+                                             seqnames),
+                                      twoBitPath(path(con))))
+          })
 
 ## Hidden export of a list of twoBit pointers
 .TwoBits_export <- function(object, con) {
