@@ -17,18 +17,12 @@ WIGFile <- function(resource) {
 ###
 
 setGeneric("export.wig",
-           function(object, con,
-                    dataFormat = c("auto", "variableStep", "fixedStep"),
-                    ...)
-           standardGeneric("export.wig"),
-           signature = c("object", "con"))
+           function(object, con, ...) standardGeneric("export.wig"))
 
 setMethod("export.wig", "ANY",
-          function(object, con,
-                   dataFormat = c("auto", "variableStep", "fixedStep"),
-                   ...)
+          function(object, con, ...)
           {
-            export(object, con, "wig", dataFormat = match.arg(dataFormat), ...)
+            export(object, con, "wig", ...)
           })
 
 setMethod("export", c("ANY", "WIGFile"),
@@ -67,7 +61,7 @@ setMethod("export", c("ANY", "WIGFile"),
 setMethod("export", c("RangedData", "WIGFile"),
           function(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep"),
-                   writer = .wigWriter, append = FALSE)
+                   writer = .wigWriter, append = FALSE, ...)
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -133,16 +127,12 @@ setMethod("export", c("RangedDataList", "WIGFile"),
 ### Import
 ###
 
-setGeneric("import.wig",
-           function(con, genome = NA, asRangedData = TRUE, which = NULL, ...)
-           standardGeneric("import.wig"),
-           signature = "con")
+setGeneric("import.wig", function(con, ...) standardGeneric("import.wig"))
 
 setMethod("import.wig", "ANY",
-          function(con, genome, asRangedData = TRUE, ...)
+          function(con, ...)
           {
-            import(con, "wig", genome = genome, asRangedData = asRangedData,
-                   which = which, ...)
+            import(con, "wig", ...)
           })
 
 setMethod("import", "WIGFile",
