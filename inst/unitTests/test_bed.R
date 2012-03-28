@@ -144,6 +144,7 @@ test_bed <- function() {
   test <- import(test_bed_url)
   checkIdentical(correct_ucsc, test)
 
+if (FALSE) { # enable to test an HTTP URL using the R help server
   http_pipe <- pipe("Rscript -e 'tools::startDynamicHelp(); writeLines(as.character(tools:::httpdPort)); Sys.sleep(10);' &")
   port <- readLines(http_pipe, n = 1)
   test_bed_http <- paste("http://127.0.0.1:", port,
@@ -151,6 +152,7 @@ test_bed <- function() {
   test <- import(test_bed_http)
   checkIdentical(correct_ucsc, test)
   close(http_pipe)
+}
   
   ## RangedDataList
   
