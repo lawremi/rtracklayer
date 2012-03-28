@@ -1,6 +1,3 @@
-library(rtracklayer)
-library(RUnit)
-
 test_gff <- function() {
   test_path <- system.file("tests", package = "rtracklayer")
 
@@ -168,7 +165,7 @@ test_gff <- function() {
 
   ## TEST: 'source'
   correct_source <- correct_gff3
-  values(correct_source)$source <- "test"
+  correct_source$source <- factor("test")
   export(correct_gff3, test_gff3_out, source = "test")
   test <- import(test_gff3_out)
   checkIdentical(correct_source, test)
@@ -181,10 +178,10 @@ test_gff <- function() {
   
   ## TEST: 'index'
   export(correct_gff3, test_gff3_out, index = TRUE)
-  test_bed_gz <- paste(test_gff3_out, ".gz", sep = "")
-  on.exit(unlink(test_bed_gz))
+  test_gff_gz <- paste(test_gff3_out, ".gz", sep = "")
+  on.exit(unlink(test_gff_gz))
   on.exit(unlink(paste(test_gff_gz, ".tbi", sep = "")))
-  test <- import(test_bed_gz, which = which)
+  test <- import(test_gff_gz, which = which)
   checkIdentical(correct_which, test)
   
   ## TEST: RangedDataList  
