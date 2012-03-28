@@ -26,17 +26,15 @@ BED15File <- function(resource) {
 ###
 
 setGeneric("export.bed",
-           function(object, con, append = FALSE, ...)
-           standardGeneric("export.bed"),
-           signature = c("object", "con"))
+           function(object, con, ...) standardGeneric("export.bed"))
 
 setMethod("export.bed", "ANY",
-          function(object, con, append, ...) {
-            export(object, con, "bed", append = append, ...)
+          function(object, con, ...) {
+            export(object, con, "bed", ...)
           })
 
 setMethod("export", c("ANY", "BEDFile"),
-          function(object, con, format, append = FALSE, ...)
+          function(object, con, format, ...)
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -49,7 +47,7 @@ setMethod("export", c("ANY", "BEDFile"),
               if (class(track) == "try-error")
                 stop("cannot export object of class '", cl, "'")
             }
-            export(track, con, append = append, ...)
+            export(track, con, ...)
           })
 
 setMethod("export", c("RangedData", "BEDFile"),
@@ -185,20 +183,12 @@ setMethod("export", c("RangedDataList", "BEDFile"),
 ### Import
 ###
 
-setGeneric("import.bed",
-           function(con, trackLine = TRUE, genome = NA,
-                    asRangedData = TRUE, colnames = NULL, which = NULL, ...)
-           standardGeneric("import.bed"),
-           signature = "con")
+setGeneric("import.bed", function(con, ...) standardGeneric("import.bed"))
 
 setMethod("import.bed", "ANY",
-          function(con, trackLine, genome, asRangedData = TRUE, colnames = NULL,
-                   which = NULL)
+          function(con, ...)
           {
-            import(con, format = "bed",
-                   trackLine = trackLine, genome = genome,
-                   asRangedData = asRangedData, colnames = colnames,
-                   which = which)
+            import(con, format = "bed", ...)
           })
 
 scanTrackLine <- function(con) {
@@ -374,26 +364,22 @@ setMethod("import", "BED15File",
           })
 
 setGeneric("import.bed15",
-           function(con, genome = NA, asRangedData = TRUE, which = NULL, ...)
+           function(con, ...)
            standardGeneric("import.bed15"),
            signature = "con")
 
 setMethod("import.bed15", "ANY",
-          function(con, genome, asRangedData = TRUE, which = NULL)
+          function(con, ...)
           {
-            import(con, "bed15", genome = genome, asRangedData = asRangedData,
-                   which = which)
+            import(con, "bed15", ...)
           })
 
 setGeneric("export.bed15",
-           function(object, con, expNames = NULL, ...)
-           standardGeneric("export.bed15"),
-           signature = c("object", "con"))
+           function(object, con, ...) standardGeneric("export.bed15"))
 
 setMethod("export.bed15", "ANY",
-          function(object, con, expNames = NULL, ...) {
-            export(object, con, "bed15", expNames = expNames,
-                   trackLine = trackLine, ...)
+          function(object, con, ...) {
+            export(object, con, "bed15",  ...)
           })
 
 ### FIXME: dispatch will break when 'object' is a UCSCData
@@ -456,15 +442,13 @@ setMethod("fileFormat", "Bed15TrackLine", function(x) "bed15")
 ###
 
 setGeneric("import.bedGraph",
-           function(con, genome = NA, asRangedData = TRUE, which = NULL, ...)
-           standardGeneric("import.bedGraph"),
+           function(con, ...) standardGeneric("import.bedGraph"),
            signature = "con")
 
 setMethod("import.bedGraph", "ANY",
-          function(con, genome, asRangedData = TRUE, which = NULL)
+          function(con, ...)
           {
-            import(con, "bedGraph", genome = genome,
-                   asRangedData = asRangedData, which = which)
+            import(con, "bedGraph", ...)
           })
 
 setGeneric("export.bedGraph",
