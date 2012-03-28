@@ -15,46 +15,30 @@ FastaFile <- function(resource) {
 ### Export
 ###
 
-setGeneric("export.fasta",
-           function(object, con, ...) standardGeneric("export.fasta"))
-
-setMethod("export.fasta", "ANY", function(object, con, ...) {
-  export(object, con, "fasta", ...)
-})
-
 setMethod("export", c("ANY", "FastaFile"), function(object, con, ...) {
   export(as(object, "DNAStringSet"), con, ...)
 })
 
 setMethod("export", c("BSgenome", "FastaFile"),
-          function(object, con, format) {
+          function(object, con, format, ...) {
             append <- FALSE
             for (seqname in seqnames(object)) {
               dna <- DNAStringSet(object[[seqname]])
               names(dna) <- seqname
-              write.XStringSet(dna, path(con), append = append)
+              write.XStringSet(dna, path(con), append = append, ...)
               append <- TRUE
             }
           })
 
-setMethod("export", c("DNAStringSet", "FastaFile"),
-          function(object, con, format, append = append)
+setMethod("export", c("XStringSet", "FastaFile"),
+          function(object, con, format, ...)
           {
-            write.XStringSet(object, path(con), format = "fasta",
-                             append = append)
+            write.XStringSet(object, path(con), format = "fasta", ...)
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import
 ###
-
-setGeneric("import.fasta", function(con, ...) standardGeneric("import.fasta"))
-
-setMethod("import.fasta", "ANY",
-          function(con, ...)
-          {
-            import(con, "fasta", ...)
-          })
 
 setMethod("import", "FastaFile",
           function(con, format, text, type = c("DNA", "RNA", "AA", "B"), ...)
