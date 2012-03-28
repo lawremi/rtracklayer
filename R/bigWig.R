@@ -67,38 +67,29 @@ setAs("GenomicRanges", "BigWigSelection", function(from) {
 ### Export
 ###
 
-setGeneric("export.bw",
-           function(object, con,
-                    dataFormat = c("auto", "variableStep", "fixedStep",
-                      "bedGraph"),
-                    compress = TRUE, ...)
-           standardGeneric("export.bw"),
-           signature = c("object", "con"))
+setGeneric("export.bw", function(object, con, ...) standardGeneric("export.bw"))
 
 setMethod("export.bw", "ANY",
-          function(object, con,
-                   dataFormat = c("auto", "variableStep", "fixedStep",
-                     "bedGraph"), compress, ...)
+          function(object, con, ...)
           {
-            export(rd, con, "BigWig", dataFormat = match.arg(dataFormat),
-                   compress = compress, ...)
+            export(rd, con, "BigWig", ...)
           })
 
 setMethod("export", c("ANY", "BigWigFile"),
-          function(object, con,
-                   dataFormat = c("auto", "variableStep", "fixedStep",
-                     "bedGraph"), compress = TRUE, ...)
+          function(object, con, format, ...)
           {
-            rd <- as(object, "RangedData")
-            export(rd, con, match.arg(dataFormat), compress, ...)
+            object <- as(object, "RangedData")
+            callGeneric()
           })
 
 setMethod("export", c("RangedData", "BigWigFile"),
-          function(object, con,
+          function(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                                   "bedGraph"),
                    compress = TRUE)
           {
+            if (!missing(format))
+              checkArgFormat(con, format)
             con <- path(con)
             object <- sortBySeqnameAndStart(object)
             score <- score(object)
@@ -127,8 +118,8 @@ setMethod("export", c("RangedData", "BigWigFile"),
             on.exit(.Call(BWGSectionList_cleanup, sectionPtr))
             if (format == "bedGraph")
               lapply(object, .bigWigWriter, con, dataFormat)
-            else export.wig(object, con, dataFormat, writer = .bigWigWriter,
-                            trackLine = FALSE)
+            else export.wig(object, con, dataFormat = dataFormat,
+                            writer = .bigWigWriter, trackLine = FALSE)
             storage.mode(seqlengths) <- "integer"
             invisible(BigWigFile(.Call(BWGSectionList_write, sectionPtr,
                                        seqlengths, compress, con)))
