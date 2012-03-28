@@ -20,6 +20,13 @@ connection <- function(x, open = "") {
   connectionForResource(resource(x), open = open)
 }
 
+resourceDescription <- function(x) {
+  r <- resource(x)
+  if (is(r, "connection"))
+    r <- summary(r)$description
+  r
+}
+
 fileFormat <- function(x) {
   tolower(sub("File$", "", class(x)))
 }
