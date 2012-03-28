@@ -33,27 +33,3 @@ setMethod("import", c("TabixFile", "missing"),
             format <- file_ext(file_path_sans_ext(path(con)))
             callGeneric()
           })
-
-setMethod("import.gff", "TabixFile",
-          function(con, ...)
-          {
-            import(con, format = "gff", ...)
-          })
-
-setMethod("import.bed", "TabixFile",
-          function(con, ...)
-          {
-            import(con, format = "bed", ...)
-          })
-
-setMethod("import.bedGraph", "TabixFile",
-          function(con, ...)
-          {
-            import(con, format = "bedGraph", ...)
-          })
-
-setMethod("import.bed15", "TabixFile",
-          function(con, ...)
-          {
-            import(con, format = "bed15", ...)
-          })
