@@ -1070,14 +1070,17 @@ chooseGraphType <- function(from) {
 }
 
 setAs("RangedData", "UCSCData", function(from) {
-  if (is.numeric(score(from))) { # have numbers, let's plot them
-    type <- chooseGraphType(from)
-    line <- new("GraphTrackLine", type = type)
-  } else {
-    line <- new("BasicTrackLine")
-    db <- unique(genome(from))
-    if (length(db) == 1 && !is.na(db))
-      line@db <- db
+  line <- metadata(ranges(from))$trackLine
+  if (is.null(line)) {
+    if (is.numeric(score(from))) { # have numbers, let's plot them
+      type <- chooseGraphType(from)
+      line <- new("GraphTrackLine", type = type)
+    } else {
+      line <- new("BasicTrackLine")
+      db <- unique(genome(from))
+      if (length(db) == 1 && !is.na(db))
+        line@db <- db
+    }
   }
   new("UCSCData", from, trackLine = line)
 })
@@ -1097,25 +1100,22 @@ UCSCFile <- function(resource) {
 ## the 'ucsc' format is a meta format with a track line followed by
 ## features formatted as 'wig', 'bed', 'bed15', 'bedGraph', 'gff', or
 ## really any text track format.
+
 setGeneric("export.ucsc",
-           function(object, con, subformat = "auto", append = FALSE, ...)
-           standardGeneric("export.ucsc"),
-           signature = c("object", "con"))
+           function(object, con, ...) standardGeneric("export.ucsc"))
 
 setMethod("export.ucsc", c("ANY", "RTLFile"),
-          function(object, con, subformat, append, trackNames, ...)
+          function(object, con, subformat = "auto", ...)
           {
             if (subformat == "auto" && !is(con, "UCSCFile"))
               subformat <- fileFormat(con)
-            export(object, UCSCFile(resource(con)), subformat = subformat,
-                   append = append, ...)
+            export(object, UCSCFile(resource(con)), subformat, ...)
           })
 
 setMethod("export.ucsc", c("ANY", "ANY"),
-          function(object, con, subformat, append, trackNames, ...)
+          function(object, con, ...)
           {
-            export(object, con, "ucsc", subformat = subformat,
-                   append = append, ...)
+            export(object, con, "ucsc", ...)
           })
 
 .export_RangedDataList_RTLFile <- function(object, con, format, ...) {
@@ -1123,22 +1123,19 @@ setMethod("export.ucsc", c("ANY", "ANY"),
 }
 
 setMethod("export", c("RangedDataList", "UCSCFile"),
-          function(object, con, format, subformat = "auto",
-                   append = FALSE, trackNames, index = FALSE, ...)
+          function(object, con, format, append = FALSE, index = FALSE, ...)
           {
-            if (index && length(object) > 1)
+            if (isTRUE(index) && length(object) > 1)
               stop("Cannot index multiple tracks in a single file")
-            if (missing(trackNames)) {
-              trackNames <- names(object)
-              if (is.null(trackNames))
-                trackNames <- paste("R Track", seq_len(length(object)))
-              ucsc <- unlist(lapply(object, is, "UCSCData"))
-              lines <- unlist(lapply(object[ucsc], slot, "trackLine"))
-              trackNames[ucsc] <- as.character(sapply(lines, slot, "name"))
-            }
+            trackNames <- names(object)
+            if (is.null(trackNames))
+              trackNames <- paste("R Track", seq_len(length(object)))
+            ucsc <- unlist(lapply(object, is, "UCSCData"))
+            lines <- unlist(lapply(object[ucsc], slot, "trackLine"))
+            trackNames[ucsc] <- as.character(sapply(lines, slot, "name"))
             for (i in seq_len(length(object))) {
-              export(object[[i]], con, subformat = subformat,
-                     name = trackNames[i], append = append, ...)
+              export(object[[i]], con, name = trackNames[i],
+                     append = append, index = index, ...)
               append <- TRUE
             }
           })
@@ -1163,7 +1160,7 @@ setMethod("bestFileFormat", c("UCSCData", "ANY"), function(x, dest) {
 })
 
 setMethod("export", c("ANY", "UCSCFile"),
-          function(object, con, format, subformat = "auto", append = FALSE, ...)
+          function(object, con, format, ...)
           {
             cl <- class(object)
             track <- try(as(object, "RangedData"), silent = TRUE)
@@ -1172,15 +1169,15 @@ setMethod("export", c("ANY", "UCSCFile"),
               if (class(track) == "try-error")
                 stop("cannot export object of class '", cl, "'")
             }
-            export(track, con = con, subformat = subformat,
-                   append = append, ...)
+            object <- track
+            callGeneric()
           })
 
 setMethod("export", c("RangedData", "UCSCFile"),
-          function(object, con, format, subformat = "auto", append = FALSE, ...)
+          function(object, con, format, ...)
           {
             object <- as(object, "UCSCData")
-            export(object, con, subformat = subformat, append = append, ...)
+            callGeneric()
            })
 
 setMethod("export", c("UCSCData", "UCSCFile"),
@@ -1190,7 +1187,7 @@ setMethod("export", c("UCSCData", "UCSCFile"),
             auto <- FALSE
             if (subformat == "auto") {
               auto <- TRUE
-              subformat <- bestFileFormat(object)
+              subformat <- bestFileFormat(object, con)
             }
             graphFormat <- tolower(subformat) %in% c("wig", "bedgraph")
             if (graphFormat) {
@@ -1249,26 +1246,22 @@ setMethod("export", c("UCSCData", "UCSCFile"),
             do.call(export, c(list(as(object, "RangedData"), unmanage(con),
                                    subformat),
                               args[!lineArgs], trackLine = trackLine))
+            release(con)
             if (index)
               indexTrack(FileForFormat(resource(file), subformat), skip = 1L)
             else invisible(file)
           })
 
-setGeneric("import.ucsc",
-           function(con, subformat = "auto",
-                    drop = FALSE, asRangedData = TRUE, ...)
-           standardGeneric("import.ucsc"),
-           signature = "con")
+setGeneric("import.ucsc", function(con, ...) standardGeneric("import.ucsc"))
 
 setMethod("import.ucsc", "ANY",
-          function(con, subformat, drop = FALSE, asRangedData = TRUE, ...)
+          function(con, ...)
           {
-            import(con, "ucsc", subformat = subformat,
-                   drop = drop, asRangedData = asRangedData, ...)
+            import(con, "ucsc", ...)
           })
 
 setMethod("import.ucsc", "RTLFile",
-          function(con, subformat, drop = FALSE, asRangedData = TRUE, ...)
+          function(con, subformat = "auto", ...)
           {
             if (!is(con, "UCSCFile")) {
               format <- fileFormat(con)
@@ -1276,8 +1269,7 @@ setMethod("import.ucsc", "RTLFile",
                 stop("Attempt to import '", class(con), "' as ", subformat)
               subformat <- format
             }
-            import.ucsc(resource(con), subformat,
-                        drop = drop, asRangedData = asRangedData, ...)
+            import.ucsc(resource(con), subformat = subformat, ...)
           })
 
 parseFormatFromTrackLine <- function(x) {
@@ -1309,9 +1301,7 @@ setMethod("import", "UCSCFile",
               if (subformat == "auto") {
                 subformat <- parseFormatFromTrackLine(trackLines[i])
                 if (is.null(subformat)) {
-                  p <- resource(con)
-                  if (is(p, "connection"))
-                    p <- summary(p)$description
+                  p <- resourceDescription(con)
                   subformat <- file_ext(p)
                 }
               }
