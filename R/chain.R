@@ -33,11 +33,10 @@ ChainFile <- function(path) {
 ###
 
 setGeneric("import.chain",
-           function(con, exclude = "_") standardGeneric("import.chain"),
-           signature = "con")
+           function(con, ...) standardGeneric("import.chain"))
 
-setMethod("import.chain", "ANY", function(con, exclude) {
-  import(con, "chain", exclude = exclude)
+setMethod("import.chain", "ANY", function(con, ...) {
+  import(con, "chain", ...)
 })
 
 setMethod("import", "ChainFile", function(con, format, text, exclude = "_") {
