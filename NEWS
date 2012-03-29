@@ -1,0 +1,43 @@
+CHANGES IN VERSION 1.15
+-----------------------
+
+NEW FEATURES
+
+    o Integrated with tabix via Rsamtools. BED and GFF export methods
+      now generate a tabix index, if index=TRUE. Most import() methods
+      gain a 'which' argument that takes advantage of tabix, when
+      available.
+      
+    o Added wigToBigWig() function for efficient conversion of WIG to BigWig.
+    
+    o Added SeqinfoForBSGenome() and SeqinfoForUCSCGenome() for
+      conveniently retrieving Seqinfo objects for a given genome.
+    
+    o Added support for FASTA import/export via Biostrings.
+
+    o GTF and GVF files are now parsed as GFF.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o The import/export API is now based on RTLFile objects, which
+      wrap a file path, URL or connection. There is an RTLFile
+      subclass for every file format. This makes it easier to extend
+      rtracklayer (export, import) with new file types. The existing
+      API is still supported (and even encouraged for most uses).
+
+    o Handle CSV attributes in GFF3 using CharacterList columns.
+
+    o BED columns thickStart/thickEnd translate to an IRanges column
+      named "thick". The blockStarts/Sizes/Count columns now map to a
+      single RangesList "blocks" column.
+    
+BUG FIXES
+
+    o Numerous fixes in the import/export methods, as a result of
+      implementing a full unit test suite. If something was not
+      working for you in the past, please try again.
+
+    o Compression and connections should now work fairly uniformly
+      across file types.
+
+(start date: 29 March, 2012)
