@@ -276,11 +276,11 @@ setReplaceMethod("track",
                  })
 
 copyResourceToQuickload <- function(object, uri) {
-  parsed_uri <- parseURI(uri)
+  parsed_uri <- .parseURI(uri)
   if (parsed_uri$scheme == "")
     uri <- paste("file://", uri, sep = "")
   filename <- basename(uri)
-  object_uri <- parseURI(uri(object))
+  object_uri <- .parseURI(uri(object))
   if (uriIsLocal(object_uri)) {
     dest_file <- file.path(object_uri$path, filename)
     if (paste(uri(object), filename, sep = "/") != uri)

@@ -65,7 +65,7 @@ indexTrack <- function(con, ...) {
   if (is.null(format))
     stop("Cannot determine format from 'con'")
   uri <- path(con)
-  parsed_uri <- parseURI(uri)
+  parsed_uri <- .parseURI(uri)
   if (!uriIsLocal(parsed_uri))
     stop("'con' must be a path to a local file")
   if (!format %in% formats)

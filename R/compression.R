@@ -71,7 +71,7 @@ setMethod("decompress", "GZFile", function(con) {
 setGeneric("ungzip", function(x, ...) standardGeneric("ungzip"))
 
 setMethod("ungzip", "character", function(x) {
-  uri <- parseURI(x)
+  uri <- .parseURI(x)
   if (uri$scheme != "" && uri$scheme != "file")
     con <- gzcon(url(x))
   else con <- gzfile(uri$path)

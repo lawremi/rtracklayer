@@ -175,17 +175,26 @@ setMethod("bestFileFormat", c("RangesList", "ANY"), function(x, dest) {
 
 file_ext <- function(con) gsub(".*\\.([^.]*)$", "\\1", con)
 
+## Uses XML::parseURI, except first checks for Windows drive letter.
+## There are no known URI schemes that are only a single character.
+.parseURI <- function(uri) {
+  if (.Platform$OS.type == "windows" && grepl("^[A-Za-z]:/", uri)) {
+    dummy <- parseURI("")
+    dummy$path <- uri
+  } else parseURI(uri)
+}
+
 normURI <- function(x) {
   if (!isSingleString(x))
     stop("URI must be a single, non-NA string")
-  uri <- parseURI(x)
+  uri <- .parseURI(x)
   if (uri$scheme == "")
     x <- paste("file://", file_path_as_absolute(x), sep = "")
   x
 }
 
 createResource <- function(x, dir = FALSE, content = "") {
-  uri <- parseURI(x)
+  uri <- .parseURI(x)
   if (uri$scheme == "file" || uri$scheme == "") {
     if (!file.exists(uri$path)) {
       if (dir)
@@ -196,8 +205,8 @@ createResource <- function(x, dir = FALSE, content = "") {
 }
 
 uriExists <- function(x) {
-  uri <- parseURI(x)
-  if (uriIsLocal(uri)) {
+  uri <- .parseURI(x)
+  if (uriIsLocal(x)) {
     exists <- file.exists(uri$path)
   } else {
     txt <- getURL(x, header = TRUE)
@@ -207,11 +216,11 @@ uriExists <- function(x) {
 }
 
 uriIsLocal <- function(x) {
-  x$scheme == "file" || nchar(x$scheme) < 2 # allow for volumes on Windows
+  x$scheme == "file" || x$scheme == ""
 }
 
 uriIsWritable <- function(x) {
-  uri <- parseURI(x)
+  uri <- .parseURI(x)
   if (uriIsLocal(uri)) {
     !file.access(uri$path, 2) ||
     (!file.exists(uri$path) && uriIsWritable(dirname(uri$path)))
@@ -227,7 +236,9 @@ checkArgFormat <- function(con, format) {
 connectionForResource <- function(x, open = "") {
   resource <- decompress(x)
   if (is.character(resource)) {
-    uri <- parseURI(resource)
+    if (!nzchar(resource))
+      stop("path cannot be an empty string")
+    uri <- .parseURI(resource)
     if (uri$scheme != "")
       con <- url(resource)
     else con <- file(resource)

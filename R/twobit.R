@@ -11,7 +11,7 @@ setClass("TwoBitFile", contains = "RTLFile")
 setClass("2BitFile", contains = "TwoBitFile")
 
 twoBitPath <- function(path) {
-  uri <- parseURI(path)
+  uri <- .parseURI(path)
   if (!uriIsLocal(uri))
     stop("TwoBit driver handles only local file paths")
   uri$path
