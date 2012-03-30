@@ -45,18 +45,6 @@ setMethod("export", c("ANY", "TwoBitFile"), function(object, con, format, ...) {
   callGeneric()
 })
 
-setMethod("export", c("BSgenome", "character"),
-          function(object, con, format, ...) {
-            con <- TwoBitFile(con)
-            callGeneric()
-          })
-
-setMethod("export", c("DNAStringSet", "character"),
-          function(object, con, format, ...) {
-            con <- TwoBitFile(con)
-            callGeneric()
-          })
-
 setMethod("export", c("BSgenome", "TwoBitFile"),
           function(object, con, format, ...) {
             if (!missing(format))

@@ -26,14 +26,7 @@ test_twoBit <- function() {
   test <- import(test_twoBit_out)
   checkIdentical(test, correct_2bit)
 
-  ## TEST: arbitrary extension, with DNAStringSet
-  test_foo_out <- file.path(tempdir(), "test_out.foo")
-  export(correct_2bit, test_foo_out)
-  on.exit(unlink(test_foo_out))
-  test <- import.2bit(test_foo_out)
-  checkIdentical(test, correct_2bit)
-
-  ## TEST: arbitrary extension, with character
+  ## TEST: character export
   export(correct_char, test_2bit_out)
   test <- import(test_2bit_out)
   checkIdentical(test, correct_2bit)
