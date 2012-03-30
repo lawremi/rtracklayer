@@ -110,7 +110,8 @@ test_bed <- function() {
   
   ## export()
 
-  test_bed_out <- normalizePath(file.path(tempdir(), "test.bed"), "/")
+  ## the 'gsub' is to handle Windows paths (for later coercion to URL)
+  test_bed_out <- gsub("\\", "/", file.path(tempdir(), "test.bed"))
   on.exit(unlink(test_bed_out))
   export(correct_ucsc, test_bed_out)
   test <- import(test_bed_out)
