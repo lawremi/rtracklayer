@@ -178,7 +178,7 @@ file_ext <- function(con) gsub(".*\\.([^.]*)$", "\\1", con)
 ## Uses XML::parseURI, except first checks for Windows drive letter.
 ## There are no known URI schemes that are only a single character.
 .parseURI <- function(uri) {
-  if (.Platform$OS.type == "windows" && grepl("^[A-Za-z]:/", uri)) {
+  if (.Platform$OS.type == "windows" && grepl("^[A-Za-z]:[/\\]", uri)) {
     dummy <- parseURI("")
     dummy$path <- uri
   } else parseURI(uri)
