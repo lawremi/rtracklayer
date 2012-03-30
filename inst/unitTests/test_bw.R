@@ -1,5 +1,5 @@
 test_bw <- function() {
-  if (.Platform$OS.type == "windows" && .Platform$r_arch == "i386")
+  if (.Platform$OS.type == "windows")
     return()
   
   test_path <- system.file("tests", package = "rtracklayer")
