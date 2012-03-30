@@ -181,6 +181,7 @@ file_ext <- function(con) gsub(".*\\.([^.]*)$", "\\1", con)
   if (.Platform$OS.type == "windows" && grepl("^[A-Za-z]:[/\\]", uri)) {
     dummy <- parseURI("")
     dummy$path <- uri
+    dummy
   } else parseURI(uri)
 }
 
