@@ -110,7 +110,7 @@ test_bed <- function() {
   
   ## export()
 
-  test_bed_out <- file.path(tempdir(), "test.bed")
+  test_bed_out <- normalizePath(file.path(tempdir(), "test.bed"), "/")
   on.exit(unlink(test_bed_out))
   export(correct_ucsc, test_bed_out)
   test <- import(test_bed_out)
