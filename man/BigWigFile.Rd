@@ -33,7 +33,7 @@
 \description{
   These functions support the import and export of the UCSC BigWig
   format, a compressed, binary form of WIG/BEDGraph with a spatial index
-  and precomputed summaries.
+  and precomputed summaries. These functions do not work on Windows.
 }
 
 \usage{
