@@ -179,10 +179,14 @@ file_ext <- function(con) gsub(".*\\.([^.]*)$", "\\1", con)
 ## There are no known URI schemes that are only a single character.
 .parseURI <- function(uri) {
   if (.Platform$OS.type == "windows" && grepl("^[A-Za-z]:[/\\]", uri)) {
-    dummy <- parseURI("")
-    dummy$path <- uri
-    dummy
-  } else parseURI(uri)
+    parsed <- parseURI("")
+    parsed$path <- uri
+  } else {
+    parsed <- parseURI(uri)
+    if (parsed$scheme == "file" && .Platform$OS.type == "windows") 
+      parsed$path <- substring(parsed$path, 2) # trim '/' from '/C:/foo/bar.txt'
+  }
+  parsed
 }
 
 normURI <- function(x) {
