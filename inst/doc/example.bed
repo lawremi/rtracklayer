@@ -1,0 +1,7 @@
+##Example 5 from Custom Annotation Tracks User's Guide
+track name="ItemRGBDemo" description="Item RGB demonstration" visibility=2 itemRgb="On" priority=1 useScore="0" color="0,60,120" colorByStrand="0,0,255 255,0,0" group="user" offset=0 url="http://genome.ucsc.edu/" htmlUrl="http://genome.ucsc.edu/goldenPath/help/ct_description.txt"
+chr7	127471196	127472363	Pos1	0	+	127471196	127472363	255,0,0	3	300,200,100	0,500,1067
+chr7	127472363	127473530	Pos2	2	+	127472363	127473530	255,0,0	2	250,500	0,667
+chr7	127473530	127474697	Neg1	0	-	127473530	127474697	255,0,0	1	1167	0
+chr16	127474697	127475864	Pos3	5	+	127474697	127475864	255,0,0	1	1167	0
+chr16	127475864	127477031	Neg2	5	-	127475864	127477031	0,0,255	1	1167	0
