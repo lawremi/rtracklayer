@@ -33,11 +33,11 @@
 }
 
 \arguments{
-  \item{con}{A path, URL, connection or \code{FastaFile} object.  If
-    \code{con} is not a \code{FastaFile}, either the file extension or
-    the \code{format} argument needs to be \dQuote{fasta}. Compressed
-    files (\dQuote{gz}, \dQuote{bz2} and \dQuote{xz}) are handled
-    transparently.
+  \item{con}{A path or \code{FastaFile} object.  URLs and connections
+    are not supported. If \code{con} is not a \code{FastaFile}, either
+    the file extension or the \code{format} argument needs to be
+    \dQuote{fasta}. Compressed files (\dQuote{gz}, \dQuote{bz2} and
+    \dQuote{xz}) are handled transparently.
   }
   \item{object}{The object to export, should be an \code{XStringSet},
     \code{BSgenome} or something coercible to a \code{DNAStringSet},
