@@ -207,7 +207,7 @@ scanTrackLine <- function(con) {
 setMethod("import", "BEDFile",
           function(con, format, text, trackLine = TRUE,
                    genome = NA, asRangedData = TRUE, colnames = NULL,
-                   which = NULL, seqinfo = NULL)
+                   which = NULL, seqinfo = NULL, extraCols = character())
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -264,11 +264,17 @@ setMethod("import", "BEDFile",
             ## and thus specify all col classes
             ## FIXME: reading in 'as.is' to save memory,
             if (length(line <- readLines(con, 1, warn=FALSE))) {
+              `tail<-` <- function(x, n, value)
+                if (n != 0) c(head(x, -n), value) else x
               pushBack(line, con)
               colsInFile <- seq(length(strsplit(line, "[\t ]")[[1]]))
-              colnames <- normArgColnames(bedNames[colsInFile])
-              bedClasses <- ifelse(bedNames[colsInFile] %in% colnames,
-                                   bedClasses[colsInFile], "NULL")
+              presentNames <- bedNames[colsInFile]
+              tail(presentNames, length(extraCols)) <- names(extraCols)
+              presentClasses <- bedClasses[colsInFile]
+              tail(presentClasses, length(extraCols)) <- unname(extraCols)
+              colnames <- normArgColnames(presentNames)
+              bedClasses <- ifelse(presentNames %in% colnames,
+                                   presentClasses, "NULL")
               bed <- DataFrame(read.table(con, colClasses = bedClasses,
                                           as.is = TRUE))
             } else {
