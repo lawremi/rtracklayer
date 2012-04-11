@@ -25,6 +25,10 @@ test_bw <- function() {
   on.exit(unlink(test_bw_out))
   test <- import(test_bw_out)
   checkIdentical(test, correct_fixed)
+
+  export.bw(correct_fixed, test_bw_out)
+  test <- import.bw(test_bw_out)
+  checkIdentical(test, correct_fixed)
   
   correct_bedgraph <- correct_fixed
   width(correct_bedgraph) <- seq(1, 300, length = 9)

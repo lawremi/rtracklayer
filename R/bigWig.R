@@ -72,7 +72,7 @@ setGeneric("export.bw", function(object, con, ...) standardGeneric("export.bw"))
 setMethod("export.bw", "ANY",
           function(object, con, ...)
           {
-            export(rd, con, "BigWig", ...)
+            export(object, con, "BigWig", ...)
           })
 
 setMethod("export", c("ANY", "BigWigFile"),
