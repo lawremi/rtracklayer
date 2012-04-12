@@ -194,6 +194,12 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   test <- import(test_bed_gz, which = which)
   checkIdentical(subsetByOverlaps(correct_rd, which), test)
 
+  ## check TabixFile
+  test_bed_tabix <- Rsamtools::TabixFile(test_bed_gz)
+  test <- import(test_bed_tabix)
+  checkIdentical(correct_ucsc, test)
+  test <- import(test_bed_tabix, format = "foo")
+
   ## To/From text
   
   bed_text <- export(correct_ucsc, format = "bed")

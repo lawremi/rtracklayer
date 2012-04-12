@@ -13,8 +13,8 @@ setGeneric("import.trackTable",
 setMethod("import.trackTable", "characterORconnection",
           function(con, genome = NA, seqnames = 1L, start = 2L, end = 3L, ...)
           {
-            tab <- read.table(con, ...)
-            GenomicData(IRanges(ranges[[start]], ranges[[end]]),
+            tab <- read.table(con, sep = "\t", ...)
+            GenomicData(IRanges(tab[[start]], tab[[end]]),
                         tab[-c(seqnames, start, end)],
                         chrom = tab[[seqnames]], genome = genome)
           })
