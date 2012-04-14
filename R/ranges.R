@@ -73,7 +73,10 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
         strand <- Rle("*", length(ranges))
       if (!is.null(seqinfo))
         chrom <- factor(chrom, seqlevels(seqinfo))
-      gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, ...)
+      df <- DataFrame(...)
+      invalidNames <- names(df) %in% GenomicRanges:::INVALID.GR.COLNAMES
+      names(df)[invalidNames] <- paste0(".", names(df)[invalidNames])
+      gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, df)
       if (!is.null(genome))
         genome(gd) <- genome
     }
