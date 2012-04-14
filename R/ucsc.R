@@ -880,21 +880,20 @@ setAs("BasicTrackLine", "character",
       })
 
 ucscParsePairs <- function(str)
-{
-  str <- sub("^[^ ]* ", "", str)
-  split <- strsplit(str, "=")[[1]]
-  split <- sub("^ +", "", sub(" +$", "", split))
+{  
+  str <- sub("^[[:alpha:]]*[[:blank:]]", "", str)
+  split <- as.character(read.table(sep = "=", comment.char = "", as.is = TRUE,
+                                   strip.white = TRUE, text = str))
   vals <- character(0)
   if (length(split)) {
     mixed <- tail(head(split, -1), -1)
     tags <- head(split, 1)
     vals <- tail(split, 1)
     if (length(mixed)) {
-      tags <- c(tags, sub(".* ([^ ]*)$", "\\1", mixed))
-      vals <- c(sub("(.*) [^ ]*$", "\\1", mixed), vals)
+      tags <- c(tags, sub(".*[[:space:]]([[:alnum:]]*)$", "\\1", mixed))
+      vals <- c(sub("(.*)[[:space:]][[:alnum:]]*$", "\\1", mixed), vals)
     }
     names(vals) <- tags
-    vals <- sub("\"?([^\"]*)\"?", "\\1", vals)
   }
   vals
 }
