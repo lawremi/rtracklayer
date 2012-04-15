@@ -31,10 +31,11 @@ test_gff <- function() {
                             rep("4644", 14)))
   geneName <- c("tubulin, beta 8", rep(NA, 14),
                 "WAS protein family homolog 1 pseudogene", rep(NA, 15))
+  genome <- c("hg19", rep(NA, length(geneName) - 1))
   correct_gff3 <- RangedData(IRanges(start, end),
                              source, type, score,
                              strand, phase, Alias, ID, Name,
-                             Parent, geneName, space = space)
+                             Parent, geneName, genome, space = space)
   seqinfo(correct_gff3) <- Seqinfo(c("chr10", "chr12"))
 
   correct_gff1 <- correct_gff3[,c("source", "type", "score", "strand", "phase")]
@@ -128,7 +129,10 @@ test_gff <- function() {
   
   ## TEST: asRangedData = FALSE
   test <- import(test_gff3, asRangedData = FALSE)
-  checkIdentical(as(correct_gff3, "GRanges"), test)
+  correct_gff3_tmp <- correct_gff3
+  colnames(correct_gff3_tmp)[colnames(correct_gff3_tmp)=="genome"] <- ".genome"
+  test_gr <- as(correct_gff3_tmp, "GRanges")
+  checkIdentical(test_gr, test)
     
   ## TEST: colnames empty, colnames := "geneName", colnames := "strand"
   test <- import(test_gff3, colnames = character())

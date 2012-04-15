@@ -35,7 +35,7 @@ test_bed <- function() {
           description = "Item RGB demonstration",
           visibility = "2", color = c(0L, 60L, 120L),
           priority = 1, group = "user", offset = 0L,
-          url = "http://genome.ucsc.edu/",
+          url = "http://genome.ucsc.edu/foo.html?query=$$",
           htmlUrl = paste("http://genome.ucsc.edu/goldenPath/",
             "help/ct_description.txt", sep = ""),
           colorByStrand =
