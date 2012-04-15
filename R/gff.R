@@ -237,7 +237,7 @@ setMethod("import", "GFFFile",
             ## strip FASTA sequence
             fastaHeaders <- grep("^>", lines)
             if (length(fastaHeaders))
-              lines <- head(lines, -fastaHeaders[1])
+              lines <- head(lines, fastaHeaders[1] - 1)
 
             ## construct table
             fields <- c("seqname", "source", "type", "start", "end", "score",
