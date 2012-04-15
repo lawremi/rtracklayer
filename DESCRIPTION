@@ -1,6 +1,6 @@
 Package: rtracklayer
 Title: R interface to genome browsers and their annotation tracks
-Version: 1.17.2
+Version: 1.17.3
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
 Depends: R (>= 2.10), methods, GenomicRanges
 Imports: XML (>= 1.98-0), BiocGenerics (>= 0.1.0), IRanges (>= 1.13.14),
@@ -19,6 +19,6 @@ Description: Extensible framework for interacting with multiple genome
 Maintainer: Michael Lawrence <michafla@gene.com>
 License: Artistic-2.0
 Collate: io.R web.R ranges.R trackDb.R browser.R ucsc.R gff.R bed.R wig.R
-         utils.R bigWig.R chain.R quickload.R twobit.R fasta.R tabix.R
+         utils.R bigWig.R chain.R quickload.R twobit.R fasta.R tabix.R bam.R
          trackTable.R index.R compression.R test_rtracklayer_package.R
 biocViews: Annotation,Visualization,DataImport
