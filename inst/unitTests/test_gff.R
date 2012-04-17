@@ -118,7 +118,7 @@ test_gff <- function() {
   checkException(import(test_gff_file, format = "gff2"))
   checkException(import(test_gff_file, format = "bed"))
   
-  ## TEST: 'genome'
+  ## TEST: 'genome'  
   si_hg19 <- SeqinfoForBSGenome("hg19")
   rd_all <- RangedData(space = factor(character(), seqlevels(si_hg19)))
   correct_hg19 <- rbind(rd_all, correct_gff3)
@@ -127,6 +127,14 @@ test_gff <- function() {
   test <- import(test_gff3, genome = "hg19")
   checkIdentical(test, correct_hg19)
   
+  test_gff3_out <- file.path(tempdir(), "genes.gff3")
+  on.exit(unlink(test_gff3_out))
+  correct_genome_hg19 <- correct_gff3
+  universe(correct_genome_hg19) <- "hg19"
+  export(correct_genome_hg19, test_gff3_out)
+  test <- import(test_gff3_out)
+  checkIdentical(test, correct_hg19)
+
   ## TEST: asRangedData = FALSE
   test <- import(test_gff3, asRangedData = FALSE)
   correct_gff3_tmp <- correct_gff3
@@ -160,8 +168,6 @@ test_gff <- function() {
   checkIdentical(correct_gff3, test)
   
   ## TEST: 'append'
-  test_gff3_out <- file.path(tempdir(), "genes.gff3")
-  on.exit(unlink(test_gff3_out))
   export(correct_gff3["chr10"], test_gff3_out)
   export(correct_gff3["chr12"], test_gff3_out, append = TRUE)
   test <- import(test_gff3_out)

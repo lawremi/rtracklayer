@@ -85,6 +85,9 @@ setMethod("export", c("RangedData", "GFFFile"),
               if (!inherits(sourceVersion, "try-error"))
                 gffComment(con, "source-version", source, sourceVersion)
               gffComment(con, "date", base::format(Sys.time(), "%Y-%m-%d"))
+              genome <- singleGenome(genome(object))
+              if (!is.na(genome))
+                gffComment(con, "genome-build", paste(".", genome, sep = "\t"))
             }
             
             if (index)
@@ -222,6 +225,9 @@ setMethod("import", "GFFFile",
               warning("gff-version directive indicates version is ", sniffed,
                       ", not ", version)
 
+            if (is.na(genome))
+              genome <- genome(con)
+            
 ### FIXME: a queryForLines() function would be more efficient
             file <- con
             con <- queryForResource(con, which)
@@ -403,6 +409,35 @@ setMethod("asGFF", "GRangesList",
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
 ###
+
+scanGFFDirectives <- function(con, tag = NULL) {
+  con <- connection(con, "r")
+  directives <- character()
+  lines <- line <- readLines(con, n = 1)
+  while(grepl("^#", line)) {
+    if (grepl("^##", line)) {
+        directives <- c(directives, line)
+    }
+    line <- readLines(con, n = 1)
+    lines <- c(lines, line)
+  }
+  pushBack(lines, con)
+  sub("^[^[:space:]]* ", "", grep(paste0("^##", tag), directives, value = TRUE))
+}
+
+gffGenomeBuild <- function(x) {
+  genome_build <- scanGFFDirectives(x, "genome-build")
+  unlist(strsplit(genome_build, "\t", fixed = TRUE))
+}
+
+setMethod("provider", "GFFFile", function(x) {
+  gffGenomeBuild(x)[1]
+})
+
+setMethod("providerVersion", "GFFFile", function(x) {
+  gffGenomeBuild(x)[2]
+})
+setMethod("genome", "GFFFile", function(x) providerVersion(x))
 
 gffComment <- function(con, ...) 
   cat("##", paste(...), "\n", sep = "", file = con, append = TRUE)
