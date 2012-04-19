@@ -42,17 +42,24 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
       seqinfo <- Seqinfo(as.character(unique(chrom)), genome = genome)
     if (!is.factor(chrom))
       chrom <- factor(chrom, seqlevels(seqinfo))
+    normStrand <- function(strand) {
+      strand[is.na(strand)] <- "*"
+      if (!all(strand %in% levels(strand())))
+        stop("strand values should be '-', '+' or '*'")
+      factor(strand, levels(strand()))
+    }
+    if (!is.null(strand))
+      strand <- normStrand(strand)
     if (asRangedData) {
       if (is.na(genome))
         genome <- NULL # universe expects NULL if unknown
       if (!is.null(strand)) {
-        if (!all(strand[!is.na(strand)] %in% levels(strand())))
-          stop("strand values should be 'NA', '-', '+' or '*'")
-        strand <- factor(strand, levels(strand()))
         gd <- RangedData(ranges, ..., strand = strand, space = chrom,
                          universe = genome)
       } else {
         gd <- RangedData(ranges, ..., space = chrom, universe = genome)
+        if (!is.null(gd$strand))
+          gd$strand <- normStrand(gd$strand)
       }
     } else {
       if (is.null(chrom))

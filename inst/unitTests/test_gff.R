@@ -16,7 +16,7 @@ test_gff <- function() {
   source <- factor("rtracklayer")
   phase <- NA_integer_
   score <- NA_real_
-  strand <- strand(c(rep("-", 15), rep("+", 16)))
+  strand <- strand(c(rep("-", 14), "*", rep("+", 15), "*"))
   Alias <- CharacterList(c(list(c("FLJ40100", "TUBB8")),
                            rep(list(character()), 14), "LOC100288778",
                            rep(list(character()), 15)))
