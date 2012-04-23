@@ -100,15 +100,17 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
                       strand = strand,
                       values(gr)[queryHits(ol),])
             }
-            rl <- split(x, seqnames(x))
+            rl <- split(x, seqnames(x), drop = TRUE)
             unchainedNames <- setdiff(names(rl), names(chain))
             if (length(unchainedNames))
               message("Discarding unchained sequences: ",
                       paste(unchainedNames, collapse = ", "))
             sharedNames <- intersect(names(rl), names(chain))
-            ind <- split(seq(length(x)), as.vector(seqnames(x)))[sharedNames]
+            ind <- split(seq_len(length(x)),
+                         as.vector(seqnames(x)))[sharedNames]
             lifted <- unlist(mseqapply(liftOverSpace, rl[sharedNames],
                                        chain[sharedNames], ind),
                              use.names=FALSE)
-            split(lifted, factor(unlist(ind, use.names=FALSE), seq(length(x))))
+            split(lifted,
+                  factor(unlist(ind, use.names=FALSE), seq_len(length(x))))
           })
