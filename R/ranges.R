@@ -58,8 +58,8 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
                          universe = genome)
       } else {
         gd <- RangedData(ranges, ..., space = chrom, universe = genome)
-        if (!is.null(gd$strand))
-          gd$strand <- normStrand(gd$strand)
+        if (!is.null(gd[["strand"]]))
+          gd[["strand"]] <- normStrand(gd[["strand"]])
       }
     } else {
       if (is.null(chrom))
