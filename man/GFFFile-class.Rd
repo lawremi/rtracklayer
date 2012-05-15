@@ -57,7 +57,8 @@
 \usage{
 \S4method{import}{GFFFile,ANY,ANY}(con, format, text,
            version = c("", "1", "2", "3"),
-           genome = NA, asRangedData = TRUE, colnames = NULL, which = NULL)
+           genome = NA, asRangedData = TRUE, colnames = NULL, which = NULL,
+           feature.type = NULL)
 import.gff(con, ...)
 import.gff1(con, ...)
 import.gff2(con, ...)
@@ -123,6 +124,10 @@ export.gff3(object, con, ...)
     or \code{GRanges}. Only the intervals in the file overlapping the
     given ranges are returned. This is much more efficient when the
     file is indexed with the tabix utility.
+  }
+  \item{feature.type}{\code{NULL} (the default) or a character vector of
+    valid feature types. If not \code{NULL}, then only the features of the
+    specified type(s) are imported.
   }
   \item{source}{The value for the source column in GFF. This is
     typically the name of the package or algorithm that generated the

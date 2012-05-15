@@ -205,7 +205,7 @@ setMethod("import.gff", "ANY",
 setMethod("import", "GFFFile",
           function(con, format, text, version = c("", "1", "2", "3"),
                    genome = NA, asRangedData = TRUE, colnames = NULL,
-                   which = NULL)
+                   which = NULL, feature.type = NULL)
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -235,13 +235,13 @@ setMethod("import", "GFFFile",
             lines <- lines[nzchar(lines)]
             
             ## strip comments
-            notComments <- grep("^[^#]", lines)
+            notComments <- which(substr(lines, start=1L, stop=1L) != "#")
             lines <- lines[notComments]
             
 ### TODO: handle ontologies (store in RangedData)
 
             ## strip FASTA sequence
-            fastaHeaders <- grep("^>", lines)
+            fastaHeaders <- which(substr(lines, start=1L, stop=1L) == ">")
             if (length(fastaHeaders))
               lines <- head(lines, fastaHeaders[1] - 1)
 
@@ -255,24 +255,30 @@ setMethod("import", "GFFFile",
               stop("GFF files must have ", length(fields),
                    " tab-separated columns")
             haveAttr <- fieldCounts == length(fields)
-            haveAttrMat <- do.call(rbind, linesSplit[haveAttr])
-            noAttrMat <- do.call(rbind, linesSplit[!haveAttr])
-            if (!is.null(noAttrMat))
-              noAttrMat <- cbind(noAttrMat, "")
+            data <- unlist(linesSplit[haveAttr], use.names=FALSE)
+            if (is.null(data))
+                data <- character(0)
+            haveAttrMat <- matrix(data, ncol=length(fields), byrow=TRUE)
+            data <- unlist(linesSplit[!haveAttr], use.names=FALSE)
+            if (is.null(data))
+                data <- character(0)
+            noAttrMat <- matrix(data, ncol=length(fields)-1L, byrow=TRUE)
+            noAttrMat <- cbind(noAttrMat, rep.int("", nrow(noAttrMat)))
             table <- rbind(noAttrMat, haveAttrMat)
             colnames(table) <- fields
-  
+
+            if (!is.null(feature.type))
+                table <- table[table[,"type"] %in% feature.type,,drop=FALSE]
+
             ## handle missings
-            table[table == "."] <- NA
+            table[table == "."] <- NA_character_
             
             attrCol <- table[,"attributes"]
             if (is(file, "GFF3File")) {
               table <- table[,setdiff(colnames(table), "attributes"),drop=FALSE]
-              table[table[,"strand"] == "?","strand"] <- NA
-              tableVec <- as.vector(table)
-              tableDec <- ifelse(is.na(tableVec), NA, urlDecode(tableVec))
-              table <- matrix(tableDec, ncol = ncol(table),
-                              dimnames = dimnames(table))
+              table[table[,"strand"] == "?","strand"] <- NA_character_
+              is_not_NA <- !is.na(table)
+              table[is_not_NA] <- urlDecode(table[is_not_NA])
             }
             
             extraCols <- c("source", "type", "score", "strand", "phase")
@@ -293,17 +299,18 @@ setMethod("import", "GFFFile",
                   attrList <- list(group = factor(attrCol))
                 else attrList <- list()
               } else {
-                attrSplit <- strsplit(attrCol, ";")
-                lines <- rep(seq_along(attrSplit), elementLengths(attrSplit))
-                attrs <- sub(" *$", "", sub("^ *", "", unlist(attrSplit)))
+                attrSplit <- strsplit(attrCol, ";", fixed=TRUE)
+                attrs <- unlist(attrSplit, use.names=FALSE)
+                lines <- rep.int(seq_len(length(attrSplit)), elementLengths(attrSplit))
+                attrs <- sub(" *$", "", sub("^ *", "", attrs))
                 if (is(file, "GFF3File")) {
-                  attrs <- paste(attrs, "=", sep = "")
+                  #attrs <- paste(attrs, "=", sep = "")  # do we need this?
                   tvSplit <- strsplit(attrs, "=", fixed=TRUE)
                   if (any(elementLengths(tvSplit) != 2))
                     stop("Some attributes do not conform to 'tag=value' format")
-                  tvMat <- matrix(unlist(tvSplit), nrow = 2)
-                  tags <- tvMat[1,]
-                  vals <- tvMat[2,]
+                  tmp <- unlist(tvSplit, use.names=FALSE)
+                  tags <- tmp[c(TRUE, FALSE)]
+                  vals <- tmp[c(FALSE, TRUE)]
                 } else { # split on first space (FIXME: not sensitive to quotes)
                   tags <- sub(" .*", "", attrs) # strip surrounding quotes
                   vals <- sub("^\"([^\"]*)\"$", "\\1",
@@ -315,33 +322,34 @@ setMethod("import", "GFFFile",
                   vals <- vals[keep]
                   tags <- urlDecode(tags[keep])
                 }
-                lineValByTag <- split.data.frame(cbind(lines, vals), tags)
+                lineByTag <- split(lines, tags)
+                valByTag <- split(vals, tags)
+
                 ## FIXME: Parent, Alias, Note, DBxref,
                 ## Ontology_term are allowed to have multiple
                 ## values. We should probably always return them as a
                 ## CharacterList.
                 multiTags <- c("Parent", "Alias", "Note", "DBxref",
                                "Ontology_term")
-                attrList <- sapply(names(lineValByTag), function(tagName) {
-                  tag <- lineValByTag[[tagName]]
-                  vals <- tag[,"vals"]
+                attrList <- sapply(names(lineByTag), function(tagName) {
+                  vals <- valByTag[[tagName]]
                   if (is(file, "GFF3File") &&
-                      (any(grepl(",", vals)) || tagName %in% multiTags)) {
+                      (any(grepl(",", vals, fixed=TRUE)) || tagName %in% multiTags)) {
                     vals <- CharacterList(strsplit(vals, ",", fixed=TRUE))
                     vals <- relist(urlDecode(unlist(vals)), vals)
                     coerced <- suppressWarnings(as(vals, "NumericList"))
                     if (!any(any(is.na(coerced))))
                       vals <- coerced
-                    vec <- as(rep(list(character()), nrow(table)), class(vals))
+                    vec <- as(rep.int(list(character()), nrow(table)), class(vals))
                   } else {
                     coerced <- suppressWarnings(as.numeric(vals))
                     if (!any(is.na(coerced)))
                       vals <- coerced
                     if (is(file, "GFF3File"))
                       vals <- urlDecode(vals)
-                    vec <- rep(NA, nrow(table))
+                    vec <- rep.int(NA, nrow(table))
                   }
-                  vec[as.integer(tag[,"lines"])] <- vals
+                  vec[lineByTag[[tagName]]] <- vals
                   vec
                 }, simplify = FALSE)
               }
@@ -394,7 +402,7 @@ setMethod("asGFF", "GRangesList",
             values(children)$type <- childType
             values(children)$ID <- makeId(children, childType)
             values(children)$Name <- names(children)
-            values(children)$Parent <- rep(parentIds, elementLengths(x))
+            values(children)$Parent <- rep.int(parentIds, elementLengths(x))
             allColumns <- union(colnames(values(parents)),
                                 colnames(values(children)))
             rectifyDataFrame <- function(x) {
