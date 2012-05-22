@@ -202,6 +202,7 @@ test_gff <- function() {
                        trackLine = new("BasicTrackLine", name = "chr12")))
   seqinfo(correct_rdl[[1]]) <- Seqinfo("chr10")
   seqinfo(correct_rdl[[2]]) <- Seqinfo("chr12")
+  correct_rdl[[2]]$genome <- NULL
   names(correct_rdl) <- names(correct_gff3)
   export(correct_rdl, test_gff3_out)
   test <- import.ucsc(test_gff3_out)

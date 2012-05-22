@@ -18,7 +18,7 @@ test_bed <- function() {
     correct_rd <- RangedData(ir,
                              name = c("Pos1", "Pos2", "Neg1", "Pos3", "Neg2"),
                              score = c(0, 2, 0, 5, 5),
-                             strand = c("+", "+", "-", "+", "-"),
+                             strand = strand(c("+", "+", "-", "+", "-")),
                              itemRgb = c("#FF0000", "#FF0000", "#FF0000",
                                "#FF0000", "#0000FF"),
                              thick = ir, blocks, space = space)
@@ -190,16 +190,18 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   test <- import(test_bed_gz, which = which)
   checkIdentical(correct_which, test)
 
-  export(correct_ucsc, test_bed_out, index = TRUE, trackLine = FALSE)
-  test <- import(test_bed_gz, which = which)
-  checkIdentical(subsetByOverlaps(correct_rd, which), test)
-
   ## check TabixFile
+  
   test_bed_tabix <- Rsamtools::TabixFile(test_bed_gz)
   test <- import(test_bed_tabix)
   checkIdentical(correct_ucsc, test)
-  test <- import(test_bed_tabix, format = "foo")
 
+  ## look mom, no track line
+  export(correct_ucsc, test_bed_out, index = TRUE, trackLine = FALSE)
+  test <- import(test_bed_gz, which = which)
+  checkIdentical(subsetByOverlaps(correct_rd, which), test)
+  test <- import(test_bed_tabix, format = "foo")
+  
   ## To/From text
   
   bed_text <- export(correct_ucsc, format = "bed")
@@ -253,9 +255,9 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   test <- import(test_bed_out)
   correct_fill_to_blocks <- correct_ucsc
   correct_fill_to_blocks <- within(correct_fill_to_blocks, {
-    name <- "."
+    name <- NA_character_
     score <- 0
-    strand <- "."
+    strand <- strand("*")
     itemRgb <- NA_character_
     thick <- unlist(ranges, use.names = FALSE)
   })
