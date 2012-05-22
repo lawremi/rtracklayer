@@ -90,7 +90,7 @@ setMethod("export", c("RangedData", "BigWigFile"),
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            con <- path(con)
+            con <- path.expand(path(con))
             object <- sortBySeqnameAndStart(object)
             score <- score(object)
             if (!is.numeric(score) || any(is.na(score)))
@@ -156,7 +156,8 @@ setMethod("import", "BigWigFile",
               flatWhich <- IRanges()
             which <- split(flatWhich, factor(space(which), seqnames(si)))
             normRanges <- as(which, "NormalIRangesList")
-            rd <- .Call(BWGFile_query, path(con), as.list(normRanges),
+            rd <- .Call(BWGFile_query, path.expand(path(con)),
+                        as.list(normRanges),
                         identical(colnames(selection), "score"))
             seqinfo(rd) <- si
             if (!asRangedData) {
@@ -185,7 +186,7 @@ setMethod("summary", "BigWigFile",
             if (type == "sd") type <- "std"
             if (!isSingleNumberOrNA(defaultValue))
               stop("'defaultValue' must be a single number or NA")
-            summaryList <- .Call(BWGFile_summary, path(object),
+            summaryList <- .Call(BWGFile_summary, path.expand(path(object)),
                                  as.character(seqnames(which)),
                                  ranges(which), size, type,
                                  as.numeric(defaultValue))
@@ -210,6 +211,7 @@ wigToBigWig <-
     seqlengths <- seqlengths(seqinfo)
     if (any(is.na(seqlengths)))
       stop("'seqlengths(seqinfo)' must not contain any 'NA' values")
+    x <- path.expand(x)
     ans <- .Call(BWGFile_fromWIG, x, seqlengths, dest)
     invisible(BigWigFile(ans))
   }
