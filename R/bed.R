@@ -276,7 +276,7 @@ setMethod("import", "BEDFile",
               bedClasses <- ifelse(presentNames %in% colnames,
                                    presentClasses, "NULL")
               bed <- DataFrame(read.table(con, colClasses = bedClasses,
-                                          as.is = TRUE))
+                                          as.is = TRUE, na.strings = "."))
             } else {
               if (is.null(colnames))
                 colnames <- character()
