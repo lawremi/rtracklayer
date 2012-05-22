@@ -88,7 +88,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         tstart = atoi(header[3]) - tstart + 2; /* start one too high */
       qstart = atoi(header[10]) + 1;
       if (qrc)
-        qstart = atoi(header[8]) - qstart + 1;
+        qstart = atoi(header[8]) - qstart + 2;
     } else {
       int matches = chopByChar(linebuf, '\t', data, DATA_SIZE), width;
       if (matches != 1 && matches != 3)
