@@ -866,10 +866,10 @@ setAs("BasicTrackLine", "character",
           str <- paste(str, " offset=", offset, sep="")
         url <- from@url
         if (length(url))
-          str <- paste(str, " url=", url, sep="")
+          str <- paste(str, " url=", "\"", url, "\"", sep="")
         htmlUrl <- from@htmlUrl
         if (length(htmlUrl))
-          str <- paste(str, " htmlUrl=", htmlUrl, sep="")
+          str <- paste(str, " htmlUrl=", "\"", htmlUrl, "\"", sep="")
         colorByStrand <- from@colorByStrand
         if (length(colorByStrand)) {
           colors <- paste(colorByStrand[1,], colorByStrand[2,],
