@@ -52,7 +52,7 @@ FileForFormat <- function(path, format = file_ext(path)) {
   fileClassIndex <- match(tolower(fileClassName), tolower(names(fileClasses)))
   if (is.na(fileClassIndex))
     stop("Format '", format, "' unsupported")
-  pkg <- packageSlot(fileClasses[fileClassIndex])
+  pkg <- packageSlot(fileClasses[[fileClassIndex]])
   if (is.null(pkg))
     ns <- topenv()
   else ns <- getNamespace(pkg[1])
