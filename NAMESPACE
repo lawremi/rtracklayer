@@ -50,7 +50,7 @@ importFrom("BSgenome", installed.genomes, releaseDate, organism,
            providerVersion, provider)
 
 importFrom("Rsamtools", path, indexTabix, headerTabix, scanTabix, bgzip,
-           TabixFile, index)
+           TabixFile, index, asBam)
 
 importClassesFrom("Rsamtools", RsamtoolsFile)
 
