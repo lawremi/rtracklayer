@@ -287,7 +287,10 @@ setMethod("import", "BEDFile",
             }
             colnames(bed) <- bedNames[bedNames %in% colnames]
             if (!is.null(bed$thickStart)) {
-              bed$thick <- IRanges(bed$thickStart + 1L, bed$thickEnd)
+              thickEnd <- bed$thickEnd
+              if (is.null(thickEnd))
+                thickEnd <- bed$end
+              bed$thick <- IRanges(bed$thickStart + 1L, thickEnd)
               bed$thickStart <- bed$thickEnd <- NULL
             }
             color <- bed$itemRgb
