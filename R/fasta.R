@@ -23,9 +23,9 @@ setMethod("export", c("BSgenome", "FastaFile"),
           function(object, con, format, ...) {
             append <- FALSE
             for (seqname in seqnames(object)) {
-              dna <- DNAStringSet(object[[seqname]])
+              dna <- DNAStringSet(unmasked(object[[seqname]]))
               names(dna) <- seqname
-              write.XStringSet(dna, path(con), append = append, ...)
+              writeXStringSet(dna, path(con), append = append, ...)
               append <- TRUE
             }
           })
@@ -33,7 +33,7 @@ setMethod("export", c("BSgenome", "FastaFile"),
 setMethod("export", c("XStringSet", "FastaFile"),
           function(object, con, format, ...)
           {
-            write.XStringSet(object, path(con), format = "fasta", ...)
+            writeXStringSet(object, path(con), format = "fasta", ...)
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
