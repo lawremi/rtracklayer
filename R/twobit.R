@@ -108,7 +108,7 @@ setMethod("import", "TwoBitFile",
           function(con, format, text, which = as(seqinfo(con), "GenomicRanges"),
                    ...)
           {
-            lkup <- get_xsbasetypes_conversion_lookup("B", "DNA")
+            lkup <- get_seqtype_conversion_lookup("B", "DNA")
             ans <- .Call(TwoBitFile_read, as.character(path(con)),
                          as.character(seqnames(which)),
                          as(ranges(which), "IRanges"), lkup)

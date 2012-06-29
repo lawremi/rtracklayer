@@ -44,7 +44,7 @@ importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
                   seqinfo, "seqinfo<-", seqlevels, "seqlevels<-")
 
-importFrom("Biostrings", get_xsbasetypes_conversion_lookup, masks)
+importFrom("Biostrings", get_seqtype_conversion_lookup, masks)
 
 importFrom("BSgenome", installed.genomes, releaseDate, organism,
            providerVersion, provider)
