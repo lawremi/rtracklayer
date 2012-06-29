@@ -14,7 +14,7 @@ setReplaceMethod("track", c("TrackDb", "ANY"),
                  function(object, name = deparse(substitute(value)), ..., value)
                  {
                    track(object, name, ...) <-
-                     RangedDataList(as(value, "RangedData"))
+                     RangedDataList(as(value, "RangedData", strict = FALSE))
                    object
                  })
 
