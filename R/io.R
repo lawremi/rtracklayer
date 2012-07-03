@@ -46,22 +46,34 @@ setMethod("show", "RTLFile", function(object) {
 })
 
 FileForFormat <- function(path, format = file_ext(path)) {
-  fileClasses <- c(getClass("RTLFile")@subclasses,
-                   getClass("RsamtoolsFile")@subclasses)
-  fileClassName <- paste(format, "File", sep = "")
-  fileClassIndex <- match(tolower(fileClassName), tolower(names(fileClasses)))
-  if (is.na(fileClassIndex))
+  ## fileClasses <- c(getClass("RTLFile")@subclasses,
+  ##                  getClass("RsamtoolsFile")@subclasses)
+  getClassForFormat <- function(format) {
+    fileClassName <- paste0(format, "File")
+    getClass(fileClassName, .Force = TRUE)
+  }
+  fileClass <- getClassForFormat(toupper(format))
+  ## fileClassIndex <- match(tolower(fileClassName),
+  ##                         tolower(names(fileClasses)))
+  ## if (is.na(fileClassIndex))
+  if (is.null(fileClass)) {
+    substring(format, 1, 1) <- toupper(substring(format, 1, 1))
+    fileClass <- getClassForFormat(format)
+  }
+  if (is.null(fileClass)) {
     stop("Format '", format, "' unsupported")
-  pkg <- packageSlot(fileClasses[[fileClassIndex]])
+  }
+  pkg <- packageSlot(fileClass)
+  fileClassName <- fileClass@className # className() is broken
   if (is.null(pkg))
     ns <- topenv()
   else ns <- getNamespace(pkg[1])
-  constructorName <- names(fileClasses)[fileClassIndex]
+  constructorName <- fileClassName
   if(!exists(constructorName, ns)) {
     parentClassNames <- names(getClass(constructorName)@contains)
     constructorName <- names(which(sapply(parentClassNames, exists, ns)))[1]
     if (is.na(constructorName))
-      stop("No constructor found for ", names(fileClasses)[fileClassIndex])
+      stop("No constructor found for ", fileClassName)
   }
   get(constructorName, ns)(path)
 }
