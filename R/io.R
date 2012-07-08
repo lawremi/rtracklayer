@@ -46,25 +46,25 @@ setMethod("show", "RTLFile", function(object) {
 })
 
 FileForFormat <- function(path, format = file_ext(path)) {
-  ## fileClasses <- c(getClass("RTLFile")@subclasses,
-  ##                  getClass("RsamtoolsFile")@subclasses)
-  getClassForFormat <- function(format) {
-    fileClassName <- paste0(format, "File")
-    getClass(fileClassName, .Force = TRUE)
+  fileClassName <- paste0(format, "File")
+  signatureClasses <- function(fun, pos) {
+    matrix(unlist(findMethods(fun)@signatures), 3)[pos,]
   }
-  fileClass <- getClassForFormat(toupper(format))
-  ## fileClassIndex <- match(tolower(fileClassName),
-  ##                         tolower(names(fileClasses)))
-  ## if (is.na(fileClassIndex))
-  if (is.null(fileClass)) {
-    substring(format, 1, 1) <- toupper(substring(format, 1, 1))
-    fileClass <- getClassForFormat(format)
-  }
-  if (is.null(fileClass)) {
+  fileClassNames <- unique(c(signatureClasses(export, 2),
+                             signatureClasses(import, 1)))
+  fileClassNames <- fileClassNames[grepl("File$", fileClassNames)]
+  fileSubClassNames <- unlist(lapply(fileClassNames, function(x) {
+    names(getClassDef(x)@subclasses)
+  }), use.names = FALSE)
+  fileClassNames <- c(fileClassNames, fileSubClassNames) 
+  fileClassIndex <- match(tolower(fileClassName),
+                          tolower(fileClassNames))
+  if (is.na(fileClassIndex)) {
     stop("Format '", format, "' unsupported")
   }
+  fileClassName <- fileClassNames[fileClassIndex]
+  fileClass <- getClass(fileClassName)
   pkg <- packageSlot(fileClass)
-  fileClassName <- fileClass@className # className() is broken
   if (is.null(pkg))
     ns <- topenv()
   else ns <- getNamespace(pkg[1])
