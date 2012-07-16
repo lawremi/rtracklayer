@@ -1,7 +1,7 @@
 ##gff-version 3
 ##source-version rtracklayer 1.15.4
 ##date 2011-12-06
-chr10	rtracklayer	gene	92828	95504	.	-	.	ID=GeneID:347688;Name=TUBB8;geneName=tubulin%2c beta 8;Alias=FLJ40100,TUBB8;genome=hg19
+chr10	rtracklayer	gene	92828	95504	5	-	.	ID=GeneID:347688;Name=TUBB8;geneName=tubulin%2c beta 8;Alias=FLJ40100,TUBB8;genome=hg19
 chr10	rtracklayer	mRNA	92828	95178	.	-	.	Parent=GeneID:347688;ID=873;Name=TUBB8;
 chr10	rtracklayer	mRNA	92828	95504	.	-	.	Parent=GeneID:347688;ID=872;Name=TUBB8;
 chr10	rtracklayer	exon	92828	94054	.	-	.	Parent=872,873;
