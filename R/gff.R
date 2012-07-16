@@ -291,7 +291,7 @@ setMethod("import", "GFFFile",
             if (!is.null(xd$strand))
               xd$strand <- strand(xd$strand)
             if (!is.null(xd$score))
-              suppressWarnings(xd$score <- as.numeric(xd$score))
+              suppressWarnings(xd$score <- as.numeric(as.character(xd$score)))
 
             if (is.null(colnames) || length(setdiff(colnames, extraCols))) {
               if (is(file, "GFF1File")) {
