@@ -500,17 +500,17 @@ setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
 setMethod("blocks", "RangedData",
           function(x)
           {
-            blocks(as(x, "GenomicRanges"))
+            blocks(as(x, "GRanges"))
           })
 
 setMethod("blocks", "GenomicRanges",
           function(x)
           {
-            gr <- as(values(x)$blocks, "GenomicRanges")
-            if (!is.null(values(x)$name))
-              values(gr)$tx_id = rep(values(x)$name, blockCount)
-            gr
+            block_counts <- elementLengths(values(x)$blocks)
+            gr <- GRanges(rep(seqnames(x), block_counts),
+                          shift(unlist(values(x)$blocks, use.names = FALSE),
+                                rep(start(x), block_counts) - 1L),
+                          rep(strand(x), block_counts))
+            seqinfo(gr) <- seqinfo(x)
+            split(gr, togroup(values(x)$blocks))
           })
-
-## FIXME: this generic needs to be pushed up from GenomicFeatures
-##setMethod("exons", "GenomicRanges", function(x) blocks(x))
