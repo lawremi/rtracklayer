@@ -125,6 +125,14 @@ setMethod("export", c("RangedData", "BigWigFile"),
                                        seqlengths, compress, con)))
           })
 
+setMethod("export", c("RleList", "BigWigFile"),
+          function(object, con, format, ...)
+          {
+            rd <- as(object, "RangedData")
+            seqlengths(rd) <- elementLengths(object)
+            export(rd, con, ...)
+          })
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import
 ###
