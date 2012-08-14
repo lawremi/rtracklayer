@@ -56,7 +56,7 @@ BigWigSelection <- function(ranges = RangesList(), colnames = "score") {
 }
 
 setAs("RangesList", "BigWigSelection", function(from) {
-  new("BigWigSelection", as(from, "RangedSelection"))
+  new("BigWigSelection", as(from, "RangedSelection"), colnames = "score")
 })
 
 setAs("GenomicRanges", "BigWigSelection", function(from) {
