@@ -146,10 +146,12 @@ setMethod("export", c("RangedData", "GFFFile"),
                     x_char[elementLengths(x) == 0] <- NA
                   }
                   x_char[is.na(x_char)] <- "\r"
+                  if (is(file, "GTFFile") && !is.numeric(x_flat))
+                    x_char <- paste0("\"", x_char, "\"")
                   paste(name, x_char, sep = tvsep)
                 }, simplify = FALSE))
                 attrs <- do.call(paste, c(attrs, sep = ";"))
-                attrs <- gsub("[^;]*?\r(;|$)", "", attrs)
+                attrs <- gsub("[^;]*?\r\"?(;|$)", "", attrs)
                 attrs[nchar(attrs) == 0] <- NA
               }
             }
