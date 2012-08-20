@@ -102,7 +102,7 @@ BrowserViewList <- function(...) {
     views <- views[[1L]]
   if (!all(sapply(views, is, "BrowserView")))
     stop("all elements in '...' must be BrowserView objects")
-  IRanges:::newSimpleList("BrowserViewList", views)
+  IRanges:::newList("BrowserViewList", views)
 }
 
 # get genome range of active view (or default if no views)
