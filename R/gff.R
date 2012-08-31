@@ -303,16 +303,15 @@ setMethod("import", "GFFFile",
               } else {
                 attrSplit <- strsplit(attrCol, ";", fixed=TRUE)
                 attrs <- unlist(attrSplit, use.names=FALSE)
-                lines <- rep.int(seq_len(length(attrSplit)), elementLengths(attrSplit))
+                lines <- rep.int(seq_len(length(attrSplit)),
+                                 elementLengths(attrSplit))
                 attrs <- sub(" *$", "", sub("^ *", "", attrs))
                 if (is(file, "GFF3File")) {
-                  #attrs <- paste(attrs, "=", sep = "")  # do we need this?
-                  tvSplit <- strsplit(attrs, "=", fixed=TRUE)
-                  if (any(elementLengths(tvSplit) != 2))
+                  equals.pos <- regexpr("=", attrs, fixed=TRUE)
+                  if (any(equals.pos == -1L))
                     stop("Some attributes do not conform to 'tag=value' format")
-                  tmp <- unlist(tvSplit, use.names=FALSE)
-                  tags <- tmp[c(TRUE, FALSE)]
-                  vals <- tmp[c(FALSE, TRUE)]
+                  tags <- substring(attrs, 1L, equals.pos - 1L)
+                  vals <- substring(attrs, equals.pos + 1L, nchar(attrs))
                 } else { # split on first space (FIXME: not sensitive to quotes)
                   tags <- sub(" .*", "", attrs) # strip surrounding quotes
                   vals <- sub("^\"([^\"]*)\"$", "\\1",
@@ -336,13 +335,15 @@ setMethod("import", "GFFFile",
                 attrList <- sapply(names(lineByTag), function(tagName) {
                   vals <- valByTag[[tagName]]
                   if (is(file, "GFF3File") &&
-                      (any(grepl(",", vals, fixed=TRUE)) || tagName %in% multiTags)) {
+                      (any(grepl(",", vals, fixed=TRUE)) ||
+                       tagName %in% multiTags)) {
                     vals <- CharacterList(strsplit(vals, ",", fixed=TRUE))
                     vals <- relist(urlDecode(unlist(vals)), vals)
                     coerced <- suppressWarnings(as(vals, "NumericList"))
                     if (!any(any(is.na(coerced))))
                       vals <- coerced
-                    vec <- as(rep.int(list(character()), nrow(table)), class(vals))
+                    vec <- as(rep.int(list(character()), nrow(table)),
+                              class(vals))
                   } else {
                     coerced <- suppressWarnings(as.numeric(vals))
                     if (!any(is.na(coerced)))
