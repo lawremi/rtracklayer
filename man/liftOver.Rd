@@ -30,7 +30,8 @@ liftOver(x, chain, ...)
   }
 }
 \value{
-  A \code{GRanges} object, with intervals mapped through the chain.
+  A \code{GRangesList} object. Each element contains the ranges mapped
+  from the corresponding element in the input (may be one-to-many).
 }
 \references{
   \url{http://genome.ucsc.edu/cgi-bin/hgLiftOver}
