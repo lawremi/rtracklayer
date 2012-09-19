@@ -519,6 +519,7 @@ setMethod("track", "UCSCTableQuery",
             if (!is.null(table))
               tables <- table
             for (table in tables) {
+              object@table <- table
               outputs <- ucscTableOutputs(object)
               if (any(formats %in% outputs))
                 break
@@ -534,7 +535,6 @@ setMethod("track", "UCSCTableQuery",
                 output <- "wigBed"
             }
             outputType(object) <- output
-            tableName(object) <- table
             output <- ucscExport(object)
             import(text = output, format = format, asRangedData = asRangedData,
                    genome = singleGenome(genome(range(object))))
