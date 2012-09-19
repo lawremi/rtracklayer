@@ -38,7 +38,9 @@ setMethod("export", c("GappedAlignments", "BamFile"),
                          if (!is.null(emd[["mrnm"]])) emd[["mrnm"]] else "*",
                          if (!is.null(emd[["mpos"]])) emd[["mpos"]] else "0",
                          if (!is.null(emd[["isize"]])) emd[["isize"]] else "0",
-                         if (!is.null(emd[["seq"]])) emd[["seq"]] else "*",
+                         if (is(object, "GappedReads")) object@qseq
+                           else if (!is.null(emd[["seq"]])) emd[["seq"]]
+                           else "*",
                          if (!is.null(emd[["qual"]])) emd[["qual"]] else "*",
                          sep = "\t")
             writeLines(aln, sam_con)
