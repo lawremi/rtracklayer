@@ -263,11 +263,18 @@ setMethod("import", "BEDFile",
             ## read a single line to get ncols up-front,
             ## and thus specify all col classes
             ## FIXME: reading in 'as.is' to save memory,
-            if (length(line <- readLines(con, 1, warn=FALSE))) {
+            line <- readLines(con, 1, warn=FALSE)
+            ## UCSC seems to use '#' at beginning to indicate comment.
+            while(length(line) &&
+                  (!nzchar(line) || substring(line, 1, 1) == "#"))
+            {
+              line <- readLines(con, 1, warn=FALSE)
+            }
+            if (length(line)) {
               `tail<-` <- function(x, n, value)
                 if (n != 0) c(head(x, -n), value) else x
               pushBack(line, con)
-              colsInFile <- seq(length(strsplit(line, "[\t ]")[[1]]))
+              colsInFile <- seq_len(length(strsplit(line, "[\t ]")[[1]]))
               presentNames <- bedNames[colsInFile]
               tail(presentNames, length(extraCols)) <- names(extraCols)
               presentClasses <- bedClasses[colsInFile]
@@ -286,6 +293,7 @@ setMethod("import", "BEDFile",
               bed <- DataFrame(as.list(sapply(bedClasses[keepCols], vector)))
             }
             colnames(bed) <- bedNames[bedNames %in% colnames]
+            bed <- bed[substring(bed$chrom, 1, 1) != "#",]
             if (!is.null(bed$thickStart)) {
               thickEnd <- bed$thickEnd
               if (is.null(thickEnd))
@@ -315,7 +323,7 @@ setMethod("import", "BEDFile",
               bed$blocks <- blocks
             }
             GenomicData(IRanges(bed$start + 1L, bed$end),
-                        bed[,tail(colnames(bed), -3),drop=FALSE],
+                        tail(bed, -3),
                         chrom = bed$chrom, genome = genome,
                         seqinfo = seqinfo,
                         asRangedData = asRangedData, which = which)
