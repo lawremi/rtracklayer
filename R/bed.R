@@ -323,7 +323,7 @@ setMethod("import", "BEDFile",
               bed$blocks <- blocks
             }
             GenomicData(IRanges(bed$start + 1L, bed$end),
-                        tail(bed, -3),
+                        bed[-(1:3)],
                         chrom = bed$chrom, genome = genome,
                         seqinfo = seqinfo,
                         asRangedData = asRangedData, which = which)
