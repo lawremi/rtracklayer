@@ -45,6 +45,6 @@ asGFF(x, ...)
 \dontrun{
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 exons <- exonsBy(TxDb_Hsapiens_UCSC_hg19_knownGene)
-values(asGFF(exons))
+mcols(asGFF(exons))
 }
 }

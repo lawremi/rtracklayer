@@ -110,12 +110,12 @@ QuickloadGenome_annotFiles <- function(x) {
 }
 
 setMethod("names", "QuickloadGenome", function(x) {
-  emd <- elementMetadata(x)
-  structure(sapply(as.character(emd$name), URLdecode),
-            names = as.character(emd$title))
+  x_mcols <- mcols(x)
+  structure(sapply(as.character(x_mcols$name), URLdecode),
+            names = as.character(x_mcols$title))
 })
 
-setMethod("elementMetadata", "QuickloadGenome", function(x) {
+setMethod("mcols", "QuickloadGenome", function(x) {
   files <- QuickloadGenome_annotFiles(x)
   if (!length(xmlChildren(files)))
     new("DataFrame", nrows = length(x))
@@ -186,10 +186,10 @@ annotsFile <- function(x) file.path(uri(x), "annots.xml")
 ###
 
 setMethod("track", "QuickloadGenome", function(object, name, ...) {
-  emd <- elementMetadata(object)
-  if (!name %in% emd$title)
+  object_mcols <- mcols(object)
+  if (!name %in% object_mcols$title)
     stop("Track '", name, "' does not exist")
-  md <- as.list(emd[emd$title == name,])
+  md <- as.list(object_mcols[object_mcols$title == name,])
   rd <- import(file.path(uri(object), md$name), ...)
   metadata(rd)$quickload <- md
   rd

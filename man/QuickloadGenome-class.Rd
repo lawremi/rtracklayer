@@ -16,7 +16,7 @@
 \alias{length,QuickloadGenome-method}
 \alias{names,QuickloadGenome-method}
 \alias{quickload}
-\alias{elementMetadata,QuickloadGenome-method}
+\alias{mcols,QuickloadGenome-method}
 \alias{releaseDate,QuickloadGenome-method}
 \alias{organism,QuickloadGenome-method}
 \alias{uri,QuickloadGenome-method}
@@ -118,7 +118,7 @@
       \code{names(x), trackNames(x)}: names of the datasets
     }
     \item{}{
-      \code{elementMetadata(x)}: merged metadata on the datasets
+      \code{mcols(x)}: merged metadata on the datasets
     }
     \item{}{
       \code{track(x, name), x$name}: get the track called \code{name}
@@ -171,7 +171,7 @@ seqinfo(qlg)
 organism(qlg)
 releaseDate(qlg)
 names(qlg)
-elementMetadata(qlg)
+mcols(qlg)
 if (.Platform$OS.type != "windows") { # temporary
 qlg$bedData
 }

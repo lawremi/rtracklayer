@@ -36,7 +36,7 @@
       \code{names(x)}, \code{trackNames(x)}: names of the tracks
     }
     \item{}{
-      \code{elementMetadata(x)}: merged metadata on the tracks
+      \code{mcols(x)}: merged metadata on the tracks
     }
     \item{}{
       \code{track(x, name)}, \code{x$name}, \code{x[[name]]}:

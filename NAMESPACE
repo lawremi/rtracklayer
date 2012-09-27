@@ -35,7 +35,7 @@ importMethodsFrom("IRanges", elementLengths, window,
                   space, universe, metadata,
                   "universe<-", "metadata<-",
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
-                  resize, elementMetadata, togroup)
+                  resize, mcols, togroup)
 
 importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList)
 
@@ -94,7 +94,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               ## from IRanges
               start, end, "start<-", "end<-",
               score, "score<-",
-              as.data.frame, space, elementMetadata,
+              as.data.frame, space, mcols,
               ## from GenomicRanges
               strand, seqinfo, "seqinfo<-",
               ## from BSgenome
@@ -107,7 +107,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        ucscGenomes, BigWigSelection, GRangesForUCSCGenome,
        GRangesForBSGenome, summary, seqinfo, genome, "genome<-",
        uri, Quickload, quickload, QuickloadGenome,
-       organism, releaseDate, elementMetadata, wigToBigWig,
+       organism, releaseDate, mcols, wigToBigWig,
        SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path)
 
 export(GFFFile, UCSCFile, BEDFile, WIGFile,

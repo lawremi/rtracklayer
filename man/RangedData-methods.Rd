@@ -129,11 +129,11 @@ Similarly the universe refers to the genome.}
   ## GRanges instance
   gr <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18",
                     asRangedData = FALSE)
-  values(gr)[["score"]]
+  mcols(gr)[["score"]]
   strand(gr) ## all '*'
   gr <- GenomicData(range1[[1]], score, filt = filter, strand = strand,
                     chrom = "chr1", asRangedData = FALSE)
-  values(gr)[["filt"]]
+  mcols(gr)[["filt"]]
   strand(gr) ## equal to 'strand'
 
   ## coercion from data.frame ##
