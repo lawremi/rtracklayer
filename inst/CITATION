@@ -1,0 +1,17 @@
+citEntry(entry="article",
+         title = paste("rtracklayer: an R package for interfacing with
+                  genome browsers" ),
+         author = personList( as.person("Michael Lawrence"),
+                              as.person("Robert Gentleman"),
+                              as.person("Vincent Carey")),
+         year = 2009,
+         journal = "Bioinformatics",
+         volume = "25",
+         pages = "1841-1842",
+         doi = "10.1093/bioinformatics/btp328",
+         url = "http://bioinformatics.oxfordjournals.org/content/25/14/1841.abstract",         
+         textVersion = 
+         paste("M. Lawrence, R. Gentleman, V. Carey:", 
+               "\"rtracklayer: an {R} package for interfacing with",
+               "genome browsers\".", 
+               "Bioinformatics 25:1841-1842."))
