@@ -47,6 +47,9 @@
 \alias{export.gff3}
 \alias{export.gff3,ANY-method}
 
+% Other:
+\alias{genome,GFFFile-method}
+
 \title{GFFFile objects}
 
 \description{
@@ -240,6 +243,13 @@ export.gff3(object, con, ...)
   the \code{GFFFile} constructor. The \code{GFF1File}, \code{GFF2File},
   \code{GFF3File}, \code{GVFFile} and \code{GTFFile} classes all extend
   \code{GFFFile} and indicate a particular version of the format.
+
+  It has the following utility methods:
+  \describe{
+    \item{}{\code{genome}: Gets the genome identifier from
+      the \dQuote{genome-build} header directive.
+    }
+  }
 }
 
 \author{Michael Lawrence}

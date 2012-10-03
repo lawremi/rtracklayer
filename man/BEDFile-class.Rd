@@ -47,7 +47,7 @@
 \usage{
 \S4method{import}{BEDFile,ANY,ANY}(con, format, text, trackLine = TRUE,
                    genome = NA, asRangedData = TRUE, colnames = NULL,
-                   which = NULL, seqinfo = NULL)
+                   which = NULL, seqinfo = NULL, extraCols = character())
 import.bed(con, ...)
 import.bed15(con, ...)
 import.bedGraph(con,  ...)
@@ -119,6 +119,11 @@ export.bedGraph(object, con, ...)
   \item{seqinfo}{If not \code{NULL}, the \code{Seqinfo} object to set on
     the result. If the \code{genome} argument is not \code{NA}, it must
     agree with \code{genome(seqinfo)}.
+  }
+  \item{extraCols}{Names of extra columns to read from the BED file. As
+    BED does not encode column names, these are assumed to be the last
+    columns in the file. This enables parsing of the various BEDX+Y
+    formats.
   }
   \item{append}{If \code{TRUE}, and \code{con} points to a file path,
     the data is appended to the file. Obviously, if \code{con} is a

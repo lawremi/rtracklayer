@@ -23,8 +23,10 @@
 \alias{export.2bit}
 \alias{export.2bit,ANY-method}
 \alias{export,DNAStringSet,TwoBitFile,ANY-method}
+\alias{export,DNAStringSet,character,ANY-method}
 \alias{export,ANY,TwoBitFile,ANY-method}
 \alias{export,BSgenome,TwoBitFile,ANY-method}
+\alias{export,BSgenome,character,ANY-method}
 
 \title{2bit Files}
 

@@ -130,8 +130,10 @@ import(con, format, text, ...)
   \code{BigWig} is preferred for quantitative score vectors. Note that
   the Rsamtools package provides support for the
   \code{\link[Rsamtools:BamFile]{BAM}} file format (for representing
-  read alignments), among others. For variants, consider VCF, supported
-  by the VariantAnnotation package. 
+  read alignments), among others. Based on this, the rtracklayer package
+  provides an \code{export} method for writing \code{GappedAlignments}
+  and \code{GappedReads} objects as \code{BAM}. For variants, consider
+  VCF, supported by the VariantAnnotation package.
 
   There is also support for reading and writing biological sequences,
   including the UCSC \code{\link[=TwoBitFile]{TwoBit}} format for

@@ -17,11 +17,10 @@
 
 \usage{
 \S4method{import}{TabixFile,character,ANY}(con, format, text,
-                   which = as(seqinfoForGenome(genome), "GenomicRanges"),
+                   which = if (is.na(genome)) NULL
+                           else as(seqinfoForGenome(genome), "GenomicRanges"),
                    genome = NA, header = TRUE, ...)
-\S4method{import}{TabixFile,missing,ANY}(con, format, text,
-                   which = as(seqinfoForGenome(genome), "GenomicRanges"),
-                   genome = NA, header = TRUE, ...)
+\S4method{import}{TabixFile,missing,ANY}(con, format, text, ...)
 }
 \arguments{
   \item{con}{A \code{TabixFile} object}
@@ -34,7 +33,7 @@
   \item{which}{A range data structure coercible to \code{RangesList},
     like a \code{GRanges}. Only the intervals in the file overlapping the
     given ranges are returned. The default is to use the range over the
-    entire genome given by \code{genome}.
+    entire genome given by \code{genome}, if specified.
   }
   \item{genome}{The identifier of a genome, or \code{NA} if
     unknown. Typically, this is a UCSC identifier like \dQuote{hg19}. An

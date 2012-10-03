@@ -24,6 +24,7 @@
 \alias{export.bw,ANY-method}
 \alias{export,ANY,BigWigFile,ANY-method}
 \alias{export,RangedData,BigWigFile,ANY-method}
+\alias{export,RleList,BigWigFile,ANY-method}
 
 %% Utilites:
 \alias{summary,BigWigFile-method}
@@ -58,9 +59,9 @@ export.bw(object, con, ...)
     extension or the \code{format} argument needs to be \dQuote{bigWig}
     or \dQuote{bw}.
   }
-  \item{object}{The object to export, should be a \code{RangedData} or
-    something coercible to a \code{RangedData}, like a
-    \code{GRanges}.
+  \item{object}{The object to export, should be an \code{RleList},
+    \code{RangedData} or something coercible to a \code{RangedData},
+    like a \code{GRanges}.
   }
   \item{format}{If not missing, should be \dQuote{bigWig} or \dQuote{bw}
     (case insensitive).
