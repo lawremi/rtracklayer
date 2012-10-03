@@ -46,7 +46,9 @@ setMethod("export", c("GappedAlignments", "BamFile"),
             writeLines(aln, sam_con)
             close(sam_con)
             on.exit()
-            asBam(sam_path, file_path_sans_ext(sam_path))
+            bam <- asBam(sam_path, file_path_sans_ext(sam_path))
+            unlink(sam_path)
+            invisible(bam)
           })
 
 setMethod("export", c("ANY", "BamFile"),
