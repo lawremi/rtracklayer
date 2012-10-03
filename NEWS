@@ -1,3 +1,15 @@
+CHANGES IN VERSION 1.17
+-----------------------
+
+NEW FEATURES
+
+    o Export of GappedAlignments objects as BAM files. There is also a
+      corresponding import method.
+
+    o Support for BEDX+Y import using the extraCols parameter to import.
+
+    o Direct export of RleList objects to BigWig files.
+    
 CHANGES IN VERSION 1.15
 -----------------------
 
