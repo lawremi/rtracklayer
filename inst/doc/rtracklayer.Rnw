@@ -1,7 +1,7 @@
 \documentclass{article}
 
 %\VignetteIndexEntry{rtracklayer}
-
+\usepackage{hyperref}
 \newcommand{\Rfunction}[1]{{\texttt{#1}}}
 \newcommand{\Robject}[1]{{\texttt{#1}}}
 \newcommand{\Rpackage}[1]{{\textit{#1}}}
@@ -24,6 +24,8 @@
 <<initialize, echo=FALSE>>=
 options(width=70)
 @ 
+
+\tableofcontents
 
 \section{Introduction}
 
@@ -134,7 +136,7 @@ targetTrack <- with(targets,
 @
 %
 The \Rfunction{GRangesForUCSCGenome} function constructs a
-\Rclass{GRanges} object for the named genome. The stand information,
+\Rclass{GRanges} object for the named genome. The strand information,
 the name of the microRNA and the Ensembl ID of the targeted transcript
 are stored in the \Rclass{GRanges}. The chromosome for each site is
 passed as the \texttt{chrom} argument. The chromosome names and
@@ -395,13 +397,13 @@ relying on parameter defaults:
 browseGenome(subTargetTrack)
 @ 
 
-\subsubsection{Downloading tracks}
-
+\subsubsection{Downloading Tracks from your Web Browser}
+@ 
 It is possible to query the browser to obtain the names of the loaded
 tracks and to download the tracks into R. To list the tracks loaded in
 the browser, enter the following:
 %
-<<get-track-names, eval=FALSE>>=
+<<get-track-names, eval=FALSE>>=2
 loaded_tracks <- trackNames(session)
 @
 %
@@ -655,6 +657,87 @@ session <- browseGenome(nrsfTrack, range = range(nrsfTrack[1,]) * -10)
 %
 We observe significant conservation across mammal species in the
 region of the motif.
+
+\section{Downloading tracks from UCSC}
+
+\Rclass{rtracklayer} can be used to download annotation tracks from the UCSC
+table browser, thus providing a convenient programmatic alternative to 
+the web interface available at \url{http://genome.ucsc.edu/cgi-bin/hgTables}.  
+
+\subsection{Example 1: the RepeatMasker Track}
+
+This simple example identifies repeat-masked regions in and around the transcription start site (TSS)
+of the human E2F3 gene, in hg19:
+<<rmsk.e2f3 eval = FALSE>>=
+library (rtracklayer)
+mySession = browserSession("UCSC")
+genome(mySession) <- "hg19"
+e2f3.tss.grange <- GRanges("chr6", IRanges(20400587, 20403336))
+tbl.rmsk <- getTable(
+   ucscTableQuery(mySession, track="rmsk", 
+                   range=e2f3.tss.grange, table="rmsk"))
+@ 
+There are several important points to understand about this example:
+\begin{enumerate}
+\item The \Rcode{ucscTableQuery} used above is a proxy for, and provides communication with,
+  the remote UCSC table browser (see \url{http://genome.ucsc.edu/cgi-bin/hgTables}).
+\item You must know the name of the track and table (or sub-track) that you want.  The 
+  way to do this is explained in detail below, in section 5.3.
+\item If the track contains multiple tables (which is the case for 
+  many ENCODE tracks, for instance), then you must also specify that table name.
+\item When the track contains a single table only, you may omit the \Rcode{table} 
+  parameter, or reuse the track name (as we did above).
+\item If you omit the range parameter, the full track table is returned, covering the entire
+  genome.  
+\item The amount of time required to download a track is roughly a function of the number
+  of features in the track, which is in turn a function of the density of those features,
+  and the length of the genomic range you request.  To download the entire RepeatMasker
+  track, for all of h19, would take a very long time, and is a task poorly 
+  suited to rtracklayer.  By contrast, one full-genome DNaseI track takes less than a minute (see below).
+\end{enumerate}
+
+
+\subsection{Example 2: DNaseI hypersensitivity regions in the K562 Cell Line}
+
+The ENCODE project (\url{http://encodeproject.org/ENCODE}) provides many
+hundreds of annotation tracks to the UCSC table browser.  One of these
+describes DNaseI hypersensitivity for K562 cells (an immortalized myelogenous
+leukemia line) measured at the University of Washington using 'Digital Genome
+Footprinting' (see \url{http://www.ncbi.nlm.nih.gov/pubmed?term=19305407}).
+Obtain DNaseI regions near the E2F3 TSS, and for all of hg19:
+
+<<uwDgfEncodeExample eval = FALSE>>=
+track.name <- "wgEncodeUwDgf"
+table.name <- "wgEncodeUwDgfK562Hotspots"
+e2f3.grange <- GRanges("chr6", IRanges(20400587, 20403336))
+mySession <- browserSession ()
+tbl.k562.dgf.e2f3 <- getTable(ucscTableQuery (mySession, track='wgEncodeUwDgf', 
+                              range=e2f3.grange, table="wgEncodeUwDgfK562Hotspots"))
+tbl.k562.dgf.hg19 <- getTable(ucscTableQuery (mySession, track='wgEncodeUwDgf', 
+                                              table="wgEncodeUwDgfK562Hotspots"))
+@ 
+
+\subsection{Discovering Which Tracks and Tables are Available from UCSC}
+  
+As the examples above demonstrate, you must know the exact UCSC-style name for
+the track and table you wish to download.  You may browse these interactively at
+\url{http://genome.ucsc.edu/cgi-bin/hgTables?org=Human&db=hg19} or
+programmatically, as we demonstrate here.
+
+<<trackAndTableNameDiscovery eval = FALSE>>=
+mySession <- browserSession ()
+genome(mySession) <- "hg19"
+  # 177 tracks in October 2012
+track.names <- trackNames(ucscTableQuery(mySession))
+  # chose a few tracks at random from this set, and discover how 
+  # many tables they hold
+tracks <- track.names [c (99, 81, 150, 96, 90)]
+for (track in tracks) 
+  print (paste (track, 
+      length (tableNames (ucscTableQuery (mySession, track=track)))))
+@ 
+
+
 
 \section{Conclusion}
 
