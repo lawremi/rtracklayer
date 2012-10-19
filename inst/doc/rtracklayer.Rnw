@@ -701,8 +701,8 @@ There are several important points to understand about this example:
 
 The ENCODE project (\url{http://encodeproject.org/ENCODE}) provides many
 hundreds of annotation tracks to the UCSC table browser.  One of these
-describes DNaseI hypersensitivity for K562 cells (an immortalized myelogenous
-leukemia line) measured at the University of Washington using 'Digital Genome
+describes DNaseI hypersensitivity for K562 cells (an immortalized erythroleukemia
+line) measured at the University of Washington using 'Digital Genome
 Footprinting' (see \url{http://www.ncbi.nlm.nih.gov/pubmed?term=19305407}).
 Obtain DNaseI regions near the E2F3 TSS, and for all of hg19:
 
