@@ -704,7 +704,7 @@ hundreds of annotation tracks to the UCSC table browser.  One of these
 describes DNaseI hypersensitivity for K562 cells (an immortalized erythroleukemia
 line) measured at the University of Washington using 'Digital Genome
 Footprinting' (see \url{http://www.ncbi.nlm.nih.gov/pubmed?term=19305407}).
-Obtain DNaseI regions near the E2F3 TSS, and for all of hg19:
+Obtain DNaseI hypersensitive regions near the E2F3 TSS, and for all of hg19:
 
 <<uwDgfEncodeExample eval = FALSE>>=
 track.name <- "wgEncodeUwDgf"
