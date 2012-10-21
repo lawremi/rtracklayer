@@ -1,7 +1,10 @@
 \documentclass{article}
 
 %\VignetteIndexEntry{rtracklayer}
-\usepackage{hyperref}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage[colorlinks=true, linkcolor=Blue, urlcolor=Blue,
+   citecolor=Blue]{hyperref}
+
 \newcommand{\Rfunction}[1]{{\texttt{#1}}}
 \newcommand{\Robject}[1]{{\texttt{#1}}}
 \newcommand{\Rpackage}[1]{{\textit{#1}}}
@@ -244,7 +247,7 @@ object as its target. If a target is not given, the serialized string
 is returned. The desired format is derived, by default, from
 the extension of the filename. Use the \texttt{format} parameter to
 explicitly specify a format.
-<<export, eval = FALSE>>=
+<<export, eval=FALSE>>=
 export(targetTrack, "targets.bed")
 @
 
@@ -253,14 +256,14 @@ To read the data back in a future session, we could use the
 of the data may be given as a connection, a filename or a character
 vector containing the data. Like the \texttt{export} function, the
 format is determined from the filename, by default. 
-<<import, eval = FALSE>>=
+<<import, eval=FALSE>>=
 restoredTrack <- import("targets.bed")
 @
 %
 The \Robject{restoredTrack} object is of class \Rclass{RangedData}. To
 obtain a \Rclass{GRanges} object directly upon importing, pass
 \Rcode{asRangedData = FALSE} to \Rfunction{import}:
-<<import-gr, eval = FALSE>>=
+<<import-gr, eval=FALSE>>=
 restoredTrack <- import("targets.bed", asRangedData = FALSE)
 @
 %
@@ -403,7 +406,7 @@ It is possible to query the browser to obtain the names of the loaded
 tracks and to download the tracks into R. To list the tracks loaded in
 the browser, enter the following:
 %
-<<get-track-names, eval=FALSE>>=2
+<<get-track-names, eval=FALSE>>=
 loaded_tracks <- trackNames(session)
 @
 %
@@ -472,7 +475,7 @@ The returned value, \texttt{modes}, is of class
 \textit{UCSCTrackModes}. The modes may be accessed using the
 \texttt{[} function. Here, we set the mode of our ``targets'' track to
 ``full'' visibility.
-<<set-track-modes, eval = FALSE>>=
+<<set-track-modes, eval=FALSE>>=
 modes["targets"]
 modes["targets"] <- "full"
 ucscTrackModes(view) <- modes
@@ -481,7 +484,7 @@ ucscTrackModes(view) <- modes
 Existing browser views for a session may be retrieved by calling the
 \texttt{browserViews} method on the \textit{browserSession} instance.
 %
-<<browserViews, eval = FALSE>>=
+<<browserViews, eval=FALSE>>=
 views <- browserViews(session)
 length(views)
 @ 
@@ -554,7 +557,7 @@ information, which requires special consideration for visualization.
 To view the SNP locations as a track in a genome browser, we first
 need to upload the track to a fresh session. In the code below, we use
 the \texttt{[[<-} alias of \texttt{track<-}.
-<<layTrack-snp, eval = FALSE>>=
+<<layTrack-snp, eval=FALSE>>=
 session <- browserSession()
 session$cpne <- cpneTrack
 @
@@ -582,7 +585,7 @@ To plot the data values for the SNP's in a track, we need to create a
 \textit{browserView}. We will view the region spanning the first 5
 SNPs in the track, which will be displayed in the ``full'' mode.
 %
-<<browserView-snp, eval = FALSE>>=
+<<browserView-snp, eval=FALSE>>=
 view <- browserView(session, range(cpneTrack[1:5,]), full = "cpne")
 @ 
 %
@@ -597,7 +600,7 @@ that could represent some sort of cut-off. The position of the line is
 specified by \textit{yLineMark}. We set it arbitrarily to the 25\%
 quantile.
 %
-<<layTrack-snp2, eval = FALSE>>=
+<<layTrack-snp2, eval=FALSE>>=
 track(session, "cpne2", autoScale = FALSE, yLineOnOff = TRUE, 
       yLineMark = quantile(score(cpneTrack), .25)) <- cpneTrack
 view <- browserView(session, range(cpneTrack[1:5,]), full = "cpne2")
@@ -651,7 +654,7 @@ them to the UCSC browser and view them. Below, load the track and we
 view the region around the first hit in a single call to
 \texttt{browseGenome}.
 %
-<<browserView-nrsf, eval = FALSE>>=
+<<browserView-nrsf, eval=FALSE>>=
 session <- browseGenome(nrsfTrack, range = range(nrsfTrack[1,]) * -10)
 @ 
 %
@@ -668,7 +671,7 @@ the web interface available at \url{http://genome.ucsc.edu/cgi-bin/hgTables}.
 
 This simple example identifies repeat-masked regions in and around the transcription start site (TSS)
 of the human E2F3 gene, in hg19:
-<<rmsk.e2f3 eval = FALSE>>=
+<<rmsk.e2f3, eval=FALSE>>=
 library (rtracklayer)
 mySession = browserSession("UCSC")
 genome(mySession) <- "hg19"
@@ -706,15 +709,15 @@ line) measured at the University of Washington using 'Digital Genome
 Footprinting' (see \url{http://www.ncbi.nlm.nih.gov/pubmed?term=19305407}).
 Obtain DNaseI hypersensitive regions near the E2F3 TSS, and for all of hg19:
 
-<<uwDgfEncodeExample eval = FALSE>>=
+<<uwDgfEncodeExample, eval=FALSE>>=
 track.name <- "wgEncodeUwDgf"
 table.name <- "wgEncodeUwDgfK562Hotspots"
 e2f3.grange <- GRanges("chr6", IRanges(20400587, 20403336))
 mySession <- browserSession ()
-tbl.k562.dgf.e2f3 <- getTable(ucscTableQuery (mySession, track='wgEncodeUwDgf', 
-                              range=e2f3.grange, table="wgEncodeUwDgfK562Hotspots"))
-tbl.k562.dgf.hg19 <- getTable(ucscTableQuery (mySession, track='wgEncodeUwDgf', 
-                                              table="wgEncodeUwDgfK562Hotspots"))
+tbl.k562.dgf.e2f3 <- getTable(ucscTableQuery (mySession, track=track.name, 
+                              range=e2f3.grange, table=table.name))
+tbl.k562.dgf.hg19 <- getTable(ucscTableQuery (mySession, track=track.name, 
+                                              table=table.name))
 @ 
 
 \subsection{Discovering Which Tracks and Tables are Available from UCSC}
@@ -724,7 +727,7 @@ the track and table you wish to download.  You may browse these interactively at
 \url{http://genome.ucsc.edu/cgi-bin/hgTables?org=Human&db=hg19} or
 programmatically, as we demonstrate here.
 
-<<trackAndTableNameDiscovery eval = FALSE>>=
+<<trackAndTableNameDiscovery, eval=FALSE>>=
 mySession <- browserSession ()
 genome(mySession) <- "hg19"
   # 177 tracks in October 2012
@@ -732,9 +735,9 @@ track.names <- trackNames(ucscTableQuery(mySession))
   # chose a few tracks at random from this set, and discover how 
   # many tables they hold
 tracks <- track.names [c (99, 81, 150, 96, 90)]
-for (track in tracks) 
-  print (paste (track, 
-      length (tableNames (ucscTableQuery (mySession, track=track)))))
+sapply(tracks, function(track) {
+     length(tableNames(ucscTableQuery(mySession, track=track)))
+     })
 @ 
 
 
