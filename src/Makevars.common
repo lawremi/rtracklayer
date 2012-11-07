@@ -10,4 +10,4 @@ UCSC_OBJECTS = \
   _cheapcgi.o internet.o https.o base64.o verbose.o os.o wildcmp.o _portimpl.o
 
 PKG_CFLAGS = -g
-PKG_LIBS += -pthreads
+PKG_LIBS += -pthread
