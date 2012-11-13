@@ -1,15 +1,15 @@
 track type=wiggle_0 name="test" description="test track" visibility=full autoScale=off viewLimits=0:1000 color=0,200,100 maxHeightPixels=100:50:20 graphType=points priority=30
 variableStep chrom=chr19
-59304701 10.0
-59304901 12.5
-59305401 15.0
-59305601 17.5
-59305901 20.0
-59306081 17.5
-59306301 15.0
-59306691 12.5
-59307871 10.0
-fixedStep chrom=chr18 start=59308021 step=300 span=200
+59104701 10.0
+59104901 12.5
+59105401 15.0
+59105601 17.5
+59105901 20.0
+59106081 17.5
+59106301 15.0
+59106691 12.5
+59107871 10.0
+fixedStep chrom=chr18 start=59108021 step=300 span=200
 1000
  900
  800
