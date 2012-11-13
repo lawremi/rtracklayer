@@ -33,9 +33,9 @@ test_gff <- function() {
                 "WAS protein family homolog 1 pseudogene", rep(NA, 15))
   genome <- c("hg19", rep(NA, length(geneName) - 1))
   correct_gff3 <- RangedData(IRanges(start, end),
-                             source, type, score,
-                             strand, phase, Alias, geneName, genome,
-                             ID, Name, Parent, space = space)
+                             source, type, score, strand, phase,
+                             ID, Name, geneName, Alias, genome, Parent,
+                             space = space)
   seqinfo(correct_gff3) <- Seqinfo(c("chr10", "chr12"))
 
   correct_gff1 <- correct_gff3[,c("source", "type", "score", "strand", "phase")]

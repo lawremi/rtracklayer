@@ -204,6 +204,67 @@ setMethod("import.gff", "ANY",
             import(con, "gff", ...)
           })
 
+.parse_attrCol <- function(attrCol, file, colnames) {
+  if (is(file, "GFF1File")) {
+    if (is.null(colnames) || "group" %in% colnames)
+      attrList <- list(group = factor(attrCol, levels=unique(attrCol)))
+    else attrList <- list()
+  } else {
+    attrSplit <- strsplit(attrCol, ";", fixed=TRUE)
+    attrs <- unlist(attrSplit, use.names=FALSE)
+    lines <- rep.int(seq_len(length(attrSplit)),
+                     elementLengths(attrSplit))
+    attrs <- sub(" *$", "", sub("^ *", "", attrs))
+    if (is(file, "GFF3File")) {
+      equals.pos <- regexpr("=", attrs, fixed=TRUE)
+      if (any(equals.pos == -1L))
+        stop("Some attributes do not conform to 'tag=value' format")
+      tags <- substring(attrs, 1L, equals.pos - 1L)
+      vals <- substring(attrs, equals.pos + 1L, nchar(attrs))
+    } else { # split on first space (FIXME: not sensitive to quotes)
+      tags <- sub(" .*", "", attrs) # strip surrounding quotes
+      vals <- sub("^\"([^\"]*)\"$", "\\1", sub("^[^ ]* ", "", attrs))
+    }
+    if (!is.null(colnames)) {
+      keep <- tags %in% colnames
+      lines <- lines[keep]
+      vals <- vals[keep]
+      tags <- urlDecode(tags[keep])
+    }
+    tags <- factor(tags, levels=unique(tags))
+    lineByTag <- split(lines, tags)
+    valByTag <- split(vals, tags)
+
+    ## FIXME: Parent, Alias, Note, DBxref,
+    ## Ontology_term are allowed to have multiple
+    ## values. We should probably always return them as a
+    ## CharacterList.
+    multiTags <- c("Parent", "Alias", "Note", "DBxref", "Ontology_term")
+    attrList <- sapply(levels(tags), function(tagName) {
+      vals <- valByTag[[tagName]]
+      if (is(file, "GFF3File") &&
+          (any(grepl(",", vals, fixed=TRUE)) || tagName %in% multiTags)) {
+        vals <- CharacterList(strsplit(vals, ",", fixed=TRUE))
+        vals <- relist(urlDecode(unlist(vals)), vals)
+        coerced <- suppressWarnings(as(vals, "NumericList"))
+        if (!any(any(is.na(coerced))))
+          vals <- coerced
+        vec <- as(rep.int(list(character()), length(attrCol)), class(vals))
+      } else {
+        coerced <- suppressWarnings(as.numeric(vals))
+        if (!any(is.na(coerced)))
+          vals <- coerced
+        if (is(file, "GFF3File"))
+          vals <- urlDecode(vals)
+        vec <- rep.int(NA, length(attrCol))
+      }
+      vec[lineByTag[[tagName]]] <- vals
+      vec
+    }, simplify = FALSE)
+  }
+  attrList
+}
+
 setMethod("import", "GFFFile",
           function(con, format, text, version = c("", "1", "2", "3"),
                    genome = NA, asRangedData = FALSE, colnames = NULL,
@@ -298,66 +359,7 @@ setMethod("import", "GFFFile",
               suppressWarnings(xd$score <- as.numeric(as.character(xd$score)))
 
             if (is.null(colnames) || length(setdiff(colnames, extraCols))) {
-              if (is(file, "GFF1File")) {
-                if (is.null(colnames) || "group" %in% colnames)
-                  attrList <- list(group = factor(attrCol))
-                else attrList <- list()
-              } else {
-                attrSplit <- strsplit(attrCol, ";", fixed=TRUE)
-                attrs <- unlist(attrSplit, use.names=FALSE)
-                lines <- rep.int(seq_len(length(attrSplit)),
-                                 elementLengths(attrSplit))
-                attrs <- sub(" *$", "", sub("^ *", "", attrs))
-                if (is(file, "GFF3File")) {
-                  equals.pos <- regexpr("=", attrs, fixed=TRUE)
-                  if (any(equals.pos == -1L))
-                    stop("Some attributes do not conform to 'tag=value' format")
-                  tags <- substring(attrs, 1L, equals.pos - 1L)
-                  vals <- substring(attrs, equals.pos + 1L, nchar(attrs))
-                } else { # split on first space (FIXME: not sensitive to quotes)
-                  tags <- sub(" .*", "", attrs) # strip surrounding quotes
-                  vals <- sub("^\"([^\"]*)\"$", "\\1",
-                              sub("^[^ ]* ", "", attrs))
-                }
-                if (!is.null(colnames)) {
-                  keep <- tags %in% colnames
-                  lines <- lines[keep]
-                  vals <- vals[keep]
-                  tags <- urlDecode(tags[keep])
-                }
-                lineByTag <- split(lines, tags)
-                valByTag <- split(vals, tags)
-
-                ## FIXME: Parent, Alias, Note, DBxref,
-                ## Ontology_term are allowed to have multiple
-                ## values. We should probably always return them as a
-                ## CharacterList.
-                multiTags <- c("Parent", "Alias", "Note", "DBxref",
-                               "Ontology_term")
-                attrList <- sapply(names(lineByTag), function(tagName) {
-                  vals <- valByTag[[tagName]]
-                  if (is(file, "GFF3File") &&
-                      (any(grepl(",", vals, fixed=TRUE)) ||
-                       tagName %in% multiTags)) {
-                    vals <- CharacterList(strsplit(vals, ",", fixed=TRUE))
-                    vals <- relist(urlDecode(unlist(vals)), vals)
-                    coerced <- suppressWarnings(as(vals, "NumericList"))
-                    if (!any(any(is.na(coerced))))
-                      vals <- coerced
-                    vec <- as(rep.int(list(character()), nrow(table)),
-                              class(vals))
-                  } else {
-                    coerced <- suppressWarnings(as.numeric(vals))
-                    if (!any(is.na(coerced)))
-                      vals <- coerced
-                    if (is(file, "GFF3File"))
-                      vals <- urlDecode(vals)
-                    vec <- rep.int(NA, nrow(table))
-                  }
-                  vec[lineByTag[[tagName]]] <- vals
-                  vec
-                }, simplify = FALSE)
-              }
+              attrList <- .parse_attrCol(attrCol, file, colnames)
               xd <- DataFrame(xd, attrList)
             }
             
