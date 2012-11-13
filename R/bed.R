@@ -206,11 +206,13 @@ scanTrackLine <- function(con) {
 
 setMethod("import", "BEDFile",
           function(con, format, text, trackLine = TRUE,
-                   genome = NA, asRangedData = TRUE, colnames = NULL,
+                   genome = NA, asRangedData = FALSE, colnames = NULL,
                    which = NULL, seqinfo = NULL, extraCols = character())
           {
             if (!missing(format))
               checkArgFormat(con, format)
+            if (missing(asRangedData))
+              warning(asRangedData.warning.msg("import"))
             file <- con
             con <- queryForConnection(con, which)
             if (attr(con, "usedWhich"))
@@ -335,10 +337,12 @@ setMethod("import", "BEDFile",
 
 setMethod("import", "BED15File",
           function(con, format, text, trackLine = NULL, genome = NA,
-                   asRangedData = TRUE, which = NULL)
+                   asRangedData = FALSE, which = NULL)
           {
             if (!missing(format))
               checkArgFormat(con, format)
+            if (missing(asRangedData))
+              warning(asRangedData.warning.msg("import"))
             if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
             if (is.null(trackLine))

@@ -9,6 +9,10 @@
 }
 \usage{
 browseGenome(object, ...)
+\S4method{browseGenome}{GRanges}(object,
+  browser = "UCSC", range = base::range(object),
+  view = TRUE, trackParams = list(), viewParams = list(),
+  name = "customTrack", ...)
 \S4method{browseGenome}{RangedDataORRangedDataList}(object,
   browser = "UCSC", range = base::range(object),
   view = TRUE, trackParams = list(), viewParams = list(),
@@ -16,9 +20,10 @@ browseGenome(object, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{object}{ A list of
-    \code{\link[IRanges:RangedData-class]{RangedData}} instances, 
-    e.g. a \code{\link[IRanges:RangedDataList-class]{RangedDataList}} instance.}
+  \item{object}{ A \code{\link[GenomicRanges]{GRanges}} object,
+    a \code{\link[IRanges]{RangedData}} object, or a list of
+    \code{\link[IRanges]{RangedData}} objects (e.g. a
+    \code{\link[IRanges]{RangedDataList}} object). }
   \item{browser}{ The name of the genome browser. }
   \item{range}{ A genome identifier or a
     \code{\link[GenomicRanges:GRanges-class]{GRanges}} or

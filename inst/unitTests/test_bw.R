@@ -17,23 +17,23 @@ test_bw <- function() {
   si <- SeqinfoForBSGenome("hg19")
   seqlengths(correct_fixed) <- seqlengths(si)[levels(space)]
 
-  test <- import(test_bw)
+  test <- import(test_bw, asRangedData = TRUE)
   checkIdentical(test, correct_fixed)
 
   test_bw_out <- file.path(tempdir(), "test_out.bw")
   export(correct_fixed, test_bw_out)
   on.exit(unlink(test_bw_out))
-  test <- import(test_bw_out)
+  test <- import(test_bw_out, asRangedData = TRUE)
   checkIdentical(test, correct_fixed)
 
   export.bw(correct_fixed, test_bw_out)
-  test <- import.bw(test_bw_out)
+  test <- import.bw(test_bw_out, asRangedData = TRUE)
   checkIdentical(test, correct_fixed)
   
   correct_bedgraph <- correct_fixed
   width(correct_bedgraph) <- seq(1, 300, length = 9)
   export(correct_bedgraph, test_bw_out)
-  test <- import(test_bw_out)
+  test <- import(test_bw_out, asRangedData = TRUE)
   checkIdentical(test, correct_bedgraph)
   
   ## TEST: 'which'
@@ -41,19 +41,20 @@ test_bw <- function() {
   correct_which <- subsetByOverlaps(correct_bedgraph, which)
   ranges(correct_which) <- intersect(ranges(correct_which),
                                      as(which, "RangesList"))
-  test <- import(test_bw_out, which = which)
+  test <- import(test_bw_out, which = which, asRangedData = TRUE)
   checkIdentical(test, correct_which)
 
   ## TEST: BigWigSelection (range, no score)
   test <- import(test_bw_out,
-                 selection = BigWigSelection(which, colnames = character()))
+                 selection = BigWigSelection(which, colnames = character()),
+                 asRangedData = TRUE)
   correct_which <- correct_which[, character()]
   checkIdentical(test, correct_which)
   
   ## TEST: empty which
   which <- RangesList()
   correct_which <- subsetByOverlaps(correct_bedgraph, which)
-  test <- import(test_bw_out, which = which)
+  test <- import(test_bw_out, which = which, asRangedData = TRUE)
   checkIdentical(test, correct_which)  
   
   ## TEST: asRangedData=FALSE
@@ -65,6 +66,6 @@ test_bw <- function() {
   seqlevels(correct_ncbi) <- sub("chr", "", seqlevels(correct_ncbi))
   names(correct_ncbi) <- sub("chr", "", names(correct_ncbi))
   export(correct_ncbi, test_bw_out)
-  test <- import(test_bw_out)
+  test <- import(test_bw_out, asRangedData = TRUE)
   checkIdentical(test, correct_ncbi)  
 }

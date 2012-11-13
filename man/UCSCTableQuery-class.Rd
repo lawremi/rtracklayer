@@ -113,10 +113,10 @@
   
   \describe{
     \item{}{
-      \code{track(object, asRangedData = TRUE)}:
-      Retrieves the indicated table as a track, i.e. a \code{RangedData}
-      instance. Note that not all tables are available as tracks. Pass
-      \code{asRangedData = FALSE} to obtain a \code{GRanges} object.
+      \code{track(object, asRangedData = FALSE)}:
+      Retrieves the indicated table as a track, i.e. a \code{GRanges}
+      object. Note that not all tables are available as tracks. Pass
+      \code{asRangedData = TRUE} to obtain a \code{RangedData} object.
     }
     \item{}{
       \code{getTable(object)}: Retrieves the indicated table as a
@@ -176,13 +176,14 @@ trackNames(session) ## list the track names
 ## choose the Conservation track for a portion of mm9 chr1
 query <- ucscTableQuery(session, "Conservation",
                         GRangesForUCSCGenome("mm9", "chr12",
-                                             IRanges(57795963, 57815592))))
+                                             IRanges(57795963, 57815592)))
 ## list the table names
 tableNames(query)
 ## get the phastCons30way track
 tableName(query) <- "phastCons30way"
 ## retrieve the track data
-track(query)
+track(query, asRangedData = FALSE)  # as a GRanges object
+track(query, asRangedData = TRUE)   # as a RangedData object
 ## get a data.frame summarizing the multiple alignment
 tableName(query) <- "multiz30waySummary"
 getTable(query)

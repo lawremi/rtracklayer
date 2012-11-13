@@ -136,11 +136,13 @@ setMethod("import.wig", "ANY",
           })
 
 setMethod("import", "WIGFile",
-          function(con, format, text, genome = NA, asRangedData = TRUE,
+          function(con, format, text, genome = NA, asRangedData = FALSE,
                    trackLine = TRUE, which = NULL, ...)
           {
             if (!missing(format))
               checkArgFormat(con, format)
+            if (missing(asRangedData))
+              warning(asRangedData.warning.msg("import"))
             file <- con
             con <- connection(con, "r")
             ## check for a track line

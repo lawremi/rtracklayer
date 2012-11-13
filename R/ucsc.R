@@ -501,15 +501,19 @@ ucscExport <- function(object)
 
 setMethod("track", "UCSCSession",
           function(object, name, range = base::range(object), table = NULL,
-                   asRangedData = TRUE)
+                   asRangedData = FALSE)
           {
+            if (missing(asRangedData))
+              warning(asRangedData.warning.msg("track"))
             track(ucscTableQuery(object, name, range, table), asRangedData)
           })
 
 ## download a trackSet by name
 setMethod("track", "UCSCTableQuery",
-          function(object, asRangedData = TRUE)
+          function(object, asRangedData = FALSE)
           {
+            if (missing(asRangedData))
+              warning(asRangedData.warning.msg("track"))
             tables <- tableNames(object)
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
@@ -1286,8 +1290,12 @@ parseFormatFromTrackLine <- function(x) {
 
 setMethod("import", "UCSCFile",
           function(con, format, text, subformat = "auto", drop = FALSE,
-                   asRangedData = TRUE, genome = NA, ...)
+                   asRangedData = FALSE, genome = NA, ...)
           {
+            if (missing(asRangedData))
+              warning(asRangedData.warning.msg("foo",
+                                               if.FALSE="GenomicRangesList",
+                                               if.TRUE="RangedDataList"))
             if (!isTRUEorFALSE(asRangedData))
               stop("'asRangedData' must be TRUE or FALSE")
             lines <- readLines(resource(con), warn = FALSE)

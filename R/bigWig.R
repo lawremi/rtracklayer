@@ -147,10 +147,12 @@ setMethod("import.bw", "ANY",
 
 setMethod("import", "BigWigFile",
           function(con, format, text, selection = BigWigSelection(which, ...),
-                   which = con, asRangedData = TRUE, ...)
+                   which = con, asRangedData = FALSE, ...)
           {
             if (!missing(format))
               checkArgFormat(con, format)
+            if (missing(asRangedData))
+              warning(asRangedData.warning.msg("import"))
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
             si <- seqinfo(con)

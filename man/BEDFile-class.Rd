@@ -46,7 +46,7 @@
 
 \usage{
 \S4method{import}{BEDFile,ANY,ANY}(con, format, text, trackLine = TRUE,
-                   genome = NA, asRangedData = TRUE, colnames = NULL,
+                   genome = NA, asRangedData = FALSE, colnames = NULL,
                    which = NULL, seqinfo = NULL, extraCols = character())
 import.bed(con, ...)
 import.bed15(con, ...)
@@ -98,8 +98,8 @@ export.bedGraph(object, con, ...)
     value using either an installed BSgenome package or UCSC, if network
     access is available.
   }
-  \item{asRangedData}{If \code{FALSE}, a \code{GRanges} is returned,
-    instead of a \code{RangedData}.
+  \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
+    instead of a \code{GRanges}.
   }
   \item{colnames}{A character vector naming the columns to parse. These
     should name columns in the result, not those in the BED spec, so
@@ -141,8 +141,8 @@ export.bedGraph(object, con, ...)
 }
 
 \value{
-  A \code{RangedData} (or \code{GRanges} if the \code{asRangedData} is
-  \code{FALSE}), with the columns described in the details.
+  A \code{GRanges} (or \code{RangedData} if \code{asRangedData} is
+  \code{TRUE}), with the metadata columns described in the details.
 }
 
 \details{
@@ -164,12 +164,12 @@ export.bedGraph(object, con, ...)
   belong in \link[Rsamtools:BamFile]{BAM}, and gene models are more
   richly expressed in \link[=GFFFile]{GFF}.
 
-  The following is the mapping of BED elements to a \code{RangedData}
-  object. NA values are allowed only where indicated. These appear as
-  a \dQuote{.} in the file. Only the first three columns (chrom, start
-  and strand) are required. The other columns can only be included if
-  all previous columns (to the left) are included. Upon export, default
-  values are used to automatically pad the table, if necessary.
+  The following is the mapping of BED elements to a \code{GRanges} or
+  \code{RangedData} object. NA values are allowed only where indicated.
+  These appear as a \dQuote{.} in the file. Only the first three columns
+  (chrom, start and strand) are required. The other columns can only be
+  included if all previous columns (to the left) are included. Upon export,
+  default values are used to automatically pad the table, if necessary.
   \describe{
     \item{chrom, start, end}{the \code{ranges} component.}
     \item{name}{character vector (NA's allowed) in the \code{name}
@@ -225,24 +225,25 @@ export.bedGraph(object, con, ...)
   test_path <- system.file("tests", package = "rtracklayer")
   test_bed <- file.path(test_path, "test.bed")
 
-  test <- import(test_bed)
+  test <- import(test_bed, asRangedData = FALSE)
   test
-  import.bed(test_bed)
+  rd <- import.bed(test_bed, asRangedData = TRUE)
+  rd
 
   test_bed_file <- BEDFile(test_bed)
-  import(test_bed_file)
+  import(test_bed_file, asRangedData = FALSE)
   
   test_bed_con <- file(test_bed)
-  import(test_bed_con, format = "bed")
+  import(test_bed_con, format = "bed", asRangedData = FALSE)
   close(test_bed_con)
   
-  import(test_bed, trackLine = FALSE)
-  import(test_bed, asRangedData = FALSE)
-  import(test_bed, genome = "hg19")
-  import(test_bed, colnames = c("name", "strand", "thick"))
-  
-  which <- RangesList(chr7 = ranges(test)[[1]][1:2])
-  import(test_bed, which = which)
+  import(test_bed, trackLine = FALSE, asRangedData = FALSE)
+  import(test_bed, genome = "hg19", asRangedData = FALSE)
+  import(test_bed, colnames = c("name", "strand", "thick"),
+         asRangedData = FALSE)
+
+  which <- RangesList(chr7 = as(test, "RangesList")[[1]][1:2]) 
+  import(test_bed, which = which, asRangedData = FALSE)
 
 \dontrun{
   test_bed_out <- file.path(tempdir(), "test.bed")
@@ -251,7 +252,7 @@ export.bedGraph(object, con, ...)
   test_bed_out_file <- BEDFile(test_bed_out)
   export(test, test_bed_out_file)
 
-  export(test, test_bed_out, name = "Alternative name")
+  export(rd, test_bed_out, name = "Alternative name")
   
   test_bed_gz <- paste(test_bed_out, ".gz", sep = "")
   export(test, test_bed_gz)
@@ -260,7 +261,7 @@ export.bedGraph(object, con, ...)
   export(test, test_bed_out, index = TRUE, trackLine = FALSE)
   
   bed_text <- export(test, format = "bed")
-  test <- import(format = "bed", text = bed_text)
+  test <- import(format = "bed", text = bed_text, asRangedData = FALSE)
 }
 }
 

@@ -4,7 +4,7 @@ test_bedGraph <- function() {
 
   createCorrectRd <- function(si) {
     part <- PartitioningByWidth(rep(300, 9))
-    ir <- shift(IRanges(start(part), end(part)), 59302000)
+    ir <- shift(IRanges(start(part), end(part)), 59102000)
     score <- seq(-1, 1, by = 0.25)
     space <- factor(c(rep("chr19", 6), "chr17", rep("chr18", 2)), seqlevels(si))
     correct_rd <- RangedData(ir, score, space = space)
@@ -28,62 +28,71 @@ test_bedGraph <- function() {
   correct_ucsc <- createCorrectUCSC(correct_rd)
   
   ## TEST: basic import
-  test <- import(test_bg)
-  checkIdentical(test, correct_ucsc)
-  test <- import.bedGraph(test_bg)
-  checkIdentical(test, correct_ucsc)
-  test_bg_file <- BEDGraphFile(test_bg)
-  test <- import(test_bg_file)
-  checkIdentical(import(test_bg_file, format = "bedGraph"), correct_ucsc)
-  checkException(import(test_bg_file, format = "wig"))
-  checkIdentical(test, correct_ucsc)
-  test_bg_con <- file(test_bg)
-  test <- import(test_bg_con, format = "wig")
-  checkIdentical(test, correct_ucsc)
-  close(test_bg_con)
-  test_bg_con <- file(test_bg)
-  test <- import(WIGFile(test_bg_con))
-  checkIdentical(test, correct_ucsc)
-  close(test_bg_con)
-  
+  for (asRangedData in c(TRUE, FALSE)) {
+    target <- correct_ucsc
+    if (!asRangedData)
+      target <- as(target, "GRanges")
+    test <- import(test_bg, asRangedData = asRangedData)
+    checkIdentical(target, test)
+    test <- import.bedGraph(test_bg, asRangedData = asRangedData)
+    checkIdentical(target, test)
+    test_bg_file <- BEDGraphFile(test_bg)
+    checkException(import(test_bg_file, format = "wig",
+                          asRangedData = asRangedData))
+    test <- import(test_bg_file, format = "bedGraph",
+                   asRangedData = asRangedData)
+    checkIdentical(target, test)
+    test <- import(test_bg_file, asRangedData = asRangedData)
+    checkIdentical(target, test)
+    test_bg_con <- file(test_bg)
+    test <- import(test_bg_con, format = "wig", asRangedData = asRangedData)
+    checkIdentical(target, test)
+    close(test_bg_con)
+    test_bg_con <- file(test_bg)
+    test <- import(WIGFile(test_bg_con), asRangedData = asRangedData)
+    checkIdentical(target, test)
+    close(test_bg_con)
+  }
+
   ## TEST: 'genome'
   hg19_seqinfo <- SeqinfoForBSGenome("hg19")
   correct_genome <- createCorrectUCSC(createCorrectRd(hg19_seqinfo))
-  test <- import(test_bg, genome = "hg19")
+  test <- import(test_bg, genome = "hg19", asRangedData = TRUE)
   checkIdentical(correct_genome, test)
+  test <- import(test_bg, genome = "hg19", asRangedData = FALSE)
+  checkIdentical(as(correct_genome, "GRanges"), sort(test))
 
   ## TEST: trackLine = FALSE
-  test <- import(test_bg, trackLine = FALSE)
-  checkIdentical(test, correct_rd)
-
-  ## TEST: asRangedData = FALSE
-  correct_gr <- suppressWarnings(as(correct_ucsc, "GRanges"))
-  test <- import(test_bg, asRangedData = FALSE)
-  checkIdentical(correct_gr, sort(test))
+  test <- import(test_bg, trackLine = FALSE, asRangedData = TRUE)
+  checkIdentical(correct_rd, test)
+  test <- import(test_bg, trackLine = FALSE, asRangedData = FALSE)
+  checkIdentical(as(correct_rd, "GRanges"), test)
 
   ## TEST: which
   which <- ranges(correct_rd[3:4,])
   correct_which <- subsetByOverlaps(correct_ucsc, which)
-  test <- import(test_bg, which = which)
+  test <- import(test_bg, which = which, asRangedData = TRUE)
   checkIdentical(correct_which, test)
+  test <- import(test_bg, which = which, asRangedData = FALSE)
+  checkIdentical(as(correct_which, "GRanges"), test)
 
   ## TEST: basic export
   test_bg_out <- file.path(tempdir(), "test.bedGraph")
   on.exit(unlink(test_bg_out))
   export(correct_ucsc, test_bg_out)
-  test <- import(test_bg_out)
+  test <- import(test_bg_out, asRangedData = TRUE)
   checkIdentical(correct_ucsc, test)
   export.bedGraph(correct_ucsc, test_bg_out)
-  test <- import(test_bg_out)
+  test <- import(test_bg_out, asRangedData = TRUE)
   checkIdentical(correct_ucsc, test)
   test_foo_out <- file.path(tempdir(), "test.foo")
   export(correct_ucsc, test_foo_out, format = "bedGraph")
   on.exit(unlink(test_foo_out))
-  test <- import(test_bg_out)
+  test <- import(test_bg_out, asRangedData = TRUE)
   checkIdentical(correct_ucsc, test)
   test_bg_out_file <- BEDGraphFile(test_bg_out)
   export(correct_ucsc, test_bg_out_file)
-  test <- import(test_bg_out)
+  test <- import(test_bg_out, asRangedData = TRUE)
   checkIdentical(correct_ucsc, test)
   checkException(export(correct_ucsc, test_bg_out_file, format = "gff"))
 
@@ -92,34 +101,34 @@ test_bedGraph <- function() {
                               trackLine = initialize(correct_ucsc@trackLine,
                                 name = "test2"))
   export(correct_ucsc2, test_bg_out_file, append = TRUE)
-  test <- import(test_bg_out_file)
+  test <- import(test_bg_out_file, asRangedData = TRUE)
   correct_list <- RangedDataList("bedGraph track" = correct_ucsc,
                                  test2 = correct_ucsc2)
   checkIdentical(correct_list, test)
 
   ## TEST: track line parameters
   export(correct_ucsc, test_bg_out, name = "test2")
-  test <- import(test_bg_out)
+  test <- import(test_bg_out, asRangedData = TRUE)
   checkIdentical(correct_ucsc2, test)
 
   ## TEST: export trackLine
   export(correct_ucsc, test_bg_out, trackLine = FALSE)
-  test <- import(test_bg_out)
+  test <- import(test_bg_out, asRangedData = TRUE)
   checkIdentical(test, correct_rd)
   
   ## TEST: RangedDataList
   export(correct_list, test_bg_out)
-  test <- import(test_bg_out)
+  test <- import(test_bg_out, asRangedData = TRUE)
   checkIdentical(correct_list, test)
   
   ## TEST: gzip
   test_bg_gz <- paste(test_bg_out, ".gz", sep = "")
   on.exit(unlink(test_bg_gz))
   export(correct_ucsc, test_bg_gz)
-  test <- import(test_bg_gz)
+  test <- import(test_bg_gz, asRangedData = TRUE)
   checkIdentical(correct_ucsc, test)
   export(correct_ucsc2, test_bg_gz, append = TRUE)
-  test <- import(test_bg_gz)
+  test <- import(test_bg_gz, asRangedData = TRUE)
   checkIdentical(correct_list, test)
   
   ## TEST: Using connection to add comment header
@@ -130,6 +139,6 @@ test_bedGraph <- function() {
   export(correct_ucsc, test_bg_con)
   close(test_bg_con)
   checkIdentical(comment, readLines(test_bg_out, n = 1))
-  test <- import(test_bg_out)
+  test <- import(test_bg_out, asRangedData = TRUE)
   checkIdentical(correct_ucsc, test)
 }

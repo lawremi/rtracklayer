@@ -206,13 +206,15 @@ setMethod("import.gff", "ANY",
 
 setMethod("import", "GFFFile",
           function(con, format, text, version = c("", "1", "2", "3"),
-                   genome = NA, asRangedData = TRUE, colnames = NULL,
+                   genome = NA, asRangedData = FALSE, colnames = NULL,
                    which = NULL, feature.type = NULL)
           {
             if (!missing(format))
               checkArgFormat(con, format)
             if (!missing(version))
               con <- asGFFVersion(con, match.arg(version))
+            if (missing(asRangedData))
+              warning(asRangedData.warning.msg("import"))
 
             sniffed <- sniffGFFVersion(resource(con))
             version <- gffFileVersion(con)

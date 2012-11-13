@@ -50,7 +50,7 @@ preferred in the context of \Rpackage{rtracklayer}; however,
 
 \textbf{rtracklayer} supports the import and export of tracks from and
 to files in various formats, see Section~\ref{sec:import-export}. All
-positions in a \Rclass{RangedData} or \Rclass{GRanges} should be
+positions in a \Rclass{GRanges} or \Rclass{RangedData} should be
 1-based, as in R itself.
 
 The \textbf{rtracklayer} package currently interfaces with the
@@ -257,21 +257,16 @@ of the data may be given as a connection, a filename or a character
 vector containing the data. Like the \texttt{export} function, the
 format is determined from the filename, by default. 
 <<import, eval=FALSE>>=
-restoredTrack <- import("targets.bed")
-@
-%
-The \Robject{restoredTrack} object is of class \Rclass{RangedData}. To
-obtain a \Rclass{GRanges} object directly upon importing, pass
-\Rcode{asRangedData = FALSE} to \Rfunction{import}:
-<<import-gr, eval=FALSE>>=
 restoredTrack <- import("targets.bed", asRangedData = FALSE)
 @
 %
-Eventually, \Rfunction{import} will return \Rclass{GRanges} objects by
-default; the extra parameter is necessary for backwards
-compatibility. Thus, if a \Rclass{RangedData} is desired, new code
-should specify \Rcode{asRangedData = TRUE} in anticipation of the
-change in default value.
+The \Robject{restoredTrack} object is of class \Rclass{GRanges}. To
+obtain a \Rclass{RangedData} object directly upon importing, pass
+\Rcode{asRangedData = TRUE} to \Rfunction{import}:
+<<import-gr, eval=FALSE>>=
+restoredTrack <- import("targets.bed", asRangedData = TRUE)
+@
+%
 
 \paragraph{Exercises}
 
@@ -283,7 +278,7 @@ change in default value.
 
 <<sol-3, echo=FALSE, results=hide>>=
 export(targetTrack, "targets.gff")
-targetGff <- import("targets.gff")
+targetGff <- import("targets.gff", asRangedData = FALSE)
 targetChar <- export(targetTrack, format = "gff1")
 @ 
 
@@ -414,12 +409,12 @@ One may download any of the tracks, such as the ``targets'' track that
 was loaded previously in this example.
 %
 <<get-track-data, eval=FALSE>>=
-subTargetTrack <- track(session, "targets")
+subTargetTrack <- track(session, "targets", asRangedData = FALSE)
 @
 %
-The returned object is a \Rclass{RangedData}, even if the data was
-originally uploaded as a \Rclass{GRanges} or other object. To get a
-\Rclass{GRanges} instead, pass \Rcode{asRangedData = FALSE}. By
+The returned object is a \Rclass{GRanges}, even if the data was
+originally uploaded as a \Rclass{RangedData} or other object. To get a
+\Rclass{RangedData} instead, pass \Rcode{asRangedData = TRUE}. By
 default, the segment of the track downloaded is the current default
 genome segment associated with the session. One may download track
 data for any genome segment, such as those on a particular
@@ -427,7 +422,7 @@ chromosome. Note that this does not distinguish by strand; we are only
 indicating a position on the genome.
 %
 <<get-track-segment, eval=FALSE>>=
-chr1Targets <- track(session, "targets", chr1Targets)
+chr1Targets <- track(session, "targets", chr1Targets, asRangedData = FALSE)
 @
 
 \paragraph{Exercises}
@@ -439,9 +434,9 @@ chr1Targets <- track(session, "targets", chr1Targets)
 
 <<sol-7, eval=FALSE, echo=FALSE, results=hide>>=
 region <- range(subTargetTrack) + 500
-targetSNP <- track(session, "snp130", region)
+targetSNP <- track(session, "snp130", region, asRangedData = FALSE)
 as.data.frame(targetSNP)
-targetGene <- track(session, "knownGene", region)
+targetGene <- track(session, "knownGene", region, asRangedData = FALSE)
 as.data.frame(targetGene)
 @ 
 
@@ -636,16 +631,15 @@ instance.
 %
 <<track-nrsf>>=
 nrsfTrack <- GenomicData(ranges(nrsfHits), strand="+", chrom="chr1",
-                         genome = "hg19")
+                         genome = "hg19", asRangedData = FALSE)
 @ 
 %
 \Rfunction{GenomicData} is a convenience function that by default
-constructs a \Rclass{RangedData} object. A \Rclass{GRanges} may be
-obtained by passing \Rcode{asRangedData = FALSE}; however, a
-\Rclass{RangedData} may be preferred in this case, as the
-\Robject{nrsfHits} object is stored as a \Rclass{Views} object in
-\Robject{nrsfTrack} without any loss of informatqion, in particular
-the sequence of chr1.
+constructs a \Rclass{GRanges} object. A \Rclass{RangedData} may be
+obtained by passing \Rcode{asRangedData = TRUE} and may be preferred
+in this case, as the \Robject{nrsfHits} object will then be stored as a
+\Rclass{Views} object in \Robject{nrsfTrack} without any loss of information,
+in particular the sequence of chr1.
 
 \subsection{Browsing the binding sites}
 
@@ -655,7 +649,7 @@ view the region around the first hit in a single call to
 \texttt{browseGenome}.
 %
 <<browserView-nrsf, eval=FALSE>>=
-session <- browseGenome(nrsfTrack, range = range(nrsfTrack[1,]) * -10)
+session <- browseGenome(nrsfTrack, range = range(nrsfTrack[1]) * -10)
 @ 
 %
 We observe significant conservation across mammal species in the

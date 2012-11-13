@@ -8,8 +8,10 @@
 
 GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
                         seqinfo = NULL,
-                        asRangedData = TRUE, which = NULL)
+                        asRangedData = FALSE, which = NULL)
 {
+  if (missing(asRangedData))
+    warning(asRangedData.warning.msg("GenomicData"))
   if (!isTRUEorFALSE(asRangedData))
     stop("'asRangedData' must be TRUE or FALSE")
   if (is.null(genome))

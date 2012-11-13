@@ -40,7 +40,7 @@
 \usage{
 \S4method{import}{BigWigFile,ANY,ANY}(con, format, text,
                    selection = BigWigSelection(which, ...),
-                   which = con, asRangedData = TRUE, ...)
+                   which = con, asRangedData = FALSE, ...)
 import.bw(con, ...)
 
 \S4method{export}{ANY,BigWigFile,ANY}(object, con, format, ...)
@@ -67,8 +67,8 @@ export.bw(object, con, ...)
     (case insensitive).
   }
   \item{text}{Not supported.}
-  \item{asRangedData}{If \code{FALSE}, a \code{GRanges} is returned,
-    instead of a \code{RangedData}.
+  \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
+    instead of a \code{GRanges}.
   }
   \item{selection}{A \code{\linkS4class{BigWigSelection}} object
     indicating the ranges to load.
@@ -93,9 +93,9 @@ export.bw(object, con, ...)
 }
 
 \value{
-  A \code{RangedData} (or \code{GRanges} if the \code{asRangedData} is
-  \code{FALSE}), with the score values in the \code{score} column, which
-  is accessible via the \code{score} function.
+  A \code{GRanges} (or \code{RangedData} if \code{asRangedData} is
+  \code{TRUE}), with the score values in the \code{score} metadata column,
+  which is accessible via the \code{score} function.
 }
 
 \section{\code{BigWigFile} objects}{
@@ -148,11 +148,11 @@ if (.Platform$OS.type != "windows") {
   test_path <- system.file("tests", package = "rtracklayer")
   test_bw <- file.path(test_path, "test.bw")
 
-  test <- import(test_bw)
+  test <- import(test_bw, asRangedData = FALSE)
   test
 
   which <- GRanges(c("chr2", "chr2"), IRanges(c(1, 300), c(400, 1000)))
-  import(test_bw, which = which)
+  import(test_bw, which = which, asRangedData = FALSE)
 
 \dontrun{
   test_bw_out <- file.path(tempdir(), "test_out.bw")

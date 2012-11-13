@@ -65,11 +65,11 @@ Similarly the universe refers to the genome.}
   \describe{
     \item{}{
       \code{GenomicData(ranges, ..., strand = NULL, chrom = NULL,
-        genome = NULL, asRangedData = TRUE)}: If \code{asRangedData} is
-      \code{TRUE}, constructs a \code{RangedData} instance with the given
-      \code{ranges} and variables in \code{...} (see the
-      \code{\link[IRanges:RangedData-class]{RangedData}} constructor).
-      If \code{asRangedData} is \code{FALSE}, constructs a \code{GRanges}
+        genome = NULL, asRangedData = FALSE)}: If \code{asRangedData} is
+      \code{FALSE} (the default), constructs a \code{GRanges} instance with
+      the given \code{ranges} and variables in \code{...} (see the
+      \code{\link[GenomicRanges]{GRanges}} constructor).
+      If \code{asRangedData} is \code{TRUE}, constructs a \code{RangedData}
       instance with the given \code{ranges} and variables in \code{...}.
 
       If non-\code{NULL}, the \code{strand} argument specifies the strand
@@ -79,8 +79,8 @@ Similarly the universe refers to the genome.}
       is only acceptable when \code{asRangedData} is \code{TRUE}.) To get the
       levels for \code{strand}, call \code{levels(strand())}.
 
-      \code{chrom} argument is analogous to \code{space} in the
-      \code{RangedData} and \code{seqnames} in \code{GRanges} constructors.
+      \code{chrom} argument is analogous to \code{seqnames} in the
+      \code{GRanges} and \code{space} in \code{RangedData} constructors.
 
       The \code{genome} argument should be a scalar string and is treated
       as the \code{RangedData} universe. See the examples.
@@ -101,31 +101,23 @@ Similarly the universe refers to the genome.}
   range1 <- IRanges::RangesList(chr1 = IRanges::IRanges(c(1,2,3), c(5,2,8)))
 
   ## just ranges ##
-  ## RangedData instance
-  rd <- GenomicData(range1)
   ## GRanges instance
   gr <- GenomicData(range1, asRangedData = FALSE)
+  ## RangedData instance
+  rd <- GenomicData(range1, asRangedData = TRUE)
 
   ## with a genome (universe) ##
-  ## RangedData instance
-  rd <- GenomicData(range1, genome = "hg18")
-  genome(rd) ## "hg18"
   ## GRanges instance
   gr <- GenomicData(range1, genome = "hg18", asRangedData = FALSE)
   genome(gr) ## "hg18"
+  ## RangedData instance
+  rd <- GenomicData(range1, genome = "hg18", asRangedData = TRUE)
+  genome(rd) ## "hg18"
 
   ## with some data ##
   filter <- c(1L, 0L, 1L)
   score <- c(10L, 2L, NA)
   strand <- factor(c("+", NA, "-"), levels = levels(strand()))
-  ## RangedData instance
-  rd <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18")
-  rd[["score"]]
-  strand(rd) ## all NA
-  rd <- GenomicData(range1[[1]], score, chrom = "chr1", filt = filter,
-                    strand = strand)
-  rd[["filt"]]
-  strand(rd) ## equal to 'strand'
   ## GRanges instance
   gr <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18",
                     asRangedData = FALSE)
@@ -135,11 +127,20 @@ Similarly the universe refers to the genome.}
                     chrom = "chr1", asRangedData = FALSE)
   mcols(gr)[["filt"]]
   strand(gr) ## equal to 'strand'
+  ## RangedData instance
+  rd <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18",
+                    asRangedData = TRUE)
+  rd[["score"]]
+  strand(rd) ## all NA
+  rd <- GenomicData(range1[[1]], score, filt = filter, strand = strand,
+                    chrom = "chr1", asRangedData = TRUE)
+  rd[["filt"]]
+  strand(rd) ## equal to 'strand'
 
   ## coercion from data.frame ##
   df <- as.data.frame(rd)
-  GenomicData(df)
   GenomicData(df, asRangedData = FALSE)
+  GenomicData(df, asRangedData = TRUE)
 }
 \keyword{classes}
 \keyword{methods}

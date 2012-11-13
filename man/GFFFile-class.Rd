@@ -60,7 +60,7 @@
 \usage{
 \S4method{import}{GFFFile,ANY,ANY}(con, format, text,
            version = c("", "1", "2", "3"),
-           genome = NA, asRangedData = TRUE, colnames = NULL, which = NULL,
+           genome = NA, asRangedData = FALSE, colnames = NULL, which = NULL,
            feature.type = NULL)
 import.gff(con, ...)
 import.gff1(con, ...)
@@ -116,8 +116,8 @@ export.gff3(object, con, ...)
     value using either an installed BSgenome package or UCSC, if network
     access is available.
   }
-  \item{asRangedData}{If \code{FALSE}, a \code{GRanges} is returned,
-    instead of a \code{RangedData}.
+  \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
+    instead of a \code{GRanges}.
   }
   \item{colnames}{A character vector naming the columns to parse. These
     should name either fixed fields, like \code{source} or
@@ -156,8 +156,8 @@ export.gff3(object, con, ...)
 }
 
 \value{
-  A \code{RangedData} (or \code{GRanges} if the \code{asRangedData} is
-  \code{FALSE}), with the columns described in the details.
+  A \code{GRanges} (or \code{RangedData} if \code{asRangedData} is
+  \code{TRUE}), with the metadata columns described in the details.
 }
 
 \details{
@@ -200,10 +200,10 @@ export.gff3(object, con, ...)
   still supports it. To export or import GFF data in the track line
   format, call \code{\link{export.ucsc}} or \code{\link{import.ucsc}}.
   
-  The following is the mapping of GFF elements to a \code{RangedData}
-  object. NA values are allowed only where indicated. These appear as
-  a \dQuote{.} in the file. GFF requires that all columns are included,
-  so \code{export} generates defaults for missing columns.
+  The following is the mapping of GFF elements to a \code{GRanges} or
+  \code{RangedData} object. NA values are allowed only where indicated.
+  These appear as a \dQuote{.} in the file. GFF requires that all columns
+  are included, so \code{export} generates defaults for missing columns.
 
   \describe{
     \item{seqid, start, end}{the \code{ranges} component.}
@@ -270,48 +270,48 @@ export.gff3(object, con, ...)
   test_gff3 <- file.path(test_path, "genes.gff3")
 
   ## basic import
-  test <- import(test_gff3)
+  test <- import(test_gff3, asRangedData = FALSE)
   test
 
   ## import.gff functions
-  import.gff(test_gff3)
-  import.gff3(test_gff3)
+  import.gff(test_gff3, asRangedData = FALSE)
+  import.gff3(test_gff3, asRangedData = FALSE)
 
   ## GFFFile derivatives
   test_gff_file <- GFF3File(test_gff3)
-  import(test_gff_file)
+  import(test_gff_file, asRangedData = FALSE)
   test_gff_file <- GFFFile(test_gff3)
-  import(test_gff_file)
+  import(test_gff_file, asRangedData = FALSE)
   test_gff_file <- GFFFile(test_gff3, version = "3")
-  import(test_gff_file)
+  import(test_gff_file, asRangedData = FALSE)
 
   ## from connection
   test_gff_con <- file(test_gff3)
-  test <- import(test_gff_con, format = "gff")
+  test <- import(test_gff_con, format = "gff", asRangedData = FALSE)
   close(test_gff_con)
 
   ## various arguments
-  import(test_gff3, genome = "hg19")
-  import(test_gff3, asRangedData = FALSE)
-  import(test_gff3, colnames = character())
-  import(test_gff3, colnames = c("strand", "geneName"))
+  import(test_gff3, genome = "hg19", asRangedData = FALSE)
+  import(test_gff3, colnames = character(), asRangedData = FALSE)
+  import(test_gff3, colnames = c("strand", "geneName"), asRangedData = FALSE)
 
   ## 'which'
   which <- RangesList(chr10 = IRanges(90000, 93000))
-  import(test_gff3, which = which)
+  import(test_gff3, which = which, asRangedData = FALSE)
 
 \dontrun{
   ## 'append'
   test_gff3_out <- file.path(tempdir(), "genes.gff3")
-  export(test["chr10"], test_gff3_out)
-  export(test["chr12"], test_gff3_out, append = TRUE)
-  import(test_gff3_out)
+
+  export(test[seqnames(test) == "chr10"], test_gff3_out)
+  export(test[seqnames(test) == "chr12"], test_gff3_out, append = TRUE)
+  import(test_gff3_out, asRangedData = FALSE)
   
   ## 'index'
   export(test, test_gff3_out, index = TRUE)
   test_bed_gz <- paste(test_gff3_out, ".gz", sep = "")
-  import(test_bed_gz, which = which)
-  
+  import(test_bed_gz, which = which, asRangedData = FALSE)
+
   ## RangedDataList  
   rdl <-
     RangedDataList(new("UCSCData", test[1],
@@ -320,7 +320,7 @@ export.gff3(object, con, ...)
                        trackLine = new("BasicTrackLine", name = "chr12")))
   names(rdl) <- names(test)
   export(rdl, test_gff3_out)
-  import.ucsc(test_gff3_out)
+  import.ucsc(test_gff3_out, asRangedData = FALSE)
 }
 }
 

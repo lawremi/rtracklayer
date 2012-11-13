@@ -42,7 +42,7 @@
 \usage{
 \S4method{import}{UCSCFile,ANY,ANY}(con, format, text,
                    subformat = "auto", drop = FALSE,
-                   asRangedData = TRUE, genome = NA, ...)
+                   asRangedData = FALSE, genome = NA, ...)
 import.ucsc(con, ...)
 
 \S4method{export}{ANY,UCSCFile,ANY}(object, con, format, ...)
@@ -95,10 +95,10 @@ export.ucsc(object, con, ...)
     access is available. This defaults to the \code{db} BED track line
     parameter, if any.
   }
-  \item{asRangedData}{If \code{FALSE}, a \code{GenomicRangesList} is
-    returned, instead of a \code{RangedDataList} of \code{UCSCData}
-    objects, and the track line is then stored in the \code{metadata} of
-    each \code{GRanges} in the list.
+  \item{asRangedData}{If \code{FALSE} (the default), a \code{GenomicRangesList}
+    is returned and the track line is stored in the \code{metadata} of
+    each \code{GRanges} in the list. If \code{TRUE}, a \code{RangedDataList}
+    of \code{UCSCData} objects is returned.
   }
   \item{drop}{If \code{TRUE}, and there is only one track in the file,
     return the track object directly, rather than embedding it in a list.
@@ -119,14 +119,14 @@ export.ucsc(object, con, ...)
 }
 
 \value{
-  A \code{RangedDataList} (or \code{GenomicRangesList} if the
-  \code{asRangedData} is \code{FALSE}), unless \code{drop}
-  is \code{TRUE} and there is only a single track in the file. In that
-  case, the first and only object is extracted from the list and
-  returned. The structure of that object depends on the format of the
-  data. The \code{RangedDataList} contains \code{UCSCData} objects,
-  whereas the \code{GenomicRangesList} contains \code{GRanges} objects
-  with a \code{trackLine} element in their metadata.
+  A \code{GenomicRangesList} if \code{asRangedData} is \code{FALSE})
+  (and a \code{RangedDataList} otherwise), unless \code{drop} is \code{TRUE}
+  and there is only a single track in the file. In that case, the first and
+  only object is extracted from the list and returned.
+  The structure of that object depends on the format of the
+  data. The \code{GenomicRangesList} contains \code{GRanges} objects
+  with a \code{trackLine} element in their metadata,
+  whereas the \code{RangedDataList} contains \code{UCSCData} objects.
 }
 
 \details{

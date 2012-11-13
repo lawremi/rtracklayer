@@ -30,7 +30,7 @@
 
 \usage{
 \S4method{import}{WIGFile,ANY,ANY}(con, format, text, genome = NA,
-                    asRangedData = TRUE, trackLine = TRUE, which = NULL, ...)
+                    asRangedData = FALSE, trackLine = TRUE, which = NULL, ...)
 import.wig(con, ...)
 
 \S4method{export}{ANY,WIGFile,ANY}(object, con, format, ...)
@@ -74,8 +74,8 @@ export.wig(object, con, ...)
     value using either an installed BSgenome package or UCSC, if network
     access is available.
   }
-  \item{asRangedData}{If \code{FALSE}, a \code{GRanges} is returned,
-    instead of a \code{RangedData}.
+  \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
+    instead of a \code{GRanges}.
   }
   \item{which}{A range data structure like \code{RangesList}
     or \code{GRanges}. Only the intervals in the file overlapping the
@@ -102,9 +102,9 @@ export.wig(object, con, ...)
 }
 
 \value{
-  A \code{RangedData} (or \code{GRanges} if the \code{asRangedData} is
-  \code{FALSE}), with the score values in the \code{score} column, which
-  is accessible via the \code{score} function.
+  A \code{GRanges} (or \code{RangedData} if \code{asRangedData} is
+  \code{TRUE}), with the score values in the \code{score} metadata column,
+  which is accessible via the \code{score} function.
 }
 
 \details{
@@ -144,24 +144,23 @@ export.wig(object, con, ...)
   test_wig <- file.path(test_path, "step.wig")
 
   ## basic import calls
-  test <- import(test_wig)
+  test <- import(test_wig, asRangedData = FALSE)
   test
-  import.wig(test_wig)
+  import.wig(test_wig, asRangedData = FALSE)
   test_wig_file <- WIGFile(test_wig)
-  import(test_wig_file)
+  import(test_wig_file, asRangedData = FALSE)
   test_wig_con <- file(test_wig)
-  import(test_wig_con, format = "wig")
+  import(test_wig_con, format = "wig", asRangedData = FALSE)
   close(test_wig_con)
   test_wig_con <- file(test_wig)
-  import(WIGFile(test_wig_con))
+  import(WIGFile(test_wig_con), asRangedData = FALSE)
   close(test_wig_con)
 
   ## various options
-  import(test_wig, genome = "hg19")
-  import(test_wig, trackLine = FALSE)
-  import(test_wig, asRangedData = FALSE)
-  which <- ranges(test[3:4,])
-  import(test_wig, which = which)
+  import(test_wig, genome = "hg19", asRangedData = FALSE)
+  import(test_wig, trackLine = FALSE, asRangedData = FALSE)
+  which <- as(test[3:4,], "RangesList")
+  import(test_wig, which = which, asRangedData = FALSE)
 
 \dontrun{
   ## basic export calls
@@ -174,9 +173,9 @@ export.wig(object, con, ...)
   export(test, test_wig_out_file)
 
   ## appending
-  test2 <- initialize(test,
-                      trackLine = initialize(test@trackLine,
-                        name = "test2"))
+  test2 <- test
+  metadata(test2)$trackLine <- initialize(metadata(test)$trackLine,
+                                          name = "test2")
   export(test2, test_wig_out_file, append = TRUE)
 
   ## passing track line parameters
