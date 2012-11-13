@@ -73,6 +73,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
           dots[["strand"]] <- NULL
           return(GenomicData(ranges = ranges, dots, strand = strand,
                              chrom = chrom, genome = genome,
+                             seqinfo = seqinfo,
                              asRangedData = asRangedData, which = which))
         }
       }
