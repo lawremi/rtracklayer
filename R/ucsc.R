@@ -1293,7 +1293,7 @@ setMethod("import", "UCSCFile",
                    asRangedData = FALSE, genome = NA, ...)
           {
             if (missing(asRangedData))
-              warning(asRangedData.warning.msg("foo",
+              warning(asRangedData.warning.msg("import",
                                                if.FALSE="GenomicRangesList",
                                                if.TRUE="RangedDataList"))
             if (!isTRUEorFALSE(asRangedData))
