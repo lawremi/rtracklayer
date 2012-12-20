@@ -14,7 +14,7 @@ twoBitPath <- function(path) {
   uri <- .parseURI(path)
   if (!uriIsLocal(uri))
     stop("TwoBit driver handles only local file paths")
-  uri$path
+  path.expand(uri$path)
 }
 
 TwoBitFile <- function(path) {
@@ -109,7 +109,7 @@ setMethod("import", "TwoBitFile",
                    ...)
           {
             lkup <- get_seqtype_conversion_lookup("B", "DNA")
-            ans <- .Call(TwoBitFile_read, as.character(path(con)),
+            ans <- .Call(TwoBitFile_read, twoBitPath(path(con)),
                          as.character(seqnames(which)),
                          as(ranges(which), "IRanges"), lkup)
             names(ans) <- names(which)
