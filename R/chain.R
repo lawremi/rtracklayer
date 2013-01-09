@@ -42,7 +42,8 @@ setMethod("import.chain", "ANY", function(con, ...) {
 setMethod("import", "ChainFile", function(con, format, text, exclude = "_") {
   if (!missing(format))
     checkArgFormat(con, format)
-  .Call("readChain", path(con), as.character(exclude), PACKAGE="rtracklayer")
+  .Call("readChain", path.expand(path(con)), as.character(exclude),
+        PACKAGE="rtracklayer")
 })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
