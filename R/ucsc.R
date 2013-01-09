@@ -87,6 +87,14 @@ setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
             object
           })
 
+setReplaceMethod("track", c("UCSCSession", "RTLFile"),
+                 function(object, name = names(value), ..., value)
+                 {
+                   form <- ucscForm(value, genome(object), ...)
+                   response <- ucscPost(object, "custom", form)
+                   object
+                 })
+
 setMethod("browserViews", "UCSCSession",
           function(object) object@views$instances)
 
@@ -1169,8 +1177,8 @@ setMethod("export", c("ANY", "UCSCFile"),
             track <- try(as(object, "RangedData"), silent = TRUE)
             if (class(track) == "try-error") {
               track <- try(as(object, "RangedDataList"), silent = TRUE)
-              if (class(track) == "try-error")
-                stop("cannot export object of class '", cl, "'")
+              if (is(track, "try-error"))
+                stop("cannot export object of class '", cl, "': ", track)
             }
             object <- track
             callGeneric()
@@ -1523,6 +1531,15 @@ setMethod("ucscForm", "UCSCView",
               list(hgsid = as.character(object@hgsid))
             else list()
           })
+setOldClass("FileUploadInfo")
+setMethod("ucscForm", "FileUploadInfo",
+          function(object, genome = NA_character_, ...)
+          {
+            form <- list(Submit = "Submit", hgt.customFile = object)
+            if (!is.na(genome))
+              form <- c(form, db = genome)
+            form
+          })
 setMethod("ucscForm", "RangedDataList",
           function(object, format, ...)
           {
@@ -1530,11 +1547,14 @@ setMethod("ucscForm", "RangedDataList",
             text <- paste(paste(lines, collapse = "\n"), "\n", sep = "")
             filename <- paste("track", format, sep = ".")
             upload <- fileUpload(filename, text, "text/plain")
-            form <- list(Submit = "Submit", hgt.customFile = upload)
             genome <- singleGenome(genome(object))
-            if (!is.na(genome))
-              form <- c(form, db = genome)
-            form
+            ucscForm(upload, genome)
+          })
+setMethod("ucscForm", "RTLFile",
+          function(object, genome, ...)
+          {
+            upload <- fileUpload(path(object), "text/plain")
+            ucscForm(upload, genome)
           })
 
 setMethod("ucscForm", "UCSCTableQuery",
