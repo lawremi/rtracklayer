@@ -10,7 +10,7 @@ test_bed <- function() {
 
     ir <- IRanges(c(127471197, 127472364, 127473531, 127474698, 127475865),
                   width = 1167)
-    space <- factor(rep(c("chr7", "chr16"), c(3, 2)), seqlevels(seqinfo))
+    space <- factor(rep(c("chr7", "chr9"), c(3, 2)), seqlevels(seqinfo))
     blocks <- split(IRanges(c(1, 501, 1068, 1, 668, 1, 1, 1),
                             c(300, 700, 1167, 250, 1167, 1167, 1167, 1167)),
                     rep(seq_len(5), c(3, 2, 1, 1, 1)))
@@ -43,7 +43,7 @@ test_bed <- function() {
           useScore = FALSE))
   }
   
-  correct_rd <- createCorrectRd(Seqinfo(c("chr7", "chr16")))
+  correct_rd <- createCorrectRd(Seqinfo(c("chr7", "chr9")))
   correct_ucsc <- createCorrectUCSC(correct_rd)
   
   test <- import(test_bed, asRangedData = TRUE)
