@@ -47,7 +47,7 @@ setMethod("import", "FastaFile",
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            readFun <- get(paste("read.", match.arg(type), "StringSet",
+            readFun <- get(paste("read", match.arg(type), "StringSet",
                                  sep = ""))
             readFun(path(con), format = "fasta", ...)
           })
