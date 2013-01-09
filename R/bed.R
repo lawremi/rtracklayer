@@ -44,8 +44,8 @@ setMethod("export", c("ANY", "BEDFile"),
             track <- try(as(object, "RangedData"), silent = TRUE)
             if (class(track) == "try-error") {
               track <- try(as(object, "RangedDataList"), silent = TRUE)
-              if (class(track) == "try-error")
-                stop("cannot export object of class '", cl, "'")
+              if (is(track, "try-error"))
+                stop("cannot export object of class '", cl, "': ", track)
             }
             export(track, con, ...)
           })
