@@ -227,7 +227,8 @@ setMethod("import", "BEDFile",
                                  trackLine = FALSE, genome = genome,
                                  asRangedData = asRangedData,
                                  colnames = colnames,
-                                 which = which, seqinfo = seqinfo))
+                                 which = which, seqinfo = seqinfo,
+                                 extraCols = extraCols))
             }
             if (is(file, "BEDGraphFile")) {
               bedClasses <- c("character", "integer", "integer", "numeric")
@@ -279,6 +280,7 @@ setMethod("import", "BEDFile",
               colsInFile <- seq_len(length(strsplit(line, "[\t ]")[[1]]))
               presentNames <- bedNames[colsInFile]
               tail(presentNames, length(extraCols)) <- names(extraCols)
+              bedNames <- presentNames
               presentClasses <- bedClasses[colsInFile]
               tail(presentClasses, length(extraCols)) <- unname(extraCols)
               colnames <- normArgColnames(presentNames)
