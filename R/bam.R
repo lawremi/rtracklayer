@@ -12,7 +12,7 @@ setMethod("import", "BamFile",
           })
 
 setMethod("export", c("GappedAlignments", "BamFile"),
-          function(object, con, format) {
+          function(object, con, format, index = TRUE) {
             sam_path <- paste(file_path_sans_ext(path(con)), ".sam", sep = "")
             sam_con <- file(sam_path, "w")
             on.exit(close(sam_con))
@@ -46,7 +46,8 @@ setMethod("export", c("GappedAlignments", "BamFile"),
             writeLines(aln, sam_con)
             close(sam_con)
             on.exit()
-            bam <- asBam(sam_path, file_path_sans_ext(sam_path))
+            bam <- asBam(sam_path, file_path_sans_ext(sam_path),
+                         overwrite = TRUE, indexDestination = index)
             unlink(sam_path)
             invisible(bam)
           })
