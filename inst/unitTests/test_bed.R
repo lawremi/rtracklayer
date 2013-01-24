@@ -29,6 +29,7 @@ test_bed <- function() {
   }
 
   createCorrectUCSC <- function(rd) {
+    on.exit
     new("UCSCData", rd,
         trackLine = new("BasicTrackLine", itemRgb = TRUE,
           name = "ItemRGBDemo",
@@ -264,3 +265,28 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   })
   checkIdentical(test, correct_fill_to_blocks)
 }
+
+test_extendedBed <- function()
+{
+
+        # the narrowPeak format represents a variety of "BED6+N" formats
+        # used by the ENCODE project.  see
+        # http://genome.ucsc.edu/FAQ/FAQformat.html
+        # "This format is used to provide called peaks of signal
+        #  enrichment based on pooled, normalized (interpreted) data.
+        #  It is a BED6+4 format."
+  
+    file <- system.file("extdata", "demo.narrowPeak.gz",  package="rtracklayer")
+    extraCols <- c(signalValue="numeric", pValue="numeric", qValue="numeric",
+                   peak="integer")
+    gr <- import(file, forma="bed", asRangedData=FALSE, extraCols=extraCols)
+    checkEquals(length(gr), 6)
+    checkEquals(colnames(mcols(gr)),
+                c("name","score","signalValue","pValue","qValue","peak"))
+
+       # Seqinfo not provided. here's one way to do it
+       # seqinfo(gr) <- SeqinfoForBSGenome("hg19")[names(seqinfo(gr))]
+    
+    checkTrue(all(is.na(seqlengths(seqinfo(gr)))))
+    
+} 
