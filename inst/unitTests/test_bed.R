@@ -279,14 +279,15 @@ test_extendedBed <- function()
     file <- system.file("extdata", "demo.narrowPeak.gz",  package="rtracklayer")
     extraCols <- c(signalValue="numeric", pValue="numeric", qValue="numeric",
                    peak="integer")
-    gr <- import(file, forma="bed", asRangedData=FALSE, extraCols=extraCols)
+    gr <- import(file, forma="bed", asRangedData=FALSE, extraCols=extraCols, genome="hg19")
     checkEquals(length(gr), 6)
     checkEquals(colnames(mcols(gr)),
                 c("name","score","signalValue","pValue","qValue","peak"))
 
-       # Seqinfo not provided. here's one way to do it
-       # seqinfo(gr) <- SeqinfoForBSGenome("hg19")[names(seqinfo(gr))]
-    
-    checkTrue(all(is.na(seqlengths(seqinfo(gr)))))
+        # make sure that all seqnames in the gr object
+        # are also in the seqinfo(gr) object
+    checkTrue(all(seqnames(gr) %in% names(seqinfo(gr))))
+
+
     
 } 
