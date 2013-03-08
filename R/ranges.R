@@ -255,9 +255,14 @@ normGenomeRange <- function(range, session) {
   }
   genome <- genome(session)
   rangeGenome <- singleGenome(genome(range))
-  if (is.na(rangeGenome))
-    genome(range) <- genome
-  else if (rangeGenome != genome) {
+  if (is.na(rangeGenome)) {
+    if (is(range, "GenomicRanges") && length(seqinfo(range)) == 0L) {
+      seqinfo(range) <- Seqinfo("foo", genome = genome)
+    }
+    else {
+      genome(range) <- genome
+    }
+  } else if (rangeGenome != genome) {
     genome(session) <- rangeGenome
     on.exit(genome(session) <- genome)
   }
@@ -274,16 +279,18 @@ normGenomeRange <- function(range, session) {
     }
     GRangesForGenome(genome, chrom, range, seqinfo = seqinfo(session))
   } else if (is(range, "GRanges")) {
-    if (length(unique(seqnames(range))) != 1L)
-      stop("'range' must contain ranges on a single chromosome")
-    strand(range) <- "*"
-    range <- range(range)
-    seqlens <- seqlengths(session)
-    chr <- as.character(seqnames(range))
-    if (!chr %in% names(seqlens))
-      stop("'range' has invalid chromosome: ", chr)
-    if (start(range) < 1L || end(range) > seqlens[chr])
-      stop("'range' is out of bounds for ", rangeGenome, ":", chr)
+    if (length(range) > 0L) {
+      if (length(unique(seqnames(range))) != 1L)
+        stop("'range' must contain ranges on a single chromosome")
+      strand(range) <- "*"
+      range <- range(range)
+      seqlens <- seqlengths(session)
+      chr <- as.character(seqnames(range))
+      if (!all(chr %in% names(seqlens)))
+        stop("'range' has invalid chromosome: ", chr)
+      if (start(range) < 1L || end(range) > seqlens[chr])
+        stop("'range' is out of bounds for ", rangeGenome, ":", chr)
+    }
     range
   }
   else stop("'range' should be either a genome string, RangesList or GRanges")

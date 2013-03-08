@@ -30,13 +30,9 @@ setMethod("initialize", "UCSCSession",
           })
 
 setMethod("seqlengths", "UCSCSession", function(x) {
-  chromInfo <- ucscGet(x, "tracks", list(chromInfoPage = ""))
-  path <- "//table/tr[1]/td[contains(text(), 'Sequence name')]/../.."
-  table <- getNodeSet(chromInfo, path)[[1]]
-  ans <- sapply(getNodeSet(table, "tr/td[@align = 'RIGHT']/text()"), xmlValue)
-  ans <- as.integer(gsub("[^0-9]", "", ans))
-  names(ans) <- sapply(getNodeSet(table, "tr/td/a/text()"), xmlValue)
-  ans
+  query <- ucscTableQuery(x, range = GRanges(), table = "chromInfo")
+  chromInfo <- getTable(query)
+  setNames(chromInfo$size, chromInfo$chrom)
 })
 
 setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
@@ -1513,10 +1509,12 @@ setMethod("ucscForm", "GRanges",
             genome <- singleGenome(genome(object))
             if (!is.na(genome))
               form <- c(form, db = genome)
-            object <- object[1]
-            c(form, position = paste(seqnames(object), ":",
-                      unlist(start(object)), "-",
-                      unlist(end(object)), sep = ""))
+            if (length(object) > 0L) {
+              object <- object[1]
+              c(form, position = paste(seqnames(object), ":",
+                        unlist(start(object)), "-",
+                        unlist(end(object)), sep = ""))
+            } else form
           })
 
 setMethod("ucscForm", "UCSCTrackModes",
@@ -1561,18 +1559,21 @@ setMethod("ucscForm", "UCSCTableQuery",
           function(object, tracks = FALSE) {
             ## range (ie genome) is required
             range <- object@range
+            table <- object@table
             form <- ucscForm(range)
-            if (is.null(object@track) && !tracks)
+            if (is.null(object@track) && !tracks) {
               form <- c(form, list(hgta_group = "allTables"))
+              if (is.null(table))
+                table <- "chromInfo"
+            }              
             else
               form <- c(form, list(hgta_group = "allTracks",
                                    hgta_track = object@track))
             if (spansGenome(range))
               regionType <- "genome"
             else regionType <- "range"
-            form <- c(form, hgta_regionType = regionType)
-            table <- object@table
-            form <- c(form, hgta_table = table)
+            form <- c(form, hgta_regionType = regionType,
+                      hgta_table = table)
             if (!is.null(object@outputType)) {
               form <- c(form, hgta_outputType = object@outputType)
             }
