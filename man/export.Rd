@@ -149,6 +149,15 @@ import(con, format, text, ...)
 }
 \author{ Michael Lawrence }
 
+\seealso{
+  Format-specific options for the popular formats:
+  \acronym{\link[=GFFFile]{GFF}}, \acronym{\link[=BEDFile]{BED}},
+  \acronym{\link[=BED15File]{Bed15}},
+  \acronym{\link[=BEDGraphFile]{bedGraph}},
+  \acronym{\link[=WIGFile]{WIG}},
+  \acronym{\link[=BigWigFile]{BigWig}}
+}
+
 \examples{
   track <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
   \dontrun{export(track, "my.gff", version = "3")}
