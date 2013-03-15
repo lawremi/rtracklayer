@@ -16,7 +16,7 @@ setMethod("decompress", "ANY", function(con, ...) con)
 setMethod("decompress", "CompressedFile", function(con, ...) {
   resource <- resource(con)
   if (is.character(resource))
-    manageConnection(gzfile(resource)) # handles gzip, bzip2 and xz
+    manage(gzfile(resource)) # handles gzip, bzip2 and xz
   else stop("Cannot decompress connection")
 })
 
