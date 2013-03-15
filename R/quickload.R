@@ -227,8 +227,8 @@ setMethod("sortBySeqnameAndStart", "RangedDataORGenomicRanges", function(x) {
 })
 
 setMethod("sortBySeqnameAndStart", "RangesList", function(x) {
-  value_flat <- unlist(value, use.names=FALSE)
-  relist(value_flat[order(space(value), start(value_flat))], value)
+  x.flat <- unlist(x, use.names=FALSE)
+  relist(x.flat[order(space(x), start(x.flat))], x)
 })
 
 .exportToQuickload <- function(object, name,
