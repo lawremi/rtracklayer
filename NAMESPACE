@@ -44,10 +44,11 @@ importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
                   seqinfo, "seqinfo<-", seqlevels, "seqlevels<-")
 
-importFrom("Biostrings", get_seqtype_conversion_lookup, masks, writeXStringSet)
+importFrom("Biostrings", get_seqtype_conversion_lookup, masks, writeXStringSet,
+           "masks<-", DNAStringSet, )
 
 importFrom("BSgenome", installed.genomes, releaseDate, organism,
-           providerVersion, provider)
+           providerVersion, provider, bsapply)
 
 importFrom("Rsamtools", path, indexTabix, headerTabix, scanTabix, bgzip,
            TabixFile, index, asBam)
