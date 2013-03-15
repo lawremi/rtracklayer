@@ -240,8 +240,8 @@ singleGenome <- function(x) {
 
 
 ## normalize 'range', using 'session' for default genome
-## note that is singular, i.e., only one interval should come out of this
-normGenomeRange <- function(range, session) {
+## if 'single' is 'TRUE', only one interval should come out of this
+normGenomeRange <- function(range, session, single = TRUE) {
   ## the user can specify a portion of the genome in several ways:
   ## - String identifying a genome
   ## - RangesList
@@ -253,47 +253,32 @@ normGenomeRange <- function(range, session) {
     genome(session) <- range
     return(GRangesForGenome(range, seqinfo = seqinfo(session)))
   }
+  if (!is(range, "RangesList") && !is(range, "GenomicRanges"))
+    stop("'range' should be either a genome string, RangesList or GRanges")
   genome <- genome(session)
-  rangeGenome <- singleGenome(genome(range))
-  if (is.na(rangeGenome)) {
-    if (is(range, "GenomicRanges") && length(seqinfo(range)) == 0L) {
-      seqinfo(range) <- Seqinfo("foo", genome = genome)
+  if (length(seqinfo(range)) == 0L) {
+    ## hack: need to avoid calling seqlengths(session) here, so use 'foo'
+    seqinfo(range) <- Seqinfo("foo", genome = genome)
+  } else {
+    rangeGenome <- singleGenome(genome(range))
+    if (!is.na(rangeGenome) && rangeGenome != genome) {
+      genome(session) <- rangeGenome
+      on.exit(genome(session) <- genome)
     }
-    else {
-      genome(range) <- genome
-    }
-  } else if (rangeGenome != genome) {
-    genome(session) <- rangeGenome
-    on.exit(genome(session) <- genome)
+    seqinfo(range) <- seqinfo(session)
   }
   if (is(range, "RangesList")) {
-    if (length(range) > 1)
-      stop("'range' must contain ranges on a single chromosome")
-    chrom <- names(range)
-    genome <- rangeGenome
-    ranges <- NULL
-    if (!is.null(chrom)) {
-      flatRange <- unlist(range)
-      if (length(flatRange))
-        range <- range(flatRange)
-    }
-    GRangesForGenome(genome, chrom, range, seqinfo = seqinfo(session))
-  } else if (is(range, "GRanges")) {
-    if (length(range) > 0L) {
-      if (length(unique(seqnames(range))) != 1L)
-        stop("'range' must contain ranges on a single chromosome")
-      strand(range) <- "*"
-      range <- range(range)
-      seqlens <- seqlengths(session)
-      chr <- as.character(seqnames(range))
-      if (!all(chr %in% names(seqlens)))
-        stop("'range' has invalid chromosome: ", chr)
-      if (start(range) < 1L || end(range) > seqlens[chr])
-        stop("'range' is out of bounds for ", rangeGenome, ":", chr)
-    }
-    range
+    range <- GRangesForGenome(genome(range), names(range), unlist(range),
+                              seqinfo = seqinfo(session))
+  } else if (is(range, "GenomicRanges")) {
+    strand(range) <- "*"
+    mcols(range) <- NULL
   }
-  else stop("'range' should be either a genome string, RangesList or GRanges")
+  if (single) {
+    if (length(unique(seqnames(range))) != 1L)
+      stop("'range' must contain ranges on a single chromosome")
+    range(range)
+  } else range
 }
 
 spansGenome <- function(x) {

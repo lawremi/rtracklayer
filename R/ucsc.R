@@ -182,7 +182,8 @@ setReplaceMethod("browserSession", c("UCSCTableQuery", "UCSCSession"),
 setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
 setReplaceMethod("range", "UCSCTableQuery",
                  function(x, value) {
-                   x@range <- normGenomeRange(value, browserSession(x))
+                   x@range <- normGenomeRange(value, browserSession(x),
+                                              single = FALSE)
                    x
                  })
 
@@ -269,7 +270,7 @@ setMethod("ucscTableQuery", "UCSCSession",
             if (!is(names, "characterORNULL"))
               stop("'names' must be 'NULL' or a character vector")
             ## only inherit the genome from the session
-            range <- normGenomeRange(range, x)
+            range <- normGenomeRange(range, x, single = FALSE)
             query <- new("UCSCTableQuery", session = x, range = range,
                          NAMES = names)
             ## the following line must always happen to initialize the session
@@ -289,7 +290,7 @@ ucscTableGet <- function(query, .parse = TRUE, tracks = FALSE, ...)
 
 ucscTablePost <- function(query, .parse = TRUE, tracks = FALSE, ...)
   ucscPost(browserSession(query), "tables",
-           c(ucscForm(query, tracks = tracks), ...), .parse = .parse)
+           c(ucscForm(query, tracks = tracks), list(...)), .parse = .parse)
 
 ## gets the track names available from the table browser
 
@@ -450,6 +451,15 @@ setMethod("ucscSchema", "UCSCTableQuery", function(object) {
   ucscSchema(ucscSchemaDescription(object))
 })
 
+.uploadTableBrowserRanges <- function(query, hgsid) {
+  lines <- export(query@range, format = "bed", ignore.strand = TRUE)
+  text <- paste(paste(lines, collapse = "\n"), "\n", sep = "")
+  upload <- fileUpload("ranges.bed", text, "text/plain")
+  ucscTablePost(query, hgta_enteredUserRegionFile = upload,
+                hgta_enteredUserRegions = "",
+                hgta_doSubmitUserRegions = "submit",
+                hgsid = hgsid)
+}
 
 ## export data from UCSC (internal utility)
 ucscExport <- function(object)
@@ -486,6 +496,10 @@ ucscExport <- function(object)
                            hgsid = hgsid)
     hgsid <- get_hgsid(output)
   }
+  if (length(object@range) > 1) {
+    output <- .uploadTableBrowserRanges(object, hgsid)
+    hgsid <- get_hgsid(output)
+  }
   followup <- NULL
   if (outputType(object) == "bed") { ## some formats have extra pages
     followup <- list(hgta_doGetBed = "get BED",
@@ -511,6 +525,10 @@ setMethod("track", "UCSCSession",
               warning(asRangedData.warning.msg("track"))
             track(ucscTableQuery(object, name, range, table), asRangedData)
           })
+
+outputTruncated <- function(x) {
+  grepl("^-", tail(x, 1))
+}
 
 ## download a trackSet by name
 setMethod("track", "UCSCTableQuery",
@@ -544,8 +562,12 @@ setMethod("track", "UCSCTableQuery",
             }
             outputType(object) <- output
             output <- ucscExport(object)
+            if (outputTruncated(output))
+              stop("Output incomplete: ",
+                   "track has more than 100,000 elements. ",
+                   "Try downloading the data via the UCSC FTP site.")
             import(text = output, format = format, asRangedData = asRangedData,
-                   genome = singleGenome(genome(range(object))))
+                   seqinfo = seqinfo(range(object)))
           })
 
 ## grab sequences for features in 'track' at 'range'
@@ -1560,7 +1582,10 @@ setMethod("ucscForm", "UCSCTableQuery",
             ## range (ie genome) is required
             range <- object@range
             table <- object@table
-            form <- ucscForm(range)
+            form <- list()
+            if (length(range) == 1) {
+              form <- c(form, ucscForm(range))
+            }
             if (is.null(object@track) && !tracks) {
               form <- c(form, list(hgta_group = "allTables"))
               if (is.null(table))
@@ -1571,7 +1596,9 @@ setMethod("ucscForm", "UCSCTableQuery",
                                    hgta_track = object@track))
             if (spansGenome(range))
               regionType <- "genome"
-            else regionType <- "range"
+            else if (length(range) == 1)
+              regionType <- "range"
+            else regionType <- "userRegions"
             form <- c(form, hgta_regionType = regionType,
                       hgta_table = table)
             if (!is.null(object@outputType)) {
