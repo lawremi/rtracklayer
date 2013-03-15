@@ -51,7 +51,8 @@ setMethod("export", c("ANY", "BEDFile"),
           })
 
 setMethod("export", c("RangedData", "BEDFile"),
-          function(object, con, format, append = FALSE, index = FALSE)
+          function(object, con, format, append = FALSE, index = FALSE,
+                   ignore.strand = FALSE)
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -122,7 +123,7 @@ setMethod("export", c("RangedData", "BEDFile"),
                 thickStart <- start(object)
                 thickEnd <- end(object)
               }
-              strand <- object$strand
+              strand <- if (ignore.strand) NULL else object$strand
               if (!is.null(thickStart) && is.null(strand)) {
                 strand <- rep(NA, nrow(object))
               }
