@@ -137,7 +137,7 @@ setMethod("import.wig", "ANY",
 
 setMethod("import", "WIGFile",
           function(con, format, text, genome = NA, asRangedData = FALSE,
-                   trackLine = TRUE, which = NULL, ...)
+                   trackLine = TRUE, which = NULL, seqinfo = NULL, ...)
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -152,6 +152,7 @@ setMethod("import", "WIGFile",
               return(import.ucsc(initialize(file, resource = con), drop = TRUE,
                                  trackLine = FALSE, genome = genome,
                                  asRangedData = asRangedData, which = which,
+                                 seqinfo = seqinfo,
                                  ...))
             }
             if (!isTRUEorFALSE(asRangedData))
@@ -164,8 +165,7 @@ setMethod("import", "WIGFile",
             format <- gsub("^([^ ]*) .*", "\\1", formatLines)
             parsedFormat <- lapply(formatLines, ucscParsePairs)
             chrom <- sapply(parsedFormat, `[[`, "chrom")
-            seqinfo <- NULL
-            if (!is.null(genome) && !is.na(genome))
+            if (is.null(seqinfo) && !is.null(genome) && !is.na(genome))
               seqinfo <- seqinfoForGenome(genome)
             if (!is.null(seqinfo))
               seqlevels <- seqlevels(seqinfo)
@@ -239,6 +239,6 @@ setMethod("import", "WIGFile",
             } else {
               import(text = lines, format = "bedGraph",
                      genome = genome, asRangedData = asRangedData,
-                     which = which)
+                     which = which, seqinfo = seqinfo)
             }
         })
