@@ -9,10 +9,7 @@
 }
 \usage{
 browseGenome(object, ...)
-\S4method{browseGenome}{GRanges}(object,
-  browser = "UCSC", range = base::range(object),
-  view = TRUE, trackParams = list(), viewParams = list(),
-  name = "customTrack", ...)
+\S4method{browseGenome}{GRanges}(object, ...)
 \S4method{browseGenome}{RangedDataORRangedDataList}(object,
   browser = "UCSC", range = base::range(object),
   view = TRUE, trackParams = list(), viewParams = list(),

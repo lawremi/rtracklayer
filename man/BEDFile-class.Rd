@@ -54,7 +54,7 @@ import.bedGraph(con,  ...)
 
 \S4method{export}{ANY,BEDFile,ANY}(object, con, format, ...)
 \S4method{export}{RangedData,BEDFile,ANY}(object, con, format,
-                   append = FALSE, index = FALSE)
+                   append = FALSE, index = FALSE, ignore.strand = FALSE)
 \S4method{export}{RangedDataList,BEDFile,ANY}(object, con, format, ...)
 \S4method{export}{UCSCData,BEDFile,ANY}(object, con, format,
                    trackLine = TRUE, ...)
@@ -115,6 +115,9 @@ export.bedGraph(object, con, ...)
     sort the data by chromosome and start. Does not work when exporting
     a \code{RangedDataList} with multiple elements; tabix supports a
     single track in a file.
+  }
+  \item{ignore.strand}{Whether to output the strand when not required
+    (by the existence of later fields).
   }
   \item{seqinfo}{If not \code{NULL}, the \code{Seqinfo} object to set on
     the result. If the \code{genome} argument is not \code{NA}, it must

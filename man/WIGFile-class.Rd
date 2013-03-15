@@ -30,7 +30,8 @@
 
 \usage{
 \S4method{import}{WIGFile,ANY,ANY}(con, format, text, genome = NA,
-                    asRangedData = FALSE, trackLine = TRUE, which = NULL, ...)
+                    asRangedData = FALSE, trackLine = TRUE, which = NULL,
+                    seqinfo = NULL, ...)
 import.wig(con, ...)
 
 \S4method{export}{ANY,WIGFile,ANY}(object, con, format, ...)
@@ -73,6 +74,10 @@ export.wig(object, con, ...)
     attempt will be made to derive the \code{seqinfo} on the return
     value using either an installed BSgenome package or UCSC, if network
     access is available.
+  }
+  \item{seqinfo}{If not \code{NULL}, the \code{Seqinfo} object to set on
+    the result. If the \code{genome} argument is not \code{NA}, it must
+    agree with \code{genome(seqinfo)}.
   }
   \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
     instead of a \code{GRanges}.
