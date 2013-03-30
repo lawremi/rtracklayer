@@ -1,3 +1,33 @@
+CHANGES IN VERSION 1.20
+-----------------------
+
+NEW FEATURES
+
+    o Table query interface supports multiple query ranges.
+
+    o Files (RTLFile objects) can be directly uploaded to UCSC, via track<-.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o All methods with asRangedData argument now have it default to
+      FALSE, instead of TRUE. A warning is issued if the argument is
+      missing. Eventually, we will drop all support for RangedData
+      import (export will still work via automatic coercion to
+      GRanges).
+    
+BUG FIXES
+
+    o Chromosome list for a genome is now downloaded from the table
+      browser, instead of the Genome Browser page. This supports
+      genomes with more than 1000 contigs.
+
+    o BEDX+Y formats now work when a track line is present, and the
+      extraCols argument is used for the column names.
+
+    o path.expand() is now called for paths passed off to the Kent library.
+
+    o Order of metadata columns upon GFF import no longer depends on LC_COLLATE.
+    
 CHANGES IN VERSION 1.17
 -----------------------
 
