@@ -140,18 +140,18 @@ setMethod("export", c("RangedData", "GFFFile"),
                   x_char <- as.character(x_flat)
                   x_char <- sub(" *$", "", sub("^ *", "", as.character(x_char)))
                   if (version == "3")
-                    x_char <- urlEncode(x_char, "\t\n\r;=%&,", FALSE)
+                    x_char <- urlEncode(x_char, "%\t\n\r;=&,", FALSE)
                   if (is(x, "List")) {
                     x_char[is.na(x_char)] <- "."
                     x_char <- pasteCollapse(relist(x_char, x))
                     x_char[elementLengths(x) == 0] <- NA
                   }
                   x_char[is.na(x_char)] <- "\r"
-                  if (is(file, "GTFFile") && !is.numeric(x_flat))
+                  if (!is.numeric(x_flat))
                     x_char <- paste0("\"", x_char, "\"")
                   paste(name, x_char, sep = tvsep)
                 }, simplify = FALSE))
-                attrs <- do.call(paste, c(attrs, sep = ";"))
+                attrs <- do.call(paste, c(attrs, sep = "; "))
                 attrs <- gsub("[^;]*?\r\"?(;|$)", "", attrs)
                 attrs[nchar(attrs) == 0] <- NA
               }
@@ -211,21 +211,21 @@ setMethod("import.gff", "ANY",
       attrList <- list(group = factor(attrCol, levels=unique(attrCol)))
     else attrList <- list()
   } else {
-    attrSplit <- strsplit(attrCol, ";", fixed=TRUE)
-    attrs <- unlist(attrSplit, use.names=FALSE)
-    lines <- rep.int(seq_len(length(attrSplit)),
-                     elementLengths(attrSplit))
-    attrs <- sub(" *$", "", sub("^ *", "", attrs))
-    if (is(file, "GFF3File")) {
-      equals.pos <- regexpr("=", attrs, fixed=TRUE)
-      if (any(equals.pos == -1L))
-        stop("Some attributes do not conform to 'tag=value' format")
-      tags <- substring(attrs, 1L, equals.pos - 1L)
-      vals <- substring(attrs, equals.pos + 1L, nchar(attrs))
-    } else { # split on first space (FIXME: not sensitive to quotes)
-      tags <- sub(" .*", "", attrs) # strip surrounding quotes
-      vals <- sub("^\"([^\"]*)\"$", "\\1", sub("^[^ ]* ", "", attrs))
-    }
+    sentinel <- "\b"
+    con <- file()
+    on.exit(close(con))
+    writeLines(paste0(sub(";$", "", attrCol), sentinel), con)
+    attrs <- scan(con, what=character(),
+                  strip.white = TRUE, quiet = TRUE, sep = ";")
+    lines <- togroup(PartitioningByEnd(grep(sentinel, attrs, fixed = TRUE)))
+    attrs <- sub(sentinel, "", attrs, fixed = TRUE)
+    tag.value.sep <- if (is(file, "GFF3File")) "=" else " "
+    sep.pos <- regexpr(tag.value.sep, attrs, fixed=TRUE)
+    if (any(sep.pos == -1L))
+      stop("Some attributes do not conform to 'tag", tag.value.sep,
+           "value' format")
+    tags <- substring(attrs, 1L, sep.pos - 1L)
+    vals <- substring(attrs, sep.pos + 1L, nchar(attrs))
     if (!is.null(colnames)) {
       keep <- tags %in% colnames
       lines <- lines[keep]

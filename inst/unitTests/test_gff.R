@@ -30,7 +30,7 @@ test_gff <- function() {
                             list(character()), "GeneID:100288778",
                             rep("4644", 14)))
   geneName <- c("tubulin, beta 8", rep(NA, 14),
-                "WAS protein family homolog 1 pseudogene", rep(NA, 15))
+                "WAS protein family homolog 1; pseudogene", rep(NA, 15))
   genome <- c("hg19", rep(NA, length(geneName) - 1))
   correct_gff3 <- RangedData(IRanges(start, end),
                              source, type, score, strand, phase,
