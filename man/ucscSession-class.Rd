@@ -5,6 +5,7 @@
 \alias{track,UCSCSession-method}
 \alias{range<-}
 \alias{range<-,UCSCSession-method}
+\alias{track<-,UCSCSession,RTLFile-method}
 \alias{genome,UCSCSession-method}
 \alias{genome<-,UCSCSession-method}
 \alias{range,UCSCSession-method}
@@ -83,7 +84,9 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       \code{\link{export.ucsc}}, so they could be slots in a
       \code{\linkS4class{TrackLine}} subclass (and thus specify
         visual attributes like color) or parameters to pass
-      on to the export function for \code{format}.
+      on to the export function for \code{format}. The \code{value} may
+        be either a range object (like a \code{GRanges}) or a file
+        object (like a \code{BEDFile}).
     }
     \item{\code{\link{track}(object, name, range = range(object),
         table = NULL)}}{
