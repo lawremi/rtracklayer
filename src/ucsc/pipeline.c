@@ -160,17 +160,23 @@ static void plProcSetup(struct plProc* proc, int stdinFd, int stdoutFd, int stde
 /* setup signal, error handling, and file descriptors after fork */
 {
 int fd;
+#ifdef __USE_POSIX
 struct sigaction sigAct;
+#endif
 
 /* make sure abort handler exits */
 pushWarnAbort();
 pushAbortHandler(childAbortHandler);
 
 /* treat a closed pipe as an EOF rather than getting SIGPIPE */
+#ifdef __USE_POSIX
 ZeroVar(&sigAct);
 sigAct.sa_handler = SIG_IGN;
 if (sigaction(SIGPIPE, &sigAct, NULL) != 0)
-    errnoAbort("failed to set SIGPIPE to SIG_IGN");
+#else
+if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+#endif
+  errnoAbort("failed to set SIGPIPE to SIG_IGN");
 
 /* child, first setup stdio files */
 if (stdinFd != STDIN_FILENO)
