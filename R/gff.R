@@ -57,10 +57,14 @@ setMethod("export", c("ANY", "GFFFile"),
           {
             if (hasMethod("asGFF", class(object)))
               object <- asGFF(object)
-            object <- try(as(object, "RangedData"), silent = TRUE)
-            if (is(object, "try-error"))
-              stop("cannot export object of class '", class(object), "': ",
-                   object)
+            res <- try(as(object, "RangedData"), silent = TRUE)
+            if (is(res, "try-error")) {
+              res <- try(as(object, "RangedDataList"), silent = TRUE)
+              if (is(res, "try-error"))
+                stop("cannot export object of class '", class(object), "': ",
+                     res)
+            }
+            object <- res
             if (!missing(format))
               checkArgFormat(con, format)
             export(object, con, ...)

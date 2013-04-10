@@ -1075,7 +1075,7 @@ setAs("GraphTrackLine", "BasicTrackLine",
 setClass("UCSCData",
          representation(trackLine = "TrackLine"),
          prototype(trackLine = new("BasicTrackLine")),
-         "RangedData")
+         "GRanges")
 
 setMethod("show", "UCSCData",
           function(object)
@@ -1098,6 +1098,32 @@ chooseGraphType <- function(from) {
   type
 }
 
+setAs("GRanges", "UCSCData", function(from) {
+  line <- metadata(from)$trackLine
+  if (is.null(line)) {
+    if (is.numeric(score(from))) { # have numbers, let's plot them
+      type <- chooseGraphType(as(from, "RangedData"))
+      line <- new("GraphTrackLine", type = type)
+    } else {
+      line <- new("BasicTrackLine")
+      db <- unique(genome(from))
+      if (length(db) == 1 && !is.na(db))
+        line@db <- db
+    }
+  } else {
+    metadata(from)$trackLine <- NULL
+  }
+  new("UCSCData", from, trackLine = line)
+})
+
+setAs("UCSCData", "GRanges", function(from) {
+  gr <- new("GRanges")
+  for (what in slotNames(gr))
+    slot(gr, what) <- slot(from, what)
+  metadata(gr)$trackLine <- from@trackLine
+  gr
+})
+
 setAs("RangedData", "UCSCData", function(from) {
   line <- metadata(ranges(from))$trackLine
   if (is.null(line)) {
@@ -1111,14 +1137,20 @@ setAs("RangedData", "UCSCData", function(from) {
         line@db <- db
     }
   }
-  new("UCSCData", from, trackLine = line)
+  new("UCSCData", as(from, "GRanges"), trackLine = line)
 })
 
-setAs("UCSCData", "GRanges", function(from) {
-  gr <- as(as(from, "RangedData"), "GRanges")
-  metadata(gr)$trackLine <- from@trackLine
-  gr
+setAs("UCSCData", "RangedData", function(from) {
+  as(as(from, "GRanges"), "RangedData")
 })
+
+setMethod("split", "UCSCData",
+          function(x, f, drop=FALSE, ...) {
+            GenomicRangesList(
+              lapply(split(seq_along(x), f, drop=drop, ...),
+                     function(i) x[i])
+            )
+          })
 
 setClass("UCSCFile", contains = "RTLFile")
 
@@ -1223,6 +1255,7 @@ setMethod("export", c("UCSCData", "UCSCFile"),
               strand <- as.character(strand(object))
               strand[is.na(strand)] <- "NA"
               isStrandDisjoint <- function(track) {
+                track <- as(track, "RangedData")
                 all(unlist(lapply(ranges(track), function(r) {
                   isDisjoint(r) && all(width(r) > 0)
                 })))
@@ -1339,43 +1372,59 @@ setMethod("import", "UCSCFile",
                 }
               }
               line <- as(trackLines[i], trackLineClass(subformat))
-              if (starts[i] <= ends[i])
+              if (starts[i] <= ends[i]) {
                 text <- window(lines, starts[i], ends[i])
-              else
+              } else {
                 text <- character()
+              }
               if (is.na(genome) && is(line, "BasicTrackLine") &&
                   length(line@db))
                 genome <- line@db
-              if (subformat == "bed15") # need to pass track line
+              if (subformat == "bed15") { # need to pass track line
                 ucsc <- import(format = "bed15", text = text,
                                trackLine = line,
                                asRangedData = asRangedData,
                                genome = genome, ...)
-              else
+              } else {
                 ucsc <- import(format = subformat, text = text,
                                asRangedData = asRangedData,
                                genome = genome, ...)
+              }
               if (is(line, "BasicTrackLine") && length(line@offset))
                 ranges(ucsc) <- shift(ranges(ucsc), line@offset)
               if (asRangedData) {
+                metadata(ranges(ucsc))$trackLine <- line
+              } else {
                 ucsc <- as(ucsc, "UCSCData", FALSE)
                 ucsc@trackLine <- line
-              } else metadata(ucsc)$trackLine <- line
+              }
               ucsc
             }
             tsets <- lapply(seq_along(trackLines), makeTrackSet)
-            if (asRangedData) 
+            if (asRangedData) {
+              trackNames <- sapply(tsets,
+                function(x) metadata(ranges(x))$trackLine@name)
+            } else {
               trackNames <- sapply(tsets, function(x) x@trackLine@name)
-            else trackNames <- sapply(tsets,
-                                      function(x) metadata(x)$trackLine@name)
+            }
             if (!any(is.na(trackNames)))
               names(tsets) <- trackNames
             if (drop && length(tsets) == 1)
-              tsets[[1]]
-            else if (asRangedData)
-              do.call(RangedDataList, tsets)
-            else
-              do.call(GenomicRangesList, tsets)
+              return(tsets[[1]])
+            ans <- do.call(RangedDataList, lapply(tsets, as, "RangedData"))
+            if (!asRangedData) {
+              ans <- GenomicRangesList(
+                       lapply(ans,
+                         function(rd) {
+                           line <- metadata(ranges(rd))$trackLine
+                           if (is.null(line))
+                             Class <- "GRanges"
+                           else
+                             Class <- "UCSCData"
+                           as(rd, Class)
+                         }))
+            }
+            ans
           })
 
 ############ INTERNAL API ############

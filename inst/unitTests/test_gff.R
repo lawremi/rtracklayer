@@ -221,17 +221,17 @@ test_gff <- function() {
     checkIdentical(which_target, test)
   }
 
-  ## TEST: RangedDataList  
-  correct_rdl <-
-    RangedDataList(new("UCSCData", correct_gff3[1],
-                       trackLine = new("BasicTrackLine", name = "chr10")),
-                   new("UCSCData", correct_gff3[2],
-                       trackLine = new("BasicTrackLine", name = "chr12")))
-  seqinfo(correct_rdl[[1]]) <- Seqinfo("chr10")
-  seqinfo(correct_rdl[[2]]) <- Seqinfo("chr12")
-  correct_rdl[[2]]$genome <- NULL
-  names(correct_rdl) <- names(correct_gff3)
-  export(correct_rdl, test_gff3_out)
-  test <- import.ucsc(test_gff3_out, asRangedData = TRUE)
-  checkIdentical(correct_rdl, test)
+  ## TEST: GenomicRangesList
+  correct_grl <-
+    GenomicRangesList(new("UCSCData", as(correct_gff3[1], "GRanges"),
+                          trackLine = new("BasicTrackLine", name = "chr10")),
+                      new("UCSCData", as(correct_gff3[2], "GRanges"),
+                          trackLine = new("BasicTrackLine", name = "chr12")))
+  seqlevels(correct_grl[[1]]) <- "chr10"
+  seqlevels(correct_grl[[2]]) <- "chr12"
+  mcols(correct_grl[[2]])$genome <- NULL
+  names(correct_grl) <- names(correct_gff3)
+  export(correct_grl, test_gff3_out)
+  test <- import.ucsc(test_gff3_out, asRangedData = FALSE)
+  checkIdentical(correct_grl, test)
 }

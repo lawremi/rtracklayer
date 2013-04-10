@@ -7,8 +7,11 @@
 \alias{export.ucsc,UCSCData,characterORconnection-method}
 \alias{initialize,UCSCData-method}
 \alias{show,UCSCData-method}
-\alias{coerce,RangedData,UCSCData-method}
+\alias{coerce,GRanges,UCSCData-method}
 \alias{coerce,UCSCData,GRanges-method}
+\alias{coerce,RangedData,UCSCData-method}
+\alias{coerce,UCSCData,RangedData-method}
+\alias{split,UCSCData-method}
 
 \title{Class "UCSCData"}
 \description{Each track in \acronym{UCSC} has an associated

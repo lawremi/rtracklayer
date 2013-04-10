@@ -224,12 +224,13 @@ setMethod("import", "BEDFile",
             line <- scanTrackLine(con)
             if (!is.null(line) && trackLine) {
               pushBack(line, con)
-              return(import.ucsc(initialize(file, resource = con), drop = TRUE,
+              ans <- import.ucsc(initialize(file, resource = con), drop = TRUE,
                                  trackLine = FALSE, genome = genome,
                                  asRangedData = asRangedData,
                                  colnames = colnames,
                                  which = which, seqinfo = seqinfo,
-                                 extraCols = extraCols))
+                                 extraCols = extraCols)
+              return(ans)
             }
             if (is(file, "BEDGraphFile")) {
               bedClasses <- c("character", "integer", "integer", "numeric")

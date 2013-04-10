@@ -30,7 +30,7 @@ test_bed <- function() {
 
   createCorrectUCSC <- function(rd) {
     on.exit
-    new("UCSCData", rd,
+    new("UCSCData", as(rd, "GRanges"),
         trackLine = new("BasicTrackLine", itemRgb = TRUE,
           name = "ItemRGBDemo",
           description = "Item RGB demonstration",
@@ -45,66 +45,73 @@ test_bed <- function() {
   }
   
   correct_rd <- createCorrectRd(Seqinfo(c("chr7", "chr9")))
+  correct_gr <- as(correct_rd, "GRanges")
   correct_ucsc <- createCorrectUCSC(correct_rd)
   
-  test <- import(test_bed, asRangedData = TRUE)
+  test <- import(test_bed, asRangedData = FALSE)
   checkIdentical(test, correct_ucsc)
   
   test_bed_file <- BEDFile(test_bed)
-  test <- import(test_bed_file, asRangedData = TRUE)
+  test <- import(test_bed_file, asRangedData = FALSE)
   checkIdentical(test, correct_ucsc)
-  checkIdentical(import(test_bed_file, format = "bed", asRangedData = TRUE),
+  checkIdentical(import(test_bed_file, format = "bed", asRangedData = FALSE),
                  correct_ucsc)
   checkException(import(test_bed_file, format = "gff"))
 
   test_bed_con <- file(test_bed)
-  test <- import(test_bed_con, format = "bed", asRangedData = TRUE)
+  test <- import(test_bed_con, format = "bed", asRangedData = FALSE)
   checkIdentical(test, correct_ucsc)
   close(test_bed_con)
   
   test_bed_con <- file(test_bed, "r")
-  test <- import(test_bed_con, format = "bed", asRangedData = TRUE)
+  test <- import(test_bed_con, format = "bed", asRangedData = FALSE)
   checkIdentical(test, correct_ucsc)
   close(test_bed_con)
 
   test_bed_con <- file(test_bed)
-  test <- import(BEDFile(test_bed_con), asRangedData = TRUE)
+  test <- import(BEDFile(test_bed_con), asRangedData = FALSE)
   checkIdentical(test, correct_ucsc)
   close(test_bed_con)
   
+  test <- import(test_bed, trackLine = FALSE, asRangedData = FALSE)
+  checkIdentical(test, correct_gr)
   test <- import(test_bed, trackLine = FALSE, asRangedData = TRUE)
   checkIdentical(test, correct_rd)
 
-  correct_gr <- as(correct_ucsc, "GRanges")
   test <- import(test_bed, asRangedData = FALSE)
-  checkIdentical(correct_gr, sort(test))
+  checkIdentical(correct_ucsc, test)
 
   hg19_seqinfo <- SeqinfoForBSGenome("hg19")
   correct_genome <- createCorrectUCSC(createCorrectRd(hg19_seqinfo))
-  test <- import(test_bed, genome = "hg19", asRangedData = TRUE)
+  test <- import(test_bed, genome = "hg19", asRangedData = FALSE)
   checkIdentical(correct_genome, test)
 
-  subcols <- c("name", "strand", "thick")
-  correct_subcols <- correct_ucsc[,subcols]
-  test <- import(test_bed, colnames = subcols, asRangedData = TRUE)
+  subcols <- c("name", "thick")
+  correct_subcols <- correct_ucsc
+  mcols(correct_subcols) <- mcols(correct_subcols)[ , subcols]
+  test <- import(test_bed, colnames = c(subcols, "strand"),
+                 asRangedData = FALSE)
+  checkIdentical(correct_subcols, test)
+  strand(correct_subcols) <- "*"
+  test <- import(test_bed, colnames = subcols, asRangedData = FALSE)
   checkIdentical(correct_subcols, test)
   
   which <- RangesList(chr7 = ranges(correct_rd)[[1]][1:2])
   correct_which <- subsetByOverlaps(correct_ucsc, which)
-  test <- import(test_bed, which = which, asRangedData = TRUE)
+  test <- import(test_bed, which = which, asRangedData = FALSE)
   checkIdentical(correct_which, test)
 
-  test <- import(test_bed, format = "bed", asRangedData = TRUE)
+  test <- import(test_bed, format = "bed", asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   
   ## import.bed()
 
-  test <- import.bed(test_bed, asRangedData = TRUE)
+  test <- import.bed(test_bed, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
 
   test_bed_con <- pipe(paste("head -n2", test_bed))
-  test <- import.bed(test_bed_con, asRangedData = TRUE)
-  correct_empty <- new("UCSCData", RangedData(),
+  test <- import.bed(test_bed_con, asRangedData = FALSE)
+  correct_empty <- new("UCSCData", GRanges(),
                        trackLine = correct_ucsc@trackLine)
   seqinfo(correct_empty) <- Seqinfo()
   checkIdentical(test, correct_empty)
@@ -116,35 +123,35 @@ test_bed <- function() {
   test_bed_out <- gsub("\\\\", "/", file.path(tempdir(), "test.bed"))
   on.exit(unlink(test_bed_out))
   export(correct_ucsc, test_bed_out)
-  test <- import(test_bed_out, asRangedData = TRUE)
+  test <- import(test_bed_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
 
   export(correct_ucsc, test_bed_out, format = "bed")
-  test <- import(test_bed_out, asRangedData = TRUE)
+  test <- import(test_bed_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
 
   test_bed_out_file <- BEDFile(test_bed_out)
   export(correct_ucsc, test_bed_out_file)
-  test <- import(test_bed_out, asRangedData = TRUE)
+  test <- import(test_bed_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   checkException(export(correct_ucsc, test_bed_out_file, format = "gff"))
 
   correct_ucsc2 <- initialize(correct_ucsc,
                               trackLine = initialize(correct_ucsc@trackLine,
-                                name = "ItemRGBDemo2"))
+                                                     name = "ItemRGBDemo2"))
   export(correct_ucsc2, test_bed_out_file, append = TRUE)
-  test <- import(test_bed_out_file, asRangedData = TRUE)
-  correct_list <- RangedDataList(ItemRGBDemo = correct_ucsc,
-                                 ItemRGBDemo2 = correct_ucsc2)
+  test <- import(test_bed_out_file, asRangedData = FALSE)
+  correct_list <- GenomicRangesList(ItemRGBDemo = correct_ucsc,
+                                    ItemRGBDemo2 = correct_ucsc2)
   checkIdentical(correct_list, test)
 
   export(correct_ucsc, test_bed_out, name = "ItemRGBDemo2")
-  test <- import(test_bed_out, asRangedData = TRUE)
+  test <- import(test_bed_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc2, test)
 
   test_bed_url <- paste("file:///", test_bed_out, sep = "")
   export(correct_ucsc, test_bed_url)
-  test <- import(test_bed_url, asRangedData = TRUE)
+  test <- import(test_bed_url, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
 
 if (FALSE) { # enable to test an HTTP URL using the R help server
@@ -152,62 +159,57 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   port <- readLines(http_pipe, n = 1)
   test_bed_http <- paste("http://127.0.0.1:", port,
                          "/library/rtracklayer/doc/example.bed", sep = "")
-  test <- import(test_bed_http, asRangedData = TRUE)
+  test <- import(test_bed_http, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   close(http_pipe)
 }
   
-  ## RangedDataList
-  
-  export(correct_list, test_bed_out)
-  test <- import(test_bed_out, asRangedData = TRUE)
-  checkIdentical(correct_list, test)
-
   ## GenomicRangesList
   
+  export(correct_list, test_bed_out)
   test <- import(test_bed_out, asRangedData = FALSE)
-  checkIdentical(as(correct_list, "GenomicRangesList"), test)
-  
+  checkIdentical(correct_list, test)
+
   ## To/From gzip
 
   test_bed_gz <- paste(test_bed_out, ".gz", sep = "")
   on.exit(unlink(test_bed_gz))
   export(correct_ucsc, test_bed_gz)
-  test <- import(test_bed_gz, asRangedData = TRUE)
+  test <- import(test_bed_gz, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
 
   export(correct_ucsc2, test_bed_gz, append = TRUE)
-  test <- import(test_bed_gz, asRangedData = TRUE)
+  test <- import(test_bed_gz, asRangedData = FALSE)
   checkIdentical(correct_list, test)
   
   test_bed_gz_url <- paste("file:///", test_bed_gz, sep = "")
   export(correct_ucsc, test_bed_gz_url)
-  test <- import(test_bed_gz_url, asRangedData = TRUE)
+  test <- import(test_bed_gz_url, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   
   ## To/From tabix
 
   export(correct_ucsc, test_bed_out, index = TRUE)
   on.exit(unlink(paste(test_bed_gz, ".tbi", sep = "")))
-  test <- import(test_bed_gz, which = which, asRangedData = TRUE)
+  test <- import(test_bed_gz, which = which, asRangedData = FALSE)
   checkIdentical(correct_which, test)
 
   ## check TabixFile
   
   test_bed_tabix <- Rsamtools::TabixFile(test_bed_gz)
-  test <- import(test_bed_tabix, asRangedData = TRUE)
+  test <- import(test_bed_tabix, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
 
   ## look mom, no track line
   export(correct_ucsc, test_bed_out, index = TRUE, trackLine = FALSE)
-  test <- import(test_bed_gz, which = which, asRangedData = TRUE)
-  checkIdentical(subsetByOverlaps(correct_rd, which), test)
+  test <- import(test_bed_gz, which = which, asRangedData = FALSE)
+  checkIdentical(subsetByOverlaps(correct_gr, which), test)
   #test <- import(test_bed_tabix, format = "foo")
   
   ## To/From text
   
   bed_text <- export(correct_ucsc, format = "bed")
-  test <- import(format = "bed", text = bed_text, asRangedData = TRUE)
+  test <- import(format = "bed", text = bed_text, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
 
   ## TODO: empty text
@@ -221,7 +223,7 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   export(correct_ucsc, test_bed_con)
   close(test_bed_con)
   checkIdentical(comment, readLines(test_bed_out, n = 1))
-  test <- import(test_bed_out, asRangedData = TRUE)
+  test <- import(test_bed_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
     
   ## Set seqinfo on correct_rd, coerce to UCSCData, export, import and check
@@ -230,39 +232,44 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   
   ## Set offset in correct_ucsc track line, export, then:
    
-  correct_offset <- correct_rd
-  ranges(correct_offset) <- shift(ranges(correct_offset), -1)
+  correct_offset <- shift(correct_gr, -1)
   correct_ucsc@trackLine@offset <- 1L
   export(correct_ucsc, test_bed_out)
-  test <- import(test_bed_out, trackLine = FALSE, asRangedData = TRUE)
+  test <- import(test_bed_out, trackLine = FALSE, asRangedData = FALSE)
   checkIdentical(test, correct_offset)
 
-  test <- import(test_bed_out, asRangedData = TRUE)
+  test <- import(test_bed_out, asRangedData = FALSE)
   checkIdentical(test, correct_ucsc)
   correct_ucsc@trackLine@offset <- 0L
   
   ## Drop all extra columns, see if it still works
-  correct_stripped <- correct_ucsc[,character()]
+  correct_stripped <- correct_ucsc
+  mcols(correct_stripped) <- NULL
   export(correct_stripped, test_bed_out)
-  test <- import(test_bed_out, asRangedData = TRUE)
+  test <- import(test_bed_out, asRangedData = FALSE)
+  mcols(correct_stripped)$name <- NA_character_
+  mcols(correct_stripped)$score <- 0
   checkIdentical(test, correct_stripped)
   
   ## - and even when asking for a column like blocks:
-  correct_blocks <- correct_ucsc[,"blocks"]
-  test <- import(test_bed, colnames = "blocks", asRangedData = TRUE)
+  correct_blocks <- correct_ucsc
+  mcols(correct_blocks) <- mcols(correct_blocks)[ , "blocks", drop=FALSE]
+  test <- import(test_bed, colnames = c("blocks", "strand"),
+                 asRangedData = FALSE)
+  checkIdentical(test, correct_blocks)
+  strand(correct_blocks) <- "*"
+  test <- import(test_bed, colnames = "blocks", asRangedData = FALSE)
   checkIdentical(test, correct_blocks)
   
   ## Drop the columns except for blocks, see if it still works
   export(correct_blocks, test_bed_out)
-  test <- import(test_bed_out, asRangedData = TRUE)
+  test <- import(test_bed_out, asRangedData = FALSE)
   correct_fill_to_blocks <- correct_ucsc
-  correct_fill_to_blocks <- within(correct_fill_to_blocks, {
-    name <- NA_character_
-    score <- 0
-    strand <- strand("*")
-    itemRgb <- NA_character_
-    thick <- unlist(ranges, use.names = FALSE)
-  })
+  strand(correct_fill_to_blocks) <- "*"
+  mcols(correct_fill_to_blocks)$name <- NA_character_
+  mcols(correct_fill_to_blocks)$score <- 0
+  mcols(correct_fill_to_blocks)$itemRgb <- NA_character_
+  mcols(correct_fill_to_blocks)$thick <- ranges(correct_fill_to_blocks)
   checkIdentical(test, correct_fill_to_blocks)
 }
 

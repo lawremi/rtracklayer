@@ -23,17 +23,22 @@ test_wig <- function() {
                       color = c(0L, 200L, 100L),
                       maxHeightPixels = c(100L, 50L, 20L),
                       graphType = "points", priority = 30)
-    new("UCSCData", rd, trackLine = track_line)
+    new("UCSCData", as(rd, "GRanges"), trackLine = track_line)
   }
 
   correct_rd <- createCorrectRd(Seqinfo(c("chr19", "chr18")))
+  correct_gr <- as(correct_rd, "GRanges")
   correct_ucsc <- createCorrectUCSC(correct_rd)
   
   ## TEST: basic import
   for (asRangedData in c(TRUE, FALSE)) {
     target <- correct_ucsc
-    if (!asRangedData)
-      target <- as(target, "GRanges")
+    if (asRangedData) {
+      target <- as(target, "RangedData")
+      metadata(ranges(target)) <- rev(metadata(ranges(target)))
+      mcols(ranges(target)) <- NULL
+      target$strand <- NULL
+    }
     test <- import(test_wig, asRangedData = asRangedData)
     checkIdentical(target, test)
     test <- import.wig(test_wig, asRangedData = asRangedData)
@@ -58,91 +63,88 @@ test_wig <- function() {
   ## TEST: 'genome'
   hg19_seqinfo <- SeqinfoForBSGenome("hg19")
   correct_genome <- createCorrectUCSC(createCorrectRd(hg19_seqinfo))
-  test <- import(test_wig, genome = "hg19", asRangedData = TRUE)
-  checkIdentical(correct_genome, test)
   test <- import(test_wig, genome = "hg19", asRangedData = FALSE)
-  checkIdentical(as(correct_genome, "GRanges"), sort(test))
+  checkIdentical(correct_genome, sort(test))
 
   ## TEST: trackLine = FALSE
   test <- import(test_wig, trackLine = FALSE, asRangedData = TRUE)
   checkIdentical(correct_rd, test)
   test <- import(test_wig, trackLine = FALSE, asRangedData = FALSE)
-  checkIdentical(as(correct_rd, "GRanges"), test)
+  checkIdentical(correct_gr, test)
 
   ## TEST: which
   which <- ranges(correct_rd[3:4,])
   correct_which <- subsetByOverlaps(correct_ucsc, which)
-  test <- import(test_wig, which = which, asRangedData = TRUE)
-  checkIdentical(correct_which, test)
   test <- import(test_wig, which = which, asRangedData = FALSE)
-  checkIdentical(as(correct_which, "GRanges"), test)
+  checkIdentical(correct_which, test)
 
   ## TEST: basic export
   test_wig_out <- file.path(tempdir(), "test.wig")
   on.exit(unlink(test_wig_out))
   export(correct_ucsc, test_wig_out)
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   export.wig(correct_ucsc, test_wig_out)
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   test_foo_out <- file.path(tempdir(), "test.foo")
   export(correct_ucsc, test_foo_out, format = "wig")
   on.exit(unlink(test_foo_out))
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   test_wig_out_file <- WIGFile(test_wig_out)
   export(correct_ucsc, test_wig_out_file)
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   checkException(export(correct_ucsc, test_wig_out_file, format = "gff"))
 
   ## TEST: append
   correct_ucsc2 <- initialize(correct_ucsc,
                               trackLine = initialize(correct_ucsc@trackLine,
-                                name = "test2"))
+                                                     name = "test2"))
   export(correct_ucsc2, test_wig_out_file, append = TRUE)
-  test <- import(test_wig_out_file, asRangedData = TRUE)
-  correct_list <- RangedDataList(test = correct_ucsc,
-                                 test2 = correct_ucsc2)
+  test <- import(test_wig_out_file, asRangedData = FALSE)
+  correct_list <- GenomicRangesList(test = correct_ucsc,
+                                    test2 = correct_ucsc2)
   checkIdentical(correct_list, test)
 
   ## TEST: track line parameters
   export(correct_ucsc, test_wig_out, name = "test2")
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc2, test)
 
   ## TEST: export trackLine
   export(correct_ucsc, test_wig_out, trackLine = FALSE)
-  test <- import(test_wig_out, asRangedData = TRUE)
-  checkIdentical(test, correct_rd)
+  test <- import(test_wig_out, asRangedData = FALSE)
+  checkIdentical(test, correct_gr)
 
   ## TEST: Plain RangedData / bedGraph
   export.ucsc(correct_rd, test_wig_out) # mixture of steps leads to bedGraph
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   default_line <- new("GraphTrackLine", name = "R Track", type = "bedGraph")
-  correct_default <- new("UCSCData", correct_rd, trackLine = default_line)
+  correct_default <- new("UCSCData", correct_gr, trackLine = default_line)
   checkIdentical(test, correct_default)
   export.ucsc(correct_rd[2], test_wig_out)
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   default_line <- new("GraphTrackLine", name = "R Track", type = "wig")
-  correct_default <- new("UCSCData", correct_rd[2], trackLine = default_line)
-  seqinfo(correct_default) <- seqinfo(correct_default)["chr18"]
+  correct_default <- new("UCSCData", as(correct_rd[2], "GRanges"),
+                                     trackLine = default_line)
+  seqlevels(correct_default) <- "chr18"
   checkIdentical(test, correct_default)
   
   ## TEST: RangedDataList
   export(correct_list, test_wig_out)
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   checkIdentical(correct_list, test)
   
   ## TEST: gzip
   test_wig_gz <- paste(test_wig_out, ".gz", sep = "")
   on.exit(unlink(test_wig_gz))
   export(correct_ucsc, test_wig_gz)
-  test <- import(test_wig_gz, asRangedData = TRUE)
+  test <- import(test_wig_gz, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
   export(correct_ucsc2, test_wig_gz, append = TRUE)
-  test <- import(test_wig_gz, asRangedData = TRUE)
+  test <- import(test_wig_gz, asRangedData = FALSE)
   checkIdentical(correct_list, test)
   
   ## TEST: Using connection to add comment header
@@ -153,6 +155,6 @@ test_wig <- function() {
   export(correct_ucsc, test_wig_con)
   close(test_wig_con)
   checkIdentical(comment, readLines(test_wig_out, n = 1))
-  test <- import(test_wig_out, asRangedData = TRUE)
+  test <- import(test_wig_out, asRangedData = FALSE)
   checkIdentical(correct_ucsc, test)
 }
