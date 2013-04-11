@@ -1,13 +1,13 @@
 \name{BamFile-methods}
 
 \alias{export,ANY,BamFile,ANY-method}
-\alias{export,GappedAlignments,BamFile,ANY-method}
+\alias{export,GAlignments,BamFile,ANY-method}
 \alias{import,BamFile,ANY,ANY-method}
 
 \title{Export to BAM Files}
 \description{
   Methods for import and export of
-  \code{\link[GenomicRanges]{GappedAlignments}} objects from and to BAM
+  \code{\link[GenomicRanges]{GAlignments}} objects from and to BAM
   files, represented as \code{\link[Rsamtools]{BamFile}} objects.
 }
 \usage{
@@ -17,7 +17,7 @@
 }
 \arguments{
   \item{object}{The object to export, should be
-    a \code{GappedAlignments} or one of its subclasses, like
+    a \code{GAlignments} or one of its subclasses, like
     \code{GappedReads}.
   }
   \item{con}{A path, URL, connection or \code{BamFile} object.}
@@ -32,7 +32,7 @@
   }
 }
 \details{
-  BAM fields not formally present in the \code{GappedAlignments} object
+  BAM fields not formally present in the \code{GAlignments} object
   are extracted from the metadata columns, if present; otherwise, the
   missing value, \dQuote{"."}, is output. The file is sorted and
   indexed. This can be useful for subsetting BAM files, although
@@ -40,8 +40,8 @@
   enough to be the favored alternative.
 }
 \seealso{
-  \code{\link[GenomicRanges]{readGappedAlignments}} for reading BAM
-  files into a \code{GappedAlignments}.
+  \code{\link[GenomicRanges]{readGAlignments}} for reading BAM
+  files into a \code{GAlignments}.
 }
 \examples{
      library(Rsamtools)

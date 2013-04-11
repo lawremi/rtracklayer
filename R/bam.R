@@ -8,10 +8,10 @@ setMethod("import", "BamFile",
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            readBamGappedAlignments(con, use.names = use.names, param = param)
+            readGAlignmentsFromBam(con, use.names = use.names, param = param)
           })
 
-setMethod("export", c("GappedAlignments", "BamFile"),
+setMethod("export", c("GAlignments", "BamFile"),
           function(object, con, format, index = TRUE) {
             sam_path <- paste(file_path_sans_ext(path(con)), ".sam", sep = "")
             sam_con <- file(sam_path, "w")
@@ -54,6 +54,6 @@ setMethod("export", c("GappedAlignments", "BamFile"),
 
 setMethod("export", c("ANY", "BamFile"),
           function(object, con, format, ...) {
-            export(as(object, "GappedAlignments"), con, ...)
+            export(as(object, "GAlignments"), con, ...)
           })
 

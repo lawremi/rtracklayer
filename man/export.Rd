@@ -131,7 +131,7 @@ import(con, format, text, ...)
   the Rsamtools package provides support for the
   \code{\link[Rsamtools:BamFile]{BAM}} file format (for representing
   read alignments), among others. Based on this, the rtracklayer package
-  provides an \code{export} method for writing \code{GappedAlignments}
+  provides an \code{export} method for writing \code{GAlignments}
   and \code{GappedReads} objects as \code{BAM}. For variants, consider
   VCF, supported by the VariantAnnotation package.
 
