@@ -42,7 +42,7 @@ importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList)
 importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
 
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
-                  seqinfo, "seqinfo<-", seqlevels, "seqlevels<-")
+                  seqinfo, "seqinfo<-", seqlevels, "seqlevels<-", coerce)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, masks, writeXStringSet,
            "masks<-", DNAStringSet)

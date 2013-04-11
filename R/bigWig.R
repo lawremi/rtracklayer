@@ -151,8 +151,7 @@ setMethod("import", "BigWigFile",
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            if (missing(asRangedData))
-              warning(asRangedData.warning.msg("import"))
+            asRangedData <- normarg_asRangedData(asRangedData, "import")
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
             si <- seqinfo(con)

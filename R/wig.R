@@ -141,8 +141,7 @@ setMethod("import", "WIGFile",
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            if (missing(asRangedData))
-              warning(asRangedData.warning.msg("import"))
+            asRangedData <- normarg_asRangedData(asRangedData, "import")
             file <- con
             con <- connection(con, "r")
             ## check for a track line
@@ -155,8 +154,6 @@ setMethod("import", "WIGFile",
                                  seqinfo = seqinfo,
                                  ...))
             }
-            if (!isTRUEorFALSE(asRangedData))
-              stop("'asRangedData' must be TRUE or FALSE")
             lines <- readLines(con, warn = FALSE)
             formatInds <- grep("chrom=", lines, fixed=TRUE)
             formatLines <- lines[formatInds]

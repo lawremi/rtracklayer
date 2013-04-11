@@ -521,8 +521,7 @@ setMethod("track", "UCSCSession",
           function(object, name, range = base::range(object), table = NULL,
                    asRangedData = FALSE)
           {
-            if (missing(asRangedData))
-              warning(asRangedData.warning.msg("track"))
+            asRangedData <- normarg_asRangedData(asRangedData, "track")
             track(ucscTableQuery(object, name, range, table), asRangedData)
           })
 
@@ -534,8 +533,7 @@ outputTruncated <- function(x) {
 setMethod("track", "UCSCTableQuery",
           function(object, asRangedData = FALSE)
           {
-            if (missing(asRangedData))
-              warning(asRangedData.warning.msg("track"))
+            asRangedData <- normarg_asRangedData(asRangedData, "track")
             tables <- tableNames(object)
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
@@ -1113,7 +1111,7 @@ setAs("GRanges", "UCSCData", function(from) {
   } else {
     metadata(from)$trackLine <- NULL
   }
-  new("UCSCData", from, trackLine = line)
+  new("UCSCData", as(from, "GRanges"), trackLine = line)
 })
 
 setAs("UCSCData", "GRanges", function(from) {
@@ -1351,12 +1349,9 @@ setMethod("import", "UCSCFile",
           function(con, format, text, subformat = "auto", drop = FALSE,
                    asRangedData = FALSE, genome = NA, ...)
           {
-            if (missing(asRangedData))
-              warning(asRangedData.warning.msg("import",
-                                               if.FALSE="GenomicRangesList",
-                                               if.TRUE="RangedDataList"))
-            if (!isTRUEorFALSE(asRangedData))
-              stop("'asRangedData' must be TRUE or FALSE")
+            asRangedData <- normarg_asRangedData(asRangedData, "import",
+                                                 if.FALSE="GenomicRangesList",
+                                                 if.TRUE="RangedDataList")
             lines <- readLines(resource(con), warn = FALSE)
             tracks <- grep("^track", lines)
             trackLines <- lines[tracks]

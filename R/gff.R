@@ -279,8 +279,7 @@ setMethod("import", "GFFFile",
               checkArgFormat(con, format)
             if (!missing(version))
               con <- asGFFVersion(con, match.arg(version))
-            if (missing(asRangedData))
-              warning(asRangedData.warning.msg("import"))
+            asRangedData <- normarg_asRangedData(asRangedData, "import")
 
             sniffed <- sniffGFFVersion(resource(con))
             version <- gffFileVersion(con)

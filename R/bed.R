@@ -212,8 +212,7 @@ setMethod("import", "BEDFile",
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            if (missing(asRangedData))
-              warning(asRangedData.warning.msg("import"))
+            asRangedData <- normarg_asRangedData(asRangedData, "import")
             file <- con
             con <- queryForConnection(con, which)
             if (attr(con, "usedWhich"))
@@ -345,10 +344,7 @@ setMethod("import", "BED15File",
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            if (missing(asRangedData))
-              warning(asRangedData.warning.msg("import"))
-            if (!isTRUEorFALSE(asRangedData))
-              stop("'asRangedData' must be TRUE or FALSE")
+            asRangedData <- normarg_asRangedData(asRangedData, "import")
             if (is.null(trackLine))
               return(import.ucsc(con, TRUE, genome = genome,
                                  asRangedData = asRangedData, which = which))
