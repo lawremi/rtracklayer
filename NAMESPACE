@@ -35,7 +35,7 @@ importMethodsFrom("IRanges", elementLengths, window,
                   space, universe, metadata,
                   "universe<-", "metadata<-",
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
-                  resize, mcols, togroup)
+                  resize, mcols, "mcols<-", togroup)
 
 importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList)
 
