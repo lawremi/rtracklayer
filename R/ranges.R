@@ -262,7 +262,9 @@ normGenomeRange <- function(range, session, single = TRUE) {
       genome(session) <- rangeGenome
       on.exit(genome(session) <- genome)
     }
-    seqinfo(range) <- seqinfo(session)
+    si <- seqinfo(session)
+    seqinfo(range, new2old = match(seqlevels(si), seqlevels(range))) <-
+      merge(si, seqinfo(range))
   }
   if (is(range, "RangesList")) {
     range <- GRangesForGenome(genome(range), names(range), unlist(range),

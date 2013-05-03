@@ -39,7 +39,8 @@ importMethodsFrom("IRanges", elementLengths, window,
 
 importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList)
 
-importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-")
+importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-",
+           merge)
 
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
                   seqinfo, "seqinfo<-", seqlevels, "seqlevels<-", coerce)
