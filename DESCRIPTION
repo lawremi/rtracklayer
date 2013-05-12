@@ -1,15 +1,15 @@
 Package: rtracklayer
 Title: R interface to genome browsers and their annotation tracks
-Version: 1.21.4
+Version: 1.21.5
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
 Depends: R (>= 2.10), methods, GenomicRanges (>= 1.13.3)
-Imports: XML (>= 1.98-0), BiocGenerics (>= 0.1.0), IRanges (>= 1.15.37),
-         GenomicRanges, Biostrings (>= 2.25.6), BSgenome (>= 1.23.1),
+Imports: XML (>= 1.98-0), BiocGenerics (>= 0.1.0), IRanges (>= 1.19.5),
+         GenomicRanges, XVector, Biostrings (>= 2.29.2), BSgenome (>= 1.23.1),
          zlibbioc, RCurl (>= 1.4-2), Rsamtools (>= 1.13.1)
 Suggests: humanStemCell, microRNA (>= 1.1.1), genefilter, limma, org.Hs.eg.db,
           BSgenome.Hsapiens.UCSC.hg19, TxDb.Hsapiens.UCSC.hg19.knownGene,
           hgu133plus2.db
-LinkingTo: IRanges
+LinkingTo: IRanges, XVector
 Description: Extensible framework for interacting with multiple genome 
   browsers (currently UCSC built-in) and manipulating 
   annotation tracks in various formats (currently GFF, BED, bedGraph, BED15,

@@ -4,5 +4,6 @@
 #include <Rinternals.h>
 
 #include <IRanges_interface.h>
+#include <XVector_interface.h>
 
 #endif
