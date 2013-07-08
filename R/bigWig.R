@@ -147,10 +147,12 @@ setMethod("import.bw", "ANY",
 
 setMethod("import", "BigWigFile",
           function(con, format, text, selection = BigWigSelection(which, ...),
-                   which = con, asRangedData = FALSE, ...)
+                   which = con, asRangedData = FALSE, asCoverage = FALSE, ...)
           {
             if (!missing(format))
               checkArgFormat(con, format)
+            if (!isTRUEorFALSE(asCoverage))
+              stop("'asCoverage' must be TRUE or FALSE")
             asRangedData <- normarg_asRangedData(asRangedData, "import")
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
@@ -171,9 +173,11 @@ setMethod("import", "BigWigFile",
             seqinfo(rd) <- si
             if (!asRangedData) {
               strand(rd) <- "*"
-              as(rd, "GRanges")
+              rd <- as(rd, "GRanges")
             }
-            else rd
+            if (asCoverage) {
+              coverage(rd, weight = "score")
+            } else rd
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
