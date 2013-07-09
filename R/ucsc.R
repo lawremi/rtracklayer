@@ -16,7 +16,8 @@ setMethod("initialize", "UCSCSession",
             handle <- getCurlHandle(followLocation=TRUE, ...)
             gw <- getURL(ucscURL(.Object, "gateway"), cookiefile = tempfile(),
                          header = TRUE, curl = handle)
-            .Object@url <-              # update url, e.g., redirect?
+            if (grepl("Location: [^[:space:]]+cgi-bin/", gw))
+              .Object@url <-
                 sub(".*Location: ([^[:space:]]+cgi-bin/).*", "\\1", gw)
             cookie <- grep("Set-Cookie: hguid[^=]*=", gw)
             if (!length(cookie))
