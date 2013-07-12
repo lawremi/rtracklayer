@@ -55,10 +55,6 @@
 #endif
 #endif
 
-#ifdef __CYGWIN32__
-#include <mingw/math.h>
-#endif
-
 #ifndef NAN
 #define NAN (0.0 / 0.0)
 #endif
