@@ -47,7 +47,7 @@ setMethod("import", "FastaFile",
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            readFun <- get(paste("read", match.arg(type), "StringSet",
-                                 sep = ""))
+            readFun <- get(paste0("read", match.arg(type), "StringSet"),
+                           getNamespace("Biostrings"))
             readFun(path(con), format = "fasta", ...)
           })
