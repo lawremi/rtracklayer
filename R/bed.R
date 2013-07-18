@@ -108,7 +108,8 @@ setMethod("export", c("RangedData", "BEDFile"),
                 color <- "0" ## blocks require color
               else if (!is.null(color)) {
                 nacol <- is.na(color)
-                colmat <- col2rgb(color)
+                if (!is.matrix(color))
+                  colmat <- col2rgb(color)
                 color <- paste(colmat[1,], colmat[2,], colmat[3,], sep = ",")
                 color[nacol] <- "0"
               }
