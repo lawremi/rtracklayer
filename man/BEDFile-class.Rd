@@ -191,9 +191,10 @@ export.bedGraph(object, con, ...)
       column named \code{thick}; defaults to the ranges of the feature
       on export.
     }
-    \item{itemRgb}{character vector of hex color codes, as returned
-      by \code{\link{col2rgb}}, in the \code{itemRgb} column; default is
-      NA on export, which translates to black.
+    \item{itemRgb}{an integer matrix of color codes, as returned by
+      \code{\link{col2rgb}}, or any valid input to
+      \code{\link{col2rgb}}, in the \code{itemRgb} column; default is NA
+      on export, which translates to black.
     }
     \item{blockSizes, blockStarts, blockCounts}{\code{RangesList} object
       in a column named \code{blocks}; defaults to empty upon BED15 export.
