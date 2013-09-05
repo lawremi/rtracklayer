@@ -31,7 +31,8 @@ setMethod("export", c("GAlignments", "BamFile"),
             }
             emd <- values(object)
             aln <- paste(if (!is.null(names(object))) names(object) else "*",
-                         ifelse(strand(object) == "-", "16", "0"),
+                         if (!is.null(emd[["flag"]])) emd[["flag"]] else
+                           ifelse(strand(object) == "-", "16", "0"),
                          seqnames(object), start(object),
                          if (!is.null(emd[["mapq"]])) emd[["mapq"]] else "255",
                          cigar(object),
