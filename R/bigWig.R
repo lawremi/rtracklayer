@@ -126,11 +126,25 @@ setMethod("export", c("RangedData", "BigWigFile"),
           })
 
 setMethod("export", c("RleList", "BigWigFile"),
-          function(object, con, format, ...)
+          function(object, con, format, compress = TRUE)
           {
-            rd <- as(object, "RangedData")
-            seqlengths(rd) <- elementLengths(object)
-            export(rd, con, ...)
+            if (!missing(format))
+              checkArgFormat(con, format)
+            con <- path.expand(path(con))
+            if (!isTRUEorFALSE(compress))
+              stop("'compress' must be TRUE or FALSE")
+            seqlengths <- elementLengths(object)
+            sectionPtr <- NULL # keep adding to the same linked list
+            .bigWigWriter <- function(chr) {
+              sectionPtr <<- .Call(BWGSectionList_add, sectionPtr,
+                                   chr, ranges(object[[chr]]),
+                                   as.numeric(runValue(object[[chr]])),
+                                   "bedGraph")
+            }
+            on.exit(.Call(BWGSectionList_cleanup, sectionPtr))
+            lapply(names(object), .bigWigWriter)
+            invisible(BigWigFile(.Call(BWGSectionList_write, sectionPtr,
+                                       seqlengths, compress, con)))
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
