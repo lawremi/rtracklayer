@@ -33,7 +33,7 @@ test_twoBit <- function() {
   
   ## TEST: 'which'
   which_range <- IRanges(c(10, 40), c(30, 42))
-  correct_which <- seqselect(correct_2bit[[1]], which_range)
+  correct_which <- correct_2bit[[1]][which_range]
   which <- GRanges(names(correct_2bit), which_range)
   test <- import(test_2bit_out, which = which)
   checkIdentical(unlist(test), correct_which)

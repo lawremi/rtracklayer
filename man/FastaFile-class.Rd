@@ -50,16 +50,16 @@
   }
   \item{type}{Type of biological sequence.}
   \item{...}{Arguments to pass down
-    to \code{\link[Biostrings]{write.XStringSet}} (export)
-    or the \code{\link[Biostrings]{read.DNAStringSet}} family of
+    to \code{\link[Biostrings]{writeXStringSet}} (export)
+    or the \code{\link[Biostrings]{readDNAStringSet}} family of
     functions (import).
   }
 }
 
 \seealso{
   These functions are implemented by the Biostrings
-  \code{\link[Biostrings]{write.XStringSet}} (export) and the
-  \code{\link[Biostrings]{read.DNAStringSet}} family of functions
+  \code{\link[Biostrings]{writeXStringSet}} (export) and the
+  \code{\link[Biostrings]{readDNAStringSet}} family of functions
   (import).
 }
 
