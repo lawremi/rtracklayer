@@ -137,7 +137,7 @@ setMethod("export", c("RangedData", "GFFFile"),
               custom <- setdiff(colnames(object), builtin)
               if (length(custom)) {
                 if (version == "3") tvsep <- "=" else tvsep <- " "
-                attrs <- unlist(values(object))
+                attrs <- unlist(values(object), use.names=FALSE)
                 attrs <- as.data.frame(sapply(custom, function(name) {
                   x <- attrs[[name]]
                   x_flat <- if (is(x, "List")) unlist(x, use.names=FALSE) else x
