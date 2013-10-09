@@ -321,9 +321,9 @@ setMethod("import", "BEDFile",
               as.integer(unlist(strsplit(b, ",", fixed = TRUE)))
             }
             if (!is.null(bed$blockStarts)) {
-              blocks <- seqsplit(IRanges(fromCSV(bed$blockStarts) + 1L,
-                                         width = fromCSV(bed$blockSizes)),
-                                 togroup(PartitioningByWidth(bed$blockCount)))
+              blocks <- split(IRanges(fromCSV(bed$blockStarts) + 1L,
+                                      width = fromCSV(bed$blockSizes)),
+                              PartitioningByWidth(bed$blockCount))
               names(blocks) <- NULL
               bed$blockStarts <- bed$blockSizes <- bed$blockCount <- NULL
               bed$blocks <- blocks
