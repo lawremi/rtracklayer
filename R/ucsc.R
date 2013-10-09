@@ -565,10 +565,10 @@ setMethod("track", "UCSCTableQuery",
                 output <- "wigBed"
             }
             outputType(object) <- output
-            output <- ucscExport(object)
-            if (outputTruncated(output))
-              stop("Output incomplete: ",
-                   "track has more than 100,000 elements. ",
+            output <- try(ucscExport(object))
+            if (is(output, "try-error") || outputTruncated(output))
+              stop("Output may be incomplete: ",
+                   "track may have more than 100,000 elements. ",
                    "Try downloading the data via the UCSC FTP site.")
             import(text = output, format = format, asRangedData = asRangedData,
                    seqinfo = seqinfo(range(object)))
