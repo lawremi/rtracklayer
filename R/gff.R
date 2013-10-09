@@ -150,6 +150,7 @@ setMethod("export", c("RangedData", "GFFFile"),
                     x_char <- pasteCollapse(relist(x_char, x))
                     x_char[elementLengths(x) == 0] <- NA
                   }
+                  ## FIXME: add option so these become "." instead of removing
                   x_char[is.na(x_char)] <- "\r"
                   if (!is.numeric(x_flat))
                     x_char <- paste0("\"", x_char, "\"")

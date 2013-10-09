@@ -185,8 +185,7 @@ setReplaceMethod("browserSession", c("UCSCTableQuery", "UCSCSession"),
 setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
 setReplaceMethod("range", "UCSCTableQuery",
                  function(x, value) {
-                   x@range <- normGenomeRange(value, browserSession(x),
-                                              single = FALSE)
+                   x@range <- normTableQueryRange(value, browserSession(x))
                    x
                  })
 
@@ -265,6 +264,10 @@ normArgTrack <- function(name, trackids) {
   name
 }
 
+normTableQueryRange <- function(range, x) {
+  normGenomeRange(range, x, max.length = 1000L)
+}
+
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
           function(x, track = NULL, range = genome(x), table = NULL,
@@ -273,7 +276,7 @@ setMethod("ucscTableQuery", "UCSCSession",
             if (!is(names, "characterORNULL"))
               stop("'names' must be 'NULL' or a character vector")
             ## only inherit the genome from the session
-            range <- normGenomeRange(range, x, single = FALSE)
+            range <- normTableQueryRange(range, x)
             query <- new("UCSCTableQuery", session = x, range = range,
                          NAMES = names)
             ## the following line must always happen to initialize the session
@@ -1145,13 +1148,15 @@ setAs("UCSCData", "RangedData", function(from) {
   as(as(from, "GRanges"), "RangedData")
 })
 
-setMethod("split", "UCSCData",
-          function(x, f, drop=FALSE, ...) {
-            GenomicRangesList(
-              lapply(split(seq_along(x), f, drop=drop, ...),
-                     function(i) x[i])
-            )
-          })
+splitUCSCData <- function(x, f, drop=FALSE, ...) {
+  GenomicRangesList(
+    lapply(split(seq_along(x), f, drop=drop, ...),
+           function(i) x[i])
+    )
+}
+
+setMethod("split", "UCSCData", splitUCSCData)
+setMethod("split", c("UCSCData", "Vector"), splitUCSCData)
 
 setClass("UCSCFile", contains = "RTLFile")
 
@@ -1423,6 +1428,33 @@ setMethod("import", "UCSCFile",
                          }))
             }
             ans
+          })
+
+
+
+setMethod("login", "UCSCSession", function(x, username, password) {
+  ucscPost(x, "hgLogin", list(hgLogin.do.displayLogin = "Login",
+                              hgLogin_userName = username,
+                              hgLogin_password = password))
+  
+})
+
+setMethod("saveView", "UCSCView", function(x, name, username, password,
+                                           share = TRUE)
+          {
+            if (!missing(username))
+              login(browserSession(x), username, password)
+            ucscPost(x, "hgSession",
+                     list(hgS_newSessionName = name,
+                          hgS_newSessionShare = if (share) "on" else "off"))
+          })
+
+setMethod("restoreView", "UCSCSession",
+          function(x, name, username, password) {
+            if (!missing(username))
+              login(x, username, password)
+            ucscPost(x, "hgSession",
+                     setNames(list("use"), paste0("hgS_load_", name)))
           })
 
 ############ INTERNAL API ############

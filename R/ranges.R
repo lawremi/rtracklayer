@@ -238,7 +238,7 @@ singleGenome <- function(x) {
 
 ## normalize 'range', using 'session' for default genome
 ## if 'single' is 'TRUE', only one interval should come out of this
-normGenomeRange <- function(range, session, single = TRUE) {
+normGenomeRange <- function(range, session, max.length = 1L) {
   ## the user can specify a portion of the genome in several ways:
   ## - String identifying a genome
   ## - RangesList
@@ -273,11 +273,17 @@ normGenomeRange <- function(range, session, single = TRUE) {
     strand(range) <- "*"
     mcols(range) <- NULL
   }
-  if (single) {
-    if (length(unique(seqnames(range))) != 1L)
+  if (length(range) > max.length) {
+    warning("number of ranges (", length(range),
+            ") exceeds limit of ", max.length)
+  }
+  if (max.length == 1L) {
+    if (length(unique(seqnames(range))) > max.length)
       stop("'range' must contain ranges on a single chromosome")
     range(range)
-  } else range
+  } else {
+    head(range, max.length)
+  }
 }
 
 spansGenome <- function(x) {

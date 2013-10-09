@@ -195,3 +195,11 @@ setMethod("browserSession", "BrowserView", function(object) object@session)
 setGeneric("sequence<-", function(object, name, ..., value)
            standardGeneric("sequence<-"))
 
+setGeneric("login",
+           function(x, username, password, ...) standardGeneric("login"),
+           signature = "x")
+
+setGeneric("saveView", function(x, ...) standardGeneric("saveView"))
+
+setGeneric("restoreView",
+           function(x, ...) standardGeneric("restoreView"))
