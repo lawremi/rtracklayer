@@ -21,7 +21,7 @@ importClassesFrom("IRanges",
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
            RangesList, Rle, RangedSelection, RleList, isSingleString,
            recycleIntegerArg, recycleNumericArg, isSingleStringOrNA,
-           isTRUEorFALSE, isSingleNumberOrNA)
+           isTRUEorFALSE, isSingleNumberOrNA, PartitioningByWidth, shift)
 
 importMethodsFrom("IRanges", elementLengths, window,
                   start, end, width, range,
@@ -37,7 +37,8 @@ importMethodsFrom("IRanges", elementLengths, window,
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
                   resize, mcols, "mcols<-", togroup)
 
-importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList)
+importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList,
+                  GIntervalTree)
 
 importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-",
            merge)
