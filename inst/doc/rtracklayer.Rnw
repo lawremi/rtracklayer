@@ -657,9 +657,16 @@ region of the motif.
 
 \section{Downloading tracks from UCSC}
 
-\Rclass{rtracklayer} can be used to download annotation tracks from the UCSC
-table browser, thus providing a convenient programmatic alternative to 
-the web interface available at \url{http://genome.ucsc.edu/cgi-bin/hgTables}.  
+\Rclass{rtracklayer} can be used to download annotation tracks from
+the UCSC table browser, thus providing a convenient programmatic
+alternative to the web interface available at
+\url{http://genome.ucsc.edu/cgi-bin/hgTables}.  
+
+\textbf{Note} that not all tables are output in parseable form, and
+that \textbf{UCSC will truncate responses} if they exceed certain
+limits (usually around 100,000 records). The safest (and most
+efficient) bet for large queries is to download the file via FTP and
+query it locally.
 
 \subsection{Example 1: the RepeatMasker Track}
 

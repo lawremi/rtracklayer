@@ -121,7 +121,10 @@
     \item{}{
       \code{getTable(object)}: Retrieves the indicated table as a
       \code{data.frame}. Note that not all tables are output in
-      parseable form.
+      parseable form, and that UCSC will truncate responses if they
+      exceed certain limits (usually around 100,000 records). The safest
+      (and most efficient) bet for large queries is to download the file
+      via FTP and query it locally.
     }
     \item{}{
       \code{tableNames(object)}: Gets the names of the tables available
