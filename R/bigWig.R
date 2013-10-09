@@ -159,14 +159,36 @@ setMethod("import.bw", "ANY",
             import(con, "BigWig", ...)
           })
 
+
+### FIXME: For chr20, WGS coverage, coercion RangedData->GRanges takes
+### 2X as long as reading. The most common use case is reading long
+### vectors as Rles. Constructing an RleList is complicated by
+### 'which'. As long as 'which' spans chromosomes, we can quickly
+### coerce the GRanges (or faster yet, a RangedData) to an
+### RleList. Consumes memory, but time cost is minimal, when 'which'
+### is trivial (an entire genome or chromosome).
+
+### Consider the use cases:
+### - Extract whole genome or whole chromosome coverage as Rle (ChIP-seq)
+###   - Use rdToRle() fast path
+### - Extract single position coverage for millions of variants
+###   - Slow to query by position, so extract whole genome/chromosome (above),
+###     then use findRun trick.
+### - Extract single position coverage for a hundred hot-spot variants
+###   - rdToRle() should be fast enough, followed by findRun trick.
+### - Extract coverage for one/all genes and summarize (RNA-seq?)
+###   - probably want summarize,BigWigFile
+
+### FIXME: We also might want an integer/numeric switch?
+
 setMethod("import", "BigWigFile",
           function(con, format, text, selection = BigWigSelection(which, ...),
-                   which = con, asRangedData = FALSE, asCoverage = FALSE, ...)
+                   which = con, asRangedData = FALSE, asRle = FALSE, ...)
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            if (!isTRUEorFALSE(asCoverage))
-              stop("'asCoverage' must be TRUE or FALSE")
+            if (!isTRUEorFALSE(asRle))
+              stop("'asRle' must be TRUE or FALSE")
             asRangedData <- normarg_asRangedData(asRangedData, "import")
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
@@ -185,14 +207,19 @@ setMethod("import", "BigWigFile",
                         as.list(normRanges),
                         identical(colnames(selection), "score"))
             seqinfo(rd) <- si
-            if (!asRangedData) {
+            if (asRle) {
+              rdToRle(rd)
+            } else if (!asRangedData) {
               strand(rd) <- "*"
               rd <- as(rd, "GRanges")
-            }
-            if (asCoverage) {
-              coverage(rd, weight = "score")
             } else rd
           })
+
+rdToRle <- function(x) {
+  RleList(mapply(function(r, v, sl) {
+    IRanges:::.Ranges.coverage(r, width=sl, weight=v$score)
+  }, ranges(x), values(x), seqlengths(x), SIMPLIFY=FALSE), compress=FALSE)
+}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Summary
