@@ -531,8 +531,16 @@ setMethod("track", "UCSCSession",
             track(ucscTableQuery(object, name, range, table), asRangedData)
           })
 
+inconsistentFieldCounts <- function(x) {
+  con <- file()
+  on.exit(close(con))
+  writeLines(x, con)
+  length(unique(count.fields(con, skip=2L, sep="\t")) > 1L)
+}
+
 outputTruncated <- function(x) {
-  grepl("^-", tail(x, 1))
+  has.msg <- grepl("^-", tail(x, 1))
+  has.msg || inconsistentFieldCounts(x)
 }
 
 ## download a trackSet by name
@@ -565,9 +573,9 @@ setMethod("track", "UCSCTableQuery",
                 output <- "wigBed"
             }
             outputType(object) <- output
-            output <- try(ucscExport(object))
-            if (is(output, "try-error") || outputTruncated(output))
-              stop("Output may be incomplete: ",
+            output <- ucscExport(object)
+            if (outputTruncated(output))
+              stop("Output is incomplete: ",
                    "track may have more than 100,000 elements. ",
                    "Try downloading the data via the UCSC FTP site.")
             import(text = output, format = format, asRangedData = asRangedData,
