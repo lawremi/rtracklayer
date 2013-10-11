@@ -4,6 +4,8 @@ import(zlibbioc)
 
 importFrom("stats", offset)
 
+importFrom(utils, count.fields)
+
 importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
            xmlInternalTreeParse, parseURI, newXMLNode, xmlChildren,
            addChildren, removeChildren, saveXML)
