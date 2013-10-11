@@ -19,7 +19,7 @@ setMethod("initialize", "UCSCSession",
             if (grepl("Location: [^[:space:]]+cgi-bin/", gw))
               .Object@url <-
                 sub(".*Location: ([^[:space:]]+cgi-bin/).*", "\\1", gw)
-            cookie <- grep("Set-Cookie: hguid[^=]*=", gw)
+            cookie <- grep("Set-[Cc]ookie: hguid[^=]*=", gw)
             if (!length(cookie))
               stop("Failed to obtain 'hguid' cookie")
             hguid <- sub(".*Set-Cookie: (hguid[^=]*=[^;]*);.*", "\\1", gw)
