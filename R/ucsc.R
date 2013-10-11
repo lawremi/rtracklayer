@@ -540,7 +540,7 @@ inconsistentFieldCounts <- function(x) {
 
 outputTruncated <- function(x) {
   has.msg <- grepl("^-", tail(x, 1))
-  has.msg || inconsistentFieldCounts(x)
+  has.msg #|| inconsistentFieldCounts(x)
 }
 
 ## download a trackSet by name
