@@ -54,7 +54,7 @@ setAs("character", "Quickload", function(from) Quickload(from))
 
 setMethod("show", "Quickload", function(object) {
   cat(class(object), "repository\nuri:", uri(object), "\n")
-  cat(IRanges:::labeledLine("genomes", genome(object)))
+  cat(BiocGenerics:::labeledLine("genomes", genome(object)))
 })
 
 contentsFile <- function(x) file.path(uri(x), "contents.txt")
@@ -175,7 +175,7 @@ QuickloadGenome <- function(quickload, genome, create = FALSE,
 setMethod("show", "QuickloadGenome", function(object) {
   cat(class(object), "track database\ngenome:", genome(object), "\nquickload:",
       uri(quickload(object)), "\n")
-  cat(IRanges:::labeledLine("names", names(object)))
+  cat(BiocGenerics:::labeledLine("names", names(object)))
 })
 
 genomeFile <- function(x) file.path(uri(x), "mod_chromInfo.txt")
