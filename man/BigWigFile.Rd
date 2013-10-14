@@ -40,7 +40,8 @@
 \usage{
 \S4method{import}{BigWigFile,ANY,ANY}(con, format, text,
                    selection = BigWigSelection(which, ...),
-                   which = con, asRangedData = FALSE, ...)
+                   which = con, asRangedData = FALSE,
+                   asRle = FALSE, ...)
 import.bw(con, ...)
 
 \S4method{export}{ANY,BigWigFile,ANY}(object, con, format, ...)
@@ -69,6 +70,10 @@ export.bw(object, con, ...)
   \item{text}{Not supported.}
   \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
     instead of a \code{GRanges}.
+  }
+  \item{asRle}{If \code{TRUE}, the BigWig file is assumed to contain
+    contiguous ranges that define a run-length encoding of a
+    vector (like coverage), and an \code{RleList} is returned.
   }
   \item{selection}{A \code{\linkS4class{BigWigSelection}} object
     indicating the ranges to load.
@@ -134,7 +139,6 @@ export.bw(object, con, ...)
         multi-level summaries present in every BigWig file.
     }
   }
-
 }
 
 \author{Michael Lawrence}

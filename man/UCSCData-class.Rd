@@ -11,7 +11,8 @@
 \alias{coerce,UCSCData,GRanges-method}
 \alias{coerce,RangedData,UCSCData-method}
 \alias{coerce,UCSCData,RangedData-method}
-\alias{split,UCSCData-method}
+\alias{split,UCSCData,ANY-method}
+\alias{split,UCSCData,Vector-method}
 
 \title{Class "UCSCData"}
 \description{Each track in \acronym{UCSC} has an associated
