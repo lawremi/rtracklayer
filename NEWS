@@ -1,3 +1,26 @@
+CHANGES IN VERSION 1.22
+-----------------------
+
+NEW FEATURES
+
+    o import,BigWigFile gains an asRle parameter that returns the data as an
+      RleList (assuming it tiles the sequence); much faster than importing a
+      GRanges and calling coverage() on it.
+
+    o add export,RleList,BigWigFile method for direct (and much more
+      efficient) output of RleLists (like coverage) to BigWig files.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o UCSCData now extends GRanges instead of RangedData (thanks Herve)
+    
+BUG FIXES
+
+    o handle different Set-Cookie header field casing; often due to proxies
+      (thanks to Altuna Akalin)
+    o attempt to more gracefully handle UCSC truncation of large data downloads
+    o handle re-directs due to UCSC mirroring (thanks Martin Morgan)
+    
 CHANGES IN VERSION 1.20
 -----------------------
 
