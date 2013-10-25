@@ -63,7 +63,7 @@ normArgTrackData <- function(value, session) {
   value
 }
 
-setReplaceMethod("track", c("UCSCSession", "RangedDataList"),
+setReplaceMethod("track", c("UCSCSession", "GenomicRangesList"),
           function(object, name = names(value),
                    format = c("auto", "bed", "wig", "gff1", "bed15",
                      "bedGraph"), ..., value)
@@ -1098,7 +1098,7 @@ setMethod("show", "UCSCData",
           })
 
 chooseGraphType <- function(from) {
-  r <- ranges(from)[[1]] # heuristic only needs first chromosome
+  r <- ranges(from)
   type <- "bedGraph"
   ## decide whether compression is a good idea
   steps <- diff(sort(start(r)))
@@ -1114,7 +1114,7 @@ setAs("GRanges", "UCSCData", function(from) {
   line <- metadata(from)$trackLine
   if (is.null(line)) {
     if (is.numeric(score(from))) { # have numbers, let's plot them
-      type <- chooseGraphType(as(from, "RangedData"))
+      type <- chooseGraphType(from)
       line <- new("GraphTrackLine", type = type)
     } else {
       line <- new("BasicTrackLine")
@@ -1193,11 +1193,11 @@ setMethod("export.ucsc", c("ANY", "ANY"),
             export(object, con, "ucsc", ...)
           })
 
-.export_RangedDataList_RTLFile <- function(object, con, format, ...) {
+.export_GenomicRangesList_RTLFile <- function(object, con, format, ...) {
   export(object, UCSCFile(resource(con)), subformat = fileFormat(con), ...)
 }
 
-setMethod("export", c("RangedDataList", "UCSCFile"),
+setMethod("export", c("GenomicRangesList", "UCSCFile"),
           function(object, con, format, append = FALSE, index = FALSE, ...)
           {
             if (isTRUE(index) && length(object) > 1)
@@ -1238,9 +1238,9 @@ setMethod("export", c("ANY", "UCSCFile"),
           function(object, con, format, ...)
           {
             cl <- class(object)
-            track <- try(as(object, "RangedData"), silent = TRUE)
+            track <- try(as(object, "GRanges"), silent = TRUE)
             if (class(track) == "try-error") {
-              track <- try(as(object, "RangedDataList"), silent = TRUE)
+              track <- try(as(object, "GenomicRangesList"), silent = TRUE)
               if (is(track, "try-error"))
                 stop("cannot export object of class '", cl, "': ", track)
             }
@@ -1248,7 +1248,7 @@ setMethod("export", c("ANY", "UCSCFile"),
             callGeneric()
           })
 
-setMethod("export", c("RangedData", "UCSCFile"),
+setMethod("export", c("GenomicRanges", "UCSCFile"),
           function(object, con, format, ...)
           {
             object <- as(object, "UCSCData")
@@ -1269,8 +1269,7 @@ setMethod("export", c("UCSCData", "UCSCFile"),
               strand <- as.character(strand(object))
               strand[is.na(strand)] <- "NA"
               isStrandDisjoint <- function(track) {
-                track <- as(track, "RangedData")
-                all(unlist(lapply(ranges(track), function(r) {
+                all(unlist(tapply(ranges(track), seqnames(track), function(r) {
                   isDisjoint(r) && all(width(r) > 0)
                 })))
               }
@@ -1319,7 +1318,7 @@ setMethod("export", c("UCSCData", "UCSCFile"),
             con <- connection(con, if (append) "a" else "w")
             on.exit(release(con))
             cat(as(object@trackLine, "character"), "\n", file=con, sep = "")
-            do.call(export, c(list(as(object, "RangedData"), unmanage(con),
+            do.call(export, c(list(as(object, "GRanges"), unmanage(con),
                                    subformat),
                               args[!lineArgs], trackLine = trackLine))
             release(con)
@@ -1647,7 +1646,7 @@ setMethod("ucscForm", "FileUploadInfo",
               form <- c(form, db = genome)
             form
           })
-setMethod("ucscForm", "RangedDataList",
+setMethod("ucscForm", "GenomicRangesList",
           function(object, format, ...)
           {
             lines <- export(object, format = "ucsc", subformat = format, ...)

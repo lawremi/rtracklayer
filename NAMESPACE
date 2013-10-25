@@ -13,7 +13,7 @@ importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
 importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
            postForm)
 
-importFrom("BiocGenerics", rbind, cbind, lapply, sapply, unique)
+import(BiocGenerics)
 
 importClassesFrom("IRanges",
                   RangedData, RangedDataList, DataTable,
@@ -23,7 +23,8 @@ importClassesFrom("IRanges",
 importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
            RangesList, Rle, RangedSelection, RleList, isSingleString,
            recycleIntegerArg, recycleNumericArg, isSingleStringOrNA,
-           isTRUEorFALSE, isSingleNumberOrNA, PartitioningByWidth, shift)
+           isTRUEorFALSE, isSingleNumberOrNA, PartitioningByWidth, shift,
+           as.factor)
 
 importMethodsFrom("IRanges", elementLengths, window,
                   start, end, width, range,
@@ -40,7 +41,8 @@ importMethodsFrom("IRanges", elementLengths, window,
                   resize, mcols, "mcols<-", togroup)
 
 importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList,
-                  GIntervalTree)
+                  GIntervalTree, GenomicRangesList, SimpleGenomicRangesList,
+                  GenomicRangesORmissing)
 
 importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-",
            merge)

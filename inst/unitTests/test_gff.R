@@ -32,14 +32,13 @@ test_gff <- function() {
   geneName <- c("tubulin, beta 8", rep(NA, 14),
                 "WAS protein family homolog 1; pseudogene", rep(NA, 15))
   genome <- c("hg19", rep(NA, length(geneName) - 1))
-  correct_gff3 <- RangedData(IRanges(start, end),
-                             source, type, score, strand, phase,
-                             ID, Name, geneName, Alias, genome, Parent,
-                             space = space)
+  correct_gff3 <- GRanges(space, IRanges(start, end), strand,
+                          source, type, score, phase,
+                          ID, Name, geneName, Alias, genome, Parent)
   seqinfo(correct_gff3) <- Seqinfo(c("chr10", "chr12"))
 
-  correct_gff1 <- correct_gff3[,c("source", "type", "score", "strand", "phase")]
-  correct_gff1$group <- seqnames(correct_gff3)
+  correct_gff1 <- correct_gff3[,c("source", "type", "score", "phase")]
+  correct_gff1$group <- as.factor(seqnames(correct_gff3))
 
   correct_gff2 <- correct_gff3
   toCSV <- function(x) {
@@ -50,151 +49,146 @@ test_gff <- function() {
   correct_gff2$Alias <- toCSV(correct_gff2$Alias)
   correct_gff2$Parent <- toCSV(correct_gff2$Parent)
 
-  target_gff1 <- as(correct_gff1, "GRanges")
-  target_gff2 <- as(correct_gff2, "GRanges")
-  target_gff3 <- as(correct_gff3, "GRanges")
-
   ## TEST: basic GFF3 import
   test_gff3 <- file.path(test_path, "genes.gff3")
   test <- import(test_gff3)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
 
   ## TEST: import.gff*
   test <- import.gff(test_gff3)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
   test <- import.gff3(test_gff3)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
   options(warn = 2)
   checkException(import.gff2(test_gff3))
   
   ## TEST: GFF(3)File
   test_gff_file <- GFF3File(test_gff3)
   test <- import(test_gff_file)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
   test_gff_file <- GFFFile(test_gff3)
   test <- import(test_gff_file)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
   test_gff_file <- GFFFile(test_gff3, version = "3")
   test <- import(test_gff_file)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
   test_gff_file <- GFF2File(test_gff3)
   checkException(test <- import(test_gff_file))
 
   ## TEST: 'gff' extension
   test_gff_out <- file.path(tempdir(), "genes.gff")
   on.exit(unlink(test_gff_out))
-  export(target_gff3, test_gff_out)
+  export(correct_gff3, test_gff_out)
   test <- import(test_gff_out)
-  checkIdentical(test, target_gff1)
-  export(target_gff3, test_gff_out, version = "1")
+  checkIdentical(test, correct_gff1)
+  export(correct_gff3, test_gff_out, version = "1")
   test <- import(test_gff_out)
-  checkIdentical(test, target_gff1)
-  export(target_gff3, test_gff_out, version = "2")
+  checkIdentical(test, correct_gff1)
+  export(correct_gff3, test_gff_out, version = "2")
   test <- import(test_gff_out)
-  checkIdentical(test, target_gff2)
-  export(target_gff3, test_gff_out, version = "3")
+  checkIdentical(test, correct_gff2)
+  export(correct_gff3, test_gff_out, version = "3")
   test <- import(test_gff_out)
-  checkIdentical(test, target_gff3)
+  checkIdentical(test, correct_gff3)
   test <- import(GFF3File(test_gff_out))
-  checkIdentical(test, target_gff3)
+  checkIdentical(test, correct_gff3)
   test <- import(GFFFile(test_gff_out))
-  checkIdentical(test, target_gff3)
+  checkIdentical(test, correct_gff3)
   test <- import(test_gff_out, version = "3")
-  checkIdentical(test, target_gff3)
+  checkIdentical(test, correct_gff3)
   checkException(test <- import(test_gff_out, version = "2"))
   
   ## TEST: 'gff2' extension
   test_gff2_out <- file.path(tempdir(), "genes.gff2")
-  export(target_gff3, test_gff2_out)
+  export(correct_gff3, test_gff2_out)
   test <- import(test_gff2_out)
-  checkIdentical(test, target_gff2)
+  checkIdentical(test, correct_gff2)
 
   ## TEST: 'gff1' extension
   test_gff1_out <- file.path(tempdir(), "genes.gff1")
-  export(target_gff3, test_gff1_out)
+  export(correct_gff3, test_gff1_out)
   test <- import(test_gff1_out)
-  checkIdentical(test, target_gff1)
+  checkIdentical(test, correct_gff1)
 
   ## TEST: 'format' argument
   test_gff_file <- GFF3File(test_gff3)
   test <- import(test_gff_file, format = "gff")
-  checkIdentical(test, target_gff3)
+  checkIdentical(test, correct_gff3)
   test <- import(test_gff_file, format = "gff3")
-  checkIdentical(test, target_gff3)
+  checkIdentical(test, correct_gff3)
   checkException(import(test_gff_file, format = "gff2"))
   checkException(import(test_gff_file, format = "bed"))
   
   ## TEST: 'genome'  
   si_hg19 <- SeqinfoForBSGenome("hg19")
-  rd_all <- RangedData(space = factor(character(), seqlevels(si_hg19)))
-  correct_hg19 <- rbind(rd_all, correct_gff3)
-  universe(correct_hg19) <- "hg19"
+  gr_all <- GRanges(space = factor(character(), seqlevels(si_hg19)))
+  correct_hg19 <- c(gr_all, correct_gff3)
+  seqlevels(correct_hg19) <- seqlevels(si_hg19)
   seqinfo(correct_hg19) <- si_hg19
-  target_hg19 <- as(correct_hg19, "GRanges")
   test <- import(test_gff3, genome = "hg19")
-  checkIdentical(test, target_hg19)
+  checkIdentical(test, correct_hg19)
   
   test_gff3_out <- file.path(tempdir(), "genes.gff3")
   on.exit(unlink(test_gff3_out))
   correct_genome_hg19 <- correct_gff3
-  universe(correct_genome_hg19) <- "hg19"
-  target_genome_hg19 <- as(correct_genome_hg19, "GRanges")
-  export(target_genome_hg19, test_gff3_out)
+  genome(correct_genome_hg19) <- "hg19"
+  correct_genome_hg19 <- as(correct_genome_hg19, "GRanges")
+  export(correct_genome_hg19, test_gff3_out)
   test <- import(test_gff3_out)
-  checkIdentical(test, target_hg19)
+  checkIdentical(test, correct_hg19)
 
   ## TEST: colnames empty, colnames := "geneName", colnames := "strand"
   test <- import(test_gff3, colnames = character())
-  target <- target_gff3[,character()]
+  target <- correct_gff3[,character()]
   strand(target) <- "*"
   checkIdentical(target, test)
   test <- import(test_gff3, colnames = "geneName")
-  target <- target_gff3[,"geneName"]
+  target <- correct_gff3[,"geneName"]
   strand(target) <- "*"
   checkIdentical(target, test)
   test <- import(test_gff3, colnames = "strand")
-  target <- target_gff3[,character()]
+  target <- correct_gff3[,character()]
   checkIdentical(target, test)
 
   ## TEST: import from connection
   test_gff_con <- file(test_gff_out)
   test <- import(test_gff_con, format = "gff")
   close(test_gff_con)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
 
   ## TEST: export to connection, with preceding comment
   test_gff_con <- file(test_gff_out)
   open(test_gff_con, "w")
   comment <- "# test comment"
   writeLines(comment, test_gff_con)
-  export(target_gff3, test_gff_con, version = "3")
+  export(correct_gff3, test_gff_con, version = "3")
   close(test_gff_con)
   checkIdentical(comment, readLines(test_gff_out, n = 1))
   test <- import(test_gff_out)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
   
   ## TEST: 'append'
-  export(target_gff3[seqnames(target_gff3) == "chr10", ], test_gff3_out)
-  export(target_gff3[seqnames(target_gff3) == "chr12", ], test_gff3_out,
+  export(correct_gff3[seqnames(correct_gff3) == "chr10", ], test_gff3_out)
+  export(correct_gff3[seqnames(correct_gff3) == "chr12", ], test_gff3_out,
          append = TRUE)
   test <- import(test_gff3_out)
-  checkIdentical(target_gff3, test)
+  checkIdentical(correct_gff3, test)
 
   ## TEST: 'source'
-  target <- target_gff3
+  target <- correct_gff3
   mcols(target)$source <- factor("test")
-  export(target_gff3, test_gff3_out, source = "test")
+  export(correct_gff3, test_gff3_out, source = "test")
   test <- import(test_gff3_out)
   checkIdentical(target, test)
 
   ## TEST: 'which'
   which <- RangesList(chr10 = IRanges(90000, 93000))
-  which_target <- subsetByOverlaps(target_gff3, which)
+  which_target <- subsetByOverlaps(correct_gff3, which)
   test <- import(test_gff3, which = which)
   checkIdentical(which_target, test)
   
   ## TEST: 'index'
-  export(target_gff3, test_gff3_out, index = TRUE)
+  export(correct_gff3, test_gff3_out, index = TRUE)
   test_gff_gz <- paste(test_gff3_out, ".gz", sep = "")
   on.exit(unlink(test_gff_gz))
   on.exit(unlink(paste(test_gff_gz, ".tbi", sep = "")))
@@ -203,14 +197,12 @@ test_gff <- function() {
 
   ## TEST: GenomicRangesList
   correct_grl <-
-    GenomicRangesList(new("UCSCData", as(correct_gff3[1], "GRanges"),
+    GenomicRangesList(new("UCSCData", keepSeqlevels(correct_gff3, "chr10"),
                           trackLine = new("BasicTrackLine", name = "chr10")),
-                      new("UCSCData", as(correct_gff3[2], "GRanges"),
+                      new("UCSCData", keepSeqlevels(correct_gff3, "chr12"),
                           trackLine = new("BasicTrackLine", name = "chr12")))
-  seqlevels(correct_grl[[1]]) <- "chr10"
-  seqlevels(correct_grl[[2]]) <- "chr12"
   mcols(correct_grl[[2]])$genome <- NULL
-  names(correct_grl) <- names(correct_gff3)
+  names(correct_grl) <- seqlevels(correct_gff3)
   export(correct_grl, test_gff3_out)
   test <- import.ucsc(test_gff3_out)
   checkIdentical(correct_grl, test)

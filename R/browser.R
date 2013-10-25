@@ -134,12 +134,19 @@ setGeneric("browseGenome",
            standardGeneric("browseGenome"))
 
 setMethod("browseGenome", "missing",
-          function(object, ...) browseGenome(RangedDataList(), ...))
+          function(object, ...) browseGenome(GenomicRangesList(), ...))
 
-setMethod("browseGenome", "GRanges",
-          function(object, ...) browseGenome(as(object, "RangedData"), ...))
+setMethod("browseGenome", "RangedData",
+          function(object, ...) browseGenome(as(object, "GRanges"), ...))
 
-setMethod("browseGenome", "RangedDataORRangedDataList",
+setMethod("browseGenome", "RangedDataList",
+          function(object, ...)
+          browseGenome(as(object, "GenomicRangesList"), ...))
+
+setClassUnion("GenomicRangesORGenomicRangesList",
+              c("GenomicRanges", "GenomicRangesList"))
+
+setMethod("browseGenome", "GenomicRangesORGenomicRangesList",
           function(object, browser = "UCSC",
                    range = base::range(object), view = TRUE,
                    trackParams = list(), viewParams = list(),
@@ -149,7 +156,7 @@ setMethod("browseGenome", "RangedDataORRangedDataList",
             session <- browserSession(browser, ...)
             # load 'object'
             trackParams <- c(list(session), trackParams)
-            if (is(object, "RangedData"))
+            if (is(object, "GenomicRanges"))
               trackParams <- c(trackParams, name = name)
             session <- do.call(`track<-`, c(trackParams, list(value = object)))
             # open view of 'range'

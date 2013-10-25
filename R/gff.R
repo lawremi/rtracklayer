@@ -57,9 +57,9 @@ setMethod("export", c("ANY", "GFFFile"),
           {
             if (hasMethod("asGFF", class(object)))
               object <- asGFF(object)
-            res <- try(as(object, "RangedData"), silent = TRUE)
+            res <- try(as(object, "GRanges"), silent = TRUE)
             if (is(res, "try-error")) {
-              res <- try(as(object, "RangedDataList"), silent = TRUE)
+              res <- try(as(object, "GenomicRangedDataList"), silent = TRUE)
               if (is(res, "try-error"))
                 stop("cannot export object of class '", class(object), "': ",
                      res)
@@ -70,7 +70,7 @@ setMethod("export", c("ANY", "GFFFile"),
             export(object, con, ...)
           })
 
-setMethod("export", c("RangedData", "GFFFile"),
+setMethod("export", c("GenomicRanges", "GFFFile"),
           function(object, con, format, version = c("1", "2", "3"),
                    source = "rtracklayer", append = FALSE, index = FALSE)
           {
@@ -100,7 +100,7 @@ setMethod("export", c("RangedData", "GFFFile"),
 
             seqname <- seqnames(object)
             if (is.null(object$ID))
-              object$ID <- rownames(object)
+              object$ID <- names(object)
             if (version == "3")
               seqname <- urlEncode(seqname, "a-zA-Z0-9.:^*$@!+_?|-")
             if (!is.null(object$source) && missing(source))
@@ -114,8 +114,9 @@ setMethod("export", c("RangedData", "GFFFile"),
             if (is.null(score)) {
               score <- NA
             } else {
-              if (!("score" %in% colnames(object)))
-                colnames(object)[1] <- "score" ## avoid outputting as attribute
+              if (!("score" %in% colnames(mcols(object))))
+                ## avoid outputting as attribute
+                colnames(mcols(object))[1] <- "score" 
             }
             strand <- strand(object)
             if (is.null(strand))
@@ -131,13 +132,13 @@ setMethod("export", c("RangedData", "GFFFile"),
             if (version == "1") {
               attrs <- object$group
               if (is.null(attrs))
-                attrs <- seqname
+                attrs <- as.vector(seqname)
             } else {
-              builtin <- c("type", "strand", "score", "phase", "source")
-              custom <- setdiff(colnames(object), builtin)
+              builtin <- c("type", "score", "phase", "source")
+              custom <- setdiff(colnames(mcols(object)), builtin)
               if (length(custom)) {
                 if (version == "3") tvsep <- "=" else tvsep <- " "
-                attrs <- unlist(values(object), use.names=FALSE)
+                attrs <- mcols(object)
                 attrs <- as.data.frame(sapply(custom, function(name) {
                   x <- attrs[[name]]
                   x_flat <- if (is(x, "List")) unlist(x, use.names=FALSE) else x
@@ -180,8 +181,8 @@ setMethod("export", c("RangedData", "GFFFile"),
             invisible(NULL)
           })
 
-setMethod("export", c("RangedDataList", "GFFFile"),
-          .export_RangedDataList_RTLFile)
+setMethod("export", c("GenomicRangesList", "GFFFile"),
+          .export_GenomicRangesList_RTLFile)
 
 setGeneric("export.gff1",
            function(object, con, ...) standardGeneric("export.gff1"))

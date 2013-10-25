@@ -2,33 +2,31 @@ test_wig <- function() {
   test_path <- system.file("tests", package = "rtracklayer")
   test_wig <- file.path(test_path, "step.wig")
 
-  createCorrectRd <- function(si) {
+  createCorrectGR <- function(si) {
     score <- c(seq(10, 20, by = 2.5), seq(17.5, 10, by = -2.5),
                seq(1000, 100, by = -100))
     start <- c(59104701 + cumsum(c(0, 200, 500, 200, 300, 180, 220, 390, 1180)),
                59108021 + cumsum(c(0, rep(300, 9))))
     width <- c(rep(1, 9), rep(200, 10))
     space <- factor(c(rep("chr19", 9), rep("chr18", 10)), seqlevels(si))
-    correct_rd <- RangedData(IRanges(start, width = width), score,
-                             space = space)
+    correct_gr <- GRanges(space, IRanges(start, width = width), score = score)
     if (!any(is.na(genome(si))))
-      universe(correct_rd) <- unname(genome(si)[1])
-    metadata(ranges(correct_rd))$seqinfo <- si
-    correct_rd
+      genome(correct_gr) <- unname(genome(si)[1])
+    seqinfo(correct_gr) <- si
+    correct_gr
   }
-  createCorrectUCSC <- function(rd) {  
+  createCorrectUCSC <- function(gr) {  
     track_line <- new("GraphTrackLine", type = "wig", name = "test",
                       description = "test track", visibility = "full",
                       autoScale = FALSE, viewLimits = c(0, 1000),
                       color = c(0L, 200L, 100L),
                       maxHeightPixels = c(100L, 50L, 20L),
                       graphType = "points", priority = 30)
-    new("UCSCData", as(rd, "GRanges"), trackLine = track_line)
+    new("UCSCData", gr, trackLine = track_line)
   }
 
-  correct_rd <- createCorrectRd(Seqinfo(c("chr19", "chr18")))
-  correct_gr <- as(correct_rd, "GRanges")
-  correct_ucsc <- createCorrectUCSC(correct_rd)
+  correct_gr <- createCorrectGR(Seqinfo(c("chr19", "chr18")))
+  correct_ucsc <- createCorrectUCSC(correct_gr)
 
   ## TEST: basic import
   test <- import(test_wig)
@@ -52,16 +50,16 @@ test_wig <- function() {
   
   ## TEST: 'genome'
   hg19_seqinfo <- SeqinfoForBSGenome("hg19")
-  correct_genome <- createCorrectUCSC(createCorrectRd(hg19_seqinfo))
+  correct_genome <- createCorrectUCSC(createCorrectGR(hg19_seqinfo))
   test <- import(test_wig, genome = "hg19")
-  checkIdentical(correct_genome, sort(test))
+  checkIdentical(correct_genome, test)
 
   ## TEST: trackLine = FALSE
   test <- import(test_wig, trackLine = FALSE)
   checkIdentical(correct_gr, test)
 
   ## TEST: which
-  which <- ranges(correct_rd[3:4,])
+  which <- correct_gr[3:4]
   correct_which <- subsetByOverlaps(correct_ucsc, which)
   test <- import(test_wig, which = which)
   checkIdentical(correct_which, test)
@@ -107,21 +105,21 @@ test_wig <- function() {
   test <- import(test_wig_out)
   checkIdentical(test, correct_gr)
 
-  ## TEST: Plain RangedData / bedGraph
-  export.ucsc(correct_rd, test_wig_out) # mixture of steps leads to bedGraph
+  ## TEST: Plain GRanges / bedGraph
+  export.ucsc(correct_gr, test_wig_out) # mixture of steps leads to bedGraph
   test <- import(test_wig_out)
   default_line <- new("GraphTrackLine", name = "R Track", type = "bedGraph")
   correct_default <- new("UCSCData", correct_gr, trackLine = default_line)
   checkIdentical(test, correct_default)
-  export.ucsc(correct_rd[2], test_wig_out)
+  correct_chr18 <- keepSeqlevels(correct_gr, "chr18")
+  export.ucsc(correct_chr18, test_wig_out)
   test <- import(test_wig_out)
   default_line <- new("GraphTrackLine", name = "R Track", type = "wig")
-  correct_default <- new("UCSCData", as(correct_rd[2], "GRanges"),
-                                     trackLine = default_line)
-  seqlevels(correct_default) <- "chr18"
+  correct_default <- new("UCSCData", keepSeqlevels(correct_gr, "chr18"),
+                         trackLine = default_line)
   checkIdentical(test, correct_default)
   
-  ## TEST: RangedDataList
+  ## TEST: GenomicRangesList
   export(correct_list, test_wig_out)
   test <- import(test_wig_out)
   checkIdentical(correct_list, test)

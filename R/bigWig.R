@@ -78,11 +78,11 @@ setMethod("export.bw", "ANY",
 setMethod("export", c("ANY", "BigWigFile"),
           function(object, con, format, ...)
           {
-            object <- as(object, "RangedData")
+            object <- as(object, "GRanges")
             callGeneric()
           })
 
-setMethod("export", c("RangedData", "BigWigFile"),
+setMethod("export", c("GenomicRanges", "BigWigFile"),
           function(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                                   "bedGraph"),
@@ -107,8 +107,8 @@ setMethod("export", c("RangedData", "BigWigFile"),
               if (any(tail(start(chromData), -1) <= head(end(chromData), -1)))
                 stop("BigWig ranges cannot overlap")
               sectionPtr <<- .Call(BWGSectionList_add, sectionPtr,
-                                   names(chromData)[1],
-                                   as(ranges(chromData)[[1]], "IRanges"),
+                                   as.vector(seqnames(chromData)[1]),
+                                   as(ranges(chromData), "IRanges"),
                                    as.numeric(score(chromData)), dataFormat)
             }
             dataFormat <- match.arg(dataFormat)
@@ -117,7 +117,8 @@ setMethod("export", c("RangedData", "BigWigFile"),
             else format <- dataFormat
             on.exit(.Call(BWGSectionList_cleanup, sectionPtr))
             if (format == "bedGraph")
-              lapply(object, .bigWigWriter, con, dataFormat)
+              lapply(split(object, seqnames(object)), .bigWigWriter, con,
+                     dataFormat)
             else export.wig(object, con, dataFormat = dataFormat,
                             writer = .bigWigWriter, trackLine = FALSE)
             storage.mode(seqlengths) <- "integer"
@@ -217,7 +218,7 @@ setMethod("import", "BigWigFile",
 
 rdToRle <- function(x) {
   RleList(mapply(function(r, v, sl) {
-    IRanges:::.Ranges.coverage(r, width=sl, weight=v$score)
+    coverage(r, width=sl, weight=v$score)
   }, ranges(x), values(x), seqlengths(x), SIMPLIFY=FALSE), compress=FALSE)
 }
 

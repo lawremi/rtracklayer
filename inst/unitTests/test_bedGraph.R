@@ -2,18 +2,18 @@ test_bedGraph <- function() {
   test_path <- system.file("tests", package = "rtracklayer")
   test_bg <- file.path(test_path, "test.bedGraph")
 
-  createCorrectRd <- function(si) {
+  createCorrectGR <- function(si) {
     part <- PartitioningByWidth(rep(300, 9))
     ir <- shift(IRanges(start(part), end(part)), 59102000)
     score <- seq(-1, 1, by = 0.25)
     space <- factor(c(rep("chr19", 6), "chr17", rep("chr18", 2)), seqlevels(si))
-    correct_rd <- RangedData(ir, score, space = space)
+    correct_gr <- GRanges(space, ir, score = score)
     if (!any(is.na(genome(si))))
-      universe(correct_rd) <- unname(genome(si)[1])
-    metadata(ranges(correct_rd))$seqinfo <- si
-    correct_rd
+      genome(correct_gr) <- unname(genome(si)[1])
+    seqinfo(correct_gr) <- si
+    correct_gr
   }
-  createCorrectUCSC <- function(rd) {  
+  createCorrectUCSC <- function(gr) {  
     track_line <- new("GraphTrackLine", type = "bedGraph",
                       name = "bedGraph track",
                       description = "Test", visibility = "full",
@@ -21,12 +21,11 @@ test_bedGraph <- function() {
                       windowingFunction = "mean",
                       color = c(200L, 100L, 0L),
                       altColor = c(0L, 100L, 200L), priority = 20)
-    new("UCSCData", as(rd, "GRanges"), trackLine = track_line)
+    new("UCSCData", gr, trackLine = track_line)
   }
 
-  correct_rd <- createCorrectRd(Seqinfo(c("chr19", "chr17", "chr18")))
-  correct_gr <- as(correct_rd, "GRanges")
-  correct_ucsc <- createCorrectUCSC(correct_rd)
+  correct_gr <- createCorrectGR(Seqinfo(c("chr19", "chr17", "chr18")))
+  correct_ucsc <- createCorrectUCSC(correct_gr)
   
   ## TEST: basic import
   test <- import(test_bg)
@@ -50,18 +49,17 @@ test_bedGraph <- function() {
 
   ## TEST: 'genome'
   hg19_seqinfo <- SeqinfoForBSGenome("hg19")
-  correct_genome <- createCorrectUCSC(createCorrectRd(hg19_seqinfo))
+  correct_genome <- createCorrectUCSC(createCorrectGR(hg19_seqinfo))
   test <- import(test_bg, genome = "hg19")
-  checkIdentical(correct_genome, sort(test))
+  checkIdentical(correct_genome, test)
 
   ## TEST: trackLine = FALSE
   test <- import(test_bg, trackLine = FALSE)
   checkIdentical(correct_gr, test)
 
   ## TEST: which
-  which <- ranges(correct_rd[3:4,])
-  correct_which <- subsetByOverlaps(correct_ucsc, which)
-  test <- import(test_bg, which = which)
+  correct_which <- subsetByOverlaps(correct_ucsc, correct_gr[3:4])
+  test <- import(test_bg, which = correct_which)
   checkIdentical(correct_which, test)
 
   ## TEST: basic export

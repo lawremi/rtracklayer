@@ -29,9 +29,9 @@ setMethod("export", c("ANY", "WIGFile"),
           function(object, con, ...)
           {
             cl <- class(object)
-            track <- try(as(object, "RangedData"), silent = TRUE)
+            track <- try(as(object, "GRanges"), silent = TRUE)
             if (class(track) == "try-error") {
-              track <- try(as(object, "RangedDataList"), silent = TRUE)
+              track <- try(as(object, "GenomicRangesList"), silent = TRUE)
               if (is(track, "try-error"))
                 stop("cannot export object of class '", cl, "': ", track)
             }
@@ -42,7 +42,7 @@ setMethod("export", c("ANY", "WIGFile"),
   con <- connection(con, if (append) "a" else "w")
   on.exit(release(con))
   cat(dataFormat, file = con)
-  cat(" chrom=", as.character(space(chromData))[1], file = con, sep = "")
+  cat(" chrom=", as.character(seqnames(chromData)[1]), file = con, sep = "")
   data <- score(chromData)
   starts <- start(chromData)
   if (dataFormat == "variableStep")
@@ -58,7 +58,7 @@ setMethod("export", c("ANY", "WIGFile"),
               row.names = FALSE, quote = FALSE)
 }
 
-setMethod("export", c("RangedData", "WIGFile"),
+setMethod("export", c("GenomicRanges", "WIGFile"),
           function(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep"),
                    writer = .wigWriter, append = FALSE, ...)
@@ -72,7 +72,7 @@ setMethod("export", c("RangedData", "WIGFile"),
             on.exit(options(scipen = scipen))
             dataFormat <- match.arg(dataFormat)            
             doBlock <- function(chromData) {
-              if (!nrow(chromData))
+              if (length(chromData) == 0L)
                 return()
               if (is.unsorted(start(chromData)))
                 chromData <- chromData[order(start(chromData)),]
@@ -103,7 +103,7 @@ setMethod("export", c("RangedData", "WIGFile"),
               ans
             }
             dataFormat <- match.arg(dataFormat)
-            lapply(object, doBlock)
+            lapply(split(object, seqnames(object)), doBlock)
             invisible(con)
           })
 
@@ -120,8 +120,8 @@ setMethod("export", c("UCSCData", "WIGFile"),
             invisible(con)
           })
 
-setMethod("export", c("RangedDataList", "WIGFile"),
-          .export_RangedDataList_RTLFile)
+setMethod("export", c("GenomicRangesList", "WIGFile"),
+          .export_GenomicRangesList_RTLFile)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import

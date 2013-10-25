@@ -41,16 +41,16 @@ setMethod("export", c("ANY", "BEDFile"),
             cl <- class(object)
             if (hasMethod("asBED", class(object)))
               object <- asBED(object)
-            track <- try(as(object, "RangedData"), silent = TRUE)
+            track <- try(as(object, "GRanges"), silent = TRUE)
             if (class(track) == "try-error") {
-              track <- try(as(object, "RangedDataList"), silent = TRUE)
+              track <- try(as(object, "GenomicRangesList"), silent = TRUE)
               if (is(track, "try-error"))
                 stop("cannot export object of class '", cl, "': ", track)
             }
             export(track, con, ...)
           })
 
-setMethod("export", c("RangedData", "BEDFile"),
+setMethod("export", c("GenomicRanges", "BEDFile"),
           function(object, con, format, append = FALSE, index = FALSE,
                    ignore.strand = FALSE)
           {
@@ -124,17 +124,17 @@ setMethod("export", c("RangedData", "BEDFile"),
                 thickStart <- start(object)
                 thickEnd <- end(object)
               }
-              strand <- if (ignore.strand) NULL else object$strand
+              strand <- if (ignore.strand) NULL else strand(object)
               if (!is.null(thickStart) && is.null(strand)) {
-                strand <- rep(NA, nrow(object))
+                strand <- rep(NA, length(object))
               }
               if (!is.null(strand) && is.null(score))
                 score <- 0
               name <- object$name
               if (is.null(name))
-                name <- rownames(object)
+                name <- names(object)
               if (!is.null(score) && is.null(name))
-                name <- rep(NA, nrow(object))
+                name <- rep(NA, length(object))
               df$name <- name
               df$score <- score
               df$strand <- strand
@@ -178,8 +178,8 @@ setMethod("export", c("UCSCData", "BEDFile"),
             invisible(con)
           })
 
-setMethod("export", c("RangedDataList", "BEDFile"),
-          .export_RangedDataList_RTLFile)
+setMethod("export", c("GenomicRangesList", "BEDFile"),
+          .export_GenomicRangesList_RTLFile)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import
@@ -407,7 +407,7 @@ setMethod("export.bed15", "ANY",
 
 ### FIXME: dispatch will break when 'object' is a UCSCData
 ### Possible solution: just merge this code with the main BEDFile method?
-setMethod("export", c("RangedData", "BED15File"),
+setMethod("export", c("GenomicRanges", "BED15File"),
           function(object, con, format, expNames = NULL, trackLine = NULL, ...)
           {
             if (!missing(format))
@@ -420,9 +420,9 @@ setMethod("export", c("RangedData", "BED15File"),
               return(export.ucsc(object, con, expNames = expNames, ...))
             }
             expNames <- trackLine@expNames
-            object$expCount <- rep(length(expNames), nrow(object))
+            object$expCount <- rep(length(expNames), length(object))
             object$expIds <- rep(paste(seq_along(expNames)-1, collapse=","),
-                                 nrow(object))
+                                 length(object))
             scores <- as.list(unlist(values(object[,expNames])))
             scores <- do.call(paste, c(scores, sep = ","))
             scores <- gsub("NA", "-10000", scores, fixed=TRUE)
