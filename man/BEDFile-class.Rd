@@ -231,9 +231,7 @@ export.bedGraph(object, con, ...)
 
   test <- import(test_bed, asRangedData = FALSE)
   test
-  rd <- import.bed(test_bed, asRangedData = TRUE)
-  rd
-
+  
   test_bed_file <- BEDFile(test_bed)
   import(test_bed_file, asRangedData = FALSE)
   
@@ -256,7 +254,7 @@ export.bedGraph(object, con, ...)
   test_bed_out_file <- BEDFile(test_bed_out)
   export(test, test_bed_out_file)
 
-  export(rd, test_bed_out, name = "Alternative name")
+  export(test, test_bed_out, name = "Alternative name")
   
   test_bed_gz <- paste(test_bed_out, ".gz", sep = "")
   export(test, test_bed_gz)

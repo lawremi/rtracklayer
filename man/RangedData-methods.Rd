@@ -103,16 +103,11 @@ Similarly the universe refers to the genome.}
   ## just ranges ##
   ## GRanges instance
   gr <- GenomicData(range1, asRangedData = FALSE)
-  ## RangedData instance
-  rd <- GenomicData(range1, asRangedData = TRUE)
 
   ## with a genome (universe) ##
   ## GRanges instance
   gr <- GenomicData(range1, genome = "hg18", asRangedData = FALSE)
   genome(gr) ## "hg18"
-  ## RangedData instance
-  rd <- GenomicData(range1, genome = "hg18", asRangedData = TRUE)
-  genome(rd) ## "hg18"
 
   ## with some data ##
   filter <- c(1L, 0L, 1L)
@@ -127,20 +122,8 @@ Similarly the universe refers to the genome.}
                     chrom = "chr1", asRangedData = FALSE)
   mcols(gr)[["filt"]]
   strand(gr) ## equal to 'strand'
-  ## RangedData instance
-  rd <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18",
-                    asRangedData = TRUE)
-  rd[["score"]]
-  strand(rd) ## all NA
-  rd <- GenomicData(range1[[1]], score, filt = filter, strand = strand,
-                    chrom = "chr1", asRangedData = TRUE)
-  rd[["filt"]]
-  strand(rd) ## equal to 'strand'
-
   ## coercion from data.frame ##
-  df <- as.data.frame(rd)
-  GenomicData(df, asRangedData = FALSE)
-  GenomicData(df, asRangedData = TRUE)
+  df <- as.data.frame(gr)
 }
 \keyword{classes}
 \keyword{methods}
