@@ -40,7 +40,7 @@
   enough to be the favored alternative.
 }
 \seealso{
-  \code{\link[GenomicRanges]{readGAlignments}} for reading BAM
+  \code{\link[GenomicAlignments]{readGAlignments}} for reading BAM
   files into a \code{GAlignments}.
 }
 \examples{

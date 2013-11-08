@@ -61,6 +61,8 @@ importFrom("Rsamtools", path, indexTabix, headerTabix, scanTabix, bgzip,
 
 importClassesFrom("Rsamtools", RsamtoolsFile)
 
+importFrom("GenomicAlignments", readGAlignmentsFromBam)
+
 importFrom("tools", file_path_as_absolute, file_path_sans_ext)
 
 exportClasses(BrowserSession, BrowserView, BrowserViewList,
