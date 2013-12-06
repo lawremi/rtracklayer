@@ -178,6 +178,12 @@ setMethod("export", c("UCSCData", "BEDFile"),
             invisible(con)
           })
 
+setMethod("export", c("GRangesList", "BEDFile"),
+          function(object, con, format, ...) {
+            object <- asBED(object)
+            callGeneric()
+          })
+
 setMethod("export", c("GenomicRangesList", "BEDFile"),
           .export_GenomicRangesList_RTLFile)
 
