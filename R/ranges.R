@@ -195,10 +195,6 @@ setReplaceMethod("chrom", "GRanges", function(x, value) {
 ### Genome-oriented conveniences for RangedSelection classes
 ### -------------------------------------------------------------------------
 
-## One could imagine the BSgenome object having a coerce method to
-## Ranges and RangesList, and this function could use that. But would
-## the coercion consider masks?
-
 GenomicSelection <- function(genome, chrom = NULL, colnames = character(0))
 {
   if (missing(genome) || !isSingleString(genome))
@@ -250,8 +246,10 @@ normGenomeRange <- function(range, session, max.length = 1L) {
     genome(session) <- range
     return(GRangesForGenome(range, seqinfo = seqinfo(session)))
   }
+  if (is(range, "Seqinfo"))
+    range <- as(range, "GRanges")
   if (!is(range, "RangesList") && !is(range, "GenomicRanges"))
-    stop("'range' should be either a genome string, RangesList or GRanges")
+    stop("'range' should be a genome string, RangesList, GRanges or Seqinfo")
   genome <- genome(session)
   if (length(seqinfo(range)) == 0L) {
     ## hack: need to avoid calling seqlengths(session) here, so use 'foo'
