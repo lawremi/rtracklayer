@@ -29,7 +29,7 @@ setMethod("export", c("GAlignments", "BamFile"),
                                             genome(si)[has_genome])
               writeLines(header, sam_con)
             }
-            emd <- values(object)
+            emd <- mcols(object)
             aln <- paste(if (!is.null(names(object))) names(object) else "*",
                          if (!is.null(emd[["flag"]])) emd[["flag"]] else
                            ifelse(strand(object) == "-", "16", "0"),
@@ -44,6 +44,23 @@ setMethod("export", c("GAlignments", "BamFile"),
                            else "*",
                          if (!is.null(emd[["qual"]])) emd[["qual"]] else "*",
                          sep = "\t")
+            reserved <- c("flag", "mapq", "mrnm", "mpos", "isize", "qual", "seq")
+            custom <- emd[setdiff(names(emd), reserved)]
+            if (length(custom) > 0L) {
+              type.map <- c(integer = "i", numeric = "f", character = "Z",
+                            factor = "Z")
+              custom.class <- sapply(custom, class)
+              custom.type <- type.map[custom.class]
+              unknown.class <- custom.class[is.na(custom.type)]
+              if (length(unknown.class) > 0L) {
+                warning("these classes are not yet valid for BAM tag export: ",
+                        paste(unknown.class, collapse=", "))
+                custom <- custom[!is.na(custom.type)]
+              }
+              tags <- mapply(paste0, names(custom), ":", custom.type, ":",
+                             as.list(custom), SIMPLIFY=FALSE)
+              aln <- do.call(paste, c(list(aln), tags, sep = "\t"))
+            }
             writeLines(aln, sam_con)
             close(sam_con)
             on.exit()
