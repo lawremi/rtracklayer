@@ -115,3 +115,8 @@ setMethod("import", "TwoBitFile",
             names(ans) <- names(which)
             ans
           })
+
+setMethod("getSeq", "TwoBitFile",
+          function(x, which = as(seqinfo(con), "GenomicRanges")) {
+            import(x, which = which)
+          })

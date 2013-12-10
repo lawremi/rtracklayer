@@ -51,7 +51,7 @@ importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
                   seqinfo, "seqinfo<-", seqlevels, "seqlevels<-", coerce)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, masks, writeXStringSet,
-           "masks<-", DNAStringSet)
+           "masks<-", DNAStringSet, getSeq)
 
 importFrom("BSgenome", installed.genomes, releaseDate, organism,
            providerVersion, provider, bsapply)
@@ -61,7 +61,7 @@ importFrom("Rsamtools", path, indexTabix, headerTabix, scanTabix, bgzip,
 
 importClassesFrom("Rsamtools", RsamtoolsFile)
 
-importFrom("GenomicAlignments", readGAlignmentsFromBam)
+importFrom("GenomicAlignments", readGAlignmentsFromBam, cigar)
 
 importFrom("tools", file_path_as_absolute, file_path_sans_ext)
 
@@ -108,7 +108,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               ## from GenomicRanges
               strand, seqinfo, "seqinfo<-",
               ## from BSgenome
-              organism, releaseDate
+              organism, releaseDate, getSeq
               )
 
 export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
