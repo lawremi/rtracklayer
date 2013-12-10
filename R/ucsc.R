@@ -623,6 +623,10 @@ setMethod("getTable", "UCSCTableQuery",
             close(f)
             tab
           })
+setMethod("getTable", "UCSCSession",
+          function(object, name, range = base::range(object), table = NULL) {
+            getTable(ucscTableQuery(object, name, range, table))
+          })
 
 ## UCSC genome view
 setClass("UCSCView", representation(hgsid = "numeric"),
