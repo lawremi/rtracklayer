@@ -44,8 +44,7 @@ setMethod("export", c("GAlignments", "BamFile"),
                            else "*",
                          if (!is.null(emd[["qual"]])) emd[["qual"]] else "*",
                          sep = "\t")
-            reserved <- c("flag", "mapq", "mrnm", "mpos", "isize", "qual", "seq")
-            custom <- emd[setdiff(names(emd), reserved)]
+            custom <- emd[nchar(names(emd)) == 2L]
             if (length(custom) > 0L) {
               type.map <- c(integer = "i", numeric = "f", character = "Z",
                             factor = "Z")
