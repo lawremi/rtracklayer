@@ -229,7 +229,7 @@ rdToRle <- function(x) {
 setMethod("summary", "BigWigFile",
           function(object, which = as(seqinfo(object), "GenomicRanges"),
                    size = 1L, type = c("mean", "min", "max", "coverage", "sd"),
-                   defaultValue = NA_real_)
+                   defaultValue = NA_real_, asRle = FALSE)
           {
             ### FIXME: could do with "GenomicRanges" here, but
             ### coercions generally only exist for GRanges specifically
@@ -245,8 +245,16 @@ setMethod("summary", "BigWigFile",
                                  as.character(seqnames(which)),
                                  ranges(which), size, type,
                                  as.numeric(defaultValue))
-            names(summaryList) <- names(which)
-            RleList(summaryList)
+            tiles <- tile(which, n = size)
+            if (asRle) {
+              setNames(RleList(mapply(Rle, summaryList, as.list(width(tiles))),
+                               compress=FALSE),
+                       names(which))
+            } else {
+              tiles <- unlist(tiles)
+              score(tiles) <- unlist(summaryList)
+              relist(tiles, summaryList)
+            }
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
