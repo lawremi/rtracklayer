@@ -7,7 +7,7 @@
 \title{Export to BAM Files}
 \description{
   Methods for import and export of
-  \code{\link[GenomicRanges]{GAlignments}} objects from and to BAM
+  \code{\link[GenomicAlignments]{GAlignments}} objects from and to BAM
   files, represented as \code{\link[Rsamtools]{BamFile}} objects.
 }
 \usage{
@@ -40,8 +40,9 @@
   enough to be the favored alternative.
 }
 \seealso{
-  \code{\link[GenomicAlignments]{readGAlignments}} for reading BAM
-  files into a \code{GAlignments}.
+  \code{\link[GenomicAlignments]{readGAlignments}} in the
+  \pkg{GenomicAlignments} package for reading BAM files into
+  a \code{GAlignments}.
 }
 \examples{
      library(Rsamtools)
