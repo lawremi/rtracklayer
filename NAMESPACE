@@ -1,40 +1,56 @@
 useDynLib(rtracklayer, .registration = TRUE)
 
-import(methods)
+## ============================================================
+## Import
+## ============================================================
 
+import(methods)
+import(BiocGenerics)
 import(zlibbioc)
 
-importFrom("stats", offset)
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### base packages
+###
 
-importFrom(utils, count.fields)
+importFrom("stats", offset, setNames)
+importFrom("utils", count.fields, URLdecode, URLencode, browseURL, download.file,
+           read.table, type.convert, write.table)
+importFrom("tools", file_path_as_absolute, file_path_sans_ext)
+importFrom("grDevices", col2rgb, rgb)
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Non-bioconductor packages
+###
 
 importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
            xmlInternalTreeParse, parseURI, newXMLNode, xmlChildren,
-           addChildren, removeChildren, saveXML)
+           addChildren, removeChildren)
+importMethodsFrom("XML", saveXML)
 
 importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
            postForm)
 
-import(BiocGenerics)
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Bioconductor packages
+###
 
 import(XVector)
 
 importClassesFrom("IRanges",
-                  RangedData, RangedDataList, DataTable,
-                  Annotated, Vector, List, DataTableORNULL, characterORNULL,
-                  RangedSelection, SimpleList, DataFrame)
-
-importFrom("IRanges", DataFrame, IRanges, RangedDataList, RangedData,
-           RangesList, Rle, RangedSelection, RleList, isSingleString,
-           recycleIntegerArg, recycleNumericArg, isSingleStringOrNA,
-           isTRUEorFALSE, isSingleNumberOrNA, PartitioningByWidth, shift,
-           as.factor)
-
+                  IRanges, RangedData, RangedDataList,
+                  Vector, DataTableORNULL, characterORNULL,
+                  RangedSelection, SimpleList, DataFrame, RangesList,
+                  Rle, RleList)
+importFrom("IRanges", CharacterList, DataFrame, IRanges, RangedDataList,
+           RangedData, RangesList, RangedSelection, RleList, isSingleString,
+           recycleIntegerArg, isSingleStringOrNA,
+           isTRUEorFALSE, isSingleNumberOrNA, PartitioningByWidth,
+           PartitioningByEnd, mseqapply)
 importMethodsFrom("IRanges", elementLengths, window,
                   start, end, width, range,
                   "start<-", "end<-", "width<-",
                   split, lapply, sapply, unlist, unique,
-                  as.vector, as.list, as.data.frame,
+                  as.vector, as.list, as.data.frame, as.factor,
                   colnames,  rownames,
                   "colnames<-","rownames<-",
                   ranges, values, score,
@@ -42,32 +58,39 @@ importMethodsFrom("IRanges", elementLengths, window,
                   space, universe, metadata,
                   "universe<-", "metadata<-",
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
-                  resize, mcols, "mcols<-", togroup)
+                  resize, mcols, "mcols<-", togroup, Rle, "active<-", collapse,
+                  coverage, findOverlaps, reflect, relist, runValue, shift,
+                  subjectHits, subsetByOverlaps, tile, togroup)
 
 importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList,
-                  GIntervalTree, GenomicRangesList, SimpleGenomicRangesList,
-                  GenomicRangesORmissing)
-
-importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo, genome, "genome<-",
-           merge)
-
+                  GenomicRangesList, Seqinfo, GIntervalTree,
+                  SimpleGenomicRangesList)
+importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo)
 importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
-                  seqinfo, "seqinfo<-", seqlevels, "seqlevels<-", coerce)
+                  seqinfo, "seqinfo<-", seqlevels, "seqlevels<-", "seqnames<-",
+                  genome, "genome<-", merge)
 
-importFrom("Biostrings", get_seqtype_conversion_lookup, masks, writeXStringSet,
-           "masks<-", DNAStringSet, getSeq)
+importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
+           DNAStringSet)
+importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
+importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 
-importFrom("BSgenome", installed.genomes, releaseDate, organism,
-           providerVersion, provider, bsapply)
+importFrom("BSgenome", installed.genomes, bsapply)
+importMethodsFrom("BSgenome", releaseDate, organism,
+                  providerVersion, provider)
+importClassesFrom("BSgenome", BSgenome)
 
-importFrom("Rsamtools", path, indexTabix, headerTabix, scanTabix, bgzip,
-           TabixFile, index, asBam)
+importFrom("Rsamtools", indexTabix, bgzip, TabixFile, index)
+importMethodsFrom("Rsamtools", ScanBamParam, asBam, headerTabix, isOpen, path,
+                  scanTabix)
+importClassesFrom("Rsamtools", RsamtoolsFile, TabixFile, BamFile)
 
-importClassesFrom("Rsamtools", RsamtoolsFile)
+importMethodsFrom("GenomicAlignments", readGAlignmentsFromBam, cigar)
+importClassesFrom("GenomicAlignments", GAlignments)
 
-importFrom("GenomicAlignments", readGAlignmentsFromBam, cigar)
-
-importFrom("tools", file_path_as_absolute, file_path_sans_ext)
+## ============================================================
+## Export
+## ============================================================
 
 exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
