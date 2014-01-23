@@ -40,8 +40,9 @@
 \usage{
 \S4method{import}{BigWigFile,ANY,ANY}(con, format, text,
                    selection = BigWigSelection(which, ...),
-                   which = con, asRangedData = FALSE,
-                   asRle = FALSE, ...)
+                   which = con, asRangedData = FALSE, asRle = FALSE, 
+                   as = c("GRanges", "RangedData", "RleList", 
+                          "IntegerList"), ...)
 import.bw(con, ...)
 
 \S4method{export}{ANY,BigWigFile,ANY}(object, con, format, ...)
@@ -67,11 +68,20 @@ export.bw(object, con, ...)
   \item{format}{If not missing, should be \dQuote{bigWig} or \dQuote{bw}
     (case insensitive).
   }
-  \item{text}{Not supported.}
-  \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
+  \item{text}{Not supported.
+  }
+  \item{as}{Specifies the class of the return object. Default is 
+    \code{GRanges}. When \code{IntegerList} is chosen, one integer
+    vector is returned for each range in the \code{selection} 
+    argument. \code{GRanges} and \code{RangedData} objects contain
+    only ranges with non-zero scores in the BigWig file.
+  } 
+  \item{asRangedData}{Deprecated. Use \code{as} instead.
+    If \code{TRUE}, a \code{RangedData} is returned,
     instead of a \code{GRanges}.
   }
-  \item{asRle}{If \code{TRUE}, the BigWig file is assumed to contain
+  \item{asRle}{Deprecated. Use \code{as} instead.
+    If \code{TRUE}, the BigWig file is assumed to contain
     contiguous ranges that define a run-length encoding of a
     vector (like coverage), and an \code{RleList} is returned.
   }
@@ -98,9 +108,12 @@ export.bw(object, con, ...)
 }
 
 \value{
-  A \code{GRanges} (or \code{RangedData} if \code{asRangedData} is
-  \code{TRUE}), with the score values in the \code{score} metadata column,
-  which is accessible via the \code{score} function.
+  A \code{GRanges} (default), \code{RangedData}, \code{RleList} or 
+  \code{IntegerList}. \code{GRanges} and \code{RangedData} return ranges
+  with non-zero score values in a \code{score} metadata column. The 
+  length of the \code{IntegerList} is the same length as the \code{selection} 
+  argument (one list element per range). The return order in the 
+  \code{IntegerList} matches the order of the \code{BigWigSelection} object. 
 }
 
 \section{\code{BigWigFile} objects}{
@@ -152,11 +165,19 @@ if (.Platform$OS.type != "windows") {
   test_path <- system.file("tests", package = "rtracklayer")
   test_bw <- file.path(test_path, "test.bw")
 
-  test <- import(test_bw, asRangedData = FALSE)
-  test
+  ## GRanges
+  gr <- import(test_bw)
+  gr 
 
   which <- GRanges(c("chr2", "chr2"), IRanges(c(1, 300), c(400, 1000)))
-  import(test_bw, which = which, asRangedData = FALSE)
+  import(test_bw, which = which)
+
+  ## RleList
+  rle <- import(test_bw, as = "RleList")
+  rle 
+
+  ## IntegerList
+  import(test_bw, which = which, as = "IntegerList")
 
 \dontrun{
   test_bw_out <- file.path(tempdir(), "test_out.bw")
@@ -164,7 +185,7 @@ if (.Platform$OS.type != "windows") {
 }
 
   bwf <- BigWigFile(test_bw)
-  track <- import(bwf, asRangedData = FALSE)
+  track <- import(bwf)
 
   seqinfo(bwf)  
 

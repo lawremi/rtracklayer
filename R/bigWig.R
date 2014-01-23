@@ -180,17 +180,29 @@ setMethod("import.bw", "ANY",
 ### - Extract coverage for one/all genes and summarize (RNA-seq?)
 ###   - probably want summarize,BigWigFile
 
-### FIXME: We also might want an integer/numeric switch?
 
 setMethod("import", "BigWigFile",
           function(con, format, text, selection = BigWigSelection(which, ...),
-                   which = con, asRangedData = FALSE, asRle = FALSE, ...)
+                   which = con, asRangedData = FALSE, asRle = FALSE,
+                   as=c("GRanges", "RangedData", "RleList", "IntegerList"), ...)
           {
+            ## 'asRle' and 'asRangedData' are deprecated
+            if (asRangedData) {
+              warning("'asRangedData' argument has been deprecated, ",
+                      "use 'as' instead")
+              as <- "RangedData"
+            }
+            if (asRle) {
+              warning("'asRle' argument has been deprecated, ",
+                      "use 'as' instead")
+              as <- "RleList"
+            }
             if (!missing(format))
               checkArgFormat(con, format)
-            if (!isTRUEorFALSE(asRle))
-              stop("'asRle' must be TRUE or FALSE")
-            asRangedData <- normarg_asRangedData(asRangedData, "import")
+            as <- match.arg(as)
+
+            if (as == "RangedData")
+                asRangedData <- normarg_asRangedData(asRangedData, "import")
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
             si <- seqinfo(con)
@@ -202,19 +214,29 @@ setMethod("import", "BigWigFile",
             flatWhich <- unlist(which, use.names = FALSE)
             if (is.null(flatWhich))
               flatWhich <- IRanges()
+            if (as == "IntegerList") {
+                which <- split(flatWhich, factor(space(which)))
+                rd <- .Call(BWGFile_query, path.expand(path(con)),
+                            as.list(which),
+                            identical(colnames(selection), "score"), 
+                            length(flatWhich))
+                names(rd) <- paste0(factor(space(which)), ":", 
+                                    start(flatWhich), "-", end(flatWhich))
+                return(IntegerList(rd))
+            }
             which <- split(flatWhich, factor(space(which), seqnames(si)))
             normRanges <- as(which, "NormalIRangesList")
             rd <- .Call(BWGFile_query, path.expand(path(con)),
-                        as.list(normRanges),
-                        identical(colnames(selection), "score"))
+                      as.list(normRanges),
+                      identical(colnames(selection), "score"), 0L) 
             seqinfo(rd) <- si
-            if (asRle) {
-              rdToRle(rd)
-            } else if (!asRangedData) {
-              strand(rd) <- "*"
-              rd <- as(rd, "GRanges")
+            if (as == "RleList") {
+               rdToRle(rd)
+            } else if (as == "GRanges") {
+               strand(rd) <- "*"
+               rd <- as(rd, "GRanges")
             } else rd
-          })
+           })
 
 rdToRle <- function(x) {
   RleList(mapply(function(r, v, sl) {
@@ -252,7 +274,7 @@ setMethod("summary", "BigWigFile",
                        names(which))
             } else {
               tiles <- unlist(tiles)
-              score(tiles) <- unlist(summaryList)
+              tiles$score <- unlist(summaryList)
               relist(tiles, summaryList)
             }
           })

@@ -12,7 +12,7 @@ static const R_CallMethodDef callMethods[] = {
   CALLMETHOD_DEF(BWGSectionList_add, 5),
   CALLMETHOD_DEF(BWGSectionList_write, 4),
   CALLMETHOD_DEF(BWGSectionList_cleanup, 1),
-  CALLMETHOD_DEF(BWGFile_query, 3),
+  CALLMETHOD_DEF(BWGFile_query, 4),
   CALLMETHOD_DEF(BWGFile_seqlengths, 1),
   CALLMETHOD_DEF(BWGFile_summary, 6),
   CALLMETHOD_DEF(BWGFile_fromWIG, 3),

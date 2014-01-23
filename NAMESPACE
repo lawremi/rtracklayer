@@ -1,5 +1,7 @@
 useDynLib(rtracklayer, .registration = TRUE)
 
+import(methods)
+
 import(zlibbioc)
 
 importFrom("stats", offset)
@@ -14,6 +16,8 @@ importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
            postForm)
 
 import(BiocGenerics)
+
+import(XVector)
 
 importClassesFrom("IRanges",
                   RangedData, RangedDataList, DataTable,
