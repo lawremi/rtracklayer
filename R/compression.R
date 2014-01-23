@@ -83,6 +83,16 @@ setMethod("ungzip", "connection", function(x) {
 })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### BGZip (Block-wise gzip files; extension used by Rsamtools::bgzip())
+###
+
+setClass("BGZFile", contains = "GZFile")
+
+BGZFile <- function(resource) {
+  new("BGZFile", resource = resource)
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### BZip2
 ###
 
