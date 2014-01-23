@@ -180,20 +180,21 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   
   ## To/From tabix
 
+  test_bed_bgz <- paste(test_bed_out, ".bgz", sep = "")
   export(correct_ucsc, test_bed_out, index = TRUE)
-  on.exit(unlink(paste(test_bed_gz, ".tbi", sep = "")))
-  test <- import(test_bed_gz, which = which)
+  on.exit(unlink(paste(test_bed_bgz, ".tbi", sep = "")))
+  test <- import(test_bed_bgz, which = which)
   checkIdentical(correct_which, test)
 
   ## check TabixFile
   
-  test_bed_tabix <- Rsamtools::TabixFile(test_bed_gz)
+  test_bed_tabix <- Rsamtools::TabixFile(test_bed_bgz)
   test <- import(test_bed_tabix)
   checkIdentical(correct_ucsc, test)
 
   ## look mom, no track line
   export(correct_ucsc, test_bed_out, index = TRUE, trackLine = FALSE)
-  test <- import(test_bed_gz, which = which)
+  test <- import(test_bed_bgz, which = which)
   checkIdentical(subsetByOverlaps(correct_gr, which), test)
   #test <- import(test_bed_tabix, format = "foo")
   

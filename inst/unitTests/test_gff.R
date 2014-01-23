@@ -189,10 +189,10 @@ test_gff <- function() {
   
   ## TEST: 'index'
   export(correct_gff3, test_gff3_out, index = TRUE)
-  test_gff_gz <- paste(test_gff3_out, ".gz", sep = "")
-  on.exit(unlink(test_gff_gz))
-  on.exit(unlink(paste(test_gff_gz, ".tbi", sep = "")))
-  test <- import(test_gff_gz, which = which)
+  test_gff_bgz <- paste(test_gff3_out, ".bgz", sep = "")
+  on.exit(unlink(test_gff_bgz))
+  on.exit(unlink(paste(test_gff_bgz, ".tbi", sep = "")))
+  test <- import(test_gff_bgz, which = which)
   checkIdentical(which_target, test)
 
   ## TEST: GenomicRangesList
