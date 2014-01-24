@@ -198,7 +198,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
   int nchroms = length(r_ranges);
   int int_ranges = asInteger(r_int_ranges);
   SEXP rangesList, rangesListEls, dataFrameList, dataFrameListEls, ans;
-  SEXP integerList, integerListEls;
+  SEXP numericList, numericListEls;
   bool returnScore = asLogical(r_return_score);
   const char *var_names[] = { "score", "" };
   struct lm *lm = lmInit(0);
@@ -207,7 +207,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
   struct bbiInterval *qhits = NULL;
 
   if (int_ranges) {
-    PROTECT(integerListEls = allocVector(VECSXP, int_ranges));
+    PROTECT(numericListEls = allocVector(VECSXP, int_ranges));
   } else {
     PROTECT(rangesListEls = allocVector(VECSXP, nchroms));
     setAttrib(rangesListEls, R_NamesSymbol, chromNames);
@@ -229,14 +229,14 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
       if (int_ranges) {
         qhits = queryHits;
         int nqhits = slCount(queryHits);
-        SEXP ans_integer;
-        PROTECT(ans_integer = allocVector(INTSXP, width[j]));
-        memset(INTEGER(ans_integer), 0, sizeof(int) * width[j]);
+        SEXP ans_numeric;
+        PROTECT(ans_numeric = allocVector(REALSXP, width[j]));
+        memset(REAL(ans_numeric), 0, sizeof(double) * width[j]);
         for (int k = 0; k < nqhits; k++, qhits = qhits->next) {
           for (int l = qhits->start; l < qhits->end; l++)
-            INTEGER(ans_integer)[(l - start[j] + 1)] = qhits->val;
+            REAL(ans_numeric)[(l - start[j] + 1)] = qhits->val;
         }
-        SET_VECTOR_ELT(integerListEls, elt_len, ans_integer);
+        SET_VECTOR_ELT(numericListEls, elt_len, ans_numeric);
         elt_len++;
         UNPROTECT(1);
       }
@@ -278,7 +278,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
   bbiFileClose(&file);
 
   if (int_ranges) {
-    ans = new_SimpleList("SimpleList", integerListEls);
+    ans = new_SimpleList("SimpleList", numericListEls);
     UNPROTECT(1);
   } else { 
     PROTECT(dataFrameList =

@@ -42,7 +42,7 @@
                    selection = BigWigSelection(which, ...),
                    which = con, asRangedData = FALSE, asRle = FALSE, 
                    as = c("GRanges", "RangedData", "RleList", 
-                          "IntegerList"), ...)
+                          "NumericList"), ...)
 import.bw(con, ...)
 
 \S4method{export}{ANY,BigWigFile,ANY}(object, con, format, ...)
@@ -71,7 +71,7 @@ export.bw(object, con, ...)
   \item{text}{Not supported.
   }
   \item{as}{Specifies the class of the return object. Default is 
-    \code{GRanges}. When \code{IntegerList} is chosen, one integer
+    \code{GRanges}. When \code{NumericList} is chosen, one integer
     vector is returned for each range in the \code{selection} 
     argument. \code{GRanges} and \code{RangedData} objects contain
     only ranges with non-zero scores in the BigWig file.
@@ -109,11 +109,11 @@ export.bw(object, con, ...)
 
 \value{
   A \code{GRanges} (default), \code{RangedData}, \code{RleList} or 
-  \code{IntegerList}. \code{GRanges} and \code{RangedData} return ranges
+  \code{NumericList}. \code{GRanges} and \code{RangedData} return ranges
   with non-zero score values in a \code{score} metadata column. The 
-  length of the \code{IntegerList} is the same length as the \code{selection} 
+  length of the \code{NumericList} is the same length as the \code{selection} 
   argument (one list element per range). The return order in the 
-  \code{IntegerList} matches the order of the \code{BigWigSelection} object. 
+  \code{NumericList} matches the order of the \code{BigWigSelection} object. 
 }
 
 \section{\code{BigWigFile} objects}{
@@ -176,8 +176,8 @@ if (.Platform$OS.type != "windows") {
   rle <- import(test_bw, as = "RleList")
   rle 
 
-  ## IntegerList
-  import(test_bw, which = which, as = "IntegerList")
+  ## NumericList
+  import(test_bw, which = which, as = "NumericList")
 
 \dontrun{
   test_bw_out <- file.path(tempdir(), "test_out.bw")

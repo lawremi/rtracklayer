@@ -184,7 +184,7 @@ setMethod("import.bw", "ANY",
 setMethod("import", "BigWigFile",
           function(con, format, text, selection = BigWigSelection(which, ...),
                    which = con, asRangedData = FALSE, asRle = FALSE,
-                   as=c("GRanges", "RangedData", "RleList", "IntegerList"), ...)
+                   as = c("GRanges", "RangedData", "RleList", "NumericList"), ...)
           {
             ## 'asRle' and 'asRangedData' are deprecated
             if (asRangedData) {
@@ -214,15 +214,17 @@ setMethod("import", "BigWigFile",
             flatWhich <- unlist(which, use.names = FALSE)
             if (is.null(flatWhich))
               flatWhich <- IRanges()
-            if (as == "IntegerList") {
+            if (as == "NumericList") {
                 which <- split(flatWhich, factor(space(which)))
                 rd <- .Call(BWGFile_query, path.expand(path(con)),
                             as.list(which),
                             identical(colnames(selection), "score"), 
                             length(flatWhich))
-                names(rd) <- paste0(factor(space(which)), ":", 
-                                    start(flatWhich), "-", end(flatWhich))
-                return(IntegerList(rd))
+                if (is.null(nms <- names(unlist(which))))
+                    nms <- paste0(factor(space(which)), ":", 
+                                  start(flatWhich), "-", end(flatWhich))
+                names(rd) <- nms 
+                return(NumericList(rd))
             }
             which <- split(flatWhich, factor(space(which), seqnames(si)))
             normRanges <- as(which, "NormalIRangesList")
