@@ -237,7 +237,7 @@ void bptFileTraverse(struct bptFile *bpt, void *context,
 /* Traverse bPlusTree on file, calling supplied callback function at each
  * leaf item. */
 {
-return rTraverse(bpt, bpt->rootOffset, context, callback);
+  rTraverse(bpt, bpt->rootOffset, context, callback);
 }
 
 
