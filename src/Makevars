@@ -1,4 +1,4 @@
-PKG_LIBS+=-lz 
+PKG_LIBS=-lz 
 include Makevars.common
 OBJECTS = $(PKG_OBJECTS) $(UCSC_OBJECTS:%=ucsc/%)
 PKG_CPPFLAGS=-D_FILE_OFFSET_BITS=64
