@@ -184,13 +184,12 @@ setMethod("import.bw", "ANY",
 setMethod("import", "BigWigFile",
           function(con, format, text, selection = BigWigSelection(which, ...),
                    which = con, asRangedData = FALSE, asRle = FALSE,
-                   as = c("GRanges", "RangedData", "RleList", "NumericList"), ...)
+                   as = c("GRanges", "RleList", "NumericList"), ...)
           {
             ## 'asRle' and 'asRangedData' are deprecated
             if (asRangedData) {
-              warning("'asRangedData' argument has been deprecated, ",
+              stop("'asRangedData' argument has been deprecated, ",
                       "use 'as' instead")
-              as <- "RangedData"
             }
             if (asRle) {
               warning("'asRle' argument has been deprecated, ",
@@ -201,7 +200,7 @@ setMethod("import", "BigWigFile",
               checkArgFormat(con, format)
             as <- match.arg(as)
 
-            if (as == "RangedData")
+            if (as != "NumericList")
                 asRangedData <- normarg_asRangedData(asRangedData, "import")
             selection <- as(selection, "BigWigSelection")
             validObject(selection)

@@ -41,8 +41,7 @@
 \S4method{import}{BigWigFile,ANY,ANY}(con, format, text,
                    selection = BigWigSelection(which, ...),
                    which = con, asRangedData = FALSE, asRle = FALSE, 
-                   as = c("GRanges", "RangedData", "RleList", 
-                          "NumericList"), ...)
+                   as = c("GRanges", "RleList", "NumericList"), ...)
 import.bw(con, ...)
 
 \S4method{export}{ANY,BigWigFile,ANY}(object, con, format, ...)
@@ -71,19 +70,19 @@ export.bw(object, con, ...)
   \item{text}{Not supported.
   }
   \item{as}{Specifies the class of the return object. Default is 
-    \code{GRanges}. When \code{NumericList} is chosen, one integer
-    vector is returned for each range in the \code{selection} 
-    argument. \code{GRanges} and \code{RangedData} objects contain
-    only ranges with non-zero scores in the BigWig file.
+    \code{GRanges}. As of version 1.23.11 \code{import} no longer
+    returns \code{RangedData}. 
+
+    For \code{NumericList}, one integer vector is returned for each 
+    range in the \code{selection} argument. For \code{GRanges}, 
+    only ranges with non-zero scores are returned.
   } 
   \item{asRangedData}{Deprecated. Use \code{as} instead.
-    If \code{TRUE}, a \code{RangedData} is returned,
-    instead of a \code{GRanges}.
   }
   \item{asRle}{Deprecated. Use \code{as} instead.
     If \code{TRUE}, the BigWig file is assumed to contain
     contiguous ranges that define a run-length encoding of a
-    vector (like coverage), and an \code{RleList} is returned.
+    vector (like coverage), and a \code{RleList} is returned.
   }
   \item{selection}{A \code{\linkS4class{BigWigSelection}} object
     indicating the ranges to load.
@@ -166,6 +165,7 @@ if (.Platform$OS.type != "windows") {
   test_bw <- file.path(test_path, "test.bw")
 
   ## GRanges
+  ## Returns ranges with non-zero scores.
   gr <- import(test_bw)
   gr 
 
@@ -173,7 +173,10 @@ if (.Platform$OS.type != "windows") {
   import(test_bw, which = which)
 
   ## RleList
-  rle <- import(test_bw, as = "RleList")
+  ## Scores returned as an RleList is equivalent to the coverage.
+  ## Best option when 'which' or 'selection' contain many small ranges.
+  mini <- narrow(unlist(tile(which, 50)), 2)
+  rle <- import(test_bw, which = mini, as = "RleList")
   rle 
 
   ## NumericList
