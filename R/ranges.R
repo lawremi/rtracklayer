@@ -42,10 +42,9 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
     if (!is.factor(chrom))
       chrom <- factor(chrom, seqlevels(seqinfo))
     normStrand <- function(strand) {
+      strand <- as.character(strand)
       strand[is.na(strand)] <- "*"
-      if (!all(strand %in% levels(strand())))
-        stop("strand values should be '-', '+' or '*'")
-      factor(strand, levels(strand()))
+      strand(strand)
     }
     if (!is.null(strand))
       strand <- normStrand(strand)

@@ -359,8 +359,6 @@ setMethod("import", "GFFFile",
 
             if (!is.null(xd$phase))
               xd$phase <- as.integer(as.character(xd$phase))
-            if (!is.null(xd$strand))
-              xd$strand <- strand(xd$strand)
             if (!is.null(xd$score))
               suppressWarnings(xd$score <- as.numeric(as.character(xd$score)))
 
