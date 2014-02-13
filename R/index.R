@@ -47,7 +47,7 @@ setMethod("queryForResource", "TabixFile",
               writeLines(lines, buffer)
             }
             structure(buffer, usedWhich = TRUE, seqinfo =
-                      Seqinfo(tabixHeader$seqnames))
+                      merge(Seqinfo(tabixHeader$seqnames), seqinfo(which)))
           })
 
 queryForConnection <- function(x, which = NULL, ...) {
