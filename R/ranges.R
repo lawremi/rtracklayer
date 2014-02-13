@@ -18,7 +18,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
   if (!is.null(seqinfo)) {
     if (is.na(genome))
       genome <- singleGenome(genome(seqinfo))
-    else if (!all(genome == genome(seqinfo)))
+    else if (!all(genome == genome(seqinfo), na.rm=TRUE))
       stop("'genome' ", genome, "' does not match that in 'seqinfo'")
   }
   if (is.null(seqinfo) && !is.na(genome))
