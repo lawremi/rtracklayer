@@ -219,11 +219,11 @@ setMethod("import", "BigWigFile",
                             as.list(which),
                             identical(colnames(selection), "score"), 
                             length(flatWhich))
-                if (is.null(nms <- names(unlist(which))))
-                    nms <- paste0(factor(space(which)), ":", 
-                                  start(flatWhich), "-", end(flatWhich))
-                names(rd) <- nms 
-                return(NumericList(rd))
+                rd <- NumericList(rd)
+                ulst <- unlist(which)
+                names(rd) <- names(ulst)
+                metadata(rd) <- list(ranges = ulst)
+                return(rd)
             }
             which <- split(flatWhich, factor(space(which), seqnames(si)))
             normRanges <- as(which, "NormalIRangesList")
