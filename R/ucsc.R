@@ -641,6 +641,8 @@ setMethod("browserView", "UCSCSession",
           {
             form <- list()
             if (!missing(range)) {
+              if (is(range, "RangesList"))
+                range <- range[elementLengths(range) > 0L]
               if (length(range) > 1) {
                 ranges <- range
                 views <- vector("list", length(ranges))

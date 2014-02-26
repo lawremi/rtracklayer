@@ -264,8 +264,8 @@ normGenomeRange <- function(range, session, max.length = 1L) {
       merge(si, seqinfo(range))
   }
   if (is(range, "RangesList")) {
-    range <- GRangesForGenome(genome(range), names(range), unlist(range),
-                              seqinfo = seqinfo(session))
+    range <- GRangesForGenome(singleGenome(genome(range)), names(range),
+                              unlist(range), seqinfo = seqinfo(session))
   } else if (is(range, "GenomicRanges")) {
     strand(range) <- "*"
     mcols(range) <- NULL
