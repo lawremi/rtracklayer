@@ -58,8 +58,8 @@ test_bw <- function() {
   test <- import(test_bw_out)
   checkIdentical(test, correct_ncbi)
 
-  ## TEST: asRle=TRUE
+  ## TEST: as="RleList"
   correct_cov <- coverage(correct_ncbi, weight="score")
-  test <- import(test_bw_out, asRle=TRUE)
+  test <- import(test_bw_out, as="RleList")
   checkIdentical(correct_cov, test)
 }
