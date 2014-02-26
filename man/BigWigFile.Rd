@@ -76,9 +76,8 @@ export.bw(object, con, ...)
     For \code{NumericList}, one integer vector is returned for each 
     range in the \code{selection} argument. For \code{GRanges}, 
     only ranges with non-zero scores are returned.
-  } 
-  \item{asRangedData}{Deprecated. Use \code{as} instead.
   }
+  \item{asRangedData}{Defunct.}
   \item{asRle}{Deprecated. Use \code{as} instead.
     If \code{TRUE}, the BigWig file is assumed to contain
     contiguous ranges that define a run-length encoding of a

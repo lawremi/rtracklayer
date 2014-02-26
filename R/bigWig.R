@@ -186,14 +186,12 @@ setMethod("import", "BigWigFile",
                    which = con, asRangedData = FALSE, asRle = FALSE,
                    as = c("GRanges", "RleList", "NumericList"), ...)
           {
-            ## 'asRle' and 'asRangedData' are deprecated
             if (asRangedData) {
-              stop("'asRangedData' argument has been deprecated, ",
-                      "use 'as' instead")
+              stop("'asRangedData' argument is defunct")
             }
             if (asRle) {
               warning("'asRle' argument has been deprecated, ",
-                      "use 'as' instead")
+                      "use 'as=\"RleList\"' instead")
               as <- "RleList"
             }
             if (!missing(format))
