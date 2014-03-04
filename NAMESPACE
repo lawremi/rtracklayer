@@ -145,7 +145,8 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        GRangesForBSGenome, summary, seqinfo, genome, "genome<-",
        uri, Quickload, quickload, QuickloadGenome,
        organism, releaseDate, mcols, wigToBigWig,
-       SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path)
+       SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path,
+       FileForFormat)
 
 export(GFFFile, UCSCFile, BEDFile, WIGFile,
        ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,

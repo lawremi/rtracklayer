@@ -15,6 +15,9 @@
 %% Show:
 \alias{show,RTLFile-method}
 
+%% Related functions:
+\alias{FileForFormat}
+
 \title{RTLFile objects}
 
 \description{
@@ -41,6 +44,16 @@
   }
 }
 
+\section{Related functions}{
+  \describe{
+    \item{}{
+      \code{FileForFormat(path, format = file_ext(path))}:
+      Determines the file type of \code{path} and returns
+      a high-level file object such as BamFile, BEDFile,
+      BigWigFile etc.. 
+    }
+  }
+}
 
 \author{Michael Lawrence}
 
