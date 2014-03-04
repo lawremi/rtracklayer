@@ -6,10 +6,13 @@
 \alias{BigWigFile-class}
 \alias{class:BWFile}
 \alias{BWFile-class}
+\alias{class:BigWigFileList}
+\alias{BigWigFileList-class}
 
 %% Constructor:
 \alias{BigWigFile}
 \alias{BWFile}
+\alias{BigWigFileList}
 
 %% Accessors:
 \alias{seqinfo,BigWigFile-method}
@@ -28,6 +31,7 @@
 
 %% Utilites:
 \alias{summary,BigWigFile-method}
+\alias{path,BigWigFileList-method}
 
 \title{BigWig Import and Export}
 
@@ -150,6 +154,11 @@ export.bw(object, con, ...)
         multi-level summaries present in every BigWig file.
     }
   }
+}
+
+\section{\code{BigWigFileList} objects}{
+  A \code{BigWigFileList()} provides a convenient way of managing a list 
+  of \code{BigWigFile} instances.
 }
 
 \author{Michael Lawrence}

@@ -21,6 +21,20 @@ setMethod("seqinfo", "BigWigFile", function(x) {
   Seqinfo(names(seqlengths), seqlengths) # no circularity information
 })
 
+setClass("BigWigFileList", contains = "SimpleList",
+    prototype = prototype(elementType = "BigWigFile"))
+
+BigWigFileList <- function(path)
+{
+    new("BigWigFileList", listData = (lapply(path, BigWigFile)))
+}
+
+setMethod(path, "BigWigFileList",
+    function(object, ...)
+{
+    sapply(as.list(object), path)
+})
+
 .allowedColNames <- list(bigWig = "score")
 
 .validateColNames <- function(object, format) {
