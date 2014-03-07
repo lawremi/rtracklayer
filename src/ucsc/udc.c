@@ -860,7 +860,7 @@ if (isTransparent)
      * the file itself, which appears to be completely loaded in cache. */
     int flags = O_RDONLY;
 #ifdef WIN32
-    flags |= O_BINARY
+    flags |= O_BINARY;
 #endif
     int fd = file->fdSparse = mustOpenFd(url, flags);
     struct stat status;
