@@ -23,6 +23,8 @@
  * The bitmap file contains time stamp and size data as well as an array with one bit
  * for each block of the file that has been fetched.  Currently the block size is 8K. */
 
+#define _XOPEN_SOURCE
+
 #include <sys/file.h>
 #include "common.h"
 #include "hash.h"
@@ -856,7 +858,11 @@ if (isTransparent)
     {
     /* If transparent dummy up things so that the "sparse" file pointer is actually
      * the file itself, which appears to be completely loaded in cache. */
-    int fd = file->fdSparse = mustOpenFd(url, O_RDONLY);
+    int flags = O_RDONLY;
+#ifdef WIN32
+    flags |= O_BINARY
+#endif
+    int fd = file->fdSparse = mustOpenFd(url, flags);
     struct stat status;
     fstat(fd, &status);
     file->startData = 0;
