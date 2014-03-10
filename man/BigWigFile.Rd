@@ -152,6 +152,10 @@ export.bw(object, con, ...)
         screen space is small compared to the viewed portion of the
         sequence. The operation is very fast, as it leverages cached
         multi-level summaries present in every BigWig file.
+
+        If a summary statistic is not available / cannot be computed
+        for a given range a warning is thrown and the defaultValue
+        \code{NA_real_} is returned.
     }
   }
 }

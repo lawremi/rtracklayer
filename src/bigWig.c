@@ -319,7 +319,7 @@ SEXP BWGFile_summary(SEXP r_filename, SEXP r_chrom, SEXP r_ranges,
                                       start[i] - 1 + width[i], type, size,
                                       values);
     if (!success)
-      error("Failed to summarize range %d (%s:%d-%d)", i, chrom, start[i],
+      warning("Failed to summarize range %d (%s:%d-%d)", i, chrom, start[i],
             start[i] - 1 + width[i]);
   }
   popRHandlers();
