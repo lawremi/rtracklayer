@@ -264,7 +264,7 @@ rdToRle <- function(x) {
 setMethod("summary", "BigWigFile",
           function(object, which = as(seqinfo(object), "GenomicRanges"),
                    size = 1L, type = c("mean", "min", "max", "coverage", "sd"),
-                   defaultValue = NA_real_, asRle = FALSE)
+                   defaultValue = NA_real_, asRle = FALSE, ...)
           {
             ### FIXME: could do with "GenomicRanges" here, but
             ### coercions generally only exist for GRanges specifically

@@ -138,7 +138,7 @@ export.bw(object, con, ...)
     \item{}{
       \code{summary(ranges = as(seqinfo(object), "GenomicRanges"), size
         = 1L, type = c("mean", "min", "max", "coverage", "sd"),
-        defaultValue = NA_real_)}: Aggregates the intervals in the file
+        defaultValue = NA_real_), ...}: Aggregates the intervals in the file
         that fall into \code{ranges}, which should be something
         coercible to \code{GRanges}.  The aggregation essentially
         compresses each sequence to a length of \code{size}. The
