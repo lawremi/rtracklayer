@@ -25,6 +25,10 @@
 
 #define _XOPEN_SOURCE
 
+#ifdef __sun
+# define _XPG6
+#endif
+
 #include <sys/file.h>
 #include "common.h"
 #include "hash.h"
