@@ -118,6 +118,8 @@ setMethod("export", c("GenomicRanges", "BigWigFile"),
                    "is known to BSgenome or UCSC")
             sectionPtr <- NULL # keep adding to the same linked list
             .bigWigWriter <- function(chromData, con, dataFormat, append) {
+              if (length(chromData) == 0L)
+                return()
               if (any(tail(start(chromData), -1) <= head(end(chromData), -1)))
                 stop("BigWig ranges cannot overlap")
               sectionPtr <<- .Call(BWGSectionList_add, sectionPtr,
