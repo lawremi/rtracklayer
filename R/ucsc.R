@@ -1095,6 +1095,11 @@ setClass("UCSCData",
          prototype(trackLine = new("BasicTrackLine")),
          "GRanges")
 
+UCSCData <- function(ranges, trackLine = NULL) {
+  metadata(ranges)$trackLine <- trackLine
+  as(ranges, "UCSCData")
+}
+
 setMethod("show", "UCSCData",
           function(object)
           {

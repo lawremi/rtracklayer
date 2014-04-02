@@ -52,8 +52,13 @@ setMethod("export", c("ANY", "BEDFile"),
 
 setMethod("export", c("GenomicRanges", "BEDFile"),
           function(object, con, format, append = FALSE, index = FALSE,
-                   ignore.strand = FALSE)
+                   ignore.strand = FALSE, trackLine = NULL)
           {
+            if (!is.null(trackLine)) {
+              object <- UCSCData(object, trackLine)
+              trackLine <- TRUE
+              return(callGeneric())
+            }
             if (!missing(format))
               checkArgFormat(con, format)
             name <- strand <- thickStart <- thickEnd <- color <- NULL
