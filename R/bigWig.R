@@ -312,6 +312,7 @@ wigToBigWig <-
     if (any(is.na(seqlengths)))
       stop("'seqlengths(seqinfo)' must not contain any 'NA' values")
     x <- path.expand(x)
+    dest <- path.expand(dest)
     ans <- .Call(BWGFile_fromWIG, x, seqlengths, dest)
     invisible(BigWigFile(ans))
   }
