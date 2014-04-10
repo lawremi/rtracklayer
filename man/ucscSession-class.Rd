@@ -3,6 +3,7 @@
 \alias{UCSCSession-class}
 \alias{initialize,UCSCSession-method}
 \alias{track,UCSCSession-method}
+\alias{track<-,UCSCSession,GenomicRangesList-method}
 \alias{range<-}
 \alias{range<-,UCSCSession-method}
 \alias{track<-,UCSCSession,RTLFile-method}
@@ -12,6 +13,7 @@
 \alias{seqinfo,UCSCSession-method}
 \alias{range,ucscCart-method}
 \alias{genome,ucscCart-method}
+\alias{getTable,UCSCSession-method}
 
 \title{Class "UCSCSession"}
 \description{An implementation of \code{\linkS4class{BrowserSession}}
@@ -97,6 +99,12 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       table. A specific table may be retrieved by passing its name in
       the \code{table} parameter. See \code{\link{tableNames}} for a way
       to list the available tables.
+    }
+    \item{}{
+      \code{getTable(object, name, range = base::range(object), table =
+      NULL)}: Retrieves the table indicated by the track \code{name} and
+      \code{table} name, over \code{range}, as a \code{data.frame}. See
+      \code{\link{getTable}}.
     }
     \item{\code{\link{trackNames}}(object)}{ Gets the
       names of the tracks stored in the session. }

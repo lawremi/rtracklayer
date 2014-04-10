@@ -26,7 +26,7 @@
 \alias{export.bw}
 \alias{export.bw,ANY-method}
 \alias{export,ANY,BigWigFile,ANY-method}
-\alias{export,RangedData,BigWigFile,ANY-method}
+\alias{export,GenomicRanges,BigWigFile,ANY-method}
 \alias{export,RleList,BigWigFile,ANY-method}
 
 %% Utilites:
@@ -49,7 +49,7 @@
 import.bw(con, ...)
 
 \S4method{export}{ANY,BigWigFile,ANY}(object, con, format, ...)
-\S4method{export}{RangedData,BigWigFile,ANY}(object, con, format,
+\S4method{export}{GenomicRanges,BigWigFile,ANY}(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                      "bedGraph"), compress = TRUE)
 export.bw(object, con, ...)
@@ -65,8 +65,7 @@ export.bw(object, con, ...)
     or \dQuote{bw}.
   }
   \item{object}{The object to export, should be an \code{RleList},
-    \code{RangedData} or something coercible to a \code{RangedData},
-    like a \code{GRanges}.
+    \code{GRanges} or something coercible to a \code{GRanges}.
   }
   \item{format}{If not missing, should be \dQuote{bigWig} or \dQuote{bw}
     (case insensitive).

@@ -26,10 +26,11 @@
 
 %% Export:
 \alias{export,ANY,BEDFile,ANY-method}
-\alias{export,RangedData,BED15File,ANY-method}
-\alias{export,RangedData,BEDFile,ANY-method}
-\alias{export,RangedDataList,BEDFile,ANY-method}
+\alias{export,GenomicRanges,BEDFile,ANY-method}
+\alias{export,GRangesList,BEDFile,ANY-method}
+\alias{export,GenomicRangesList,BEDFile,ANY-method}
 \alias{export,UCSCData,BEDFile,ANY-method}
+\alias{export,GenomicRanges,BED15File,ANY-method}
 \alias{export.bed}
 \alias{export.bed,ANY-method}
 \alias{export.bed15}
@@ -53,15 +54,15 @@ import.bed15(con, ...)
 import.bedGraph(con,  ...)
 
 \S4method{export}{ANY,BEDFile,ANY}(object, con, format, ...)
-\S4method{export}{RangedData,BEDFile,ANY}(object, con, format,
-                   append = FALSE, index = FALSE, ignore.strand = FALSE)
-\S4method{export}{RangedDataList,BEDFile,ANY}(object, con, format, ...)
+\S4method{export}{GenomicRanges,BEDFile,ANY}(object, con, format,
+                  append = FALSE, index = FALSE,
+                  ignore.strand = FALSE, trackLine = NULL)
 \S4method{export}{UCSCData,BEDFile,ANY}(object, con, format,
                    trackLine = TRUE, ...)
-\S4method{export}{RangedData,BED15File,ANY}(object, con, format,
-                   expNames = NULL, trackLine = NULL, ...)
 export.bed(object, con, ...)
 export.bed15(object, con, ...)
+\S4method{export}{GenomicRanges,BED15File,ANY}(object, con, format,
+                  expNames = NULL, trackLine = NULL, ...)
 export.bedGraph(object, con, ...)
 }
 
@@ -75,22 +76,23 @@ export.bedGraph(object, con, ...)
     one of \dQuote{bed}, \dQuote{bed15} or \dQuote{bedGraph}. Compressed
     files (\dQuote{gz}, \dQuote{bz2} and \dQuote{xz}) are handled transparently.
   }
-  \item{object}{The object to export, should be a \code{RangedData} or
-    something coercible to a \code{RangedData}, like a
-    \code{GRanges}. If the object has a method for \code{asBED}, it is
-    called prior to coercion. This makes it possible to export a
-    \code{GRangesList} or \code{TranscriptDb} in a way that preserves
-    the hierarchical structure. For exporting multiple tracks, in the
-    UCSC track line metaformat, pass a \code{RangedDataList}, or
-    something coercible to one, like a \code{GenomicRangesList}.
+  \item{object}{The object to export, should be a \code{GRanges} or
+    something coercible to a \code{GRanges}.  If the object has a method
+    for \code{asBED} (like \code{GRangesList}), it is called prior to
+    coercion. This makes it possible to export a \code{GRangesList} or
+    \code{TranscriptDb} in a way that preserves the hierarchical
+    structure. For exporting multiple tracks, in the UCSC track line
+    metaformat, pass a \code{GenomicRangesList}, or something coercible to
+    one.
   }
-  \item{format}{If not missing, should be one of \dQuote{bed}, \dQuote{bed15}
-    or \dQuote{bedGraph}.}
-  \item{text}{If \code{con} is missing, a character vector to use as the
-    input}
-  \item{trackLine}{Whether to parse/output a UCSC track line. An
-    imported track line will be stored in a \code{\linkS4class{TrackLine}}
-    object, as part of the returned \code{\linkS4class{UCSCData}}.
+  \item{format}{If not missing, should be one of \dQuote{bed},
+    \dQuote{bed15} or \dQuote{bedGraph}.}  \item{text}{If \code{con} is
+    missing, a character vector to use as the input}
+  \item{trackLine}{For import, an imported track line will be stored
+    in a \code{\linkS4class{TrackLine}} object, as part of the returned
+    \code{\linkS4class{UCSCData}}.  For the UCSCData method on export,
+    whether to output the UCSC track line stored on the object, for the
+    other export methods, the actual TrackLine object to export.
   }
   \item{genome}{The identifier of a genome, or \code{NA} if
     unknown. Typically, this is a UCSC identifier like \dQuote{hg19}. An

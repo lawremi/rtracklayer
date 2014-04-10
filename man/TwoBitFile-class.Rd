@@ -18,6 +18,7 @@
 \alias{import.2bit}
 \alias{import.2bit,ANY-method}
 \alias{import,TwoBitFile,ANY,ANY-method}
+\alias{getSeq,TwoBitFile-method}
 
 %% Export:
 \alias{export.2bit}
@@ -43,6 +44,7 @@
 \usage{
 \S4method{import}{TwoBitFile,ANY,ANY}(con, format, text,
            which = as(seqinfo(con), "GenomicRanges"), ...)
+\S4method{getSeq}{TwoBitFile}(x, which = as(seqinfo(con), "GenomicRanges"))
 import.2bit(con, ...)
 
 \S4method{export}{ANY,TwoBitFile,ANY}(object, con, format, ...)
@@ -62,7 +64,7 @@ export.2bit(object, con, ...)
     extension or the \code{format} argument needs to be \dQuote{twoBit}
     or \dQuote{2bit}.
   }
-  \item{object}{The object to export, either a \code{DNAStringSet},
+  \item{object,x}{The object to export, either a \code{DNAStringSet},
     \code{BSgenome} and something coercible to a \code{DNAStringSet},
     like a character vector.
   }

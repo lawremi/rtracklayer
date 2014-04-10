@@ -36,8 +36,8 @@
 
 %% Export:
 \alias{export,ANY,GFFFile,ANY-method}
-\alias{export,RangedData,GFFFile,ANY-method}
-\alias{export,RangedDataList,GFFFile,ANY-method}
+\alias{export,GenomicRanges,GFFFile,ANY-method}
+\alias{export,GenomicRangesList,GFFFile,ANY-method}
 \alias{export.gff}
 \alias{export.gff,ANY-method}
 \alias{export.gff1}
@@ -68,10 +68,10 @@ import.gff2(con, ...)
 import.gff3(con, ...)
 
 \S4method{export}{ANY,GFFFile,ANY}(object, con, format, ...)
-\S4method{export}{RangedData,GFFFile,ANY}(object, con, format,
+\S4method{export}{GenomicRanges,GFFFile,ANY}(object, con, format,
                    version = c("1", "2", "3"),
                    source = "rtracklayer", append = FALSE, index = FALSE)
-\S4method{export}{RangedDataList,GFFFile,ANY}(object, con, format, ...)
+\S4method{export}{GenomicRangesList,GFFFile,ANY}(object, con, format, ...)
 export.gff(object, con, ...)
 export.gff1(object, con, ...)
 export.gff2(object, con, ...)
@@ -89,14 +89,13 @@ export.gff3(object, con, ...)
     \dQuote{gvf}, or \dQuote{gtf}. Compressed files (\dQuote{gz},
     \dQuote{bz2} and \dQuote{xz}) are handled transparently.
   }
-  \item{object}{The object to export, should be a \code{RangedData} or
-    something coercible to a \code{RangedData}, like a
-    \code{GRanges}. If the object has a method for \code{asGFF}, it is
-    called prior to coercion. This makes it possible to export a
-    \code{GRangesList} or \code{TranscriptDb} in a way that preserves
-    the hierarchical structure. For exporting multiple tracks, in the UCSC
-    track line metaformat, pass a \code{RangedDataList}, or something
-    coercible to one, like a \code{GenomicRangesList}.
+  \item{object}{The object to export, should be a \code{GRanges} or
+    something coercible to a \code{GRanges}. If the object has a method
+    for \code{asGFF}, it is called prior to coercion. This makes it
+    possible to export a \code{GRangesList} or \code{TranscriptDb} in a
+    way that preserves the hierarchical structure. For exporting
+    multiple tracks, in the UCSC track line metaformat, pass a
+    \code{GenomicRangesList}, or something coercible to one.
   }
   \item{format}{If not missing, should be one of \dQuote{gff}, \dQuote{gff1}
     \dQuote{gff2}, \dQuote{gff3}, \dQuote{gvf}, or \dQuote{gtf}.

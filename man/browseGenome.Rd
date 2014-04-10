@@ -1,7 +1,8 @@
 \name{browseGenome}
 \alias{browseGenome}
-\alias{browseGenome,RangedDataORRangedDataList-method}
-\alias{browseGenome,GRanges-method}
+\alias{browseGenome,RangedData-method}
+\alias{browseGenome,RangedDataList-method}
+\alias{browseGenome,GenomicRangesORGenomicRangesList-method}
 \alias{browseGenome,missing-method}
 \title{ Browse a genome }
 \description{
@@ -9,8 +10,7 @@
 }
 \usage{
 browseGenome(object, ...)
-\S4method{browseGenome}{GRanges}(object, ...)
-\S4method{browseGenome}{RangedDataORRangedDataList}(object,
+\S4method{browseGenome}{GenomicRangesORGenomicRangesList}(object,
   browser = "UCSC", range = base::range(object),
   view = TRUE, trackParams = list(), viewParams = list(),
   name = "customTrack", ...)
@@ -19,8 +19,8 @@ browseGenome(object, ...)
 \arguments{
   \item{object}{ A \code{\link[GenomicRanges]{GRanges}} object,
     a \code{\link[IRanges]{RangedData}} object, or a list of
-    \code{\link[IRanges]{RangedData}} objects (e.g. a
-    \code{\link[IRanges]{RangedDataList}} object). }
+    those objects  (e.g. a
+    \code{\link[GenomicRanges]{GenomicRangesList}} object). }
   \item{browser}{ The name of the genome browser. }
   \item{range}{ A genome identifier or a
     \code{\link[GenomicRanges:GRanges-class]{GRanges}} or

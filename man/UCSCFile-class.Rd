@@ -16,8 +16,8 @@
 
 %% Export:
 \alias{export,ANY,UCSCFile,ANY-method}
-\alias{export,RangedData,UCSCFile,ANY-method}
-\alias{export,RangedDataList,UCSCFile,ANY-method}
+\alias{export,GenomicRanges,UCSCFile,ANY-method}
+\alias{export,GenomicRangesList,UCSCFile,ANY-method}
 \alias{export,UCSCData,UCSCFile,ANY-method}
 \alias{export.ucsc}
 \alias{export.ucsc,ANY,ANY-method}
@@ -46,8 +46,8 @@
 import.ucsc(con, ...)
 
 \S4method{export}{ANY,UCSCFile,ANY}(object, con, format, ...)
-\S4method{export}{RangedData,UCSCFile,ANY}(object, con, format, ...)
-\S4method{export}{RangedDataList,UCSCFile,ANY}(object, con, format,
+\S4method{export}{GenomicRanges,UCSCFile,ANY}(object, con, format, ...)
+\S4method{export}{GenomicRangesList,UCSCFile,ANY}(object, con, format,
                    append = FALSE, index = FALSE, ...)
 \S4method{export}{UCSCData,UCSCFile,ANY}(object, con, format,
                    subformat = "auto", append = FALSE, index = FALSE, ...)
@@ -61,11 +61,9 @@ export.ucsc(object, con, ...)
     functions, \dQuote{ucsc} must be passed as the \code{format}
     argument.
   }
-  \item{object}{The object to export, should be a \code{RangedData} or
-    something coercible to a \code{RangedData}, like a
-    \code{GRanges}. For exporting multiple tracks pass a
-    \code{RangedDataList}, or something coercible to one, like a
-    \code{GenomicRangesList}.
+  \item{object}{The object to export, should be a \code{GRanges} or
+    something coercible to a \code{GRanges}. For exporting multiple
+    tracks pass a \code{GenomicRangesList}, or something coercible to one.
   }
   \item{format}{If not missing, should be \dQuote{ucsc}.}
   \item{text}{If \code{con} is missing, a character vector to use as the

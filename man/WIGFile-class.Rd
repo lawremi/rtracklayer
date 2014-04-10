@@ -15,8 +15,8 @@
 
 %% Export:
 \alias{export,ANY,WIGFile,ANY-method}
-\alias{export,RangedData,WIGFile,ANY-method}
-\alias{export,RangedDataList,WIGFile,ANY-method}
+\alias{export,GenomicRanges,WIGFile,ANY-method}
+\alias{export,GenomicRangesList,WIGFile,ANY-method}
 \alias{export,UCSCData,WIGFile,ANY-method}
 \alias{export.wig}
 \alias{export.wig,ANY-method}
@@ -35,10 +35,10 @@
 import.wig(con, ...)
 
 \S4method{export}{ANY,WIGFile,ANY}(object, con, format, ...)
-\S4method{export}{RangedData,WIGFile,ANY}(object, con, format,
+\S4method{export}{GenomicRanges,WIGFile,ANY}(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep"),
                    writer = .wigWriter, append = FALSE, ...)
-\S4method{export}{RangedDataList,WIGFile,ANY}(object, con, format, ...)
+\S4method{export}{GenomicRangesList,WIGFile,ANY}(object, con, format, ...)
 \S4method{export}{UCSCData,WIGFile,ANY}(object, con, format,
                    trackLine = TRUE, ...)
 export.wig(object, con, ...)
@@ -54,11 +54,10 @@ export.wig(object, con, ...)
     (\dQuote{gz}, \dQuote{bz2} and \dQuote{xz}) are handled
     transparently.
   }
-  \item{object}{The object to export, should be a \code{RangedData} or
-    something coercible to a \code{RangedData}, like a
-    \code{GRanges}. For exporting multiple tracks, in the UCSC track
-    line metaformat, pass a \code{RangedDataList}, or something
-    coercible to one, like a \code{GenomicRangesList}.
+  \item{object}{The object to export, should be a \code{GRanges} or
+    something coercible to a \code{GRanges}. For exporting multiple
+    tracks, in the UCSC track line metaformat, pass a
+    \code{GenomicRangesList}, or something coercible to one.
   }
   \item{format}{If not missing, should be \dQuote{wig}.
   }
