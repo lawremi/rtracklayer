@@ -220,7 +220,7 @@ setMethod("import.gff", "ANY",
     sentinel <- "\b"
     con <- file()
     on.exit(close(con))
-    writeLines(paste0(sub(";$", "", attrCol), sentinel), con)
+    writeLines(paste0(sub("; *$", "", attrCol), sentinel), con)
     attrs <- scan(con, what=character(),
                   strip.white = TRUE, quiet = TRUE, sep = ";")
     lines <- togroup(PartitioningByEnd(grep(sentinel, attrs, fixed = TRUE)))
@@ -389,6 +389,12 @@ setGeneric("import.gff3",
            function(con, ...) standardGeneric("import.gff3"))
 setMethod("import.gff3", "ANY",
           function(con, ...) import(con, "gff3", ...))
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### DNAStringSet from fasta data
+###
+
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Coercion
