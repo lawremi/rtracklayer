@@ -1,6 +1,6 @@
 PKG_OBJECTS = \
-  IRanges_stubs.o XVector_stubs.o R_init_rtracklayer.o bigWig.o chain_io.o \
-  twoBit.o handlers.o utils.o
+  S4Vectors_stubs.o IRanges_stubs.o XVector_stubs.o R_init_rtracklayer.o \
+  bigWig.o chain_io.o twoBit.o handlers.o utils.o
   
 UCSC_OBJECTS = \
   bPlusTree.o bbiRead.o bbiWrite.o bwgCreate.o bwgQuery.o \

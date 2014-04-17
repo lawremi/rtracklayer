@@ -34,18 +34,17 @@ importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
 ### Bioconductor packages
 ###
 
+import(S4Vectors)
 import(XVector)
 
 importClassesFrom("IRanges",
                   IRanges, RangedData, RangedDataList,
-                  Vector, DataTableORNULL, characterORNULL,
+                  Vector, DataTableORNULL,
                   RangedSelection, SimpleList, DataFrame, RangesList,
                   Rle, RleList)
 importFrom("IRanges", CharacterList, DataFrame, IRanges, RangedDataList,
-           RangedData, RangesList, RangedSelection, RleList, isSingleString,
-           recycleIntegerArg, isSingleStringOrNA,
-           isTRUEorFALSE, isSingleNumberOrNA, PartitioningByWidth,
-           PartitioningByEnd, mseqapply)
+           RangedData, RangesList, RangedSelection, RleList, 
+           PartitioningByWidth, PartitioningByEnd, mseqapply)
 importMethodsFrom("IRanges", elementLengths, window,
                   start, end, width, range,
                   "start<-", "end<-", "width<-",
