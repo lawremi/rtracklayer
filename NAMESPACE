@@ -39,7 +39,6 @@ import(XVector)
 
 importClassesFrom("IRanges",
                   IRanges, RangedData, RangedDataList,
-                  Vector, DataTableORNULL,
                   RangedSelection, SimpleList, DataFrame, RangesList,
                   Rle, RleList)
 importFrom("IRanges", CharacterList, DataFrame, IRanges, RangedDataList,
@@ -57,7 +56,7 @@ importMethodsFrom("IRanges", elementLengths, window,
                   space, universe, 
                   "universe<-",
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
-                  resize, mcols, "mcols<-", togroup, Rle, "active<-", collapse,
+                  resize, togroup, Rle, "active<-", collapse,
                   coverage, findOverlaps, reflect, relist, runValue, shift,
                   subjectHits, subsetByOverlaps, tile, togroup)
 
