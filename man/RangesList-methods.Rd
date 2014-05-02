@@ -40,11 +40,10 @@
     }
     \item{}{
       \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the
-      sequence information as a
-      \code{\link[GenomicRanges:Seqinfo-class]{Seqinfo}} object. If this
-      has not been set explicitly, it tries to come up with a reasonable
-      default. First, it assumes the \code{\link[IRanges]{universe}} on
-      \code{x} is a genome identifier and attempts to look up the
+      sequence information as a \code{\link[GenomeInfoDb]{Seqinfo}} object.
+      If this has not been set explicitly, it tries to come up with a
+      reasonable default. First, it assumes the \code{\link[IRanges]{universe}}
+      on \code{x} is a genome identifier and attempts to look up the
       corresponding metadata an installed BSgenome package or, if that
       fails, via UCSC. If that fails, it uses \code{names(x)} as the
       \code{seqnames} and \code{end(range(x))} as the

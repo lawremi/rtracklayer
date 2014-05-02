@@ -46,7 +46,7 @@ Similarly the universe refers to the genome.}
     \item{}{
       \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the
       sequence information as a
-      \code{\link[GenomicRanges:Seqinfo-class]{Seqinfo}} object. This is
+      \code{\link[GenomeInfoDb]{Seqinfo}} object. This is
       just a wrapper on top of
       \code{\link[=RangesList-methods]{seqinfo}} for \code{ranges(x)}.
     }

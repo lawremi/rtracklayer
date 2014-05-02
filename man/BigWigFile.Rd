@@ -130,7 +130,7 @@ export.bw(object, con, ...)
   \describe{
     \item{}{
       \code{seqinfo(x)}:
-      Gets the \code{\link[GenomicRanges:Seqinfo-class]{Seqinfo}} object
+      Gets the \code{\link[GenomeInfoDb]{Seqinfo}} object
       indicating the lengths of the sequences for the intervals in the
       file. No circularity or genome information is available.
     }
@@ -205,7 +205,7 @@ if (.Platform$OS.type != "windows") {
 
   summary(bwf) # for each sequence, average all values into one
   summary(bwf, range(head(track))) # just average the first few features
-  summary(bwf, size = GenomicRanges::seqlengths(bwf) / 10) # 10X reduction
+  summary(bwf, size = seqlengths(bwf) / 10) # 10X reduction
   summary(bwf, type = "min") # min instead of mean
 }
 }

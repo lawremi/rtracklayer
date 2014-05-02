@@ -60,13 +60,16 @@ importMethodsFrom("IRanges", elementLengths, window,
                   coverage, findOverlaps, reflect, relist, runValue, shift,
                   subjectHits, subsetByOverlaps, tile, togroup)
 
+importClassesFrom("GenomeInfoDb", Seqinfo)
+importFrom("GenomeInfoDb", Seqinfo)
+importMethodsFrom("GenomeInfoDb", seqlengths,
+                  seqlevels, "seqlevels<-", genome, "genome<-", merge)
+
 importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList,
-                  GenomicRangesList, Seqinfo, GIntervalTree,
-                  SimpleGenomicRangesList)
-importFrom("GenomicRanges", GRanges, GRangesList, Seqinfo)
-importMethodsFrom("GenomicRanges", seqnames, seqlengths, strand,  "strand<-",
-                  seqinfo, "seqinfo<-", seqlevels, "seqlevels<-", "seqnames<-",
-                  genome, "genome<-", merge)
+                  GenomicRangesList, GIntervalTree, SimpleGenomicRangesList)
+importFrom("GenomicRanges", GRanges, GRangesList)
+importMethodsFrom("GenomicRanges", seqnames, "seqnames<-", strand,  "strand<-",
+                  seqinfo, "seqinfo<-")
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
            DNAStringSet)

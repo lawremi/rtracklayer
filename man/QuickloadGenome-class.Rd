@@ -82,9 +82,9 @@
   \describe{
     \item{}{
       \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the
-      \code{\link[GenomicRanges:Seqinfo-class]{Seqinfo}} object
-      indicating the lengths of the sequences in the genome. No
-      circularity information or genome identifier is stored.
+      \code{\link[GenomeInfoDb]{Seqinfo}} object indicating the lengths
+      of the sequences in the genome. No circularity information or genome
+      identifier is stored.
     }
     \item{}{
       \code{quickload(x)}: Get the Quickload object that contains this
