@@ -12,9 +12,6 @@
 \alias{chrom<-}
 \alias{chrom<-,RangedData-method}
 \alias{chrom<-,GRanges-method}
-\alias{seqinfo,RangedData-method}
-\alias{seqinfo<-,RangedData-method}
-\alias{seqnames,RangedData-method}
 \alias{score,ANY-method}
 \alias{score,GenomicRangesORGRangesList-method}
 
@@ -36,19 +33,6 @@ Similarly the universe refers to the genome.}
       sets the chromosome names for \code{x}. The length of \code{value}
       should equal the length of \code{x}. This is an alias for
       \code{\link[IRanges:RangedData-class]{names}(x)}.
-    }
-    \item{}{
-      \code{seqnames(x)}: Gets the sequence names for \code{x}. The
-      length of the return value equals the number of rows in \code{x}.
-      This is an alias for
-      \code{\link[IRanges:RangedData-class]{space}(x)}.
-    }
-    \item{}{
-      \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the
-      sequence information as a
-      \code{\link[GenomeInfoDb]{Seqinfo}} object. This is
-      just a wrapper on top of
-      \code{\link[=RangesList-methods]{seqinfo}} for \code{ranges(x)}.
     }
     \item{}{
       \code{score(x)}: Gets the \dQuote{score} column from the element
