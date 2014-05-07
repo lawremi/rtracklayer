@@ -17,7 +17,7 @@ BigWigFile <- function(path) {
 BWFile <- BigWigFile
 
 setMethod("seqinfo", "BigWigFile", function(x) {
-  seqlengths <- .Call(BWGFile_seqlengths, path(x))
+  seqlengths <- .Call(BWGFile_seqlengths, path.expand(path(x)))
   Seqinfo(names(seqlengths), seqlengths) # no circularity information
 })
 
