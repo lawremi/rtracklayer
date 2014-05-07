@@ -61,7 +61,8 @@ importMethodsFrom("IRanges", elementLengths, window,
                   subjectHits, subsetByOverlaps, tile, togroup)
 
 importClassesFrom("GenomeInfoDb", Seqinfo)
-importFrom("GenomeInfoDb", Seqinfo)
+importFrom("GenomeInfoDb", Seqinfo, organism, provider, providerVersion,
+           releaseDate)
 importMethodsFrom("GenomeInfoDb", seqlengths,
                   seqlevels, "seqlevels<-", genome, "genome<-", merge)
 
@@ -77,8 +78,6 @@ importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
 importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 
 importFrom("BSgenome", installed.genomes, bsapply)
-importMethodsFrom("BSgenome", releaseDate, organism,
-                  providerVersion, provider)
 importClassesFrom("BSgenome", BSgenome)
 
 importFrom("Rsamtools", indexTabix, bgzip, TabixFile, index)

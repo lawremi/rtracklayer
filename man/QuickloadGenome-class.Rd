@@ -58,9 +58,8 @@
         genome (potentially) in \code{quickload} or an installed
         \code{BSgenome} package. It can also be any instance of a class
         which has methods for \code{organism} and \code{releaseDate}. A
-        good example is \code{\link[BSgenome:BSgenome-class]{BSgenome}}
-        or any other derivative of
-        \code{\link[BSgenome:GenomeDescription-class]{GenomeDescription}}.
+        good example is \code{\link[BSgenome]{BSgenome}} or any other
+        derivative of \code{\link[GenomeInfoDb]{GenomeDescription}}.
         Those items are necessary for constructing the canonical
         Quickload genome string (G_Species_Month_Year).
 
