@@ -14,7 +14,6 @@
 %% Export:
 \alias{export,ANY,FastaFile,ANY-method}
 \alias{export,XStringSet,FastaFile,ANY-method}
-\alias{export,BSgenome,FastaFile,ANY-method}
 
 \title{FastaFile objects}
 
@@ -29,7 +28,6 @@
 
 \S4method{export}{ANY,FastaFile,ANY}(object, con, format, ...)
 \S4method{export}{XStringSet,FastaFile,ANY}(object, con, format, ...)
-\S4method{export}{BSgenome,FastaFile,ANY}(object, con, format, ...)
 }
 
 \arguments{
@@ -39,9 +37,8 @@
     \dQuote{fasta}. Compressed files (\dQuote{gz}, \dQuote{bz2} and
     \dQuote{xz}) are handled transparently.
   }
-  \item{object}{The object to export, should be an \code{XStringSet},
-    \code{BSgenome} or something coercible to a \code{DNAStringSet},
-    like a character vector.
+  \item{object}{The object to export, should be an \code{XStringSet} or
+    something coercible to a \code{DNAStringSet}, like a character vector.
   }
   \item{format}{If not missing, should be \dQuote{fasta}.
   }
@@ -61,6 +58,9 @@
   \code{\link[Biostrings]{writeXStringSet}} (export) and the
   \code{\link[Biostrings]{readDNAStringSet}} family of functions
   (import).
+
+  See \link[BSgenome]{export-methods} in the \pkg{BSgenome} package for
+  exporting a \link[BSgenome]{BSgenome} object as a FASTA file.
 }
 
 \section{FastaFile objects}{

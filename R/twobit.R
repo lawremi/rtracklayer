@@ -45,18 +45,6 @@ setMethod("export", c("ANY", "TwoBitFile"), function(object, con, format, ...) {
   callGeneric()
 })
 
-setMethod("export", c("BSgenome", "TwoBitFile"),
-          function(object, con, format, ...) {
-            if (!missing(format))
-              checkArgFormat(con, format)
-            i <- 0L
-            twoBits <- bsapply(new("BSParams", X = object, FUN = function(chr) {
-              i <<- i + 1
-              .DNAString_to_twoBit(chr, seqnames(object)[i])
-            }, ...))
-            invisible(.TwoBits_export(as.list(twoBits), twoBitPath(path(con))))
-          })
-
 setMethod("export", c("DNAStringSet", "TwoBitFile"),
           function(object, con, format) {
             if (!missing(format))
@@ -69,7 +57,8 @@ setMethod("export", c("DNAStringSet", "TwoBitFile"),
                                       twoBitPath(path(con))))
           })
 
-## Hidden export of a list of twoBit pointers
+## Hidden export of a list of twoBit pointers.
+## NOT exported (but used in the BSgenome package).
 .TwoBits_export <- function(object, con) {
   if (!isSingleString(con))
     stop("'con' must be a single, non-NA string")
@@ -79,6 +68,7 @@ setMethod("export", c("DNAStringSet", "TwoBitFile"),
   .Call(TwoBits_write, object, con)
 }
 
+## NOT exported (but used in the BSgenome package).
 .DNAString_to_twoBit <- function(object, seqname) {
   if (!isSingleString(seqname))
     stop("'seqname' must be a single, non-NA string")

@@ -26,8 +26,6 @@
 \alias{export,DNAStringSet,TwoBitFile,ANY-method}
 \alias{export,DNAStringSet,character,ANY-method}
 \alias{export,ANY,TwoBitFile,ANY-method}
-\alias{export,BSgenome,TwoBitFile,ANY-method}
-\alias{export,BSgenome,character,ANY-method}
 
 \title{2bit Files}
 
@@ -50,8 +48,6 @@ import.2bit(con, ...)
 \S4method{export}{ANY,TwoBitFile,ANY}(object, con, format, ...)
 \S4method{export}{DNAStringSet,TwoBitFile,ANY}(object, con, format)
 \S4method{export}{DNAStringSet,character,ANY}(object, con, format, ...)
-\S4method{export}{BSgenome,TwoBitFile,ANY}(object, con, format, ...)
-\S4method{export}{BSgenome,character,ANY}(object, con, format, ...)
 export.2bit(object, con, ...)
 }
 
@@ -64,9 +60,8 @@ export.2bit(object, con, ...)
     extension or the \code{format} argument needs to be \dQuote{twoBit}
     or \dQuote{2bit}.
   }
-  \item{object,x}{The object to export, either a \code{DNAStringSet},
-    \code{BSgenome} and something coercible to a \code{DNAStringSet},
-    like a character vector.
+  \item{object,x}{The object to export, either a \code{DNAStringSet} or
+    something coercible to a \code{DNAStringSet}, like a character vector.
   }
   \item{format}{If not missing, should be \dQuote{twoBit} or \dQuote{2bit}
     (case insensitive).
@@ -82,8 +77,7 @@ export.2bit(object, con, ...)
   \item{...}{Arguments to pass down to methods to other methods. For
     import, the flow eventually reaches the \code{TwoBitFile} method on
     \code{import}. For export, the \code{TwoBitFile} methods on
-    \code{export} are the sink. The \code{BSgenome} method forwards
-    arguments to \code{\link[BSgenome]{bsapply}}.
+    \code{export} are the sink.
   }
 }
 
@@ -107,6 +101,11 @@ export.2bit(object, con, ...)
       file. No circularity or genome information is available.
     }
   }
+}
+
+\seealso{
+  \link[BSgenome]{export-methods} in the \pkg{BSgenome} package for
+  exporting a \link[BSgenome]{BSgenome} object as a twoBit file.
 }
 
 \author{Michael Lawrence}

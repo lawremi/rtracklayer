@@ -141,7 +141,7 @@ addGenomeToContents <- function(x, title) {
   } else warning("Genome '", genome(x), "' already in contents; not replaced")
 }
 
-setMethod("toString", "BSgenome", function(x) {
+setMethod("toString", "GenomeDescription", function(x) {
   paste(organism(x), provider(x), providerVersion(x))
 })
 

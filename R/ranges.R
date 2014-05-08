@@ -108,12 +108,12 @@ seqinfoForGenome <- function(genome, method = c("auto", "BSgenome", "UCSC")) {
 }
 
 BSGenomeForID <- function(genome) {
-  pkgs <- installed.genomes()
-  pkg <- grep(paste(genome, "$", sep = ""), pkgs, value = TRUE)
-  if (length(pkg) == 1) {
-    org <- strsplit(pkg, ".", fixed=TRUE)[[1]][2]
-    get(org, getNamespace(pkg))
-  } else NULL
+  if (!suppressWarnings(require(BSgenome, quietly=TRUE)))
+    return(NULL)
+  bsgenome <- try(BSgenome::getBSgenome(genome), silent=TRUE)
+  if (inherits(bsgenome, "try-error"))
+    return(NULL)
+  bsgenome
 }
 
 SeqinfoForBSGenome <- function(genome) {

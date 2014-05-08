@@ -77,9 +77,6 @@ importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
 importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
 importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 
-importFrom("BSgenome", installed.genomes, bsapply)
-importClassesFrom("BSgenome", BSgenome)
-
 importFrom("Rsamtools", indexTabix, bgzip, TabixFile, index)
 importMethodsFrom("Rsamtools", ScanBamParam, asBam, headerTabix, isOpen, path,
                   scanTabix)
