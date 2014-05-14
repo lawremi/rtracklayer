@@ -50,4 +50,8 @@ test_twoBit <- function() {
   which <- GRanges(names(correct_2bit), which_range)
   test <- import(test_2bit_out, which = which)
   checkIdentical(unlist(correct_which), unlist(test))
+
+  ## TEST: invalid characters
+  invalid_2bit <- paste0(correct_char, "L")
+  checkException(export(invalid_2bit, test_2bit_out))
 }

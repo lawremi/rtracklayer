@@ -1701,6 +1701,7 @@ setMethod("ucscForm", "UCSCTableQuery",
             if (!is.null(object@outputType)) {
               form <- c(form, hgta_outputType = object@outputType)
             }
+            form$hgta_compressType <- "none" # TODO: support gzip
             form
           })
 

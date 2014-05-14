@@ -52,6 +52,12 @@ setMethod("export", c("DNAStringSet", "TwoBitFile"),
             seqnames <- names(object)
             if (is.null(seqnames))
               seqnames <- as.character(seq(length(object)))
+            freq <- alphabetFrequency(object)
+            unsupported.chars <- setdiff(DNA_ALPHABET, c(DNA_BASES, "N"))
+            if (any(rowSums(freq[,unsupported.chars,drop=FALSE]) > 0L)) {
+              stop("One or more strings contain unsupported ambiguity ",
+                   "characters.\nStrings can contain only A, C, G, T or N.")
+            }
             invisible(.TwoBits_export(mapply(.DNAString_to_twoBit, object,
                                              seqnames),
                                       twoBitPath(path(con))))

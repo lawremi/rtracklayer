@@ -73,7 +73,7 @@ importMethodsFrom("GenomicRanges", seqnames, "seqnames<-", strand,  "strand<-",
                   seqinfo, "seqinfo<-")
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
-           DNAStringSet)
+           DNAStringSet, DNA_BASES, DNA_ALPHABET, alphabetFrequency)
 importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
 importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 
