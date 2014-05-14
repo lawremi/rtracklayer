@@ -58,6 +58,9 @@ setMethod("export", c("DNAStringSet", "TwoBitFile"),
               stop("One or more strings contain unsupported ambiguity ",
                    "characters.\nStrings can contain only A, C, G, T or N.")
             }
+            if (any(width(object) == 0L)) {
+              stop("Empty strings are not yet supported")
+            }
             invisible(.TwoBits_export(mapply(.DNAString_to_twoBit, object,
                                              seqnames),
                                       twoBitPath(path(con))))
