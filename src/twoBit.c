@@ -92,51 +92,31 @@ SEXP TwoBitFile_read(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges, SEXP lkup)
   int *frag_start = INTEGER(get_IRanges_start(r_ranges));
   int *frag_width = INTEGER(get_IRanges_width(r_ranges));
   int frag_count = get_IRanges_length(r_ranges);
-  SEXP r_seq, r_ans_range, r_ans, r_ans_start;
+  SEXP r_ans_width, r_ans;
+  XVectorList_holder r_ans_holder;
 
-  int total_width = 0, offset = 0;
-  for (int i = 0; i < frag_count; i++)
-    total_width += frag_width[i];
-
-  PROTECT(r_seq = allocVector(RAWSXP, total_width));
-  PROTECT(r_ans_start = allocVector(INTSXP, frag_count));
+  PROTECT(r_ans_width = duplicate(get_IRanges_width(r_ranges)));
+  PROTECT(r_ans = alloc_XRawList("DNAStringSet", "DNAString", r_ans_width));
+  r_ans_holder = hold_XVectorList(r_ans);
   for (int i = 0; i < frag_count; i++) {
     if (frag_width[i]) { // UCSC library does not like zero width ranges
       struct dnaSeq *frag =
         twoBitReadSeqFrag(file, (char *)CHAR(STRING_ELT(r_seqnames, i)),
                           frag_start[i] - 1, frag_start[i] + frag_width[i] - 1);
-      Ocopy_bytes_to_i1i2_with_lkup(offset, offset + frag->size - 1,
-                                    RAW(r_seq), total_width,
-                                    frag->dna, frag->size,
-                                    INTEGER(lkup), LENGTH(lkup));
+      Chars_holder r_ans_elt_holder =
+        get_elt_from_XRawList_holder(&r_ans_holder, i);
+      /* r_ans_elt_holder.seq is a const char * so we need to cast it to
+         char * before we can write to it */
+      Ocopy_bytes_to_i1i2_with_lkup(0, r_ans_elt_holder.length - 1,
+        (char *)r_ans_elt_holder.seq, r_ans_elt_holder.length,
+        frag->dna, frag->size,
+        INTEGER(lkup), LENGTH(lkup));
       freeDnaSeq(&frag);
     }
-    INTEGER(r_ans_start)[i] = offset + 1;
-    offset += frag_width[i];
   }
-
-  PROTECT(r_ans_range = new_IRanges("IRanges", r_ans_start,
-                                    get_IRanges_width(r_ranges),
-                                    R_NilValue));
-  r_ans = new_XRawList_from_tag("DNAStringSet", "DNAString", r_seq,
-                                r_ans_range);
-  
-  
-  /* There are at least three ways to create the result:
-     - Read everything into the same RAW vector and then convert to
-       DNAStringSet. This is our choice.
-     - Create a CHARSXP for each, and coerce
-       to a DNAStringSet. This uses the same amount of memory as the
-       above option, but it also might take more time, as it creates a
-       CHARSXP for each element. It is the simplest solution.
-     - Create a DNAString for each fragment and concatenate at
-       end. This uses the least memory (during the process but the
-       result is larger right?). It would be slowest though.
-  */
-  
   twoBitClose(&file);
   popRHandlers();
 
-  UNPROTECT(3);
+  UNPROTECT(2);
   return r_ans;
 }
