@@ -16,7 +16,7 @@ chr10	rtracklayer	CDS	94744	94852	.	-	.	Parent=873;
 chr10	rtracklayer	exon	95122	95178	.	-	.	Parent=873;
 chr10	rtracklayer	CDS	95122	95178	.	-	.	Parent=873;
 chr10	rtracklayer	exon	95348	95504	.	.	.	Parent=872;
-chr12	rtracklayer	gene	87984	91263	.	+	.	ID=GeneID:100288778;Name=LOC100288778;geneName="WAS protein family homolog 1; pseudogene";Alias=LOC100288778
+chr12	rtracklayer	gene	87984	91263	.	+	.	ID=GeneID:100288778;Name=LOC100288778;geneName=WAS protein family homolog 1%3B pseudogene;Alias=LOC100288778
 chr12	rtracklayer	mRNA	87984	91263	.	+	.	Parent=GeneID:100288778;ID=4644;Name=LOC100288778;
 chr12	rtracklayer	exon	87984	88017	.	+	.	Parent=4644;
 chr12	rtracklayer	CDS	87984	88017	.	+	.	Parent=4644;
