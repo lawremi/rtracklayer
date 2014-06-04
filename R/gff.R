@@ -161,7 +161,7 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
                   }
                   ## FIXME: add option so these become "." instead of removing
                   x_char[is.na(x_char)] <- "\r"
-                  if (!is.numeric(x_flat))
+                  if (!is.numeric(x_flat) && version != "3")
                     x_char <- paste0("\"", x_char, "\"")
                   paste(name, x_char, sep = tvsep)
                 }, simplify = FALSE))
