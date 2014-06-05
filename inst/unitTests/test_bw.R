@@ -62,4 +62,16 @@ test_bw <- function() {
   correct_cov <- coverage(correct_ncbi, weight="score")
   test <- import(test_bw_out, as="RleList")
   checkIdentical(correct_cov, test)
+
+  ## TEST: export RleList
+  export(correct_cov, test_bw_out)
+  test <- import(test_bw_out, as="RleList")
+  checkIdentical(correct_cov, test)
+
+  ## TEST: export/import NumericList
+  correct_cov_short <- correct_cov[correct_cov != 0L]
+  correct_int <- as(correct_cov_short, "NumericList")
+  export(correct_int, test_bw_out)
+  test <- import(test_bw_out, as="NumericList")
+  checkIdentical(correct_int, test)
 }

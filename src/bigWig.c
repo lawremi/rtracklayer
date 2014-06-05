@@ -56,8 +56,8 @@ createFixedStepItems(double *score, int len, struct lm *lm)
 }
 
 static struct bwgSection *
-createBWGSection(const char *seq, int *start, int *width, double *score,
-                 int len, enum bwgSectionType type, struct lm *lm)
+createBWGSection_Rle(const char *seq, int *start, int *width, double *score,
+                     int len, enum bwgSectionType type, struct lm *lm)
 {
   struct bwgSection *section;
   lmAllocVar(lm, section);
@@ -78,8 +78,59 @@ createBWGSection(const char *seq, int *start, int *width, double *score,
   return section;
 }
 
+static struct bwgSection *
+createBWGSection_Atomic(const char *seq, int start, double *score,
+                        int len, struct lm *lm)
+{
+  struct bwgSection *section;
+  lmAllocVar(lm, section);
+  section->chrom = (char *)seq;
+  section->start = start;
+  section->end = start + len - 1;
+  section->type = bwgTypeFixedStep;
+  section->itemSpan = 1;
+  section->items.fixedStepPacked = createFixedStepItems(score, len, lm);
+  section->itemStep = 1;
+  section->itemCount = len;
+  return section;
+}
+
 static int itemsPerSlot = 512;
 static int blockSize = 1024;
+
+static void BWGSectionList_addRle(struct bwgSection **sections, const char *seq,
+                                  SEXP r_ranges, double *score,
+                                  enum bwgSectionType type, struct lm *lm)
+{
+  int numLeft = get_IRanges_length(r_ranges);
+  int *start = INTEGER(get_IRanges_start(r_ranges));
+  int *width = INTEGER(get_IRanges_width(r_ranges));
+  while(numLeft) {
+    int numSection = numLeft > itemsPerSlot ? itemsPerSlot : numLeft;
+    numLeft -= numSection;
+    slAddHead(sections, createBWGSection_Rle(seq, start, width, score,
+                                             numSection, type, lm));
+    start += numSection;
+    width += numSection;
+    score += numSection;
+  }
+}
+
+static void BWGSectionList_addAtomic(struct bwgSection **sections,
+                                     const char *seq,
+                                     double *score,
+                                     int num,
+                                     struct lm *lm)
+{
+  int numLeft = num;
+  while(numLeft) {
+    int numSection = numLeft > itemsPerSlot ? itemsPerSlot : numLeft;
+    slAddHead(sections, createBWGSection_Atomic(seq, num - numLeft, score,
+                                                numSection, lm));
+    score += numSection;
+    numLeft -= numSection;
+  }
+}
 
 /* --- .Call ENTRY POINT --- */
 
@@ -88,12 +139,8 @@ SEXP BWGSectionList_add(SEXP r_sections, SEXP r_seq, SEXP r_ranges,
 {
   struct bwgSection *sections = NULL;
   const char *seq = CHAR(asChar(r_seq));
-  int *start = INTEGER(get_IRanges_start(r_ranges));
-  int *width = INTEGER(get_IRanges_width(r_ranges));
   double *score = REAL(r_score);
   const char *format = CHAR(asChar(r_format));
-  int num = get_IRanges_length(r_ranges);
-  int numLeft = num;
   SEXP ans;
   struct lm *lm;
 
@@ -109,14 +156,10 @@ SEXP BWGSectionList_add(SEXP r_sections, SEXP r_seq, SEXP r_ranges,
   } else lm = lmInit(0);
 
   pushRHandlers();
-  while(numLeft) {
-    int numSection = numLeft > itemsPerSlot ? itemsPerSlot : numLeft;
-    numLeft -= numSection;
-    slAddHead(&sections,
-              createBWGSection(seq, start, width, score, numSection, type, lm));
-    start += numSection;
-    width += numSection;
-    score += numSection;
+  if (r_ranges != R_NilValue) {
+    BWGSectionList_addRle(&sections, seq, r_ranges, score, type, lm);
+  } else {
+    BWGSectionList_addAtomic(&sections, seq, score, length(r_score), lm);
   }
   popRHandlers();
 
@@ -192,12 +235,12 @@ SEXP BWGFile_seqlengths(SEXP r_filename) {
 
 /* --- .Call ENTRY POINT --- */
 SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score, 
-                   SEXP r_int_ranges) {
+                   SEXP r_return_list) {
   pushRHandlers();
   struct bbiFile * file = bigWigFileOpen((char *)CHAR(asChar(r_filename)));
   SEXP chromNames = getAttrib(r_ranges, R_NamesSymbol);
   int nchroms = length(r_ranges);
-  int int_ranges = asInteger(r_int_ranges);
+  Rboolean return_list = asLogical(r_return_list);
   SEXP rangesList, rangesListEls, dataFrameList, dataFrameListEls, ans;
   SEXP numericList, numericListEls;
   bool returnScore = asLogical(r_return_score);
@@ -207,8 +250,12 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
   struct bbiInterval *hits = NULL;
   struct bbiInterval *qhits = NULL;
 
-  if (int_ranges) {
-    PROTECT(numericListEls = allocVector(VECSXP, int_ranges));
+  if (return_list) {
+    int n_ranges = 0;
+    for(int i = 0; i < length(r_ranges); i++) {
+      n_ranges += length(VECTOR_ELT(r_ranges, i));
+    }
+    PROTECT(numericListEls = allocVector(VECSXP, n_ranges));
   } else {
     PROTECT(rangesListEls = allocVector(VECSXP, nchroms));
     setAttrib(rangesListEls, R_NamesSymbol, chromNames);
@@ -227,7 +274,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
         bigWigIntervalQuery(file, (char *)CHAR(STRING_ELT(chromNames, i)),
                             start[j] - 1, start[j] - 1 + width[j], lm);
       /* IntegerList */
-      if (int_ranges) {
+      if (return_list) {
         qhits = queryHits;
         int nqhits = slCount(queryHits);
         SEXP ans_numeric;
@@ -246,7 +293,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
     } 
 
     /* RangedData */
-    if (!int_ranges) {
+    if (!return_list) {
       int nhits = slCount(hits);
       slReverse(&hits);
       SEXP ans_start, ans_width, ans_score, ans_score_l;
@@ -278,7 +325,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
 
   bbiFileClose(&file);
 
-  if (int_ranges) {
+  if (return_list) {
     ans = new_SimpleList("SimpleList", numericListEls);
     UNPROTECT(1);
   } else { 

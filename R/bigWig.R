@@ -142,7 +142,7 @@ setMethod("export", c("GenomicRanges", "BigWigFile"),
                                        seqlengths, compress, con)))
           })
 
-setMethod("export", c("RleList", "BigWigFile"),
+setMethod("export", c("List", "BigWigFile"),
           function(object, con, format, compress = TRUE)
           {
             if (!missing(format))
@@ -152,17 +152,32 @@ setMethod("export", c("RleList", "BigWigFile"),
               stop("'compress' must be TRUE or FALSE")
             seqlengths <- elementLengths(object)
             sectionPtr <- NULL # keep adding to the same linked list
-            .bigWigWriter <- function(chr) {
-              sectionPtr <<- .Call(BWGSectionList_add, sectionPtr,
-                                   chr, ranges(object[[chr]]),
-                                   as.numeric(runValue(object[[chr]])),
-                                   "bedGraph")
-            }
             on.exit(.Call(BWGSectionList_cleanup, sectionPtr))
-            lapply(names(object), .bigWigWriter)
+            writer <- BigWigWriter(object)
+            for(chr in names(object)) {
+              sectionPtr <- writer(chr, sectionPtr)
+            }
             invisible(BigWigFile(.Call(BWGSectionList_write, sectionPtr,
                                        seqlengths, compress, con)))
           })
+
+setGeneric("BigWigWriter", function(x) standardGeneric("BigWigWriter"))
+
+setMethod("BigWigWriter", "RleList", function(x) {
+  function(chr, sectionPtr) {
+    .Call(BWGSectionList_add, sectionPtr,
+          chr, ranges(x[[chr]]), as.numeric(runValue(x[[chr]])),
+          "bedGraph")
+  }
+})
+
+setMethods("BigWigWriter", list("IntegerList", "NumericList"), function(x) {
+  function(chr, sectionPtr) {
+    .Call(BWGSectionList_add, sectionPtr,
+          chr, NULL, as.numeric(x[[chr]]),
+          "fixedStep")
+  }
+})
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import
@@ -227,30 +242,27 @@ setMethod("import", "BigWigFile",
             flatWhich <- unlist(which, use.names = FALSE)
             if (is.null(flatWhich))
               flatWhich <- IRanges()
-            if (as == "NumericList") {
-                which <- split(flatWhich, factor(space(which)))
-                rd <- .Call(BWGFile_query, path.expand(path(con)),
-                            as.list(which),
-                            identical(colnames(selection), "score"), 
-                            length(flatWhich))
-                rd <- NumericList(rd)
-                ulst <- unlist(which)
-                names(rd) <- names(ulst)
-                metadata(rd) <- list(ranges = ulst)
-                return(rd)
-            }
             which <- split(flatWhich, factor(space(which), seqnames(si)))
             normRanges <- as(which, "NormalIRangesList")
             rd <- .Call(BWGFile_query, path.expand(path(con)),
-                      as.list(normRanges),
-                      identical(colnames(selection), "score"), 0L) 
-            seqinfo(rd) <- si
-            if (as == "RleList") {
-               rdToRle(rd)
-            } else if (as == "GRanges") {
-               strand(rd) <- "*"
-               rd <- as(rd, "GRanges")
-            } else rd
+                        as.list(which),
+                        identical(colnames(selection), "score"), 
+                        as == "NumericList")
+            if (as == "NumericList") {
+                rd <- as(rd, "NumericList")
+                ulst <- unlist(which, use.names=FALSE)
+                names(rd) <- names(ulst)
+                metadata(rd) <- list(ranges = ulst)
+                rd
+            } else {
+              seqinfo(rd) <- si
+              if (as == "RleList") {
+                rdToRle(rd)
+              } else if (as == "GRanges") {
+                strand(rd) <- "*"
+                rd <- as(rd, "GRanges")
+              } else rd
+            }
            })
 
 rdToRle <- function(x) {
