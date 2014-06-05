@@ -27,7 +27,7 @@
 \alias{export.bw,ANY-method}
 \alias{export,ANY,BigWigFile,ANY-method}
 \alias{export,GenomicRanges,BigWigFile,ANY-method}
-\alias{export,RleList,BigWigFile,ANY-method}
+\alias{export,List,BigWigFile,ANY-method}
 
 %% Utilites:
 \alias{summary,BigWigFile-method}
@@ -65,6 +65,7 @@ export.bw(object, con, ...)
     or \dQuote{bw}.
   }
   \item{object}{The object to export, should be an \code{RleList},
+    \code{IntegerList}, \code{NumericList},
     \code{GRanges} or something coercible to a \code{GRanges}.
   }
   \item{format}{If not missing, should be \dQuote{bigWig} or \dQuote{bw}
@@ -72,13 +73,14 @@ export.bw(object, con, ...)
   }
   \item{text}{Not supported.
   }
-  \item{as}{Specifies the class of the return object. Default is 
-    \code{GRanges}. As of version 1.23.11 \code{import} no longer
-    returns \code{RangedData}. 
-
-    For \code{NumericList}, one integer vector is returned for each 
-    range in the \code{selection} argument. For \code{GRanges}, 
-    only ranges with non-zero scores are returned.
+  \item{as}{Specifies the class of the return object. Default is
+    \code{GRanges}, which has one range per range in the file, and a
+    score column holding the value for each range. For
+    \code{NumericList}, one numeric vector is returned for each range in
+    the \code{selection} argument. For \code{RleList}, there is one
+    \code{Rle} per sequence, and that \code{Rle} spans the entire
+    sequence. As of version 1.23.11 \code{import} no longer returns
+    \code{RangedData}.
   }
   \item{asRangedData}{Defunct.}
   \item{asRle}{Deprecated. Use \code{as} instead.

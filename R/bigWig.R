@@ -243,16 +243,18 @@ setMethod("import", "BigWigFile",
             if (is.null(flatWhich))
               flatWhich <- IRanges()
             which <- split(flatWhich, factor(space(which), seqnames(si)))
-            normRanges <- as(which, "NormalIRangesList")
+            if (as != "NumericList") {
+              which <- as(which, "NormalIRangesList")
+            }
             rd <- .Call(BWGFile_query, path.expand(path(con)),
                         as.list(which),
                         identical(colnames(selection), "score"), 
                         as == "NumericList")
             if (as == "NumericList") {
                 rd <- as(rd, "NumericList")
-                ulst <- unlist(which, use.names=FALSE)
-                names(rd) <- names(ulst)
-                metadata(rd) <- list(ranges = ulst)
+                gr <- as(which, "GRanges")
+                names(rd) <- names(flatWhich)
+                metadata(rd) <- list(ranges = gr)
                 rd
             } else {
               seqinfo(rd) <- si
