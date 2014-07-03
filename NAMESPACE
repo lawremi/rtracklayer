@@ -40,7 +40,7 @@ import(XVector)
 importClassesFrom("IRanges",
                   IRanges, RangedData, RangedDataList,
                   RangedSelection, SimpleList, DataFrame, RangesList,
-                  Rle, RleList)
+                  RleList)
 importFrom("IRanges", CharacterList, DataFrame, IRanges, RangedDataList,
            RangedData, RangesList, RangedSelection, RleList, 
            PartitioningByWidth, PartitioningByEnd, mseqapply)
@@ -56,8 +56,8 @@ importMethodsFrom("IRanges", elementLengths, window,
                   space, universe, 
                   "universe<-",
                   isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
-                  resize, togroup, Rle, "active<-", collapse,
-                  coverage, findOverlaps, reflect, relist, runValue, shift,
+                  resize, togroup, "active<-", collapse,
+                  coverage, findOverlaps, reflect, relist, shift,
                   subjectHits, subsetByOverlaps, tile, togroup)
 
 importClassesFrom("GenomeInfoDb", Seqinfo)
