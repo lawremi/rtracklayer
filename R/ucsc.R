@@ -524,11 +524,9 @@ ucscExport <- function(object)
 }
 
 setMethod("track", "UCSCSession",
-          function(object, name, range = base::range(object), table = NULL,
-                   asRangedData = FALSE)
+          function(object, name, ...)
           {
-            asRangedData <- normarg_asRangedData(asRangedData, "track")
-            track(ucscTableQuery(object, name, range, table), asRangedData)
+            track(ucscTableQuery(object, track=name, ...))
           })
 
 inconsistentFieldCounts <- function(x) {
