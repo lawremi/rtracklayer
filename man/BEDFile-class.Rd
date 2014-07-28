@@ -80,7 +80,7 @@ export.bedGraph(object, con, ...)
     something coercible to a \code{GRanges}.  If the object has a method
     for \code{asBED} (like \code{GRangesList}), it is called prior to
     coercion. This makes it possible to export a \code{GRangesList} or
-    \code{TranscriptDb} in a way that preserves the hierarchical
+    \code{TxDb} in a way that preserves the hierarchical
     structure. For exporting multiple tracks, in the UCSC track line
     metaformat, pass a \code{GenomicRangesList}, or something coercible to
     one.

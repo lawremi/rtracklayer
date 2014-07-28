@@ -92,7 +92,7 @@ export.gff3(object, con, ...)
   \item{object}{The object to export, should be a \code{GRanges} or
     something coercible to a \code{GRanges}. If the object has a method
     for \code{asGFF}, it is called prior to coercion. This makes it
-    possible to export a \code{GRangesList} or \code{TranscriptDb} in a
+    possible to export a \code{GRangesList} or \code{TxDb} in a
     way that preserves the hierarchical structure. For exporting
     multiple tracks, in the UCSC track line metaformat, pass a
     \code{GenomicRangesList}, or something coercible to one.
