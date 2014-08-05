@@ -73,6 +73,9 @@ test_bed <- function() {
   test <- import(test_bed)
   checkIdentical(correct_ucsc, test)
 
+  if (!require(BSgenome.Hsapiens.UCSC.hg19)) {
+    stop("'BSgenome.Hsapiens.UCSC.hg19' must be installed to run tests")
+  }
   hg19_seqinfo <- SeqinfoForBSGenome("hg19")
   correct_genome <- createCorrectUCSC(createCorrectGR(hg19_seqinfo))
   test <- import(test_bed, genome = "hg19")
