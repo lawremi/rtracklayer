@@ -39,7 +39,7 @@ import(XVector)
 
 importClassesFrom("IRanges",
                   IRanges, RangedData, RangedDataList,
-                  RangedSelection, SimpleList, DataFrame, RangesList,
+                  RangedSelection, DataFrame, RangesList,
                   RleList)
 importFrom("IRanges", CharacterList, DataFrame, IRanges, RangedDataList,
            RangedData, RangesList, RangedSelection, RleList, 
