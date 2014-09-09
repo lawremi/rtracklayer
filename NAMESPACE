@@ -39,9 +39,9 @@ import(XVector)
 
 importClassesFrom("IRanges",
                   IRanges, RangedData, RangedDataList,
-                  RangedSelection, DataFrame, RangesList,
+                  RangedSelection, RangesList,
                   RleList)
-importFrom("IRanges", CharacterList, DataFrame, IRanges, RangedDataList,
+importFrom("IRanges", CharacterList, IRanges, RangedDataList,
            RangedData, RangesList, RangedSelection, RleList, 
            PartitioningByWidth, PartitioningByEnd, mseqapply)
 importMethodsFrom("IRanges", elementLengths, window,
