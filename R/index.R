@@ -66,20 +66,20 @@ queryForConnection <- function(x, which = NULL, ...) {
 indexTrack <- function(con, ...) {
   indexed <- NULL
   formats <- eval(formals(indexTabix)$format)
-  format <- Find(function(f) {
-    is(con, paste(toupper(f), "File", sep = ""))
-  }, formats)
-  if (is.null(format))
-    stop("Cannot determine format from 'con'")
   uri <- path(con)
   parsed_uri <- .parseURI(uri)
   if (!uriIsLocal(parsed_uri))
     stop("'con' must be a path to a local file")
-  if (!format %in% formats)
-    stop("'", format, "' is not a supported format; try 'bed' or 'gff'")
   original_path <- parsed_uri$path
   path <- bgzip(original_path, overwrite = TRUE)
-  indexTabix(path, format, ...)
+  format <- Find(function(f) {
+    is(con, paste(toupper(f), "File", sep = ""))
+  }, formats)
+  if (!is.null(format)) {
+    indexTabix(path, format, ...)
+  } else {
+    indexTabix(path, ...)
+  }
   indexed <- TabixFile(path)
   unlink(original_path)
   invisible(indexed)
