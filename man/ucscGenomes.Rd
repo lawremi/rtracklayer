@@ -13,9 +13,15 @@ ucscGenomes()
   \item{species}{The name of the species (e.g. "Human")}
   \item{date}{The date the genome was built}
   \item{name}{The official name of the genome build}
+  \item{organism}{The scientific Name of the spcies (e.g. "Homo sapiens")}
 }
 \seealso{\code{\linkS4class{UCSCSession}} for details on specifying the
   genome.}
+\details{
+For populating the organism column, the web url 
+\url{http://genome.ucsc.edu/cgi-bin} is scraped for every assembly
+version to get the Scientific Name. 
+}
 \examples{
 ucscGenomes()
 }
