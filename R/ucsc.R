@@ -1548,21 +1548,20 @@ setMethod("ucscTrackModes", "ucscTracks",
           })
 
 ## List available UCSC genomes
-.getOrganism <- function(good_genomes){
-    .ucsc <- "http://genome.ucsc.edu/cgi-bin"
-    .tryQuery <- function(url, query)
-        tryCatch({
-            XML::htmlParse(url)[[query]]
-        }, error=function(err) {
-            warning(conditionMessage(err))
-            NA
-        })
-    urls <- sprintf("%s/hgGateway?db=%s", .ucsc, good_genomes)
-    names(urls) <- good_genomes
-    sapply(urls, .tryQuery, "string(//div[@id='sectTtl']/i)")
+.getOrganism <- function(db){
+  .ucsc <- "http://genome.ucsc.edu/cgi-bin"
+  .tryQuery <- function(url, query)
+    tryCatch({
+      htmlTreeParse(url, useInternalNodes=TRUE)[[query]]
+    }, error=function(err) {
+      warning(conditionMessage(err))
+      NA_character_
+    })
+  urls <- sprintf("%s/hgGateway?db=%s", .ucsc, db)
+  sapply(urls, .tryQuery, "string(//div[@id='sectTtl']/i)")
 }
 
-ucscGenomes <- function() {
+ucscGenomes <- function(organism=FALSE) {
   url <- "http://genome.ucsc.edu/FAQ/FAQreleases"
   doc <- httpGet(url)
   table <- getNodeSet(doc, "//table[@class='descTbl']")[[1L]]
@@ -1598,10 +1597,10 @@ ucscGenomes <- function() {
   not_empty <- df$species != ""
   df$species <- rep.int(df$species[not_empty], diff(which(c(not_empty, TRUE))))
   df <- df[df$status == "Available", -5L]
-  organism <- .getOrganism(df$db)
-  finaldf <- cbind(df, organism)
-  rownames(finaldf) <- NULL
-  finaldf
+  if (organism)
+    df$organism <- .getOrganism(df$db)
+  rownames(df) <- NULL
+  df
 }
 
 # form creation

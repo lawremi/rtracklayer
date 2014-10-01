@@ -5,7 +5,11 @@
   Get a \code{data.frame} describing the available UCSC genomes.
 }
 \usage{
-ucscGenomes()
+ucscGenomes(organism=FALSE)
+}
+\arguments{
+  \item{organism}{A \code{logical(1)} indicating whether scientific name
+    should be appended.}
 }
 \value{
   A \code{data.frame} with the following columns:
@@ -13,14 +17,14 @@ ucscGenomes()
   \item{species}{The name of the species (e.g. "Human")}
   \item{date}{The date the genome was built}
   \item{name}{The official name of the genome build}
-  \item{organism}{The scientific Name of the spcies (e.g. "Homo sapiens")}
+  \item{organism}{The scientific name of the species (e.g. "Homo sapiens")}
 }
 \seealso{\code{\linkS4class{UCSCSession}} for details on specifying the
   genome.}
 \details{
-For populating the organism column, the web url 
-\url{http://genome.ucsc.edu/cgi-bin} is scraped for every assembly
-version to get the Scientific Name. 
+  For populating the organism column, the web url
+  \url{http://genome.ucsc.edu/cgi-bin} is scraped for every assembly
+  version to get the scientific name.
 }
 \examples{
 ucscGenomes()
