@@ -3,16 +3,24 @@
 \alias{import,TabixFile,character,ANY-method}
 \alias{import,TabixFile,missing,ANY-method}
 
-\title{TabixFile Import}
+\alias{exportToTabix}
+\alias{exportToTabix,ANY,character-method}
+
+% undocumented/internal for now
+\alias{export,GenomicRanges,TabSeparatedFile,ANY-method}
+\alias{export,ANY,TabSeparatedFile,ANY-method}
+
+\title{TabixFile Import/Export}
 
 \description{
-  These methods support the import of
+  These methods support the import and export of
   \code{Rsamtools:TabixFile}{TabixFile} objects. These are generally
-  useful when importing tabix-indexed files that have a non-standard
-  format (i.e., not BED nor GFF). This relies on the tabix header,
-  which indicates the columns in the file that correspond to the
-  chromosome, start and end. The BED and GFF parsers handle tabix
-  transparently. 
+  useful when working with tabix-indexed files that have a non-standard
+  format (i.e., not BED nor GFF), as well as exporting an object with
+  arbitrary columns (like a GRanges) to an indexed, tab-separated
+  file. This relies on the tabix header, which indicates the columns in
+  the file that correspond to the chromosome, start and end. The BED and
+  GFF parsers handle tabix transparently.
 }
 
 \usage{
@@ -21,9 +29,17 @@
                            else as(seqinfoForGenome(genome), "GenomicRanges"),
                    genome = NA, header = TRUE, ...)
 \S4method{import}{TabixFile,missing,ANY}(con, format, text, ...)
+exportToTabix(object, con, ...)
 }
 \arguments{
-  \item{con}{A \code{TabixFile} object}
+  \item{con}{For \code{import}, a \code{TabixFile} object;
+    for \code{exportToTabix}, a string naming the destination file.
+  }
+  \item{object}{The object to export. It is coerced to a
+    \code{data.frame}, written to a tab-separated file, and indexed with
+    tabix for efficient range-based retrieval of the data using
+    \code{import}.
+  }
   \item{format}{If any known format, like \dQuote{bed} or \dQuote{gff}
     (or one of their variants), then the appropriate parser is
     applied. If any other value, then the tabix header is consulted for
@@ -47,11 +63,16 @@
     the tabix index header.
   }
   \item{...}{Extra arguments to pass to the underlying import routine,
-    which for non-standard formats is \code{\link{read.table}}.
+    which for non-standard formats is \code{\link{read.table}} or
+    \code{\link{write.table}}.
   }
 }
 \value{
-  A \code{RangedData} or \code{GRanges}, depending on arguments.
+  For \code{import}, a \code{RangedData} or \code{GRanges}, depending on
+  arguments.
+
+  For \code{exportToTabix}, a \code{TabixFile} object that is directly
+  passable to \code{import}.
 }
 \references{
   \url{http://samtools.sourceforge.net/tabix.shtml}
