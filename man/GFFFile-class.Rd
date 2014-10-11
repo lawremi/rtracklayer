@@ -38,6 +38,7 @@
 \alias{export,ANY,GFFFile,ANY-method}
 \alias{export,GenomicRanges,GFFFile,ANY-method}
 \alias{export,GenomicRangesList,GFFFile,ANY-method}
+\alias{export,GRangesList,GFFFile,ANY-method}
 \alias{export.gff}
 \alias{export.gff,ANY-method}
 \alias{export.gff1}
