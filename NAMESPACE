@@ -67,7 +67,8 @@ importMethodsFrom("GenomeInfoDb", seqlengths,
                   seqlevels, "seqlevels<-", genome, "genome<-", merge)
 
 importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList,
-                  GenomicRangesList, GIntervalTree, SimpleGenomicRangesList)
+                  GenomicRangesList, GIntervalTree, SimpleGenomicRangesList,
+                  DelegatingGenomicRanges)
 importFrom("GenomicRanges", GRanges, GRangesList)
 importMethodsFrom("GenomicRanges", seqnames, "seqnames<-", strand,  "strand<-",
                   seqinfo, "seqinfo<-")
