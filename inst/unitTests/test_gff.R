@@ -121,8 +121,7 @@ test_gff <- function() {
   
   ## TEST: 'genome'  
   si_hg19 <- SeqinfoForBSGenome("hg19")
-  gr_all <- GRanges(space = factor(character(), seqlevels(si_hg19)))
-  correct_hg19 <- c(gr_all, correct_gff3)
+  correct_hg19 <- correct_gff3
   seqlevels(correct_hg19) <- seqlevels(si_hg19)
   seqinfo(correct_hg19) <- si_hg19
   test <- import(test_gff3, genome = "hg19")
