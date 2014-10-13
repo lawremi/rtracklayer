@@ -1,3 +1,27 @@
+CHANGES IN VERSION 1.26
+-----------------------
+
+NEW FEATURES
+
+    o ucscGenomes() retrieves organism information
+
+    o New function exportToTabix() exports a GRanges to a
+      tabix-indexed tab separated file that contains all of the
+      metadata columns. Use import,TabixFile to load specific ranges
+      of data back into a GRanges.
+
+    o BigWig import/export to/from Integer/Numeric/RleList is now much
+      more efficient, and uses a more efficient storage format within
+      the BigWig file, when possible.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o BSgenome export methods are now in BSgenome.
+
+BUG FIXES
+
+    o Handling of quotes in GFF3 is now consistent with the spec.
+
 CHANGES IN VERSION 1.22
 -----------------------
 
