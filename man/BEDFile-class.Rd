@@ -125,10 +125,12 @@ export.bedGraph(object, con, ...)
     the result. If the \code{genome} argument is not \code{NA}, it must
     agree with \code{genome(seqinfo)}.
   }
-  \item{extraCols}{Names of extra columns to read from the BED file. As
-    BED does not encode column names, these are assumed to be the last
-    columns in the file. This enables parsing of the various BEDX+Y
-    formats.
+  \item{extraCols}{A character vector in the same form as
+    \code{colClasses} from \code{\link{read.table}}.  It should indicate
+    the name and class of each extra/special column to read from the BED
+    file. As BED does not encode column names, these are assumed to be
+    the last columns in the file. This enables parsing of the various
+    BEDX+Y formats.
   }
   \item{append}{If \code{TRUE}, and \code{con} points to a file path,
     the data is appended to the file. Obviously, if \code{con} is a
@@ -211,6 +213,15 @@ export.bedGraph(object, con, ...)
       substituted. NA values become -10000 in the file.
     }
   }
+}
+
+\section{BEDX+Y formats}{
+  To import one of the multitude of BEDX+Y formats, such as those used
+  to distribute ENCODE data through UCSC (narrowPeaks, etc), specify
+  the \code{extraCols} argument to indicate the expected names and
+  classes of the special columns. We assume that the
+  last \code{length(extraCols)} columns are special, and that the
+  preceding columns adhere to the BED format.
 }
 
 \section{BEDFile objects}{
