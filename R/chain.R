@@ -42,6 +42,9 @@ setMethod("import.chain", "ANY", function(con, ...) {
 setMethod("import", "ChainFile", function(con, format, text, exclude = "_") {
   if (!missing(format))
     checkArgFormat(con, format)
+  if (is(FileForFormat(path(con)), "CompressedFile")) {
+    stop("chain import cannot handle compressed data yet")
+  }
   .Call("readChain", path.expand(path(con)), as.character(exclude),
         PACKAGE="rtracklayer")
 })
@@ -109,9 +112,9 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
             sharedNames <- intersect(names(rl), names(chain))
             ind <- split(seq_len(length(x)),
                          as.vector(seqnames(x)))[sharedNames]
-            lifted <- unlist(mseqapply(liftOverSpace, rl[sharedNames],
-                                       chain[sharedNames], ind),
-                             use.names=FALSE)
+            liftedList <- mapply(liftOverSpace, rl[sharedNames],
+                                 chain[sharedNames], ind, SIMPLIFY=FALSE)
+            lifted <- unlist(GRangesList(liftedList), use.names=FALSE)
             split(lifted,
                   factor(unlist(ind, use.names=FALSE), seq_len(length(x))))
           })
