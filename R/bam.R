@@ -91,6 +91,9 @@ setMethod("export", c("GAlignmentPairs", "BamFile"),
                   ifelse(getMateAttribute(strand) == "-", 0x20, 0) +
                     c(0x40, 0x80) # left vs. right
             }
+            if (is.null(names(ga))) {
+              names(ga) <- as.character(rep(seq_len(length(object)), each=2L))
+            }
             export(ga, con, ...)
           })
 
