@@ -69,6 +69,31 @@ setMethod("export", c("GAlignments", "BamFile"),
             invisible(bam)
           })
 
+setMethod("export", c("GAlignmentPairs", "BamFile"),
+          function(object, con, format, ...) {
+            ga <- as(object, "GAlignments")
+            collate_subscript <-
+              S4Vectors:::make_XYZxyz_to_XxYyZz_subscript(length(object))
+            getMateAttribute <- function(FUN) {
+              c(FUN(last(object)), FUN(first(object)))[collate_subscript]
+            }
+            if (is.null(mcols(ga)$mrnm)) {
+              mcols(ga)$mrnm <- getMateAttribute(seqnames)
+            }
+            if (is.null(mcols(ga)$mpos)) {
+              mcols(ga)$mpos <- getMateAttribute(start)
+            }
+### FIXME: we cannot infer whether the pair is 'proper' (0x2)
+### nor whether the alignment is 'primary' (0x100)
+            if (is.null(mcols(ga)$flag)) {
+              mcols(ga)$flag <- 0x1 + # all paired
+                ifelse(strand(ga) == "-", 0x10, 0) +
+                  ifelse(getMateAttribute(strand) == "-", 0x20, 0) +
+                    c(0x40, 0x80) # left vs. right
+            }
+            export(ga, con, ...)
+          })
+
 setMethod("export", c("ANY", "BamFile"),
           function(object, con, format, ...) {
             export(as(object, "GAlignments"), con, ...)
