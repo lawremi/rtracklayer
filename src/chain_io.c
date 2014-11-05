@@ -9,7 +9,7 @@
 /* hash these chain blocks by target and query name */
 typedef struct _ChainBlock {
   char *name;
-  RangeAE ranges; /* to become an IRanges */
+  IntPairAE ranges; /* to become an IRanges */
   IntAE offset; /* starts in the other sequence */
   /* rle of spaces and scores */
   IntAE length, score;
@@ -68,7 +68,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         hashAdd(hash, header[2], block);
         block->name = Salloc(name_size, char);
         memcpy(block->name, header[2], name_size);
-        block->ranges = new_RangeAE(0, 0);
+        block->ranges = new_IntPairAE(0, 0);
         block->offset = new_IntAE(0, 0, 0);
         block->length = new_IntAE(0, 0, 0);
         block->score = new_IntAE(0, 0, 0);
@@ -96,7 +96,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       width = atoi(data[0]);
       tstart -= (trc ? width : 0);
       qstart -= (qrc ? width : 0);
-      RangeAE_insert_at(&block->ranges, RangeAE_get_nelt(&block->ranges),
+      IntPairAE_insert_at(&block->ranges, IntPairAE_get_nelt(&block->ranges),
                         tstart, width);
       IntAE_insert_at(&block->offset, IntAE_get_nelt(&block->offset),
                       tstart - qstart);
@@ -159,7 +159,7 @@ SEXP readChain(SEXP r_path, SEXP r_exclude) {
     block = NEW_OBJECT(chainBlock_class);
     SET_VECTOR_ELT(ans_listData, i, block);
     SET_SLOT(block, install("ranges"),
-		new_IRanges_from_RangeAE("IRanges", &chains[i]->ranges));
+		new_IRanges_from_IntPairAE("IRanges", &chains[i]->ranges));
     SET_SLOT(block, install("offset"),
 		new_INTEGER_from_IntAE(&chains[i]->offset));
     SET_SLOT(block, install("length"),
