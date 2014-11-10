@@ -102,7 +102,7 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
               GRanges(spaces,
                       IRanges(start(r) - offsets, end(r) - offsets),
                       strand = strand,
-                      values(gr)[queryHits(ol),])
+                      values(gr)[queryHits(ol),,drop=FALSE])
             }
             rl <- split(x, seqnames(x), drop = TRUE)
             unchainedNames <- setdiff(names(rl), names(chain))
