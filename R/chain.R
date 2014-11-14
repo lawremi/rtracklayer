@@ -42,8 +42,8 @@ setMethod("import.chain", "ANY", function(con, ...) {
 setMethod("import", "ChainFile", function(con, format, text, exclude = "_") {
   if (!missing(format))
     checkArgFormat(con, format)
-  if (is(FileForFormat(path(con)), "CompressedFile")) {
-    stop("chain import cannot handle compressed data yet")
+  if (!is(connection(con), "file")) {
+    stop("chain import currently only handles local, uncompressed files")
   }
   .Call("readChain", path.expand(path(con)), as.character(exclude),
         PACKAGE="rtracklayer")
