@@ -105,10 +105,10 @@ SEXP TwoBitFile_read(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges, SEXP lkup)
                           frag_start[i] - 1, frag_start[i] + frag_width[i] - 1);
       Chars_holder r_ans_elt_holder =
         get_elt_from_XRawList_holder(&r_ans_holder, i);
-      /* r_ans_elt_holder.seq is a const char * so we need to cast it to
+      /* r_ans_elt_holder.ptr is a const char * so we need to cast it to
          char * before we can write to it */
       Ocopy_bytes_to_i1i2_with_lkup(0, r_ans_elt_holder.length - 1,
-        (char *)r_ans_elt_holder.seq, r_ans_elt_holder.length,
+        (char *)r_ans_elt_holder.ptr, r_ans_elt_holder.length,
         frag->dna, frag->size,
         INTEGER(lkup), LENGTH(lkup));
       freeDnaSeq(&frag);
