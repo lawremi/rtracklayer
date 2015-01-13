@@ -8,7 +8,7 @@ setMethod("import", "BamFile",
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            readGAlignmentsFromBam(con, use.names = use.names, param = param)
+            readGAlignments(con, use.names = use.names, param = param)
           })
 
 setMethod("export", c("GAlignments", "BamFile"),

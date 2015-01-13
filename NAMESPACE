@@ -66,9 +66,9 @@ importFrom("GenomeInfoDb", Seqinfo, organism, provider, providerVersion,
 importMethodsFrom("GenomeInfoDb", seqlengths,
                   seqlevels, "seqlevels<-", genome, "genome<-", merge)
 
-importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GRangesList,
-                  GenomicRangesList, GIntervalTree, SimpleGenomicRangesList,
-                  DelegatingGenomicRanges)
+importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GNCList,
+                  GRangesList, GenomicRangesList, GIntervalTree,
+                  SimpleGenomicRangesList, DelegatingGenomicRanges)
 importFrom("GenomicRanges", GRanges, GRangesList)
 importMethodsFrom("GenomicRanges", seqnames, "seqnames<-", strand,  "strand<-",
                   seqinfo, "seqinfo<-")
@@ -83,7 +83,7 @@ importMethodsFrom("Rsamtools", ScanBamParam, asBam, headerTabix, isOpen, path,
                   scanTabix)
 importClassesFrom("Rsamtools", RsamtoolsFile, TabixFile, BamFile)
 
-importMethodsFrom("GenomicAlignments", readGAlignmentsFromBam, cigar)
+importMethodsFrom("GenomicAlignments", readGAlignments, cigar)
 importClassesFrom("GenomicAlignments", GAlignments)
 
 ## ============================================================
