@@ -1094,8 +1094,9 @@ setClass("UCSCData",
          "GRanges")
 
 UCSCData <- function(ranges, trackLine = NULL) {
-  metadata(ranges)$trackLine <- trackLine
-  as(ranges, "UCSCData")
+  ucsc <- as(ranges, "UCSCData")
+  ucsc@trackLine <- trackLine
+  ucsc
 }
 
 setMethod("show", "UCSCData",
