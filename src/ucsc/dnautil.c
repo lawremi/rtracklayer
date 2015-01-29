@@ -15,7 +15,6 @@
 #include "common.h"
 #include "dnautil.h"
 
-static char const rcsid[] = "$Id: dnautil.c,v 1.51 2008/10/24 18:20:17 kent Exp $";
 
 struct codonTable
 /* The dread codon table. */
@@ -473,6 +472,41 @@ unsigned temp;
 temp = *pStart;
 *pStart = size - *pEnd;
 *pEnd = size - temp;
+}
+
+char *reverseComplementSlashSeparated(char *alleleStr)
+/* Given a slash-separated series of sequences (a common representation of variant alleles),
+ * returns a slash-sep series with the reverse complement of each sequence (if it is a
+ * nucleotide sequence).
+ * Special behavior to support dbSNP's variant allele conventions:
+ * 1. Reverse the order of sequences (to maintain alphabetical ordering).
+ * 2. If alleleStr begins with "-/", then after reversing, move "-/" back to the beginning. */
+{
+int len = strlen(alleleStr);
+char choppyCopy[len+1];
+safecpy(choppyCopy, sizeof(choppyCopy), alleleStr);
+char *alleles[len];
+int alCount = chopByChar(choppyCopy, '/', alleles, ArraySize(alleles));
+char *outStr = needMem(len+1);
+int i;
+for (i = alCount-1;  i >= 0;  i--)
+    {
+    char *allele = alleles[i];
+    int alLen = strlen(allele);
+    if (isAllNt(allele, alLen))
+        reverseComplement(allele, alLen);
+    if (i != alCount-1)
+        safecat(outStr, len+1, "/");
+    safecat(outStr, len+1, allele);
+    }
+if (startsWith("-/", alleleStr))
+    {
+    // Keep "-/" at the beginning:
+    memmove(outStr+2, outStr, len-2);
+    outStr[0] = '-';
+    outStr[1] = '/';
+    }
+return outStr;
 }
 
 int cmpDnaStrings(DNA *a, DNA *b)
@@ -1004,7 +1038,7 @@ return findHeadPolyTMaybeMask(dna, size, TRUE, FALSE);
 }
 
 boolean isDna(char *poly, int size)
-/* Return TRUE if letters in poly are at least 90% ACGTU */
+/* Return TRUE if letters in poly are at least 90% ACGTNU- */
 {
 int i;
 int dnaCount = 0;
@@ -1012,26 +1046,31 @@ int dnaCount = 0;
 dnaUtilOpen();
 for (i=0; i<size; ++i)
     {
-    if (ntChars[(int)poly[i]]) 
+    if (ntChars[(int)poly[i]])
 	dnaCount += 1;
     }
 return (dnaCount >= round(0.9 * size));
 }
 
-boolean isAllDna(char *poly, int size)
-/* Return TRUE if letters in poly are 100% ACGTU */
+boolean isAllNt(char *seq, int size)
+/* Return TRUE if all letters in seq are ACGTNU-. */
 {
 int i;
-
-if (size <= 1)
-    return FALSE;
 dnaUtilOpen();
 for (i=0; i<size-1; ++i)
     {
-    if (ntChars[(int)poly[i]] == 0) 
+    if (ntChars[(int)seq[i]] == 0)
 	return FALSE;
     }
 return TRUE;
+}
+
+boolean isAllDna(char *poly, int size)
+/* Return TRUE if size is great than 1 and letters in poly are 100% ACGTNU- */
+{
+if (size <= 1)
+    return FALSE;
+return isAllNt(poly, size);
 }
 
 
@@ -1123,4 +1162,3 @@ if (!opened)
     opened = TRUE;
     }
 }
-

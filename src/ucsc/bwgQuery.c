@@ -1,10 +1,12 @@
 /* bwgQuery - implements the query side of bigWig.  See bwgInternal.h for definition of file
  * format. */
 
+/* Copyright (C) 2012 The Regents of the University of California 
+ * See README in this or parent directory for licensing information. */
+
 #include "common.h"
 #include "linefile.h"
 #include "hash.h"
-#include "localmem.h"
 #include "options.h"
 #include "sig.h"
 #include "sqlNum.h"
@@ -20,7 +22,6 @@
 #include "bigWig.h"
 #include "bigBed.h"
 
-static char const rcsid[] = "$Id: bwgQuery.c,v 1.24 2010/06/03 18:08:37 kent Exp $";
 
 struct bbiFile *bigWigFileOpen(char *fileName)
 /* Open up big wig file. */
@@ -141,7 +142,7 @@ switch (head.type)
         internalErr();
 	break;
     }
-assert(blockPt == blockEnd);
+assert( (maxCount != 0 && outCount >= maxCount) || (blockPt == blockEnd));
 return outCount;
 }
 
@@ -337,7 +338,11 @@ for (block = blockList; block != NULL; )
 	if (maxCount != 0)
 	    {
 	    if (oneCount >= maxCount)
+		{
+		block = NULL;	 // we want to drop out of the outer loop too
 		break;
+		}
+
 	    maxCount -= oneCount;
 	    }
 	blockBuf += block->size;

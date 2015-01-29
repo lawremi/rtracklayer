@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include <sys/utsname.h>
 #include <sys/time.h>
+#include <sys/statvfs.h>
 #include <pwd.h>
 #include <termios.h>
 #include "portable.h"
@@ -17,7 +18,6 @@
 #include <utime.h>
 
 
-static char const rcsid[] = "$Id: osunix.c,v 1.48 2010/06/03 05:14:39 kent Exp $";
 
 
 off_t fileSize(char *pathname)
@@ -32,6 +32,16 @@ if (stat(pathname,&mystat)==-1)
 return mystat.st_size;
 }
 
+long long freeSpaceOnFileSystem(char *path)
+/* Given a path to a file or directory on a file system,  return free space
+ * in bytes. */
+{
+struct statvfs fi;
+int err = statvfs(path,&fi);
+if (err < 0)
+    errnoAbort("freeSpaceOnFileSystem could not statvfs");
+return (long long)fi.f_bsize * fi.f_bavail;
+}
 
 long clock1000()
 /* A millisecond clock. */
@@ -171,6 +181,7 @@ if ((err = mkdir(dirName, 0777)) < 0)
     }
 return TRUE;
 }
+
 
 struct fileInfo *listDirXExt(char *dir, char *pattern, boolean fullPath, boolean ignoreStatFailures)
 /* Return list of files matching wildcard pattern with
@@ -317,15 +328,32 @@ char *rTempName(char *dir, char *base, char *suffix)
 char *x;
 static char fileName[PATH_LEN];
 int i;
+char *lastSlash = (lastChar(dir) == '/' ? "" : "/");
 for (i=0;;++i)
     {
     x = semiUniqName(base);
-    safef(fileName, sizeof(fileName), "%s/%s%d%s",
-    	dir, x, i, suffix);
+    safef(fileName, sizeof(fileName), "%s%s%s%d%s",
+    	dir, lastSlash, x, i, suffix);
     if (!fileExists(fileName))
         break;
     }
 return fileName;
+}
+
+void mustRename(char *oldName, char *newName)
+/* Rename file or die trying. */
+{
+int err = rename(oldName, newName);
+if (err < 0)
+    errnoAbort("Couldn't rename %s to %s", oldName, newName);
+}
+
+void mustRemove(char *path)
+/* Remove file or die trying */
+{
+int err = remove(path);
+if (err < 0)
+    errnoAbort("Couldn't remove %s", path);
 }
 
 static void eatSlashSlashInPath(char *path)
@@ -523,6 +551,25 @@ if (fstat(fd, &buf) < 0)
 return S_ISFIFO(buf.st_mode);
 }
 
+void childExecFailedExit(char *msg)
+/* Child exec failed, so quit without atexit cleanup */
+{
+fprintf(stderr, "child exec failed: %s\n", msg);
+fflush(stderr);
+_exit(1);  // Let the parent know that the child failed by returning 1.
+
+/* Explanation:
+_exit() is not the normal exit().  
+_exit() avoids the usual atexit() cleanup.
+The MySQL library that we link to uses atexit() cleanup to close any open MySql connections.
+However, because the child's mysql connections are shared by the parent,
+this causes the parent MySQL connections to become invalid,
+and causes the puzzling "MySQL has gone away" error in the parent
+when it tries to use its now invalid MySQL connections.
+*/
+
+}
+
 static void execPStack(pid_t ppid)
 /* exec pstack on the specified pid */
 {
@@ -537,7 +584,9 @@ if (dup2(2, 1) < 0)
     errAbort("dup2 failed");
 
 execvp(cmd[0], cmd);
-errAbort("exec failed: %s", cmd[0]);
+
+childExecFailedExit(cmd[0]); // cannot use the normal errAbort.
+
 }
 
 void vaDumpStack(char *format, va_list args)
@@ -594,8 +643,8 @@ va_end(args);
 
 boolean maybeTouchFile(char *fileName)
 /* If file exists, set its access and mod times to now.  If it doesn't exist, create it.
-     * Return FALSE if we have a problem doing so (e.g. when qateam is gdb'ing and code tries 
-     * to touch some file owned by www). */
+ * Return FALSE if we have a problem doing so (e.g. when qateam is gdb'ing and code tries 
+ * to touch some file owned by www). */
 {
 if (fileExists(fileName))
     {
@@ -603,18 +652,39 @@ if (fileExists(fileName))
     ut.actime = ut.modtime = clock1();
     int ret = utime(fileName, &ut);
     if (ret != 0)
-        {
-        warn("utime(%s) failed (ownership?)", fileName);
-        return FALSE;
-        }
+	{
+	warn("utime(%s) failed (ownership?)", fileName);
+	return FALSE;
+	}
     }
 else
     {
     FILE *f = fopen(fileName, "w");
     if (f == NULL)
-       return FALSE;
+	return FALSE;
     else
-       carefulClose(&f);
+	carefulClose(&f);
     }
 return TRUE;
 }
+
+boolean isRegularFile(char *fileName)
+/* Return TRUE if fileName is a regular file. */
+{
+struct stat st;
+
+if (stat(fileName, &st) < 0)
+    return FALSE;
+if (S_ISREG(st.st_mode))
+    return TRUE;
+return FALSE;
+}
+
+void makeSymLink(char *oldName, char *newName)
+/* Return a symbolic link from newName to oldName or die trying */
+{
+int err = symlink(oldName, newName);
+if (err < 0)
+     errnoAbort("Couldn't make symbolic link from %s to %s\n", oldName, newName);
+}
+

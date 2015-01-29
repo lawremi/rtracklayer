@@ -9,7 +9,6 @@
 #include "obscure.h"
 #include "dystring.h"
 
-static char const rcsid[] = "$Id: hash.c,v 1.51 2009/11/10 22:46:19 angie Exp $";
 
 /*
  * Hash a string key.  This code is taken from Tcl interpreter. I was borrowed
@@ -242,7 +241,8 @@ return hashAdd(hash, name, NULL)->name;
 }
 
 int hashIntVal(struct hash *hash, char *name)
-/* Find size of name in hash or die trying. */
+/* Return integer value associated with name in a simple 
+ * hash of ints. */
 {
 void *val = hashMustFindVal(hash, name);
 return ptToInt(val);
@@ -412,8 +412,7 @@ hash->numResizes++;
 
 
 struct hash *hashFromSlNameList(void *list)
-/* Create a hash out of a list of slNames or any kind of list where the */
-/* first field is the next pointer and the second is the name. */
+/* Create a hash out of a list of slNames. */
 {
 struct hash *hash = NULL;
 struct slName *namedList = list, *item;
@@ -422,6 +421,19 @@ if (!list)
 hash = newHash(0);
 for (item = namedList; item != NULL; item = item->next)
     hashAdd(hash, item->name, item);
+return hash;
+}
+
+struct hash *hashSetFromSlNameList(void *list)
+/* Create a hashSet (hash with only keys) out of a list of slNames. */
+{
+struct hash *hash = NULL;
+struct slName *namedList = list, *item;
+if (!list)
+    return NULL;
+hash = newHash(0);
+for (item = namedList; item != NULL; item = item->next)
+    hashAdd(hash, item->name, NULL);
 return hash;
 }
 
@@ -455,6 +467,15 @@ int hashElCmp(const void *va, const void *vb)
 const struct hashEl *a = *((struct hashEl **)va);
 const struct hashEl *b = *((struct hashEl **)vb);
 return strcmp(a->name, b->name);
+}
+
+int hashElCmpWithEmbeddedNumbers(const void *va, const void *vb)
+/* Compare two hashEl by name sorting including numbers within name,
+ * suitable for chromosomes, genes, etc. */
+{
+const struct hashEl *a = *((struct hashEl **)va);
+const struct hashEl *b = *((struct hashEl **)vb);
+return cmpStringsWithEmbeddedNumbers(a->name, b->name);
 }
 
 void *hashElFindVal(struct hashEl *list, char *name)
@@ -707,3 +728,22 @@ for (i=0; i<hash->size; ++i)
     n += bucketLen(hash->table[i]);
 return n;
 }
+
+struct hash *hashFromString(char *string)
+/* parse a whitespace-separated string with tuples in the format name=val or
+ * name="val" to a hash name->val */
+{
+if (string==NULL)
+    return NULL;
+
+struct slPair *keyVals = slPairListFromString(string, TRUE);
+if (keyVals==NULL)
+    return NULL;
+
+struct hash *nameToVal = newHash(0);
+struct slPair *kv;
+for (kv = keyVals; kv != NULL; kv = kv->next)
+    hashAdd(nameToVal, kv->name, kv->val);
+return nameToVal;
+}
+

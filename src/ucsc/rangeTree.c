@@ -7,6 +7,9 @@
  * Beware the several static/global variables which can be
  * changed by various function calls. */
 
+/* Copyright (C) 2013 The Regents of the University of California 
+ * See README in this or parent directory for licensing information. */
+
 #include "common.h"
 #include "limits.h"
 #include "localmem.h"
@@ -14,7 +17,6 @@
 #include "rbTree.h"
 #include "rangeTree.h"
 
-static char const rcsid[] = "$Id: rangeTree.c,v 1.24 2009/02/01 01:34:21 kent Exp $";
 
 int rangeCmp(void *va, void *vb)
 /* Return -1 if a before b,  0 if a and b overlap,
@@ -317,6 +319,24 @@ int rangeTreeOverlapTotalSize(struct rbTree *tree)
 {
 return rangeTreeOverlapSize(tree, INT_MIN, INT_MAX);
 }
+
+void rangeTreeSumRangeCallback(void *item, void *context)
+/* This is a callback for rbTreeTraverse with context.  It just adds up
+ * end-start */
+{
+struct range *range = item;
+long long *pSum = context;
+*pSum += range->end - range->start;
+}
+
+long long rangeTreeSumRanges(struct rbTree *tree)
+/* Return sum of end-start of all items. */
+{
+long long sum = 0;
+rbTreeTraverseWithContext(tree, rangeTreeSumRangeCallback, &sum);
+return sum;
+}
+
 
 struct rbTree *rangeTreeNew()
 /* Create a new, empty, rangeTree. */

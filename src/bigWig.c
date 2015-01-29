@@ -5,7 +5,6 @@
 #include "ucsc/bbiFile.h"
 #include "ucsc/bigWig.h"
 #include "ucsc/bwgInternal.h"
-#include "ucsc/_bwgInternal.h"
 
 #include "bigWig.h"
 #include "handlers.h"
@@ -190,6 +189,7 @@ SEXP BWGSectionList_write(SEXP r_sections, SEXP r_seqlengths, SEXP r_compress,
   }
   pushRHandlers();
   bwgCreate(sections, lenHash, blockSize, itemsPerSlot, asLogical(r_compress),
+            FALSE /*keepAllChromosomes*/, TRUE /*fixedSummaries*/,
             (char *)CHAR(asChar(r_file)));
   freeHash(&lenHash);
   popRHandlers();
@@ -385,7 +385,7 @@ SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_seqlengths, SEXP r_outfile) {
   struct bwgSection *sections =
     bwgParseWig((char *)CHAR(asChar(r_infile)), FALSE, lenHash, itemsPerSlot,
                 lm);
-  bwgCreate(sections, lenHash, blockSize, itemsPerSlot, TRUE,
+  bwgCreate(sections, lenHash, blockSize, itemsPerSlot, TRUE, TRUE, TRUE,
             (char *)CHAR(asChar(r_outfile)));
   lmCleanup(&lm);
   freeHash(&lenHash);

@@ -10,6 +10,15 @@
 #include "linefile.h"
 #include "dystring.h"
 
+#define DEFAULTCONNECTTIMEOUTMSEC 10000  /* default connect timeout for tcp in milliseconds */
+#define DEFAULTREADWRITETTIMEOUTSEC 120  /* default read/write timeout for tcp in seconds */
+
+int setReadWriteTimeouts(int sd, int seconds);
+/* Set read and write timeouts on socket sd 
+ * Return -1 if there are any errors, 0 if successful. */
+
+/* add a failure to connFailures[]
+ *  which can save time and avoid more timeouts */
 int netConnect(char *hostName, int port);
 /* Start connection with a server having resolved port. Return < 0 if error. */
 
@@ -39,14 +48,18 @@ FILE *netFileFromSocket(int socket);
 /* Wrap a FILE around socket.  This should be fclose'd
  * and separately the socket close'd. */
 
+int netWaitForData(int sd, int microseconds);
+/* Wait for descriptor to have some data to read, up to given number of
+ * microseconds.  Returns amount of data there or zero if timed out. */
+
 void netBlockBrokenPipes();
 /* Make it so a broken pipe doesn't kill us. */
 
-size_t netReadAll(int sd, void *vBuf, size_t size);
+ssize_t netReadAll(int sd, void *vBuf, ssize_t size);
 /* Read given number of bytes into buffer.
  * Don't give up on first read! */
 
-int netMustReadAll(int sd, void *vBuf, size_t size);
+ssize_t netMustReadAll(int sd, void *vBuf, ssize_t size);
 /* Read given number of bytes into buffer or die.
  * Don't give up if first read is short! */
 
@@ -124,7 +137,15 @@ char *urlFromNetParsedUrl(struct netParsedUrl *npu);
 
 int netUrlOpen(char *url);
 /* Return socket descriptor (low-level file handle) for read()ing url data,
- * or -1 if error.  Just close(result) when done. */
+ * or -1 if error.  Just close(result) when done. Errors from this routine
+ * from web urls are rare, because this just opens up enough to read header,
+ * which may just say "file not found." Consider using netUrlMustOpenPastHeader
+ * instead .*/
+
+int netUrlMustOpenPastHeader(char *url);
+/* Get socket descriptor for URL.  Process header, handling any forwarding and
+ * the like.  Do errAbort if there's a problem, which includes anything but a 200
+ * return from http after forwarding. */
 
 int netUrlOpenSockets(char *url, int *retCtrlSocket);
 /* Return socket descriptor (low-level file handle) for read()ing url data,
@@ -240,9 +261,7 @@ boolean netSkipHttpHeaderLinesHandlingRedirect(int sd, char *url, int *redirecte
 boolean netGetFtpInfo(char *url, long long *retSize, time_t *retTime);
 /* Return date in UTC and size of ftp url file */
 
-
-boolean parallelFetch(char *url, char *outPath, int numConnections, int numRetries, boolean newer, boolean progress);
-/* Open multiple parallel connections to URL to speed downloading */
-
+boolean hasProtocol(char *urlOrPath);
+/* Return TRUE if it looks like it has http://, ftp:// etc. */
 #endif /* NET_H */
 

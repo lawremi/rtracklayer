@@ -11,7 +11,6 @@
 #include "obscure.h"
 #include "linefile.h"
 
-static char const rcsid[] = "$Id: obscure.c,v 1.53 2010/01/27 21:04:04 galt Exp $";
 static int _dotForUserMod = 100; /* How often does dotForUser() output a dot. */
 
 long incCounterFile(char *fileName)
@@ -178,6 +177,7 @@ while (lineFileNext(lf, &line, NULL))
      el = newSlName(line);
      slAddHead(&list, el);
      }
+lineFileClose(&lf);
 slReverse(&list);
 return list;
 }
@@ -413,7 +413,7 @@ struct hash *hashThisEqThatLine(char *line, int lineIx, boolean firstStartsWithL
 /* Return a symbol table from a line of form:
  *   1-this1=val1 2-this='quoted val2' var3="another val" 
  * If firstStartsWithLetter is true, then the left side of the equals must start with
- * and equals. */
+ * a letter. */
 {
 char *dupe = cloneString(line);
 char *s = dupe, c;
@@ -533,8 +533,20 @@ return charSepToSlNames(commaSep, ',');
 void sprintLongWithCommas(char *s, long long l)
 /* Print out a long number with commas a thousands, millions, etc. */
 {
-long long billions, millions, thousands;
-if (l >= 1000000000)
+long long trillions, billions, millions, thousands;
+if (l >= 1000000000000LL)
+    {
+    trillions = l/1000000000000LL;
+    l -= trillions * 1000000000000LL;
+    billions = l/1000000000;
+    l -= billions * 1000000000;
+    millions = l/1000000;
+    l -= millions * 1000000;
+    thousands = l/1000;
+    l -= thousands * 1000;
+    sprintf(s, "%lld,%03lld,%03lld,%03lld,%03lld", trillions, billions, millions, thousands, l);
+    }
+else if (l >= 1000000000)
     {
     billions = l/1000000000;
     l -= billions * 1000000000;
@@ -588,8 +600,39 @@ else
     safef(s,slength,"%3.0f %s",((double)size)/d, greek[i]);
 }
 
+void shuffleArrayOfChars(char *array, int arraySize)
+/* Shuffle array of characters of given size given number of times. */
+{
+char c;
+int i, randIx;
 
-void shuffleArrayOfPointers(void *pointerArray, int arraySize, int shuffleCount)
+/* Randomly permute an array using the method from Cormen, et al */
+for (i=0; i<arraySize; ++i)
+    {
+    randIx = i + (rand() % (arraySize - i));
+    c = array[i];
+    array[i] = array[randIx];
+    array[randIx] = c;
+    }
+}
+
+void shuffleArrayOfInts(int *array, int arraySize)
+/* Shuffle array of ints of given size given number of times. */
+{
+int c;
+int i, randIx;
+
+/* Randomly permute an array using the method from Cormen, et al */
+for (i=0; i<arraySize; ++i)
+    {
+    randIx = i + (rand() % (arraySize - i));
+    c = array[i];
+    array[i] = array[randIx];
+    array[randIx] = c;
+    }
+}
+
+void shuffleArrayOfPointers(void *pointerArray, int arraySize)
 /* Shuffle array of pointers of given size given number of times. */
 {
 void **array = pointerArray, *pt;
@@ -605,7 +648,7 @@ for (i=0; i<arraySize; ++i)
     }
 }
 
-void shuffleList(void *pList, int shuffleCount)
+void shuffleList(void *pList)
 /* Randomize order of slList.  Usage:
  *     randomizeList(&list)
  * where list is a pointer to a structure that
@@ -624,7 +667,7 @@ if (count > 1)
     for (el = list, i=0; el != NULL; el = el->next, i++)
         array[i] = el;
     for (i=0; i<4; ++i)
-        shuffleArrayOfPointers(array, count, shuffleCount);
+        shuffleArrayOfPointers(array, count);
     list = NULL;
     for (i=0; i<count; ++i)
         {
@@ -636,6 +679,48 @@ if (count > 1)
     *pL = list;       
     }
 }
+
+void *slListRandomReduce(void *list, double reduceRatio)
+/* Reduce list to approximately reduceRatio times original size. Destroys original list. */
+{
+if (reduceRatio >= 1.0)
+    return list;
+int threshold = RAND_MAX * reduceRatio;
+struct slList *newList = NULL, *next, *el;
+for (el = list; el != NULL; el = next)
+    {
+    next = el->next;
+    if (rand() <= threshold)
+        {
+	slAddHead(&newList, el);
+	}
+    }
+return newList;
+}
+
+void *slListRandomSample(void *list, int maxCount)
+/* Return a sublist of list with at most maxCount. Destroy list in process */
+{
+if (list == NULL)
+    return list;
+int initialCount = slCount(list);
+if (initialCount <= maxCount)
+    return list;
+double reduceRatio = (double)maxCount/initialCount;
+if (reduceRatio < 0.9)
+    {
+    double conservativeReduceRatio = reduceRatio * 1.05;
+    list = slListRandomReduce(list, conservativeReduceRatio);
+    }
+int midCount = slCount(list);
+if (midCount <= maxCount)
+    return list;
+shuffleList(list);
+struct slList *lastEl = slElementFromIx(list, maxCount-1);
+lastEl->next = NULL;
+return list;
+}
+
 
 char *stripCommas(char *position)
 /* make a new string with commas stripped out */

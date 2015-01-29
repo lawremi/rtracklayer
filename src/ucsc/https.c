@@ -1,5 +1,8 @@
 /* Connect via https. */
 
+/* Copyright (C) 2012 The Regents of the University of California 
+ * See README in this or parent directory for licensing information. */
+
 #ifdef USE_SSL
 
 #include "openssl/ssl.h"
@@ -10,7 +13,8 @@
 #include <pthread.h>
 
 #include "common.h"
-#include "errabort.h"
+#include "errAbort.h"
+#include "net.h"
 
 
 static pthread_mutex_t *mutexes = NULL;
@@ -176,8 +180,8 @@ while (1)
 	FD_SET(fd, &readfds);
 	FD_SET(fd, &writefds);
 	}
-    tv.tv_sec = 10;  // timeout
-    tv.tv_usec = 0;
+    tv.tv_sec = (long) (DEFAULTCONNECTTIMEOUTMSEC/1000);  // timeout default 10 seconds
+    tv.tv_usec = (long) (((DEFAULTCONNECTTIMEOUTMSEC/1000)-tv.tv_sec)*1000000);
 
     err = select(fd + 1, &readfds, &writefds, NULL, &tv);
     if (err < 0) 
@@ -237,8 +241,8 @@ while (1)
     if (srd == 0)
 	FD_SET(params->sv[1], &readfds);
 
-    tv.tv_sec = 10;   // timeout
-    tv.tv_usec = 0;
+    tv.tv_sec = (long) (DEFAULTCONNECTTIMEOUTMSEC/1000);  // timeout default 10 seconds
+    tv.tv_usec = (long) (((DEFAULTCONNECTTIMEOUTMSEC/1000)-tv.tv_sec)*1000000);
 
     err = select(max(fd,params->sv[1]) + 1, &readfds, &writefds, NULL, &tv);
 
@@ -373,7 +377,7 @@ return params->sv[0];
 
 #include <stdarg.h>
 #include "common.h"
-#include "errabort.h"
+#include "errAbort.h"
 
 int netConnectHttps(char *hostName, int port)
 /* Start https connection with server or die. */

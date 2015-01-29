@@ -41,7 +41,6 @@
 #include "cheapcgi.h"
 #include "udc.h"
 
-static char const rcsid[] = "$Id: udc.c,v 1.37 2010/03/19 19:16:37 angie Exp $";
 
 #define udcBlockSize (8*1024)
 /* All fetch requests are rounded up to block size. */
@@ -134,7 +133,7 @@ bits64 remaining = size, total = 0;
 while (remaining > 0)
     {
     bits64 chunkSize = min(remaining, udcBlockSize);
-    bits64 rd = read(sd, buf, chunkSize);
+    ssize_t rd = read(sd, buf, chunkSize);
     if (rd < 0)
 	errnoAbort("readAndIgnore: error reading socket after %lld bytes", total);
     remaining -= rd;
@@ -380,12 +379,13 @@ char *sizeString = hashFindValUpperCase(hash, "Content-Length:");
 if (sizeString == NULL)
     {
     /* try to get remote file size by an alternate method */
-    retInfo->size = netUrlSizeByRangeResponse(url);
-    if (retInfo->size < 0)
+    long long retSize = netUrlSizeByRangeResponse(url);
+    if (retSize < 0)
 	{
     	hashFree(&hash);
 	errAbort("No Content-Length: returned in header for %s, can't proceed, sorry", url);
 	}
+    retInfo->size = retSize;
     }
 else
     {
@@ -458,6 +458,21 @@ return TRUE;
 
 /********* Non-protocol-specific bits **********/
 
+boolean udcFastReadString(struct udcFile *f, char buf[256])
+/* Read a string into buffer, which must be long enough
+ * to hold it.  String is in 'writeString' format. */
+{
+UBYTE bLen;
+int len;
+if (!udcReadOne(f, bLen))
+    return FALSE;
+if ((len = bLen)> 0)
+    udcMustRead(f, buf, len);
+buf[len] = 0;
+return TRUE;
+}
+
+void msbFirstWriteBits64(FILE *f, bits64 x);
 
 static char *fileNameInCacheDir(struct udcFile *file, char *fileName)
 /* Return the name of a file in the cache dir, from the cache root directory on down.
@@ -530,6 +545,11 @@ if (fd < 0)
 /* Get status info from file. */
 struct stat status;
 fstat(fd, &status);
+if (status.st_size < udcBitmapHeaderSize) // check for truncated invalid bitmap files.
+    {
+    close(fd);
+    return NULL;  // returning NULL will cause the fresh creation of bitmap and sparseData files.
+    }  
 
 /* Read signature and decide if byte-swapping is needed. */
 // TODO: maybe buffer the I/O for performance?  Don't read past header - 
@@ -803,8 +823,6 @@ if (bits != NULL)
     if (retTime)
 	*retTime = bits->remoteUpdate;
     }
-else
-    warn("Can't open bitmap file %s: %s\n", bitmapFileName, strerror(errno));
 udcBitmapClose(&bits);
 return ret;
 }
@@ -1207,7 +1225,7 @@ file->startData = fetchedStart;
 file->endData = fetchedEnd;
 }
 
-static boolean udcCachePreload(struct udcFile *file, bits64 offset, int size)
+static boolean udcCachePreload(struct udcFile *file, bits64 offset, bits64 size)
 /* Make sure that given data is in cache - fetching it remotely if need be. 
  * Return TRUE on success. */
 {
@@ -1240,7 +1258,7 @@ return ok;
 }
 
 #define READAHEADBUFSIZE 4096
-int udcRead(struct udcFile *file, void *buf, int size)
+bits64 udcRead(struct udcFile *file, void *buf, bits64 size)
 /* Read a block from file.  Return amount actually read. */
 {
 
@@ -1255,7 +1273,7 @@ size = end - start;
 char *cbuf = buf;
 
 /* use read-ahead buffer if present */
-int bytesRead = 0;
+bits64 bytesRead = 0;
 
 bits64 raStart;
 bits64 raEnd;
@@ -1268,8 +1286,8 @@ while(TRUE)
 	if (start >= raStart && start < raEnd)
 	    {
 	    // copy bytes out of rabuf
-	    int endInBuf = min(raEnd, end);
-	    int sizeInBuf = endInBuf - start;
+	    bits64 endInBuf = min(raEnd, end);
+	    bits64 sizeInBuf = endInBuf - start;
 	    memcpy(cbuf, file->sparseReadAheadBuf + (start-raStart), sizeInBuf);
 	    cbuf += sizeInBuf;
 	    bytesRead += sizeInBuf;
@@ -1337,12 +1355,12 @@ while(TRUE)
 return bytesRead;
 }
 
-void udcMustRead(struct udcFile *file, void *buf, int size)
+void udcMustRead(struct udcFile *file, void *buf, bits64 size)
 /* Read a block from file.  Abort if any problem, including EOF before size is read. */
 {
-int sizeRead = udcRead(file, buf, size);
+bits64 sizeRead = udcRead(file, buf, size);
 if (sizeRead < size)
-    errAbort("udc couldn't read %d bytes from %s, did read %d", size, file->url, sizeRead);
+    errAbort("udc couldn't read %llu bytes from %s, did read %llu", size, file->url, sizeRead);
 }
 
 int udcGetChar(struct udcFile *file)
@@ -1401,6 +1419,41 @@ udcMustRead(file, &val, sizeof(val));
 if (isSwapped)
     val = byteSwapDouble(val);
 return val;
+}
+
+char *udcReadLine(struct udcFile *file)
+/* Fetch next line from udc cache or NULL. */
+{
+char shortBuf[2], *longBuf = NULL, *buf = shortBuf;
+int i, bufSize = sizeof(shortBuf);
+for (i=0; ; ++i)
+    {
+    /* See if need to expand buffer, which is initially on stack, but if it gets big goes into 
+     * heap. */
+    if (i >= bufSize)
+        {
+	int newBufSize = bufSize*2;
+	char *newBuf = needLargeMem(newBufSize);
+	memcpy(newBuf, buf, bufSize);
+	freeMem(longBuf);
+	buf = longBuf = newBuf;
+	bufSize = newBufSize;
+	}
+
+    char c;
+    bits64 sizeRead = udcRead(file, &c, 1);
+    if (sizeRead == 0)
+	return NULL;
+    buf[i] = c;
+    if (c == '\n')
+	{
+	buf[i] = 0;
+	break;
+	}
+    }
+char *retString = cloneString(buf);
+freeMem(longBuf);
+return retString;
 }
 
 char *udcReadStringAndZero(struct udcFile *file)
@@ -1463,6 +1516,13 @@ char *buf = udcFileReadAll(url, cacheDir, maxSize, NULL);
 return lineFileOnString(url, TRUE, buf);
 }
 
+void udcSeekCur(struct udcFile *file, bits64 offset)
+/* Seek to a particular position in file. */
+{
+file->offset += offset;
+mustLseek(file->fdSparse, offset, SEEK_CUR);
+}
+
 void udcSeek(struct udcFile *file, bits64 offset)
 /* Seek to a particular position in file. */
 {
@@ -1518,7 +1578,8 @@ for (file = fileList; file != NULL; file = file->next)
 	}
     else if (sameString(file->name, bitmapName))
         {
-	verbose(2, "%ld (%ld) %s/%s\n", bitRealDataSize(file->name), (long)file->size, getCurrentDir(), file->name);
+	if (file->size > udcBitmapHeaderSize) /* prevent failure on bitmap files of size 0 or less than header size */
+	    verbose(2, "%ld (%ld) %s/%s\n", bitRealDataSize(file->name), (long)file->size, getCurrentDir(), file->name);
 	if (file->lastAccess < deleteTime)
 	    {
 	    /* Remove all files when get bitmap, so that can ensure they are deleted in 
@@ -1566,7 +1627,7 @@ return defaultDir;
 void udcSetDefaultDir(char *path)
 /* Set default directory for cache */
 {
-defaultDir = path;
+defaultDir = cloneString(path);
 }
 
 
@@ -1599,24 +1660,50 @@ if (sameString("transparent", udc->protocol))
 return udc->updateTime;
 }
 
-#ifdef PROGRESS_METER
-off_t remoteFileSize(char *url)
-/* fetch remote file size from given URL */
+off_t udcFileSize(char *url)
+/* fetch file size from given URL or local path 
+ * returns -1 if not found. */
 {
-off_t answer = 0;
+if (udcIsLocal(url))
+    return fileSize(url);
+
+// don't go to the network if we can avoid it
+int cacheSize = udcSizeFromCache(url, NULL);
+if (cacheSize!=-1)
+    return cacheSize;
+
+off_t ret = -1;
 struct udcRemoteFileInfo info;
 
 if (startsWith("http://",url) || startsWith("https://",url))
     {
     if (udcInfoViaHttp(url, &info))
-	answer = info.size;
+	ret = info.size;
     }
 else if (startsWith("ftp://",url))
     {
     if (udcInfoViaFtp(url, &info))
-	answer = info.size;
+	ret = info.size;
     }
+else
+    errAbort("udc/udcFileSize: invalid protocol for url %s, can only do http/https/ftp", url);
 
-return answer;
+return ret;
 }
-#endif
+
+boolean udcIsLocal(char *url) 
+/* return true if file is not a http or ftp file, just a local file */
+{
+// copied from above
+char *protocol = NULL, *afterProtocol = NULL, *colon;
+udcParseUrl(url, &protocol, &afterProtocol, &colon);
+freez(&protocol);
+freez(&afterProtocol);
+return colon==NULL;
+}
+
+boolean udcExists(char *url)
+/* return true if a local or remote file exists */
+{
+return udcFileSize(url)!=-1;
+}

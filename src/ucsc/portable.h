@@ -96,6 +96,12 @@ struct tempName
 void makeTempName(struct tempName *tn, char *base, char *suffix);
 /* Make a good name for a temp file. */
 
+void mustRename(char *oldName, char *newName);
+/* Rename file or die trying. */
+
+void mustRemove(char *path);
+/* Remove file or die trying */
+
 char *semiUniqName(char *base);
 /* Figure out a name likely to be unique.
  * Name will have no periods.  Returns a static
@@ -147,6 +153,16 @@ boolean isPipe(int fd);
 boolean maybeTouchFile(char *fileName);
 /* If file exists, set its access and mod times to now.  If it doesn't exist, create it.
  * Return FALSE if we have a problem doing so. */
+
+boolean isRegularFile(char *fileName);
+/* Return TRUE if fileName is a regular file. */
+
+void makeSymLink(char *oldName, char *newName);
+/* Return a symbolic link from newName to oldName or die trying */
+
+long long freeSpaceOnFileSystem(char *path);
+/* Given a path to a file or directory on a file system,  return free space
+ * in bytes. */
 
 #endif /* PORTABLE_H */
 

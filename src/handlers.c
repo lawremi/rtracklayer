@@ -1,5 +1,5 @@
 #include "ucsc/common.h"
-#include "ucsc/errabort.h"
+#include "ucsc/errAbort.h"
 
 #include "handlers.h"
 

@@ -44,12 +44,18 @@ void htmlTextOut(char *s);
 char *htmlTextStripTags(char *s);
 /* Returns a cloned string with all html tags stripped out */
 
+char *htmlTextReplaceTagsWithChar(char *s, char ch);
+/* Returns a cloned string with all html tags replaced with given char (useful for tokenizing) */
+
 char *htmlEncodeText(char *s, boolean tagsOkay);
 /* Returns a cloned string with quotes replaced by html codes.
    Changes ',",\n and if not tagsOkay >,<,& to code equivalents.
    This differs from cgiEncode as it handles text that will
    be displayed in an html page or tooltip style title.  */
 #define htmlEncode(s) htmlEncodeText(s,FALSE)
+
+char *attributeEncode(char *str);
+// encode double and single quotes in a string to be used as an element attribute
 
 void htmlMemDeath();
 /* Complain about lack of memory and abort.  */
@@ -59,6 +65,9 @@ void htmlStart(char *title);
 
 void htmStart(FILE *f, char *title);
 /* Write the start of a stand alone .html file. */
+
+void printBodyTag(FILE *f);
+// print starting BODY tag, including any appropriate attributes (class, background and bgcolor). 
 
 void htmStartWithHead(FILE *f, char *head, char *title);
 /* Write the start of a stand alone .html file, plus head info */
@@ -81,6 +90,18 @@ void htmlSetStyle(char *style);
 /* Set document wide style. A favorite style to
  * use for many purposes is htmlStyleUndecoratedLink
  * which will remove underlines from links.
+ * Needs to be called before htmlStart or htmShell. */
+
+void htmlSetStyleSheet(char *styleSheet);
+/* Set document wide style sheet by adding css name to HEAD part.
+ * Needs to be called before htmlStart or htmShell. */
+
+void htmlSetFormClass(char *formClass);
+/* Set class in the BODY part. */
+
+
+void htmlSetStyleTheme(char *style);
+/* Set theme style, these styles can overwrite document wide styles.
  * Needs to be called before htmlStart or htmShell. */
 
 void htmlSetBackground(char *imageFile);

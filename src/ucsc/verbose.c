@@ -1,11 +1,13 @@
 /* verbose.c - write out status messages according to the
  * current verbosity level.  These messages go to stderr. */
 
+/* Copyright (C) 2011 The Regents of the University of California 
+ * See README in this or parent directory for licensing information. */
+
 #include "common.h"
 #include "portable.h"
 #include "verbose.h"
 
-static char const rcsid[] = "$Id: verbose.c,v 1.7 2010/04/01 17:31:10 markd Exp $";
 
 static int logVerbosity = 1;	/* The level of log verbosity.  0 is silent. */
 static FILE *logFile;	/* File to log to. */

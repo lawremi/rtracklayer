@@ -55,6 +55,10 @@
 #endif
 #endif
 
+#ifdef __CYGWIN32__
+#include <mingw/math.h>
+#endif
+
 #ifndef NAN
 #define NAN (0.0 / 0.0)
 #endif
@@ -339,8 +343,8 @@ void reverseStrings(char **a, int length);
 void swapBytes(char *a, char *b, int length);
 /* Swap buffers a and b. */
 
-/* Some things to manage simple lists - structures that begin
- * with a pointer to the next element in the list. */
+/******* Some things to manage simple lists - structures that begin ******
+ ******* with a pointer to the next element in the list.            ******/
 struct slList
     {
     struct slList *next;
@@ -425,8 +429,16 @@ void slUniqify(void *pList, CmpFunction *compare, void (*free)());
  * pointers to pointers to elements.  Free should take a simple
  * pointer to dispose of duplicate element, and can be NULL. */
 
+void slSortMerge(void *pA, void *b, CmpFunction *compare);
+// Merges and sorts a pair of singly linked lists using slSort.
+
+void slSortMergeUniq(void *pA, void *b, CmpFunction *compare, void (*free)());
+// Merges and sorts a pair of singly linked lists leaving only unique
+// items via slUniqufy.  duplicate itens are defined by the compare routine
+// returning 0. If free is provided, items dropped from list can disposed of.
+
 boolean slRemoveEl(void *vpList, void *vToRemove);
-/* Remove element from doubly linked list.  Usage:
+/* Remove element from singly linked list.  Usage:
  *    slRemove(&list, el);
  * Returns TRUE if element in list.  */
 
@@ -435,6 +447,8 @@ void slFreeList(void *listPt);
  * Usage:
  *    slFreeList(&list);
  */
+
+/******* slInt - an int on a list - the first of many singly linked list structures *******/
 
 struct slInt
 /* List of integers. */
@@ -456,16 +470,17 @@ int slIntCmpRev(const void *va, const void *vb);
 struct slInt * slIntFind(struct slInt *list, int target);
 /* Find target in slInt list or return NULL */
 
-void doubleSort(int count, double *array);
-/* Sort an array of doubles. */
+struct slUnsigned
+/* List of unsigned */
+    {
+    struct slUnsigned *next;  /* Next in list */
+    unsigned val;	      /* Unsigned value */
+    };
 
-double doubleMedian(int count, double *array);
-/* Return median value in array.  This will sort
- * the array as a side effect. */
+struct slUnsigned *slUnsignedNew(unsigned x);
+/* Return a new slUnsigned. */
 
-void doubleBoxWhiskerCalc(int count, double *array, double *retMin,
-	double *retQ1, double *retMedian, double *retQ3, double *retMax);
-/* Calculate what you need to draw a box and whiskers plot from an array of doubles. */
+/******* slDouble - a double on a list *******/
 
 struct slDouble
 /* List of double-precision numbers. */
@@ -484,16 +499,7 @@ int slDoubleCmp(const void *va, const void *vb);
 double slDoubleMedian(struct slDouble *list);
 /* Return median value on list. */
 
-void slDoubleBoxWhiskerCalc(struct slDouble *list, double *retMin,
-	double *retQ1, double *retMedian, double *retQ3, double *retMax);
-/* Calculate what you need to draw a box and whiskers plot from a list of slDoubles. */
-
-void intSort(int count, int *array);
-/* Sort an array of ints. */
-
-int intMedian(int count, int *array);
-/* Return median value in array.  This will sort
- * the array as a side effect. */
+/******* slName - a zero terminated string on a list *******/
 
 struct slName
 /* List of names. The name array is allocated to accommodate full name
@@ -589,6 +595,8 @@ struct slName *slNameLoadReal(char *fileName);
 struct slName *slNameIntersection(struct slName *a, struct slName *b);
 /* return intersection of two slName lists.  */
 
+/******* slRef - a void pointer on a list *******/
+
 struct slRef
 /* Singly linked list of generic references. */
     {
@@ -608,8 +616,13 @@ void refAdd(struct slRef **pRefList, void *val);
 void refAddUnique(struct slRef **pRefList, void *val);
 /* Add reference to list if not already on list. */
 
+void slRefFreeListAndVals(struct slRef **pList);
+/* Free up (with simple freeMem()) each val on list, and the list itself as well. */
+
 struct slRef *refListFromSlList(void *list);
 /* Make a reference list that mirrors a singly-linked list. */
+
+/******* slPair - a name/value pair on list where value not always a string *******/
 
 struct slPair
 /* A name/value pair. */
@@ -691,9 +704,38 @@ int slPairAtoiCmp(const void *va, const void *vb);
 void slPairValAtoiSort(struct slPair **pList);
 // Sort slPair list on string values interpreted as integers.
 
+
+
+/******* Some old stuff maybe we could trim. *******/
+
 void gentleFree(void *pt);
 /* check pointer for NULL before freeing.
  * (Actually plain old freeMem does that these days.) */
+
+/******* Some math stuff *******/
+
+void doubleSort(int count, double *array);
+/* Sort an array of doubles. */
+
+double doubleMedian(int count, double *array);
+/* Return median value in array.  This will sort
+ * the array as a side effect. */
+
+void doubleBoxWhiskerCalc(int count, double *array, double *retMin,
+	double *retQ1, double *retMedian, double *retQ3, double *retMax);
+/* Calculate what you need to draw a box and whiskers plot from an array of doubles. */
+
+void slDoubleBoxWhiskerCalc(struct slDouble *list, double *retMin,
+	double *retQ1, double *retMedian, double *retQ3, double *retMax);
+/* Calculate what you need to draw a box and whiskers plot from a list of slDoubles. */
+
+int intMedian(int count, int *array);
+/* Return median value in array.  This will sort
+ * the array as a side effect. */
+
+void intSort(int count, int *array);
+/* Sort an array of ints. */
+
 
 /*******  Some stuff for processing strings. *******/
 
@@ -781,6 +823,9 @@ boolean endsWith(char *string, char *end);
 char lastChar(char *s);
 /* Return last character in string. */
 
+void trimLastChar(char *s);
+/* Erase last character in string. */
+
 char *lastNonwhitespaceChar(char *s);
 // Return pointer to last character in string that is not whitespace.
 
@@ -852,6 +897,9 @@ char *stripEnclosingChar(char *inout,char encloser);
 void stripString(char *s, char *strip);
 /* Remove all occurences of strip from s. */
 
+int countCase(char *s,boolean upper);
+// Count letters with case (upper or lower)
+
 int countChars(char *s, char c);
 /* Return number of characters c in string s. */
 
@@ -869,6 +917,10 @@ int countLeadingNondigits(const char *s);
 
 int countSame(char *a, char *b);
 /* Count number of characters that from start in a,b that are same. */
+
+int countSeparatedItems(char *string, char separator);
+/* Count number of items in string you would parse out with given
+ * separator,  assuming final separator is optional. */
 
 int chopString(char *in, char *sep, char *outArray[], int outSize);
 /* int chopString(in, sep, outArray, outSize); */
@@ -913,7 +965,7 @@ char *skipBeyondDelimit(char *s,char delimit);
    If delimit is ' ' then skips beyond first patch of whitespace. */
 
 char *skipLeadingSpaces(char *s);
-/* Return first non-white space */
+/* Return first white space or NULL if none.. */
 
 char *skipToSpaces(char *s);
 /* Return first white space. */
@@ -992,6 +1044,19 @@ int ptArrayIx(void *pt, void *array, int arraySize);
 /* Return index of pt in array or -1 if not there. */
 
 #define stringIx(string, array) stringArrayIx( (string), (array), ArraySize(array))
+
+/* Some stuff that is left out of GNU .h files!? */
+#ifndef SEEK_SET
+#define SEEK_SET 0
+#endif
+
+#ifndef SEEK_CUR
+#define SEEK_CUR 1
+#endif
+
+#ifndef SEEK_END
+#define SEEK_END 2
+#endif
 
 #ifndef FILEPATH_H
 void splitPath(char *path, char dir[PATH_LEN], char name[FILENAME_LEN],
@@ -1340,6 +1405,10 @@ char *splitOffNonNumeric(char *s);
 char *splitOffNumber(char *db);
 /* Split off number part, e.g. 8 of mm8. Result should be freed when done */
 
+
+void childExecFailedExit(char *msg);
+/* Child exec failed, so quit without atexit cleanup */
+
 void vaDumpStack(char *format, va_list args);
 /* debugging function to run the pstack program on the current process. In
  * prints a message, following by a new line, and then the stack track.  Just
@@ -1357,10 +1426,15 @@ __attribute__((format(printf, 1, 2)))
 ;
 
 // SETTING_ON set of macros are frequently used comparisons of string values for boolean questions.
-// Notice the subtle difference between NOT_ON and IS_OFF.  NOT_ON could be NULL but IS_OFF must be explicitly set
-#define SETTING_IS_ON(setting)    (setting && (sameWord(setting,"on") || sameWord(setting,"true") || sameWord(setting,"yes") || sameWord(setting,"enabled") || atoi(setting) != 0))
+// Notice the subtle difference between NOT_ON and IS_OFF.
+//        NOT_ON could be NULL but IS_OFF must be explicitly set
+#define SETTING_IS_ON(setting) (  setting && (sameWord(setting,"on") || sameWord(setting,"true") \
+                               || sameWord(setting,"yes") || sameWord(setting,"enabled") \
+                               || atoi(setting) != 0) )
 #define SETTING_NOT_ON(setting)   (!SETTING_IS_ON(setting))
-#define SETTING_IS_OFF(setting)   (setting && (sameWord(setting,"off") || sameWord(setting,"false") || sameWord(setting,"no") || sameWord(setting,"disabled") || sameWord(setting,"0")))
+#define SETTING_IS_OFF(setting) (  setting && (sameWord(setting,"off") \
+                                || sameWord(setting,"false") || sameWord(setting,"no") \
+                                || sameWord(setting,"disabled") || sameWord(setting,"0")) )
 
 // Standard bit mask macros
 #define BITS_ADD(    flags,bits) ((flags) = ((flags) |  (bits)))
@@ -1396,8 +1470,14 @@ time_t dateToSeconds(const char *date,const char*format);
 boolean dateIsOld(const char *date,const char*format);
 // Is this string date older than now?
 
+boolean dateIsOlderBy(const char *date,const char*format, time_t seconds);
+// Is this string date older than now by this many seconds?
+
 char *dateAddTo(char *date,char *format,int addYears,int addMonths,int addDays);
 /* Add years,months,days to a formatted date and returns the new date as a cloned string
 *  format is a strptime/strftime format: %F = yyyy-mm-dd */
+
+boolean haplotype(const char *name);
+/* Is this name a haplotype name ?  _hap or _alt in the name */
 
 #endif /* COMMON_H */

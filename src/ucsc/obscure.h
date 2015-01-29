@@ -135,15 +135,26 @@ struct hash *hashNameIntFile(char *fileName);
 struct hash *hashTwoColumnFile(char *fileName);
 /* Given a two column file (key, value) return a hash. */
 
-void shuffleArrayOfPointers(void *pointerArray, int arraySize, 
-	int shuffleCount);
+void shuffleArrayOfChars(char *array, int arraySize);
+/* Shuffle array of characters of given size given number of times. */
+
+void shuffleArrayOfInts(int *array, int arraySize);
+/* Shuffle array of ints of given size given number of times. */
+
+void shuffleArrayOfPointers(void *pointerArray, int arraySize);
 /* Shuffle array of pointers of given size given number of times. */
 
-void shuffleList(void *pList, int shuffleCount);
+void shuffleList(void *pList);
 /* Randomize order of slList.  Usage:
  *     shuffleList(&list)
  * where list is a pointer to a structure that
  * begins with a next field. */
+
+void *slListRandomReduce(void *list, double reduceRatio);
+/* Reduce list to approximately reduceRatio times original size. Destroys original list. */
+
+void *slListRandomSample(void *list, int maxCount);
+/* Return a sublist of list with at most maxCount. Destroy list in process */
 
 char *stripCommas(char *position);
 /* make a new string with commas stripped out */

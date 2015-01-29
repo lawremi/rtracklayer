@@ -1,7 +1,9 @@
+/* Copyright (C) 2011 The Regents of the University of California 
+ * See README in this or parent directory for licensing information. */
+
 #include "common.h"
 #include "base64.h"
 
-static char const rcsid[] = "$Id: base64.c,v 1.6 2008/09/17 18:00:47 galt Exp $";
 
 char *base64Encode(char *input, size_t inplen)
 /* Use base64 to encode a string.  Returns one long encoded

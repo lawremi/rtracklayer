@@ -7,11 +7,14 @@
 #include "common.h"
 #include "hash.h"
 #include <fcntl.h>
+#include <signal.h>
 #include "dystring.h"
-#include "errabort.h"
+#include "errAbort.h"
 #include "linefile.h"
 #include "pipeline.h"
-#include <signal.h>
+#include "localmem.h"
+#include "cheapcgi.h"
+#include "udc.h"
 
 char *getFileNameFromHdrSig(char *m)
 /* Check if header has signature of supported compression stream,
@@ -25,7 +28,7 @@ else if (startsWith("BZ",m)) ext = "bz2";
 else if (startsWith("PK\x03\x04",m)) ext = "zip";
 if (ext==NULL)
     return NULL;
-safef(buf, sizeof(buf), "somefile.%s", ext);
+safef(buf, sizeof(buf), LF_BOGUS_FILE_PREFIX "%s", ext);
 return cloneString(buf);
 }
 
@@ -38,16 +41,25 @@ static char *Z_READ[] = {"gzip", "-dc", NULL};
 static char *BZ2_READ[] = {"bzip2", "-dc", NULL};
 static char *ZIP_READ[] = {"gzip", "-dc", NULL};
 
-if (endsWith(fileName, ".gz"))
-    return GZ_READ;
-else if (endsWith(fileName, ".Z"))
-    return Z_READ;
-else if (endsWith(fileName, ".bz2"))
-    return BZ2_READ;
-else if (endsWith(fileName, ".zip"))
-    return ZIP_READ;
-else
-    return NULL;
+char **result = NULL;
+char *fileNameDecoded = cloneString(fileName);
+if (startsWith("http://" , fileName)
+ || startsWith("https://", fileName)
+ || startsWith("ftp://",   fileName))
+    cgiDecode(fileName, fileNameDecoded, strlen(fileName));
+
+if      (endsWith(fileNameDecoded, ".gz"))
+    result = GZ_READ;
+else if (endsWith(fileNameDecoded, ".Z"))
+    result = Z_READ;
+else if (endsWith(fileNameDecoded, ".bz2"))
+    result = BZ2_READ;
+else if (endsWith(fileNameDecoded, ".zip"))
+    result = ZIP_READ;
+
+freeMem(fileNameDecoded);
+return result;
+
 }
 
 static void metaDataAdd(struct lineFile *lf, char *line)
@@ -116,7 +128,6 @@ return result;
 }
 
 #ifndef WIN32
-
 struct lineFile *lineFileDecompress(char *fileName, bool zTerm)
 /* open a linefile with decompression */
 {
@@ -134,7 +145,7 @@ testName=getFileNameFromHdrSig(testbytes);
 freez(&testbytes);
 if (!testName)
     return NULL;  /* avoid error from pipeline */
-pl = pipelineOpen1(getDecompressor(fileName), pipelineRead, fileName, NULL);
+pl = pipelineOpen1(getDecompressor(fileName), pipelineRead|pipelineSigpipe, fileName, NULL);
 lf = lineFileAttach(fileName, zTerm, pipelineFd(pl));
 lf->pl = pl;
 return lf;
@@ -145,11 +156,12 @@ struct lineFile *lineFileDecompressFd(char *name, bool zTerm, int fd)
 {
 struct pipeline *pl;
 struct lineFile *lf;
-pl = pipelineOpenFd1(getDecompressor(name), pipelineRead, fd, STDERR_FILENO);
+pl = pipelineOpenFd1(getDecompressor(name), pipelineRead|pipelineSigpipe, fd, STDERR_FILENO);
 lf = lineFileAttach(name, zTerm, pipelineFd(pl));
 lf->pl = pl;
 return lf;
 }
+
 
 
 struct lineFile *lineFileDecompressMem(bool zTerm, char *mem, long size)
@@ -160,7 +172,7 @@ struct lineFile *lf;
 char *fileName = getFileNameFromHdrSig(mem);
 if (fileName==NULL)
   return NULL;
-pl = pipelineOpenMem1(getDecompressor(fileName), pipelineRead, mem, size, STDERR_FILENO);
+pl = pipelineOpenMem1(getDecompressor(fileName), pipelineRead|pipelineSigpipe, mem, size, STDERR_FILENO);
 lf = lineFileAttach(fileName, zTerm, pipelineFd(pl));
 lf->pl = pl;
 return lf;
@@ -196,6 +208,12 @@ lf->buf = s;
 return lf;
 }
 
+#if (defined USE_TABIX && defined KNETFILE_HOOKS && !defined USE_SAMTABIX)
+// UCSC aliases for backwards compatibility with independently patched & linked samtools and tabix:
+#define bgzf_tell ti_bgzf_tell
+#define bgzf_read ti_bgzf_read
+#endif
+
 struct lineFile *lineFileTabixMayOpen(char *fileOrUrl, bool zTerm)
 /* Wrap a line file around a data file that has been compressed and indexed
  * by the tabix command line program.  The index file <fileOrUrl>.tbi must be
@@ -204,14 +222,15 @@ struct lineFile *lineFileTabixMayOpen(char *fileOrUrl, bool zTerm)
  * with the tabix C library. */
 {
 #ifdef USE_TABIX
+if (fileOrUrl == NULL)
+    errAbort("lineFileTabixMayOpen: fileOrUrl is NULL");
 int tbiNameSize = strlen(fileOrUrl) + strlen(".tbi") + 1;
-char *tbiName = needMem(tbiNameSize);
-safef(tbiName, tbiNameSize, "%s.tbi", fileOrUrl);
+char tbiName[tbiNameSize];
+safef(tbiName, sizeof(tbiName), "%s.tbi", fileOrUrl);
 tabix_t *tabix = ti_open(fileOrUrl, tbiName);
 if (tabix == NULL)
     {
     warn("Unable to open \"%s\"", fileOrUrl);
-    freez(&tbiName);
     return NULL;
     }
 if ((tabix->idx = ti_index_load(tbiName)) == NULL)
@@ -219,7 +238,6 @@ if ((tabix->idx = ti_index_load(tbiName)) == NULL)
     warn("Unable to load tabix index from \"%s\"", tbiName);
     ti_close(tabix);
     tabix = NULL;
-    freez(&tbiName);
     return NULL;
     }
 struct lineFile *lf = needMem(sizeof(struct lineFile));
@@ -229,7 +247,7 @@ lf->bufSize = 64 * 1024;
 lf->buf = needMem(lf->bufSize);
 lf->zTerm = zTerm;
 lf->tabix = tabix;
-freez(&tbiName);
+lf->tabixIter = ti_iter_first();
 return lf;
 #else // no USE_TABIX
 warn(COMPILE_WITH_TABIX, "lineFileTabixMayOpen");
@@ -258,7 +276,7 @@ if (iter == NULL)
 if (lf->tabixIter != NULL)
     ti_iter_destroy(lf->tabixIter);
 lf->tabixIter = iter;
-lf->bufOffsetInFile = ti_bgzf_tell(lf->tabix->fp);
+lf->bufOffsetInFile = bgzf_tell(lf->tabix->fp);
 lf->bytesInBuf = 0;
 lf->lineIx = -1;
 lf->lineStart = 0;
@@ -268,6 +286,27 @@ return TRUE;
 warn(COMPILE_WITH_TABIX, "lineFileSetTabixRegion");
 return FALSE;
 #endif // no USE_TABIX
+}
+
+struct lineFile *lineFileUdcMayOpen(char *fileOrUrl, bool zTerm)
+/* Create a line file object with an underlying UDC cache. NULL if not found. */
+{
+if (fileOrUrl == NULL)
+    errAbort("lineFileUdcMayOpen: fileOrUrl is NULL");
+
+struct udcFile *udcFile = udcFileMayOpen(fileOrUrl, NULL);
+if (udcFile == NULL)
+    return NULL;
+
+struct lineFile *lf;
+AllocVar(lf);
+lf->fileName = cloneString(fileOrUrl);
+lf->fd = -1;
+lf->bufSize = 0;
+lf->buf = NULL;
+lf->zTerm = zTerm;
+lf->udcFile = udcFile;
+return lf;
 }
 
 
@@ -332,20 +371,19 @@ void lineFileSeek(struct lineFile *lf, off_t offset, int whence)
 /* Seek to read next line from given position. */
 {
 noTabixSupport(lf, "lineFileSeek");
+if (lf->checkSupport)
+    lf->checkSupport(lf, "lineFileSeek");
 if (lf->pl != NULL)
     errnoAbort("Can't lineFileSeek on a compressed file: %s", lf->fileName);
 lf->reuse = FALSE;
-if (whence == SEEK_SET && offset >= lf->bufOffsetInFile
-	&& offset < lf->bufOffsetInFile + lf->bytesInBuf)
+if (lf->udcFile)
     {
-    lf->lineStart = lf->lineEnd = offset - lf->bufOffsetInFile;
+    udcSeek(lf->udcFile, offset);
+    return;
     }
-else
-    {
-    lf->lineStart = lf->lineEnd = lf->bytesInBuf = 0;
-    if ((lf->bufOffsetInFile = lseek(lf->fd, offset, whence)) == -1)
-	errnoAbort("Couldn't lineFileSeek %s", lf->fileName);
-    }
+lf->lineStart = lf->lineEnd = lf->bytesInBuf = 0;
+if ((lf->bufOffsetInFile = lseek(lf->fd, offset, whence)) == -1)
+    errnoAbort("Couldn't lineFileSeek %s", lf->fileName);
 }
 
 void lineFileRewind(struct lineFile *lf)
@@ -414,6 +452,27 @@ if (lf->reuse)
     *retStart = buf + lf->lineStart;
     if (lf->metaOutput && *retStart[0] == '#')
         metaDataAdd(lf, *retStart);
+    return TRUE;
+    }
+
+if (lf->nextCallBack)
+    return lf->nextCallBack(lf, retStart, retSize);
+
+if (lf->udcFile)
+    {
+    lf->bufOffsetInFile = udcTell(lf->udcFile);
+    char *line = udcReadLine(lf->udcFile);
+    if (line==NULL)
+        return FALSE;
+    int lineSize = strlen(line);
+    lf->bytesInBuf = lineSize;
+    lf->lineIx = -1;
+    lf->lineStart = 0;
+    lf->lineEnd = lineSize;
+    *retStart = line;
+    freeMem(lf->buf);
+    lf->buf = line;
+    lf->bufSize = lineSize;
     return TRUE;
     }
 
@@ -491,7 +550,7 @@ while (!gotLf)
 #ifdef USE_TABIX
     else if (lf->tabix != NULL && readSize > 0)
 	{
-	readSize = ti_bgzf_read(lf->tabix->fp, buf+sizeLeft, readSize);
+	readSize = bgzf_read(lf->tabix->fp, buf+sizeLeft, readSize);
 	if (readSize < 1)
 	    return FALSE;
 	}
@@ -625,15 +684,15 @@ void lineFileClose(struct lineFile **pLf)
 struct lineFile *lf;
 if ((lf = *pLf) != NULL)
     {
-#ifndef WIN32
-    if (lf->pl != NULL)
+    #ifndef WIN32
+    struct pipeline *pl = lf->pl;
+    if (pl != NULL)
         {
-        pipelineWait(lf->pl);
+        pipelineWait(pl);
         pipelineFree(&lf->pl);
         }
-    else
-#endif // WIN32
-    if (lf->fd > 0 && lf->fd != fileno(stdin))
+    #endif
+    else if (lf->fd > 0 && lf->fd != fileno(stdin))
 	{
 	close(lf->fd);
 	freeMem(lf->buf);
@@ -646,6 +705,11 @@ if ((lf = *pLf) != NULL)
 	ti_close(lf->tabix);
 	}
 #endif // USE_TABIX
+    else if (lf->udcFile != NULL)
+        udcFileClose(&lf->udcFile);
+
+    if (lf->closeCallBack)
+        lf->closeCallBack(lf);
     freeMem(lf->fileName);
     metaDataFree(lf);
     freez(pLf);
@@ -802,7 +866,7 @@ return FALSE;
 
 boolean lineFileNextReal(struct lineFile *lf, char **retStart)
 /* Fetch next line from file that is not blank and
- * does not start with a '#'. */
+ *  * does not start with a '#'. */
 {
 char *s, c;
 while (lineFileNext(lf, retStart, NULL))
@@ -948,6 +1012,193 @@ if (c != '-' && !isdigit(c))
     	wordIx+1, lf->lineIx, lf->fileName, ascii);
 return atoi(ascii);
 }
+
+int lineFileCheckAllIntsNoAbort(char *s, void *val, 
+    boolean isSigned, int byteCount, char *typeString, boolean noNeg, 
+    char *errMsg, int errMsgSize)
+/* Convert string to (signed) integer of the size specified.  
+ * Unlike atol assumes all of string is number, no trailing trash allowed.
+ * Returns 0 if conversion possible, and value is returned in 'val'
+ * Otherwise 1 for empty string or trailing chars, and 2 for numeric overflow,
+ * and 3 for (-) sign in unsigned number.
+ * Error messages if any are written into the provided buffer.
+ * Pass NULL val if you only want validation.
+ * Use noNeg if negative values are not allowed despite the type being signed,
+ * returns 4. */
+{
+unsigned long long res = 0, oldRes = 0;
+boolean isMinus = FALSE;
+
+if ((byteCount != 1) 
+ && (byteCount != 2)
+ && (byteCount != 4)
+ && (byteCount != 8))
+    errAbort("Unexpected error: Invalid byte count for integer size in lineFileCheckAllIntsNoAbort, expected 1 2 4 or 8, got %d.", byteCount);
+
+unsigned long long limit = 0xFFFFFFFFFFFFFFFFULL >> (8*(8-byteCount));
+
+if (isSigned) 
+    limit >>= 1;
+
+char *p, *p0 = s;
+
+if (*p0 == '-')
+    {
+    if (isSigned)
+	{
+	if (noNeg)
+	    {
+	    safef(errMsg, errMsgSize, "Negative value not allowed");
+	    return 4; 
+	    }
+	p0++;
+	++limit;
+	isMinus = TRUE;
+	}
+    else
+	{
+	safef(errMsg, errMsgSize, "Unsigned %s may not begin with minus sign (-)", typeString);
+	return 3; 
+	}
+    }
+p = p0;
+while ((*p >= '0') && (*p <= '9'))
+    {
+    res *= 10;
+    if (res < oldRes)
+	{
+	safef(errMsg, errMsgSize, "%s%s overflowed", isSigned ? "signed ":"", typeString);
+	return 2; 
+	}
+    oldRes = res;
+    res += *p - '0';
+    if (res < oldRes)
+	{
+	safef(errMsg, errMsgSize, "%s%s overflowed", isSigned ? "signed ":"", typeString);
+	return 2; 
+	}
+    if (res > limit)
+	{
+	safef(errMsg, errMsgSize, "%s%s overflowed, limit=%s%llu", isSigned ? "signed ":"", typeString, isMinus ? "-" : "", limit);
+	return 2; 
+	}
+    oldRes = res;
+    p++;
+    }
+/* test for invalid character, empty, or just a minus */
+if (*p != '\0')
+    {
+    safef(errMsg, errMsgSize, "Trailing characters parsing %s%s", isSigned ? "signed ":"", typeString);
+    return 1;
+    }
+if (p == p0)
+    {
+    safef(errMsg, errMsgSize, "Empty string parsing %s%s", isSigned ? "signed ":"", typeString);
+    return 1;
+    }
+
+if (!val)
+    return 0;  // only validation required
+
+switch (byteCount)
+    {
+    case 1:
+	if (isSigned)
+	    {
+	    if (isMinus)
+		*(char *)val = -res;
+	    else
+		*(char *)val = res;
+	    }
+	else
+	    *(unsigned char *)val = res;
+	break;
+    case 2:
+	if (isSigned)
+	    {
+	    if (isMinus)
+		*(short *)val = -res;
+	    else
+		*(short *)val = res;
+	    }
+	else
+	    *(unsigned short *)val = res;
+	break;
+    case 4:
+	if (isSigned)
+	    {
+	    if (isMinus)
+		*(int *)val = -res;
+	    else
+		*(int *)val = res;
+	    }
+	else
+	    *(unsigned *)val = res;
+	break;
+    case 8:
+	if (isSigned)
+	    {
+	    if (isMinus)
+		*(long long *)val = -res;
+	    else
+		*(long long *) val =res;
+	    }
+	else
+	    *(unsigned long long *)val = res;
+	break;
+    }
+
+
+return 0;
+}
+
+void lineFileAllInts(struct lineFile *lf, char *words[], int wordIx, void *val,
+  boolean isSigned,  int byteCount, char *typeString, boolean noNeg)
+/* Returns long long integer from converting the input string. Aborts on error. */
+{
+char *s = words[wordIx];
+char errMsg[256];
+int res = lineFileCheckAllIntsNoAbort(s, val, isSigned, byteCount, typeString, noNeg, errMsg, sizeof errMsg);
+if (res > 0)
+    {
+    errAbort("%s in field %d line %d of %s, got %s",
+	errMsg, wordIx+1, lf->lineIx, lf->fileName, s);
+    }
+}
+
+int lineFileAllIntsArray(struct lineFile *lf, char *words[], int wordIx, void *array, int arraySize,
+  boolean isSigned,  int byteCount, char *typeString, boolean noNeg)
+/* Convert comma separated list of numbers to an array.  Pass in
+ * array and max size of array. Aborts on error. Returns number of elements in parsed array. */
+{
+char *s = words[wordIx];
+char errMsg[256];
+unsigned count = 0;
+char *cArray = array;
+for (;;)
+    {
+    char *e;
+    if (s == NULL || s[0] == 0 || count == arraySize)
+        break;
+    e = strchr(s, ',');
+    if (e)
+        *e = 0;
+    int res = lineFileCheckAllIntsNoAbort(s, cArray, isSigned, byteCount, typeString, noNeg, errMsg, sizeof errMsg);
+    if (res > 0)
+	{
+	errAbort("%s in column %d of array field %d line %d of %s, got %s",
+	    errMsg, count, wordIx+1, lf->lineIx, lf->fileName, s);
+	}
+    if (cArray) // NULL means validation only.
+	cArray += byteCount;  
+    count++;
+    if (e)  // restore input string
+        *e++ = ',';
+    s = e;
+    }
+return count;
+}
+
 
 double lineFileNeedDouble(struct lineFile *lf, char *words[], int wordIx)
 /* Make sure that words[wordIx] is an ascii double value, and return

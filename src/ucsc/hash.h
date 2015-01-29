@@ -190,6 +190,10 @@ struct hashEl *hashElListHash(struct hash *hash);
 int hashElCmp(const void *va, const void *vb);
 /* Compare two hashEl by name. */
 
+int hashElCmpWithEmbeddedNumbers(const void *va, const void *vb);
+/* Compare two hashEl by name sorting including numbers within name,
+ * suitable for chromosomes, genes, etc. */
+
 void *hashElFindVal(struct hashEl *list, char *name);
 /* Look up name in hashEl list and return val or NULL if not found. */
 
@@ -229,8 +233,10 @@ void hashResize(struct hash *hash, int powerOfTwoSize);
 /* Resize the hash to a new size */
 
 struct hash *hashFromSlNameList(void *list);
-/* Create a hash out of a list of slNames or any kind of list where the */
-/* first field is the next pointer and the second is the name. */
+/* Create a hash out of a list of slNames. */
+
+struct hash *hashSetFromSlNameList(void *list);
+/* Create a hashSet (hash without values) out of a list of slNames. */
 
 void freeHash(struct hash **pHash);
 /* Free up hash table. */
@@ -270,6 +276,10 @@ char *hashToRaString(struct hash *hash);
 
 int hashNumEntries(struct hash *hash);
 /* count the number of entries in a hash */
+
+struct hash *hashFromString(char *string);
+/* parse a whitespace-separated string with tuples in the format name=val or
+ * name="val" to a hash name->val */
 
 #endif /* HASH_H */
 
