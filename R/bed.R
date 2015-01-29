@@ -178,6 +178,7 @@ setMethod("export", c("UCSCData", "BEDFile"),
             if (trackLine) {
               export.ucsc(object, con, ...)
             } else {
+              trackLine <- NULL
               callNextMethod()
             }
             invisible(con)
