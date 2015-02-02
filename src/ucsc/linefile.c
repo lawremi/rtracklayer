@@ -691,8 +691,9 @@ if ((lf = *pLf) != NULL)
         pipelineWait(pl);
         pipelineFree(&lf->pl);
         }
+    else
     #endif
-    else if (lf->fd > 0 && lf->fd != fileno(stdin))
+    if (lf->fd > 0 && lf->fd != fileno(stdin))
 	{
 	close(lf->fd);
 	freeMem(lf->buf);
