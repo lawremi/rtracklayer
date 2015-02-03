@@ -3,12 +3,13 @@
  * This file is copyright 2002 Jim Kent, but license is hereby
  * granted for all use - public, private or commercial. */
 
+#include "common.h"
+#include <string.h>
+
 #ifndef WIN32
 
-#include "common.h"
 #include <signal.h>
 #include <errno.h>
-#include <string.h>
 #include <sys/time.h>
 #include <utime.h>
 #include <pthread.h>
