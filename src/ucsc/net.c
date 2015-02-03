@@ -2095,6 +2095,7 @@ int netHttpGetMultiple(char *url, struct slName *queries, void *userData,
 
   return qCount;
 } /* netHttpMultipleQueries */
+#endif
 
 boolean hasProtocol(char *urlOrPath)
 /* Return TRUE if it looks like it has http://, ftp:// etc. */
@@ -2102,4 +2103,3 @@ boolean hasProtocol(char *urlOrPath)
 return stringIn("://", urlOrPath) != NULL;
 }
 
-#endif

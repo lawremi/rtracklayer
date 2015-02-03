@@ -12,6 +12,13 @@
 
 static char const rcsid[] = "$Id: oswin9x.c,v 1.9 2008/06/27 18:46:53 markd Exp $";
 
+boolean isRegularFile(char *fileName) {
+  DWORD dwAttrib = GetFileAttributes((LPCTSTR)fileName);
+
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
+          !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
 /* Return how long the named file is in bytes. 
  * Return -1 if no such file. */
 off_t fileSize(char *fileName)

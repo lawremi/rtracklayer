@@ -147,8 +147,10 @@ void pushWarnHandler(WarnHandler handler)
 struct perThreadAbortVars *ptav = getThreadVars();
 if (ptav->warnIx >= maxWarnHandlers-1)
     {
+#ifndef WIN32
     if (ptav->debugPushPopErr)
         dumpStack("pushWarnHandler overflow");
+#endif
     errAbort("Too many pushWarnHandlers, can only handle %d\n", maxWarnHandlers-1);
     }
 ptav->warnArray[++ptav->warnIx] = handler;
@@ -160,8 +162,10 @@ void popWarnHandler()
 struct perThreadAbortVars *ptav = getThreadVars();
 if (ptav->warnIx <= 0)
     {
+#ifndef WIN32
     if (ptav->debugPushPopErr)
         dumpStack("popWarnHandler underflow");
+#endif
     errAbort("Too few popWarnHandlers");
     }
 --ptav->warnIx;
@@ -226,8 +230,10 @@ void pushAbortHandler(AbortHandler handler)
 struct perThreadAbortVars *ptav = getThreadVars();
 if (ptav->abortIx >= maxAbortHandlers-1)
     {
+#ifndef WIN32
     if (ptav->debugPushPopErr)
         dumpStack("pushAbortHandler overflow");
+#endif
     errAbort("Too many pushAbortHandlers, can only handle %d", maxAbortHandlers-1);
     }
 ptav->abortArray[++ptav->abortIx] = handler;
@@ -239,8 +245,10 @@ void popAbortHandler()
 struct perThreadAbortVars *ptav = getThreadVars();
 if (ptav->abortIx <= 0)
     {
+#ifndef WIN32
     if (ptav->debugPushPopErr)
         dumpStack("popAbortHandler underflow");
+#endif
     errAbort("Too many popAbortHandlers\n");
     }
 --ptav->abortIx;

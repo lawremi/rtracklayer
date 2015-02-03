@@ -1667,6 +1667,9 @@ off_t udcFileSize(char *url)
 if (udcIsLocal(url))
     return fileSize(url);
 
+#ifdef WIN32
+ errAbort("udc/udcFileSize: invalid protocol for url %s, only file:// URLs are supported on Windows", url)
+#else
 // don't go to the network if we can avoid it
 int cacheSize = udcSizeFromCache(url, NULL);
 if (cacheSize!=-1)
@@ -1687,7 +1690,8 @@ else if (startsWith("ftp://",url))
     }
 else
     errAbort("udc/udcFileSize: invalid protocol for url %s, can only do http/https/ftp", url);
-
+#endif
+  
 return ret;
 }
 
