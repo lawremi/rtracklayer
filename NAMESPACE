@@ -61,7 +61,7 @@ importMethodsFrom("IRanges", elementLengths, window,
                   subjectHits, subsetByOverlaps, tile, togroup)
 
 importClassesFrom("GenomeInfoDb", Seqinfo)
-importFrom("GenomeInfoDb", Seqinfo, organism, provider, providerVersion,
+importFrom("GenomeInfoDb", Seqinfo, provider, providerVersion,
            releaseDate)
 importMethodsFrom("GenomeInfoDb", seqlengths,
                   seqlevels, "seqlevels<-", genome, "genome<-", merge)
