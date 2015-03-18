@@ -97,8 +97,8 @@ setMethod("releaseDate", "QuickloadGenome", function(x) {
   sub(".*?_(.*?)_([^_]*)$", "\\1 \\2", genome(x))
 })
 
-setMethod("organism", "QuickloadGenome", function(x) {
-  gsub("_", " ", sub("(.*?)_.*?_[^_]*$", "\\1", genome(x)))
+setMethod("organism", "QuickloadGenome", function(object) {
+  gsub("_", " ", sub("(.*?)_.*?_[^_]*$", "\\1", genome(object)))
 })
 
 setMethod("length", "QuickloadGenome", function(x) {

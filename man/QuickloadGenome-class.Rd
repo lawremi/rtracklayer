@@ -75,8 +75,8 @@
 }
 
 \section{Accessor Methods}{
-  In the code snippets below, \code{x} represents a \code{Quickload}
-  object.
+  In the code snippets below, \code{x} and \code{object} represent a
+  \code{Quickload} object.
   
   \describe{
     \item{}{
@@ -102,7 +102,7 @@
       e.g., \dQuote{Feb_2009}.
     }
     \item{}{
-      \code{organism(x)}: Get the organism portion of the genome name,
+      \code{organism(object)}: Get the organism portion of the genome name,
       e.g., \dQuote{H sapiens}.
     }
   }
