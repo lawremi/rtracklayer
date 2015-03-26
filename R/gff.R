@@ -225,6 +225,8 @@ setMethod("import.gff", "ANY",
       attrList <- list(group = factor(attrCol, levels=unique(attrCol)))
     else attrList <- list()
   } else {
+    if (length(attrCol) == 0L)
+        return(list())
     sentinel <- "\b"
     con <- file()
     on.exit(close(con))
@@ -453,6 +455,8 @@ scanGFFDirectives <- function(con, tag = NULL) {
         directives <- c(directives, line)
     }
     line <- readLines(con, n = 1)
+    if (length(line) == 0L)
+        break
     lines <- c(lines, line)
   }
   pushBack(lines, con)
