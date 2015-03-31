@@ -94,7 +94,8 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
               Bed15TrackLine, UCSCTrackModes, BigWigSelection,
-              UCSCSchema, Quickload, QuickloadGenome)
+              UCSCSchema, Quickload, QuickloadGenome,
+              GenomicRangesORGenomicRangesList)
 
 ## File classes
 exportClasses(RTLFile, CompressedFile, GFFFile, UCSCFile, BEDFile, WIGFile,
