@@ -13,7 +13,7 @@
 \usage{data(cpneTrack)}
 \format{
   Each feature (row) is a SNP. The association test scores are
-  accessible via \code{\link[IRanges]{score}}.
+  accessible via \code{\link[BiocGenerics]{score}}.
 }
 \source{
   Vince Carey and the \code{GGtools} package.

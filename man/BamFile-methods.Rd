@@ -2,12 +2,14 @@
 
 \alias{export,ANY,BamFile,ANY-method}
 \alias{export,GAlignments,BamFile,ANY-method}
+\alias{export,GAlignmentPairs,BamFile,ANY-method}
 \alias{import,BamFile,ANY,ANY-method}
 
 \title{Export to BAM Files}
 \description{
   Methods for import and export of
-  \code{\link[GenomicAlignments]{GAlignments}} objects from and to BAM
+  \code{\link[GenomicAlignments]{GAlignments}} or
+  \code{\link[GenomicAlignments]{GAlignmentPairs}} objects from and to BAM
   files, represented as \code{\link[Rsamtools]{BamFile}} objects.
 }
 \usage{
@@ -16,9 +18,8 @@
 \S4method{export}{ANY,BamFile,ANY}(object, con, format, ...)
 }
 \arguments{
-  \item{object}{The object to export, should be
-    a \code{GAlignments} or one of its subclasses, like
-    \code{GappedReads}.
+  \item{object}{The object to export, such as
+    a \code{GAlignments} or \code{GAlignmentPairs}.
   }
   \item{con}{A path, URL, connection or \code{BamFile} object.}
   \item{format}{If not missing, should be \dQuote{bam}.}
@@ -32,7 +33,7 @@
   }
 }
 \details{
-  BAM fields not formally present in the \code{GAlignments} object
+  BAM fields not formally present in the \code{GAlignments[Pairs]} object
   are extracted from the metadata columns, if present; otherwise, the
   missing value, \dQuote{"."}, is output. The file is sorted and
   indexed. This can be useful for subsetting BAM files, although
@@ -40,9 +41,9 @@
   enough to be the favored alternative.
 }
 \seealso{
-  \code{\link[GenomicAlignments]{readGAlignments}} in the
-  \pkg{GenomicAlignments} package for reading BAM files into
-  a \code{GAlignments}.
+  The \code{\link[GenomicAlignments]{readGAlignments}} and
+  \code{\link[GenomicAlignments]{readGAlignmentPairs}} functions
+  for reading BAM files.
 }
 \examples{
      library(Rsamtools)

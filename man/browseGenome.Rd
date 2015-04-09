@@ -2,6 +2,7 @@
 \alias{browseGenome}
 \alias{browseGenome,RangedData-method}
 \alias{browseGenome,RangedDataList-method}
+\alias{GenomicRangesORGenomicRangesList-class}
 \alias{browseGenome,GenomicRangesORGenomicRangesList-method}
 \alias{browseGenome,missing-method}
 \title{ Browse a genome }
