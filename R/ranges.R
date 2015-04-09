@@ -108,7 +108,7 @@ seqinfoForGenome <- function(genome, method = c("auto", "BSgenome", "UCSC")) {
 }
 
 BSGenomeForID <- function(genome) {
-  if (!suppressWarnings(require(BSgenome, quietly=TRUE)))
+  if (!suppressWarnings(requireNamespace("BSgenome", quietly=TRUE)))
     return(NULL)
   bsgenome <- try(BSgenome::getBSgenome(genome), silent=TRUE)
   if (inherits(bsgenome, "try-error"))
