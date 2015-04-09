@@ -39,6 +39,7 @@ urlForm <- function(url, .form = list(), ...) {
 # differs from URLencode (vectorized, only encodes specified chars)
 urlEncode <- function(str, chars = "-a-zA-Z0-9$_.+!*'(),", keep = TRUE)
 {
+  str <- as.character(str)
   bad <- chars
   if (keep)
     bad <- gsub(paste("[", chars, "]", sep=""), "", str)
