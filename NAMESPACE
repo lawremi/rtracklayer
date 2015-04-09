@@ -36,42 +36,9 @@ importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
 
 import(S4Vectors)
 import(XVector)
-
-importClassesFrom("IRanges",
-                  IRanges, RangedData, RangedDataList,
-                  RangedSelection, RangesList,
-                  RleList)
-importFrom("IRanges", CharacterList, IRanges, RangedDataList,
-           RangedData, RangesList, RangedSelection, RleList, 
-           PartitioningByWidth, PartitioningByEnd, mseqapply)
-importMethodsFrom("IRanges", elementLengths, window,
-                  start, end, width, range,
-                  "start<-", "end<-", "width<-",
-                  split, lapply, unlist, unique,
-                  as.vector, as.list, as.data.frame,
-                  colnames,  rownames,
-                  "colnames<-","rownames<-",
-                  ranges, values, score,
-                  "ranges<-", "values<-", "score<-",
-                  space, universe, 
-                  "universe<-",
-                  isDisjoint, queryHits, findOverlaps, reduce, nrow, summary,
-                  resize, togroup, "active<-", collapse,
-                  coverage, findOverlaps, reflect, relist, shift,
-                  subjectHits, subsetByOverlaps, tile, togroup)
-
-importClassesFrom("GenomeInfoDb", Seqinfo)
-importFrom("GenomeInfoDb", Seqinfo, provider, providerVersion,
-           releaseDate)
-importMethodsFrom("GenomeInfoDb", seqlengths,
-                  seqlevels, "seqlevels<-", genome, "genome<-", merge)
-
-importClassesFrom("GenomicRanges", GenomicRanges, GRanges, GNCList,
-                  GRangesList, GenomicRangesList, GIntervalTree,
-                  SimpleGenomicRangesList, DelegatingGenomicRanges)
-importFrom("GenomicRanges", GRanges, GRangesList)
-importMethodsFrom("GenomicRanges", seqnames, "seqnames<-", strand,  "strand<-",
-                  seqinfo, "seqinfo<-")
+import(GenomeInfoDb)
+import(IRanges)
+import(GenomicRanges)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
            DNAStringSet, DNA_BASES, DNA_ALPHABET, alphabetFrequency)
@@ -83,7 +50,7 @@ importMethodsFrom("Rsamtools", ScanBamParam, asBam, headerTabix, isOpen, path,
                   scanTabix)
 importClassesFrom("Rsamtools", RsamtoolsFile, TabixFile, BamFile)
 
-importMethodsFrom("GenomicAlignments", readGAlignments, cigar)
+importMethodsFrom("GenomicAlignments", readGAlignments, cigar, last, first)
 importClassesFrom("GenomicAlignments", GAlignments)
 
 ## ============================================================
