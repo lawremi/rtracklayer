@@ -130,6 +130,9 @@ setMethod("export", c("GenomicRanges", "BEDFile"),
                 thickEnd <- end(object)
               }
               strand <- if (ignore.strand) NULL else strand(object)
+              if (!is.null(strand)) {
+                strand[strand == "*"] <- NA
+              }
               if (!is.null(thickStart) && is.null(strand)) {
                 strand <- rep(NA, length(object))
               }
