@@ -1279,9 +1279,9 @@ setMethod("export", c("UCSCData", "UCSCFile"),
               strand <- as.character(strand(object))
               strand[is.na(strand)] <- "NA"
               isStrandDisjoint <- function(track) {
-                all(unlist(tapply(ranges(track), seqnames(track), function(r) {
+                all(tapply(ranges(track), seqnames(track), function(r) {
                   isDisjoint(r) && all(width(r) > 0)
-                })))
+                }), na.rm=TRUE)
               }
               if (!all(unlist(lapply(split(object, strand), isStrandDisjoint))))
               {
