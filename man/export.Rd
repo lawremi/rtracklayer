@@ -171,7 +171,7 @@ import(con, format, text, ...)
   }
   ## or as a string
   export(track, format = "gff3")
-!}
+}
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{IO}

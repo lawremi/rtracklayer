@@ -294,6 +294,16 @@ setMethod("import", "GFFFile",
               con <- asGFFVersion(con, match.arg(version))
             asRangedData <- normarg_asRangedData(asRangedData, "import")
 
+            ## download the file first if it's remote
+            if (is.character(resource(con))) {
+                uri <- parseURI(resource(con))
+                if (uri$scheme %in% c("ftp", "http")) {
+                    destfile <- tempfile()
+                    download.file(resource(con), destfile)
+                    con@resource <- destfile
+                }
+            }
+
             sniffed <- sniffGFFVersion(resource(con))
             version <- gffFileVersion(con)
             if (!length(version)) {
