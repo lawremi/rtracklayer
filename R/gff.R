@@ -296,7 +296,7 @@ setMethod("import", "GFFFile",
 
             ## download the file first if it's remote
             if (is.character(resource(con))) {
-                uri <- parseURI(resource(con))
+                uri <- .parseURI(resource(con))
                 if (uri$scheme %in% c("ftp", "http")) {
                     destfile <- tempfile()
                     download.file(resource(con), destfile)
