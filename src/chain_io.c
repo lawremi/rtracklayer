@@ -9,12 +9,12 @@
 /* hash these chain blocks by target and query name */
 typedef struct _ChainBlock {
   char *name;
-  IntPairAE ranges; /* to become an IRanges */
-  IntAE offset; /* starts in the other sequence */
+  IntPairAE *ranges; /* to become an IRanges */
+  IntAE *offset; /* starts in the other sequence */
   /* rle of spaces and scores */
-  IntAE length, score;
-  CharAE rev; /* use CharAE until we have a bitset */
-  CharAEAE space;
+  IntAE *length, *score;
+  CharAE *rev; /* use CharAE until we have a bitset */
+  CharAEAE *space;
 } ChainBlock;
 
 #define HEADER_SIZE 11
@@ -75,13 +75,13 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         block->rev = new_CharAE(0);
         block->space = new_CharAEAE(0, 0);
       } else block = value;
-      IntAE_insert_at(&block->score, IntAE_get_nelt(&block->score),
+      IntAE_insert_at(block->score, IntAE_get_nelt(block->score),
                       atoi(header[1]));
-      append_string_to_CharAEAE(&block->space, header[7]);
+      append_string_to_CharAEAE(block->space, header[7]);
       header_line = line;
       trc = strcmp("+", header[4]);
       qrc = strcmp("+", header[9]);
-      CharAE_insert_at(&block->rev, CharAE_get_nelt(&block->rev),
+      CharAE_insert_at(block->rev, CharAE_get_nelt(block->rev),
                        trc != qrc);
       tstart = atoi(header[5]) + 1; /* 0-based -> 1-based */
       if (trc)
@@ -96,9 +96,9 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       width = atoi(data[0]);
       tstart -= (trc ? width : 0);
       qstart -= (qrc ? width : 0);
-      IntPairAE_insert_at(&block->ranges, IntPairAE_get_nelt(&block->ranges),
+      IntPairAE_insert_at(block->ranges, IntPairAE_get_nelt(block->ranges),
                         tstart, width);
-      IntAE_insert_at(&block->offset, IntAE_get_nelt(&block->offset),
+      IntAE_insert_at(block->offset, IntAE_get_nelt(block->offset),
                       tstart - qstart);
       if (matches == 3) { /* normal line */
         int dt = atoi(data[1]), dq = atoi(data[2]);
@@ -113,7 +113,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         qstart += qchange;
       } else {
         new_block = TRUE;
-        IntAE_insert_at(&block->length, IntAE_get_nelt(&block->length),
+        IntAE_insert_at(block->length, IntAE_get_nelt(block->length),
                         line-header_line);
         //Rprintf("end of %s block, line: %d\n", block->name, line);
         fgets(linebuf, LINEBUF_SIZE, stream); /* skip empty line */
@@ -159,17 +159,17 @@ SEXP readChain(SEXP r_path, SEXP r_exclude) {
     block = NEW_OBJECT(chainBlock_class);
     SET_VECTOR_ELT(ans_listData, i, block);
     SET_SLOT(block, install("ranges"),
-		new_IRanges_from_IntPairAE("IRanges", &chains[i]->ranges));
+		new_IRanges_from_IntPairAE("IRanges", chains[i]->ranges));
     SET_SLOT(block, install("offset"),
-		new_INTEGER_from_IntAE(&chains[i]->offset));
+		new_INTEGER_from_IntAE(chains[i]->offset));
     SET_SLOT(block, install("length"),
-		new_INTEGER_from_IntAE(&chains[i]->length));
+		new_INTEGER_from_IntAE(chains[i]->length));
     SET_SLOT(block, install("score"),
-		new_INTEGER_from_IntAE(&chains[i]->score));
+		new_INTEGER_from_IntAE(chains[i]->score));
     SET_SLOT(block, install("space"),
-		new_CHARACTER_from_CharAEAE(&chains[i]->space));
+		new_CHARACTER_from_CharAEAE(chains[i]->space));
     SET_SLOT(block, install("reversed"),
-		new_LOGICAL_from_CharAE(&chains[i]->rev));
+		new_LOGICAL_from_CharAE(chains[i]->rev));
     SET_STRING_ELT(ans_names, i, mkChar(chains[i]->name));
   }
 
