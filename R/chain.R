@@ -115,6 +115,7 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
             liftedList <- mapply(liftOverSpace, rl[sharedNames],
                                  chain[sharedNames], ind, SIMPLIFY=FALSE)
             lifted <- unlist(GRangesList(liftedList), use.names=FALSE)
-            split(lifted,
-                  factor(unlist(ind, use.names=FALSE), seq_len(length(x))))
+            f <- structure(unlist(ind, use.names=FALSE),
+                           levels=seq_len(length(x)), class="factor")
+            setNames(split(lifted, f), names(x))
           })
