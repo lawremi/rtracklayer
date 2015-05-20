@@ -74,6 +74,11 @@ test_bw <- function() {
   which <- GRanges(names(correct_int), IRanges(1, elementLengths(correct_int)))
   metadata(correct_int) <- list(ranges=which)
   export(correct_int, test_bw_out)
+
   test <- import(test_bw_out, as="NumericList")
+  checkIdentical(correct_int, test)
+  test <- import(test_bw_out, which=which[1], as="NumericList")
+  checkIdentical(elementLengths(correct_int[1]), elementLengths(test))
+  test <- import(test_bw_out, which=which[1:2], as="NumericList")
   checkIdentical(correct_int, test)
 }

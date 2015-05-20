@@ -252,8 +252,9 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
 
   if (return_list) {
     int n_ranges = 0;
-    for(int i = 0; i < length(r_ranges); i++) {
-      n_ranges += length(VECTOR_ELT(r_ranges, i));
+    for(int i = 0; i < nchroms; i++) {
+      SEXP localRanges = VECTOR_ELT(r_ranges, i);
+      n_ranges += get_IRanges_length(localRanges);
     }
     PROTECT(numericListEls = allocVector(VECSXP, n_ranges));
   } else {
@@ -262,7 +263,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
     PROTECT(dataFrameListEls = allocVector(VECSXP, nchroms));
     setAttrib(dataFrameListEls, R_NamesSymbol, chromNames);
   }
- 
+
   int elt_len = 0;
   for (int i = 0; i < nchroms; i++) {
     SEXP localRanges = VECTOR_ELT(r_ranges, i);

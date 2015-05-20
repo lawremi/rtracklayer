@@ -193,7 +193,9 @@ if (.Platform$OS.type != "windows") {
   rle 
 
   ## NumericList
-  import(test_bw, which = which, as = "NumericList")
+  ## The 'which' is stored as metadata:
+  track <- import(test_bw, which = which, as = "NumericList")
+  metadata(track)
 
 \dontrun{
   test_bw_out <- file.path(tempdir(), "test_out.bw")

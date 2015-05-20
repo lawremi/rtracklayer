@@ -252,9 +252,8 @@ setMethod("import", "BigWigFile",
                         as == "NumericList")
             if (as == "NumericList") {
                 rd <- as(rd, "NumericList")
-                gr <- as(which, "GRanges")
-                names(rd) <- names(flatWhich)
-                metadata(rd) <- list(ranges = gr)
+                names(rd) <- rep(names(which), elementLengths(which))
+                metadata(rd) <- list(ranges = as(which, "GRanges"))
                 rd
             } else {
               seqinfo(rd) <- si
