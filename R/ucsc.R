@@ -13,12 +13,12 @@ setMethod("initialize", "UCSCSession",
           {
             .Object@url <- url
             .Object@views <- new.env()
-            gwParams <- list()
+            gwURL <- ucscURL(.Object, "gateway")
             if (force) {
-                gwParams <- c(gwParams, redirect="manual")
+                gwURL <- paste0(gwURL, '?redirect="manual"')
             }
-            gw <- httpGet(ucscURL(.Object, "gateway"), gwParams,
-                          cookiefile = tempfile(), header = TRUE, .parse=FALSE)
+            gw <- httpGet(gwURL, cookiefile = tempfile(), header = TRUE,
+                          .parse=FALSE)
             if (grepl("redirectTd", gw)) {
                 url <- sub(".*?a href=\"h([^[:space:]]+cgi-bin/).*", "h\\1", gw)
                 return(initialize(.Object, url, user=user, session=session,
