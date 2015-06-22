@@ -59,8 +59,9 @@ test_gff <- function() {
   checkIdentical(correct_gff3, test)
   test <- import.gff3(test_gff3)
   checkIdentical(correct_gff3, test)
-  options(warn = 2)
+  oldOpts <- options(warn = 2)
   checkException(import.gff2(test_gff3))
+  options(oldOpts)
   
   ## TEST: GFF(3)File
   test_gff_file <- GFF3File(test_gff3)
