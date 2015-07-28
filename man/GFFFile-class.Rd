@@ -62,7 +62,7 @@
 \S4method{import}{GFFFile,ANY,ANY}(con, format, text,
            version = c("", "1", "2", "3"),
            genome = NA, asRangedData = FALSE, colnames = NULL, which = NULL,
-           feature.type = NULL)
+           feature.type = NULL, sequenceRegionsAsSeqinfo = FALSE)
 import.gff(con, ...)
 import.gff1(con, ...)
 import.gff2(con, ...)
@@ -131,6 +131,10 @@ export.gff3(object, con, ...)
   \item{feature.type}{\code{NULL} (the default) or a character vector of
     valid feature types. If not \code{NULL}, then only the features of the
     specified type(s) are imported.
+  }
+  \item{sequenceRegionsAsSeqinfo}{If \code{TRUE}, attempt to infer the
+    \code{Seqinfo} (\code{seqlevels} and \code{seqlengths}) from the
+    \dQuote{##sequence-region} directives as specified by GFF3.
   }
   \item{source}{The value for the source column in GFF. This is
     typically the name of the package or algorithm that generated the

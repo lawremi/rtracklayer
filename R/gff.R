@@ -283,17 +283,30 @@ setMethod("import.gff", "ANY",
   attrList
 }
 
+parseSeqinfoFromSequenceRegions <- function(lines) {
+    sr <- grep("##sequence-region", lines, value=TRUE)
+    srcon <- file()
+    on.exit(close(srcon))
+    writeLines(sr, srcon)
+    srt <- read.table(srcon, comment.char="",
+                      colClasses=list(NULL, "character", NULL,
+                          "integer"))
+    Seqinfo(srt[[1]], srt[[2]])
+}
+
 setMethod("import", "GFFFile",
           function(con, format, text, version = c("", "1", "2", "3"),
                    genome = NA, asRangedData = FALSE, colnames = NULL,
-                   which = NULL, feature.type = NULL)
+                   which = NULL, feature.type = NULL,
+                   sequenceRegionsAsSeqinfo = FALSE)
           {
             if (!missing(format))
               checkArgFormat(con, format)
             if (!missing(version))
               con <- asGFFVersion(con, match.arg(version))
             asRangedData <- normarg_asRangedData(asRangedData, "import")
-
+            stopifnot(isTRUEorFALSE(sequenceRegionsAsSeqinfo))
+            
             ## download the file first if it's remote
             if (is.character(resource(con))) {
                 uri <- .parseURI(resource(con))
@@ -326,10 +339,16 @@ setMethod("import", "GFFFile",
             lines <- readLines(con, warn = FALSE) # unfortunately, not a table
             lines <- lines[nzchar(lines)]
             
-            ## strip comments
-            notComments <- which(substr(lines, start=1L, stop=1L) != "#")
-            lines <- lines[notComments]
+            comments <- substr(lines, start=1L, stop=1L) == "#"
             
+            ## sequence-region => Seqinfo
+            if (sequenceRegionsAsSeqinfo && is(file, "GFF3File")) {
+                attr(con, "seqinfo") <-
+                    parseSeqinfoFromSequenceRegions(lines[comments])
+            }
+
+            lines <- lines[!comments]
+
 ### TODO: handle ontologies (store in RangedData)
 
             ## strip FASTA sequence
