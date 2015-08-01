@@ -294,6 +294,24 @@ parseSeqinfoFromSequenceRegions <- function(lines) {
     Seqinfo(srt[[1]], srt[[2]])
 }
 
+parseSpecies <- function(lines) {
+    species <- unique(grep("##species", lines, fixed=TRUE, value=TRUE))
+    if (length(species) > 1L) {
+        stop("multiple species definitions found")
+    }
+    metadata <- list()
+    if (length(species) == 1L) {
+        species <- sub("##species ", "", species, fixed=TRUE)
+        if (isNCBISpeciesURL(species)) {
+            ncbiError <- function(e) {
+                warning("failed to retrieve organism information from NCBI")
+            }
+            metadata <- tryCatch(metadataFromNCBI(species), error = ncbiError)
+        }
+    }
+    metadata
+}
+
 setMethod("import", "GFFFile",
           function(con, format, text, version = c("", "1", "2", "3"),
                    genome = NA, asRangedData = FALSE, colnames = NULL,
@@ -347,6 +365,8 @@ setMethod("import", "GFFFile",
                     parseSeqinfoFromSequenceRegions(lines[comments])
             }
 
+            metadata <- parseSpecies(lines[comments])
+            
             lines <- lines[!comments]
 
 ### TODO: handle ontologies (store in RangedData)
@@ -412,7 +432,8 @@ setMethod("import", "GFFFile",
                         xd, chrom = table[,"seqname"], genome = genome,
                         seqinfo = attr(con, "seqinfo"),
                         asRangedData = asRangedData,
-                        which = if (attr(con, "usedWhich")) NULL else which)
+                        which = if (attr(con, "usedWhich")) NULL else which,
+                        metadata = metadata)
           })
 
 setGeneric("import.gff1",

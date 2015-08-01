@@ -8,7 +8,7 @@
 
 GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
                         seqinfo = NULL,
-                        asRangedData = FALSE, which = NULL)
+                        asRangedData = FALSE, which = NULL, metadata = list())
 {
   asRangedData <- normarg_asRangedData(asRangedData, "GenomicData")
   if (is.null(genome))
@@ -72,7 +72,8 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
           return(GenomicData(ranges = ranges, dots, strand = strand,
                              chrom = chrom, genome = genome,
                              seqinfo = seqinfo,
-                             asRangedData = asRangedData, which = which))
+                             asRangedData = asRangedData, which = which,
+                             metadata = metadata))
         }
       }
       if (is.null(strand))
@@ -91,6 +92,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
     seqinfo(gd) <- seqinfo
   if (!is.null(which))
     gd <- subsetByOverlaps(gd, which)
+  metadata(gd) <- metadata
   gd
 }
 
