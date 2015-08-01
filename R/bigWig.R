@@ -235,14 +235,15 @@ setMethod("import", "BigWigFile",
             validObject(selection)
             si <- seqinfo(con)
             which <- ranges(selection)
-            badSpaces <- setdiff(names(which), seqnames(si))
-            if (length(badSpaces))
-              stop("'which' contains sequence names not known to BigWig file: ",
-                   paste(badSpaces, collapse = ", "))
+            badSpaces <- setdiff(names(which), seqlevels(si))
+            if (length(badSpaces) > 0L)
+              warning("'which' contains seqlevels not known to BigWig file: ",
+                      paste(badSpaces, collapse = ", "))
+            which <- which[names(which) %in% seqlevels(si)]
             flatWhich <- unlist(which, use.names = FALSE)
             if (is.null(flatWhich))
               flatWhich <- IRanges()
-            which <- split(flatWhich, factor(space(which), seqnames(si)))
+            which <- split(flatWhich, factor(space(which), seqlevels(si)))
             if (as != "NumericList") {
               which <- as(which, "NormalIRangesList")
             }
