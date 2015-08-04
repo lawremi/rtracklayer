@@ -253,10 +253,6 @@ setMethod("import.gff", "ANY",
     lineByTag <- split(lines, tags)
     valByTag <- split(vals, tags)
 
-    ## FIXME: Parent, Alias, Note, DBxref,
-    ## Ontology_term are allowed to have multiple
-    ## values. We should probably always return them as a
-    ## CharacterList.
     multiTags <- c("Parent", "Alias", "Note", "DBxref", "Ontology_term")
     attrList <- sapply(levels(tags), function(tagName) {
       vals <- valByTag[[tagName]]
@@ -289,9 +285,14 @@ parseSeqinfoFromSequenceRegions <- function(lines) {
     on.exit(close(srcon))
     writeLines(sr, srcon)
     srt <- read.table(srcon, comment.char="",
-                      colClasses=list(NULL, "character", NULL,
+                      colClasses=list(NULL, "character", "integer",
                           "integer"))
-    Seqinfo(srt[[1]], srt[[2]])
+    if (any(srt[[2L]] != 1L)) {
+        warning("One or more ##sequence-region directives do not start at 1. ",
+                "The assumptions made by 'sequenceRegionsAsSeqinfo=TRUE' ",
+                "have been violated.")
+    }
+    Seqinfo(srt[[1L]], srt[[3L]])
 }
 
 parseSpecies <- function(lines) {
