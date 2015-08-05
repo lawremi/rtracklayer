@@ -15,7 +15,7 @@ import(zlibbioc)
 importFrom("stats", offset, setNames)
 importFrom("utils", count.fields, URLdecode, URLencode, browseURL, download.file,
            read.table, type.convert, write.table)
-importFrom("tools", file_path_as_absolute, file_path_sans_ext)
+importFrom("tools", file_path_as_absolute, file_ext, file_path_sans_ext)
 importFrom("grDevices", col2rgb, rgb)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
