@@ -46,6 +46,10 @@ setMethod("show", "RTLFile", function(object) {
 })
 
 FileForFormat <- function(path, format = file_ext(path)) {
+  stopifnot(isSingleString(path), isSingleString(format))
+  if (format == "") {
+    stop("Cannot detect format (no extension found in file name)")
+  }
   fileClassName <- paste0(format, "File")
   signatureClasses <- function(fun, pos) {
     matrix(unlist(findMethods(fun)@signatures), 3)[pos,]
