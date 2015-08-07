@@ -90,7 +90,7 @@ setMethod("show", "BrowserView", function(object)
                       unlist(end(range)), sep = ""),
                 "\n")
             nms <- paste("'", names(trackNames(object)), "'", sep = "")
-            cat(BiocGenerics:::labeledLine("trackNames", nms))
+            cat(S4Vectors:::labeledLine("trackNames", nms))
           })
 
 setClass("BrowserViewList", contains = "SimpleList",
