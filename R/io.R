@@ -193,7 +193,10 @@ setMethod("bestFileFormat", c("RangesList", "ANY"), function(x, dest) {
 ## Uses XML::parseURI, except first checks for Windows drive letter.
 ## There are no known URI schemes that are only a single character.
 .parseURI <- function(uri) {
-  if (.Platform$OS.type == "windows" && grepl("^[A-Za-z]:[/\\]", uri)) {
+  windowsDriveLetter <- .Platform$OS.type == "windows" &&
+      grepl("^[A-Za-z]:[/\\]", uri)
+  hasScheme <- grepl("^[A-Za-z]+:", uri) && !windowsDriveLetter
+  if (!hasScheme) {
     parsed <- parseURI("")
     parsed$path <- uri
   } else {
