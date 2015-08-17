@@ -39,7 +39,7 @@ setMethod("queryForResource", "TabixFile",
               if (!header)
                 readLines(buffer, tabixHeader$skip)
             } else {
-              buffer <- file()
+              buffer <- manage(file())
               if (header) {
                 skippedLines <- readLines(path(x), tabixHeader$skip)
                 writeLines(skippedLines, buffer)
