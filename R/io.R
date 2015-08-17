@@ -280,7 +280,7 @@ manage <- function(con) {
     return(con)
   env <- new.env()
   finalizer <- function(obj) {
-    if (exists("con")) {
+    if (exists("con", parent.env(environment()), inherits=FALSE)) {
       close(con)
       rm(con, inherits = TRUE)
       TRUE
