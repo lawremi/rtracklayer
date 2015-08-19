@@ -121,7 +121,7 @@ export.gff3(object, con, ...)
   }
   \item{colnames}{A character vector naming the columns to parse. These
     should name either fixed fields, like \code{source} or
-    \code{strand}, or, for GFF2 and GFF3, any attribute.
+    \code{type}, or, for GFF2 and GFF3, any attribute.
   }
   \item{which}{A range data structure like \code{RangesList}
     or \code{GRanges}. Only the intervals in the file overlapping the
@@ -297,7 +297,7 @@ export.gff3(object, con, ...)
   ## various arguments
   import(test_gff3, genome = "hg19", asRangedData = FALSE)
   import(test_gff3, colnames = character(), asRangedData = FALSE)
-  import(test_gff3, colnames = c("strand", "geneName"), asRangedData = FALSE)
+  import(test_gff3, colnames = c("type", "geneName"), asRangedData = FALSE)
 
   ## 'which'
   which <- RangesList(chr10 = IRanges(90000, 93000))

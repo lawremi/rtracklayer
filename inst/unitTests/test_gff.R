@@ -140,11 +140,9 @@ test_gff <- function() {
   ## TEST: colnames empty, colnames := "geneName", colnames := "strand"
   test <- import(test_gff3, colnames = character())
   target <- correct_gff3[,character()]
-  strand(target) <- "*"
   checkIdentical(target, test)
   test <- import(test_gff3, colnames = "geneName")
   target <- correct_gff3[,"geneName"]
-  strand(target) <- "*"
   checkIdentical(target, test)
   test <- import(test_gff3, colnames = "strand")
   target <- correct_gff3[,character()]

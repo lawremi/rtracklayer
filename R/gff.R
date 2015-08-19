@@ -415,7 +415,7 @@ setMethod("import", "GFFFile",
             
             extraCols <- c("source", "type", "score", "strand", "phase")
             if (!is.null(colnames))
-              extraCols <- intersect(extraCols, colnames)
+              extraCols <- intersect(extraCols, c(colnames, "strand"))
             xd <- as(table[,extraCols,drop=FALSE], "DataFrame")
 
             if (!is.null(xd$phase))
@@ -432,7 +432,6 @@ setMethod("import", "GFFFile",
             GenomicData(IRanges(as.integer(table[,"start"]), end),
                         xd, chrom = table[,"seqname"], genome = genome,
                         seqinfo = attr(con, "seqinfo"),
-                        asRangedData = asRangedData,
                         which = if (attr(con, "usedWhich")) NULL else which,
                         metadata = metadata)
           })
