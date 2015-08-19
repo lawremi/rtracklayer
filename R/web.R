@@ -51,7 +51,10 @@ urlEncode <- function(str, chars = "-a-zA-Z0-9$_.+!*'(),", keep = TRUE)
 }
 
 # differs from URLdecode (vectorized)
-urlDecode <- function(str)
+urlDecode <- function(str, na.strings="NA")
 {
-  curlUnescape(str)
+  ans <- curlUnescape(str)
+  if (!identical(na.strings, "NA"))
+      ans[is.na(str)] <- na.strings
+  ans
 }
