@@ -253,20 +253,22 @@ setMethod("export.gff3", "ANY",
 {
     lines <- readLines(con, warn = FALSE) # unfortunately, not a table
     lines <- lines[nzchar(lines)]
+    first_letter <- substr(lines, start=1L, stop=1L)
             
-    comments <- substr(lines, start=1L, stop=1L) == "#"
-            
+    comments <- first_letter == "#"
+    comment_lines <- lines[comments]
     if (sequenceRegionsAsSeqinfo)
-        ans_seqinfo <- .parseSequenceRegionsAsSeqinfo(lines[comments])
+        ans_seqinfo <- .parseSequenceRegionsAsSeqinfo(comment_lines)
     if (speciesAsMetadata)
-        ans_metadata <- .parseSpeciesAsMetadata(lines[comments])
-            
+        ans_metadata <- .parseSpeciesAsMetadata(comment_lines)
     lines <- lines[!comments]
+    rm(comments)
 
     ### TODO: handle ontologies (store in RangedData)
 
     ## strip FASTA sequence
-    fastaHeaders <- which(substr(lines, start=1L, stop=1L) == ">")
+    fastaHeaders <- which(first_letter == ">")
+    rm(first_letter)
     if (length(fastaHeaders))
         lines <- head(lines, fastaHeaders[1] - 1)
 
@@ -285,10 +287,12 @@ setMethod("export.gff3", "ANY",
     haveAttrMat <- matrix(data, ncol=length(fields), byrow=TRUE)
     data <- unlist(linesSplit[!haveAttr], use.names=FALSE)
     if (is.null(data))
-      data <- character(0)
+        data <- character(0)
+    rm(linesSplit)
     noAttrMat <- matrix(data, ncol=length(fields)-1L, byrow=TRUE)
     noAttrMat <- cbind(noAttrMat, rep.int("", nrow(noAttrMat)))
     table <- rbind(noAttrMat, haveAttrMat)
+    rm(haveAttrMat, noAttrMat)
     colnames(table) <- fields
 
     if (!is.null(feature.type))
