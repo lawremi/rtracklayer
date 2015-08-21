@@ -253,9 +253,8 @@ setMethod("export.gff3", "ANY",
 {
     lines <- readLines(con, warn = FALSE) # unfortunately, not a table
     lines <- lines[nzchar(lines)]
-    first_letter <- substr(lines, start=1L, stop=1L)
             
-    comments <- first_letter == "#"
+    comments <- substr(lines, start=1L, stop=1L) == "#"
     comment_lines <- lines[comments]
     if (sequenceRegionsAsSeqinfo)
         ans_seqinfo <- .parseSequenceRegionsAsSeqinfo(comment_lines)
@@ -267,8 +266,7 @@ setMethod("export.gff3", "ANY",
     ### TODO: handle ontologies (store in RangedData)
 
     ## strip FASTA sequence
-    fastaHeaders <- which(first_letter == ">")
-    rm(first_letter)
+    fastaHeaders <- which(substr(lines, start=1L, stop=1L) == ">")
     if (length(fastaHeaders))
         lines <- head(lines, fastaHeaders[1] - 1)
 
