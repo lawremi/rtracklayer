@@ -63,10 +63,13 @@ static double as_double(const char *val, int val_len)
 {
 	double x;
 	char *end_conversion, c;
-	int i;
+	int end_offset, i;
 
 	x = strtod(val, &end_conversion);
-	for (i = end_conversion - val; i < val_len; i++) {
+	end_offset = end_conversion - val;
+	if (end_offset == 0)
+		return NA_REAL;
+	for (i = end_offset; i < val_len; i++) {
 		c = val[i];
 		if (!isspace(c))
 			return NA_REAL;
@@ -76,15 +79,6 @@ static double as_double(const char *val, int val_len)
 
 /* See http://www.sequenceontology.org/resources/gff3.html for the official
  * GFF3 specs. */
-#define	SEQID_IDX 0
-#define	SOURCE_IDX 1
-#define	TYPE_IDX 2
-#define	START_IDX 3
-#define	END_IDX 4
-#define	SCORE_IDX 5
-#define	STRAND_IDX 6
-#define	PHASE_IDX 7
-#define	ATTRIBUTES_IDX 8
 
 static const char *col_names[] = {
 	"seqid",
@@ -110,22 +104,58 @@ static const SEXPTYPE col_types[] = {
 	STRSXP    /* attributes */
 };
 
-static SEXP alloc_ans(int nrow)
+#define	GFF_NCOL (sizeof(col_names) / sizeof(char *))
+
+#define	SEQID_IDX 0
+#define	SOURCE_IDX 1
+#define	TYPE_IDX 2
+#define	START_IDX 3
+#define	END_IDX 4
+#define	SCORE_IDX 5
+#define	STRAND_IDX 6
+#define	PHASE_IDX 7
+#define	ATTRIBUTES_IDX 8
+
+static int prepare_col_map(int *col_map, SEXP cols)
+{
+	int ncol, col_idx;
+
+	if (!(cols == R_NilValue ||
+	      (IS_LOGICAL(cols) && LENGTH(cols) == GFF_NCOL)))
+		error("'cols' must be NULL or a logical vector of length %d",
+		      GFF_NCOL);
+	ncol = 0;
+	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
+		if (cols == R_NilValue || LOGICAL(cols)[col_idx]) {
+			col_map[col_idx] = ncol++;
+		} else {
+			col_map[col_idx] = NA_INTEGER;
+		}
+		//printf("col_map[%d] = %d\n", col_idx, col_map[col_idx]);
+	}
+	return ncol;
+}
+
+static SEXP alloc_ans(int nrow, int ncol, const int *col_map)
 {
 	SEXP ans, ans_names, ans_col, col_name;
-	int col_idx;
+	int col_idx, j;
 	SEXPTYPE col_type;
 
-	PROTECT(ans = NEW_LIST(9));
-	PROTECT(ans_names = NEW_CHARACTER(9));
-	for (col_idx = 0; col_idx < 9; col_idx++) {
+	PROTECT(ans = NEW_LIST(ncol));
+	PROTECT(ans_names = NEW_CHARACTER(ncol));
+	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
+		j = col_map[col_idx];
+		if (j == NA_INTEGER)
+			continue;
 		col_type = col_types[col_idx];
 		PROTECT(ans_col = allocVector(col_type, nrow));
-		SET_ELEMENT(ans, col_idx, ans_col);
+		SET_ELEMENT(ans, j, ans_col);
 		UNPROTECT(1);
 		PROTECT(col_name = mkChar(col_names[col_idx]));
-		SET_STRING_ELT(ans_names, col_idx, col_name);
+		SET_STRING_ELT(ans_names, j, col_name);
 		UNPROTECT(1);
+		j++;
 	}
 	SET_NAMES(ans, ans_names);
 	/* list_as_data_frame() performs IN-PLACE coercion */
@@ -163,14 +193,14 @@ static void collect_double(SEXP ans_col, int row_idx,
 	return;
 }
 
-static void collect_val(SEXP ans, int row_idx, int col_idx,
+static void collect_val(SEXP ans, int row_idx, int col_idx, const int *col_map,
 		const char *val, int val_len)
 {
 	SEXP ans_col;
 	SEXPTYPE col_type;
 
 	//printf("row_idx=%d col_idx=%d: ", row_idx, col_idx);
-	ans_col = VECTOR_ELT(ans, col_idx);
+	ans_col = VECTOR_ELT(ans, col_map[col_idx]);
 	col_type = col_types[col_idx];
 	switch (col_type) {
 	    case STRSXP:
@@ -197,7 +227,8 @@ static void collect_val(SEXP ans, int row_idx, int col_idx,
 static char errmsg_buf[200];
 
 static const char *parse_GFF_line(const char *line, int lineno,
-		SEXP feature_types, SEXP ans, int *row_idx)
+		SEXP feature_types,
+		SEXP ans, int *row_idx, const int *col_map)
 {
 	int col_idx, i, val_len;
 	const char *val;
@@ -216,8 +247,8 @@ static const char *parse_GFF_line(const char *line, int lineno,
 				 "line %d has more than 8 tabs", lineno);
 			return errmsg_buf;
 		}
-		if (ans != R_NilValue)
-			collect_val(ans, *row_idx, col_idx,
+		if (ans != R_NilValue && col_map[col_idx] != NA_INTEGER)
+			collect_val(ans, *row_idx, col_idx, col_map,
 				    val, val_len);
 		col_idx++;
 		val = line + i;
@@ -228,9 +259,9 @@ static const char *parse_GFF_line(const char *line, int lineno,
 			 "line %d has less than 7 tabs", lineno);
 		return errmsg_buf;
 	}
-	if (ans != R_NilValue) {
+	if (ans != R_NilValue && col_map[col_idx] != NA_INTEGER) {
 		val_len = delete_trailing_LF_or_CRLF(val, val_len);
-		collect_val(ans, *row_idx, col_idx,
+		collect_val(ans, *row_idx, col_idx, col_map,
 			    val, val_len);
 	}
 	(*row_idx)++;
@@ -238,7 +269,7 @@ static const char *parse_GFF_line(const char *line, int lineno,
 }
 
 static const char *parse_GFF_file(SEXP filexp, SEXP feature_types,
-		int *ans_nrow, SEXP ans)
+		int *ans_nrow, SEXP ans, const int *col_map)
 {
 	int row_idx, lineno, ret_code, EOL_in_buf;
 	char buf[IOBUF_SIZE], c;
@@ -267,9 +298,9 @@ static const char *parse_GFF_file(SEXP filexp, SEXP feature_types,
 		if (c == '#')
 			continue;  /* skip comment */
 		if (c == '>')
-			break;  /* stop parsing at first FASTA header */
-		errmsg = parse_GFF_line(buf, lineno,
-					feature_types, ans, &row_idx);
+			break;     /* stop parsing at first FASTA header */
+		errmsg = parse_GFF_line(buf, lineno, feature_types,
+					ans, &row_idx, col_map);
 		if (errmsg != NULL)
 			return errmsg;
 	}
@@ -277,21 +308,37 @@ static const char *parse_GFF_file(SEXP filexp, SEXP feature_types,
 	return NULL;
 }
 
-/* --- .Call ENTRY POINT --- */
-SEXP GFFFile_read(SEXP filexp, SEXP feature_types)
+/*
+ * --- .Call ENTRY POINT ---
+ * Args:
+ *   filexp:        A "File External Pointer" (see src/io_utils.c in the
+ *                  XVector package).
+ *   cols:          NULL or a logical vector of length 9 indicating the
+ *                  columns to collect. NULL means collect all columns.
+ *   feature_types: NULL or a character vector of feature types. Only rows
+ *                  with that type are collected. NULL means collect all rows.
+ */
+SEXP GFFFile_read(SEXP filexp, SEXP cols, SEXP feature_types)
 {
+	int col_map[GFF_NCOL], ans_nrow, ans_ncol;
 	const char *errmsg;
-	int ans_nrow;
 	SEXP ans;
 
+	ans_ncol = prepare_col_map(col_map, cols);
+	if (!(feature_types == R_NilValue || IS_CHARACTER(feature_types)))
+		error("'feature_types' must be NULL or a character vector");
+
+	/* 1st pass */
 	errmsg = parse_GFF_file(filexp, feature_types,
-				&ans_nrow, R_NilValue);
+				&ans_nrow, R_NilValue, col_map);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
-	PROTECT(ans = alloc_ans(ans_nrow));
+
+	/* 2nd pass */
+	PROTECT(ans = alloc_ans(ans_nrow, ans_ncol, col_map));
 	filexp_rewind(filexp);
 	errmsg = parse_GFF_file(filexp, feature_types,
-				&ans_nrow, ans);
+				&ans_nrow, ans, col_map);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
 	UNPROTECT(1);

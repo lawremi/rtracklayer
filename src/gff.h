@@ -5,6 +5,6 @@
 
 /* The .Call entry points */
 
-SEXP GFFFile_read(SEXP filexp, SEXP feature_types);
+SEXP GFFFile_read(SEXP filexp, SEXP cols, SEXP feature_types);
 
 #endif
