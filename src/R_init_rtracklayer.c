@@ -1,4 +1,5 @@
 #include "rtracklayer.h"
+#include "gff.h"
 #include "bigWig.h"
 #include "twoBit.h"
 #include "utils.h"
@@ -8,6 +9,8 @@
 #define CALLMETHOD_DEF(fun, numArgs) {#fun, (DL_FUNC) &fun, numArgs}
 
 static const R_CallMethodDef callMethods[] = {
+  /* gff.c */
+  CALLMETHOD_DEF(GFFFile_read, 2),
   /* bigWig.c */
   CALLMETHOD_DEF(BWGSectionList_add, 5),
   CALLMETHOD_DEF(BWGSectionList_write, 4),
