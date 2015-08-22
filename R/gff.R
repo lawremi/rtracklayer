@@ -211,6 +211,33 @@ setMethod("export.gff3", "ANY",
 ### Import
 ###
 
+### Return the 9 standard GFF columns as specified at:
+###   http://www.sequenceontology.org/resources/gff3.html
+GFFcolnames <- function() .Call(gff_colnames)
+
+### Does NOT work on a connection object.
+readGFF <- function(filepath, columns=NULL)
+{
+    if (!isSingleString(filepath))
+        stop(wmsg("'filepath' must be a single string"))
+    filexp <- XVector:::open_input_files(filepath)[[1L]]
+    valid_colnames <- GFFcolnames()
+    if (is.null(columns)) {
+        colmap <- seq_along(valid_colnames)
+    } else if (is.character(columns)) {
+        if (!all(columns %in% valid_colnames)) {
+             in1string <- paste0(valid_colnames, collapse=", ")
+             stop(wmsg("valid GFF columns are: ", in1string))
+        }
+        if (anyDuplicated(columns))
+            stop(wmsg("'columns' cannot contain duplicates"))
+        colmap <- match(valid_colnames, columns)
+    } else {
+        stop(wmsg("'columns' must be NULL or character vector"))
+    }
+    .Call(gff_read, filexp, colmap, NULL)
+}
+
 ### sequence-region => Seqinfo
 .parseSequenceRegionsAsSeqinfo <- function(lines) {
     sr <- grep("##sequence-region", lines, value=TRUE)
@@ -253,7 +280,7 @@ setMethod("export.gff3", "ANY",
 {
     lines <- readLines(con, warn = FALSE) # unfortunately, not a table
     lines <- lines[nzchar(lines)]
-            
+
     comments <- substr(lines, start=1L, stop=1L) == "#"
     comment_lines <- lines[comments]
     if (sequenceRegionsAsSeqinfo)
@@ -328,6 +355,24 @@ setMethod("export.gff3", "ANY",
         attr(ans, "seqinfo") <- ans_seqinfo
     if (speciesAsMetadata)
         attr(ans, "metadata") <- ans_metadata
+    ans
+}
+
+## A fast replacement for .read_gff() that doesn't work on a connection object.
+.read_gff2 <- function(con, isGFF3File=TRUE, feature.type=NULL,
+                      sequenceRegionsAsSeqinfo=FALSE, speciesAsMetadata=FALSE)
+{
+    ans <- readGFF(con)
+    pragmas <- attr(ans, "pragmas")
+    if (sequenceRegionsAsSeqinfo)
+        attr(ans, "seqinfo") <- .parseSequenceRegionsAsSeqinfo(pragmas)
+    if (speciesAsMetadata)
+        attr(ans, "metadata") <- .parseSpeciesAsMetadata(pragmas)
+    if (!is.null(feature.type))
+        ans <- ans[ans[ , "type"] %in% feature.type, , drop=FALSE]
+    if (isGFF3File)
+        ans[ , "source"] <- urlDecode(ans[ , "source"],
+                                      na.strings=NA_character_)
     ans
 }
 
