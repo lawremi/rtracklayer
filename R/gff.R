@@ -216,26 +216,42 @@ setMethod("export.gff3", "ANY",
 GFFcolnames <- function() .Call(gff_colnames)
 
 ### Does NOT work on a connection object.
-readGFF <- function(filepath, columns=NULL)
+readGFF <- function(filepath, columns=NULL, tags=NULL)
 {
     if (!isSingleString(filepath))
         stop(wmsg("'filepath' must be a single string"))
     filexp <- XVector:::open_input_files(filepath)[[1L]]
-    valid_colnames <- GFFcolnames()
+
+    ## Check 'tags'.
+    if (!is.null(tags)) {
+        if (!is.character(tags))
+            stop(wmsg("'tags' must be NULL or character vector"))
+        if (any(is.na(tags)) || anyDuplicated(tags))
+            stop(wmsg("'tags' cannot contain NAs or duplicates"))
+    }
+
+    ## Prepare 'colmap'.
+    GFF_colnames <- GFFcolnames()
+    stopifnot(GFF_colnames[[length(GFF_colnames)]] == "attributes")
     if (is.null(columns)) {
-        colmap <- seq_along(valid_colnames)
+        colmap <- seq_along(GFF_colnames)
+        ## We don't load the "attributes" column unless the user requested no
+        ## tags (i.e. by setting 'tags' to character(0)).
+        if (!(is.character(tags) && length(tags) == 0L))
+            colmap[[length(GFF_colnames)]] <- NA_integer_
     } else if (is.character(columns)) {
-        if (!all(columns %in% valid_colnames)) {
-             in1string <- paste0(valid_colnames, collapse=", ")
+        if (!all(columns %in% GFF_colnames)) {
+             in1string <- paste0(GFF_colnames, collapse=", ")
              stop(wmsg("valid GFF columns are: ", in1string))
         }
         if (anyDuplicated(columns))
             stop(wmsg("'columns' cannot contain duplicates"))
-        colmap <- match(valid_colnames, columns)
+        colmap <- match(GFF_colnames, columns)
     } else {
         stop(wmsg("'columns' must be NULL or character vector"))
     }
-    .Call(gff_read, filexp, colmap, NULL)
+
+    .Call(gff_read, filexp, colmap, tags, NULL)
 }
 
 ### sequence-region => Seqinfo
