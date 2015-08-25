@@ -496,22 +496,6 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
     ans
 }
 
-## A fast replacement for .read_gff() that doesn't work on a connection object.
-.read_gff2 <- function(con, isGFF3File=TRUE, feature.type=NULL,
-                      sequenceRegionsAsSeqinfo=FALSE, speciesAsMetadata=FALSE)
-{
-    ans <- readGFF(con, filter=list(type=feature.type))
-    pragmas <- attr(ans, "pragmas")
-    if (sequenceRegionsAsSeqinfo)
-        attr(ans, "seqinfo") <- .parseSequenceRegionsAsSeqinfo(pragmas)
-    if (speciesAsMetadata)
-        attr(ans, "metadata") <- .parseSpeciesAsMetadata(pragmas)
-    if (isGFF3File)
-        ans[ , "source"] <- urlDecode(ans[ , "source"],
-                                      na.strings=NA_character_)
-    ans
-}
-
 setGeneric("import.gff", function(con, ...) standardGeneric("import.gff"))
 
 setMethod("import.gff", "ANY",
