@@ -95,18 +95,6 @@ static const char *col_names[] = {
 	"attributes"
 };
 
-static const SEXPTYPE col_types[] = {
-	STRSXP,   /* seqid */
-	STRSXP,   /* source */
-	STRSXP,   /* type */
-	INTSXP,   /* start */
-	INTSXP,   /* end */
-	REALSXP,  /* score */
-	STRSXP,   /* strand */
-	INTSXP,   /* phase */
-	STRSXP    /* attributes */
-};
-
 #define	GFF_NCOL ((int) (sizeof(col_names) / sizeof(char *)))
 
 /* --- .Call ENTRY POINT --- */
@@ -135,6 +123,18 @@ SEXP gff_colnames()
 #define	PHASE_IDX 7
 #define	ATTRIBUTES_IDX 8
 
+static const SEXPTYPE col_types[] = {
+	STRSXP,   /* seqid */
+	STRSXP,   /* source */
+	STRSXP,   /* type */
+	INTSXP,   /* start */
+	INTSXP,   /* end */
+	REALSXP,  /* score */
+	STRSXP,   /* strand */
+	INTSXP,   /* phase */
+	STRSXP    /* attributes */
+};
+
 static int prepare_colmap0(int *colmap0, SEXP colmap)
 {
 	int ans_ncol0, col_idx, j;
@@ -153,10 +153,10 @@ static int prepare_colmap0(int *colmap0, SEXP colmap)
 }
 
 static SEXP alloc_ans(int ans_nrow, int ans_ncol0,
-		const int *colmap0, SEXP tags,
+		const int *colmap0, SEXP tags, SEXP raw_data,
 		CharAEAE *tags_buf, CharAEAE *pragmas_buf)
 {
-	int ans_ntag, ans_ncol, col_idx, j, i;
+	int ans_ntag, ans_ncol, is_raw, col_idx, j, i;
 	SEXP ans, ans_attr, ans_names, ans_col, col_name, tags_elt;
 	SEXPTYPE col_type;
 	CharAE **ae_p, *ae;
@@ -166,6 +166,7 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0,
 	else
 		ans_ntag = LENGTH(tags);
 	ans_ncol = ans_ncol0 + ans_ntag;
+	is_raw = LOGICAL(raw_data)[0];
 
 	PROTECT(ans = NEW_LIST(ans_ncol));
 	PROTECT(ans_names = NEW_CHARACTER(ans_ncol));
@@ -175,7 +176,7 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0,
 		j = colmap0[col_idx];
 		if (j == NA_INTEGER)
 			continue;
-		col_type = col_types[col_idx];
+		col_type = is_raw ? STRSXP : col_types[col_idx];
 		PROTECT(ans_col = allocVector(col_type, ans_nrow));
 		SET_ELEMENT(ans, j, ans_col);
 		UNPROTECT(1);
@@ -224,14 +225,17 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0,
 	PROTECT(ans_attr = ScalarInteger(ans_ntag));
 	SET_ATTR(ans, install("ntag"), ans_attr);
 	UNPROTECT(1);
+	PROTECT(ans_attr = duplicate(raw_data));
+	SET_ATTR(ans, install("raw_data"), raw_data);
+	UNPROTECT(1);
 	PROTECT(ans_attr = new_CHARACTER_from_CharAEAE(pragmas_buf));
 	SET_ATTR(ans, install("pragmas"), ans_attr);
 	UNPROTECT(3);
 	return ans;
 }
 
-static void load_string(SEXP ans_col, int row_idx,
-		const char *data, int data_len)
+static void load_string(const char *data, int data_len,
+		SEXP ans_col, int row_idx)
 {
 	SEXP tmp;
 
@@ -241,27 +245,33 @@ static void load_string(SEXP ans_col, int row_idx,
 	return;
 }
 
-static void load_int(SEXP ans_col, int row_idx,
-		const char *data, int data_len)
+static void load_int(const char *data, int data_len,
+		SEXP ans_col, int row_idx)
 {
 	INTEGER(ans_col)[row_idx] = as_int(data, data_len);
 	return;
 }
 
-static void load_double(SEXP ans_col, int row_idx,
-		const char *data, int data_len)
+static void load_double(const char *data, int data_len,
+		SEXP ans_col, int row_idx)
 {
 	REAL(ans_col)[row_idx] = as_double(data, data_len);
 	return;
 }
 
-static void load_data(SEXP ans, int row_idx, int col_idx, const int *colmap0,
-		const char *data, int data_len)
+static void load_data(const char *data, int data_len,
+		SEXP ans, int row_idx, int col_idx, const int *colmap0)
 {
 	SEXP ans_col;
+	int is_raw;
 	SEXPTYPE col_type;
 
 	ans_col = VECTOR_ELT(ans, colmap0[col_idx]);
+	is_raw = LOGICAL(GET_ATTR(ans, install("raw_data")))[0];
+	if (is_raw) {
+		load_string(data, data_len, ans_col, row_idx);
+		return;
+	}
 	col_type = col_types[col_idx];
 	switch (col_type) {
 	    case STRSXP:
@@ -276,20 +286,20 @@ static void load_data(SEXP ans, int row_idx, int col_idx, const int *colmap0,
 				break;
 			}
 		}
-		load_string(ans_col, row_idx, data, data_len);
+		load_string(data, data_len, ans_col, row_idx);
 	    break;
 	    case INTSXP:
-		load_int(ans_col, row_idx, data, data_len);
+		load_int(data, data_len, ans_col, row_idx);
 	    break;
 	    case REALSXP:
-		load_double(ans_col, row_idx, data, data_len);
+		load_double(data, data_len, ans_col, row_idx);
 	    break;
 	}
 	return;
 }
 
-static void load_tagval(SEXP ans, int row_idx,
-		const char *tagval, int tag_len, int tagval_len)
+static void load_tagval(const char *tagval, int tag_len, int tagval_len,
+		SEXP ans, int row_idx)
 {
 	SEXP ans_names, col_name, ans_col;
 	int ans_ncol0, j;
@@ -309,8 +319,8 @@ static void load_tagval(SEXP ans, int row_idx,
 	if (j < ans_ncol0)
 		return;  /* 'tag' was not found ==> nothing to do */
 	ans_col = VECTOR_ELT(ans, j);
-	load_string(ans_col, row_idx,
-		    tagval + tag_len + 1, tagval_len - tag_len - 1);
+	load_string(tagval + tag_len + 1, tagval_len - tag_len - 1,
+		    ans_col, row_idx);
 	return;
 }
 
@@ -342,7 +352,7 @@ static void add_tag_to_buf(const char *tag, int tag_len, CharAEAE *tags_buf)
 	return;
 }
 
-static const char *parse_GFF_tagval(const char *tagval, int tagval_len,
+static void parse_GFF_tagval(const char *tagval, int tagval_len,
 		SEXP ans, int row_idx, CharAEAE *tags_buf)
 {
 	int tag_len;
@@ -356,21 +366,20 @@ static const char *parse_GFF_tagval(const char *tagval, int tagval_len,
 	/* If 'tagval' is not in the tag=value format (i.e. if it has no =)
 	   then we simply ignore it. */
 	if (tag_len == tagval_len)
-		return NULL;
+		return;
 	if (ans != R_NilValue)
-		load_tagval(ans, row_idx, tagval, tag_len, tagval_len);
+		load_tagval(tagval, tag_len, tagval_len, ans, row_idx);
 	if (tags_buf != NULL)
 		add_tag_to_buf(tagval, tag_len, tags_buf);
-	return NULL;
+	return;
 }
 
-static const char *parse_GFF_attributes(const char *data, int data_len,
+static void parse_GFF_attributes(const char *data, int data_len,
 		SEXP ans, int row_idx, CharAEAE *tags_buf)
 {
 	const char *tagval;
 	int tagval_len, i;
 	char c;
-	const char *errmsg;
 
 	tagval = data;
 	tagval_len = 0;
@@ -380,29 +389,20 @@ static const char *parse_GFF_attributes(const char *data, int data_len,
 			tagval_len++;
 			continue;
 		}
-		errmsg = parse_GFF_tagval(tagval, tagval_len,
-					  ans, row_idx, tags_buf);
-		if (errmsg != NULL)
-			return errmsg;
+		parse_GFF_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
 		tagval = data + i + 1;
 		tagval_len = 0;
 	}
-	errmsg = parse_GFF_tagval(tagval, tagval_len,
-				  ans, row_idx, tags_buf);
-	if (errmsg != NULL)
-		return errmsg;
-	return NULL;
+	parse_GFF_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+	return;
 }
 
-static const char *parse_GFF_line(const char *line, int lineno,
-		SEXP feature_types,
-		SEXP ans, int *row_idx, const int *colmap0,
-		CharAEAE *tags_buf)
+static const char *set_data_holders(Chars_holder *data_holders,
+		const char *line, int lineno)
 {
 	int col_idx, i, data_len;
 	const char *data;
 	char c;
-	const char *errmsg;
 
 	col_idx = i = 0;
 	data = line;
@@ -418,15 +418,8 @@ static const char *parse_GFF_line(const char *line, int lineno,
 				 lineno, GFF_NCOL - 1);
 			return errmsg_buf;
 		}
-		if (ans != R_NilValue && colmap0[col_idx] != NA_INTEGER)
-			load_data(ans, *row_idx, col_idx, colmap0,
-				  data, data_len);
-		if (col_idx == ATTRIBUTES_IDX) {
-			errmsg = parse_GFF_attributes(data, data_len,
-						      ans, *row_idx, tags_buf);
-			if (errmsg != NULL)
-				return errmsg;
-		}
+		data_holders[col_idx].ptr = data;
+		data_holders[col_idx].length = data_len;
 		col_idx++;
 		data = line + i;
 		data_len = 0;
@@ -438,20 +431,92 @@ static const char *parse_GFF_line(const char *line, int lineno,
 		return errmsg_buf;
 	}
 	data_len = delete_trailing_LF_or_CRLF(data, data_len);
-	if (ans != R_NilValue && colmap0[col_idx] != NA_INTEGER)
-		load_data(ans, *row_idx, col_idx, colmap0,
-			  data, data_len);
-	if (col_idx == ATTRIBUTES_IDX) {
-		errmsg = parse_GFF_attributes(data, data_len,
-					      ans, *row_idx, tags_buf);
-		if (errmsg != NULL)
-			return errmsg;
+	data_holders[col_idx].ptr = data;
+	data_holders[col_idx].length = data_len;
+	return NULL;
+}
+
+static void check_filter(SEXP filter)
+{
+	int col_idx, nval, i;
+	SEXP filter_elt, val;
+
+	if (isNull(filter))
+		return;
+	if (!(IS_LIST(filter) && LENGTH(filter) == GFF_NCOL - 1))
+		error("incorrect 'filter'");
+	for (col_idx = 0; col_idx < GFF_NCOL - 1; col_idx++) {
+		filter_elt = VECTOR_ELT(filter, col_idx);
+		if (isNull(filter_elt))
+			continue;
+		if (!IS_CHARACTER(filter_elt))
+			error("each list element in 'filter' must be "
+			      "NULL or a character vector");
+		nval = LENGTH(filter_elt);
+		for (i = 0; i < nval; i++) {
+			val = STRING_ELT(filter_elt, i);
+			if (val == NA_STRING)
+				error("'filter' cannot contain NAs");
+		}
+	}
+	return;
+}
+
+static int pass_filter(Chars_holder *data_holders, SEXP filter)
+{
+	int col_idx, data_len, nval, i;
+	SEXP filter_elt, val;
+	const char *data;
+
+	for (col_idx = 0; col_idx < GFF_NCOL - 1; col_idx++) {
+		filter_elt = VECTOR_ELT(filter, col_idx);
+		if (isNull(filter_elt))
+			continue;
+		data = data_holders[col_idx].ptr;
+		data_len = data_holders[col_idx].length;
+		nval = LENGTH(filter_elt);
+		for (i = 0; i < nval; i++) {
+			val = STRING_ELT(filter_elt, i);
+			if (LENGTH(val) == data_len
+			 && memcmp(CHAR(val), data, data_len) == 0)
+				break;
+		}
+		if (i >= nval)
+			return 0;
+	}
+	return 1;
+}
+
+static const char *parse_GFF_line(const char *line, int lineno,
+		SEXP filter,
+		SEXP ans, int *row_idx, const int *colmap0,
+		CharAEAE *tags_buf)
+{
+	Chars_holder data_holders[GFF_NCOL];
+	const char *errmsg;
+	int col_idx, data_len;
+	const char *data;
+
+	errmsg = set_data_holders(data_holders, line, lineno);
+	if (errmsg != NULL)
+		return errmsg;
+	if (!(isNull(filter) || pass_filter(data_holders, filter)))
+		return NULL;
+	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
+		data = data_holders[col_idx].ptr;
+		data_len = data_holders[col_idx].length;
+		if (ans != R_NilValue && colmap0[col_idx] != NA_INTEGER)
+			load_data(data, data_len,
+				  ans, *row_idx, col_idx, colmap0);
+		if (col_idx == ATTRIBUTES_IDX)
+			parse_GFF_attributes(data, data_len,
+					     ans, *row_idx, tags_buf);
 	}
 	(*row_idx)++;
 	return NULL;
 }
 
-static const char *parse_GFF_file(SEXP filexp, SEXP feature_types,
+static const char *parse_GFF_file(SEXP filexp, SEXP filter,
 		int *ans_nrow, SEXP ans, const int *colmap0,
 		CharAEAE *tags_buf, CharAEAE *pragmas_buf)
 {
@@ -488,7 +553,7 @@ static const char *parse_GFF_file(SEXP filexp, SEXP feature_types,
 		}
 		if (c == '>')
 			break;  /* stop parsing at first FASTA header */
-		errmsg = parse_GFF_line(buf, lineno, feature_types,
+		errmsg = parse_GFF_line(buf, lineno, filter,
 					ans, &row_idx, colmap0,
 					tags_buf);
 		if (errmsg != NULL)
@@ -500,16 +565,16 @@ static const char *parse_GFF_file(SEXP filexp, SEXP feature_types,
 
 /* --- .Call ENTRY POINT ---
  * Args:
- *   filexp:        A "file external pointer" (see src/io_utils.c in the
- *                  XVector package).
- *   colmap:        An integer vector of length GFF_NCOL indicating which
- *                  columns to load and in which order.
- *   tags:          NULL or a character vector indicating which tags to load.
- *                  NULL means load all tags.
- *   feature_types: NULL or a character vector of feature types. Only rows
- *                  with that type are loaded. NULL means load all rows.
+ *   filexp: A "file external pointer" (see src/io_utils.c in the XVector
+ *           package).
+ *   colmap: An integer vector of length GFF_NCOL indicating which columns to
+ *           load and in which order.
+ *   tags:   NULL or a character vector indicating which tags to load. NULL
+ *           means load all tags.
+ *   filter: NULL or a list of length GFF_NCOL-1. Each list element must be
+ *           NULL or a character vector with no NAs.
  */
-SEXP gff_read(SEXP filexp, SEXP colmap, SEXP tags, SEXP feature_types)
+SEXP gff_read(SEXP filexp, SEXP colmap, SEXP tags, SEXP filter, SEXP raw_data)
 {
 	int colmap0[GFF_NCOL], ans_nrow, ans_ncol0;
 	const char *errmsg;
@@ -517,8 +582,7 @@ SEXP gff_read(SEXP filexp, SEXP colmap, SEXP tags, SEXP feature_types)
 	SEXP ans;
 
 	ans_ncol0 = prepare_colmap0(colmap0, colmap);
-	if (!(feature_types == R_NilValue || IS_CHARACTER(feature_types)))
-		error("'feature_types' must be NULL or a character vector");
+	check_filter(filter);
 
 	/* 1st pass */
 	if (tags == R_NilValue) {
@@ -528,22 +592,22 @@ SEXP gff_read(SEXP filexp, SEXP colmap, SEXP tags, SEXP feature_types)
 	}
 	pragmas_buf = new_CharAEAE(0, 0);
 	filexp_rewind(filexp);
-	errmsg = parse_GFF_file(filexp, feature_types,
-				&ans_nrow, R_NilValue, colmap0,
+	errmsg = parse_GFF_file(filexp, filter, &ans_nrow,
+				R_NilValue, colmap0,
 				tags_buf, pragmas_buf);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
 
 	/* 2nd pass */
-	PROTECT(ans = alloc_ans(ans_nrow, ans_ncol0, colmap0, tags,
+	PROTECT(ans = alloc_ans(ans_nrow, ans_ncol0, colmap0, tags, raw_data,
 				tags_buf, pragmas_buf));
 	filexp_rewind(filexp);
-	errmsg = parse_GFF_file(filexp, feature_types,
-				&ans_nrow, ans, colmap0,
+	errmsg = parse_GFF_file(filexp, filter, &ans_nrow,
+				ans, colmap0,
 				NULL, NULL);
+	UNPROTECT(1);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
-	UNPROTECT(1);
 	return ans;
 }
 
