@@ -298,7 +298,8 @@ static void load_data(const char *data, int data_len,
 	return;
 }
 
-static void load_tagval(const char *tagval, int tag_len, int tagval_len,
+static void load_tagval(const char *tag, int tag_len,
+		const char *val, int val_len,
 		SEXP ans, int row_idx)
 {
 	SEXP ans_names, col_name, ans_col;
@@ -313,18 +314,17 @@ static void load_tagval(const char *tagval, int tag_len, int tagval_len,
 	for (j = LENGTH(ans_names) - 1; j >= ans_ncol0; j--) {
 		col_name = STRING_ELT(ans_names, j);
 		if (LENGTH(col_name) == tag_len
-		 && memcmp(CHAR(col_name), tagval, tag_len) == 0)
+		 && memcmp(CHAR(col_name), tag, tag_len) == 0)
 			break;
 	}
 	if (j < ans_ncol0)
 		return;  /* 'tag' was not found ==> nothing to do */
 	ans_col = VECTOR_ELT(ans, j);
-	load_string(tagval + tag_len + 1, tagval_len - tag_len - 1,
-		    ans_col, row_idx);
+	load_string(val, val_len, ans_col, row_idx);
 	return;
 }
 
-#define IOBUF_SIZE 20002
+#define	IOBUF_SIZE 20002
 static char errmsg_buf[200];
 
 static void add_tag_to_buf(const char *tag, int tag_len, CharAEAE *tags_buf)
@@ -341,7 +341,7 @@ static void add_tag_to_buf(const char *tag, int tag_len, CharAEAE *tags_buf)
 	for (i = 0, ae_p = tags_buf->elts; i < ntag; i++, ae_p++) {
 		ae = *ae_p;
 		if (CharAE_get_nelt(ae) == tag_len
-                 && memcmp(ae->elts, tag, tag_len) == 0)
+		 && memcmp(ae->elts, tag, tag_len) == 0)
 			return;  /* 'tag' was found ==> nothing to do */
 	}
 	/* 'tag' was not found ==> add it */
@@ -352,11 +352,46 @@ static void add_tag_to_buf(const char *tag, int tag_len, CharAEAE *tags_buf)
 	return;
 }
 
-static void parse_GFF_tagval(const char *tagval, int tagval_len,
+#define	UNKNOWN_FORMAT 0
+#define	GFF2_FORMAT 2
+#define	GFF3_FORMAT 3
+
+/*
+ * The tag-val components (i.e. the chunks between ';') with only white-space
+ * characters are uninformative so we skip them. If all tag-val components have
+ * only white-space characters then we return UNKNOWN_FORMAT. Otherwise the
+ * first tag-val chunk with a non white-space character is used to determine
+ * the format of the attributes.
+ */
+static int detect_attribs_format(const char *data, int data_len)
+{
+	int only_spaces, i;
+	char c;
+
+	only_spaces = 1;
+	for (i = 0; i < data_len; i++) {
+		c = data[i];
+		if (c == '=')
+			return GFF3_FORMAT;
+		if (c == '"')
+			return GFF2_FORMAT;
+		if (c == ';') {
+			if (only_spaces)
+				continue;
+			return GFF2_FORMAT;
+		}
+		if (!isspace(c))
+			only_spaces = 0;
+	}
+	return only_spaces ? UNKNOWN_FORMAT : GFF2_FORMAT;
+}
+
+static void parse_GFF3_tagval(const char *tagval, int tagval_len,
 		SEXP ans, int row_idx, CharAEAE *tags_buf)
 {
-	int tag_len;
+	int tag_len, val_len;
 	char c;
+	const char *val;
 
 	for (tag_len = 0; tag_len < tagval_len; tag_len++) {
 		c = tagval[tag_len];
@@ -364,17 +399,110 @@ static void parse_GFF_tagval(const char *tagval, int tagval_len,
 			break;
 	}
 	/* If 'tagval' is not in the tag=value format (i.e. if it has no =)
-	   then we simply ignore it. */
+	   then we ignore it. */
 	if (tag_len == tagval_len)
 		return;
-	if (ans != R_NilValue)
-		load_tagval(tagval, tag_len, tagval_len, ans, row_idx);
+	if (ans != R_NilValue) {
+		val = tagval + tag_len + 1;
+		val_len = tagval_len - tag_len - 1;
+		load_tagval(tagval, tag_len, val, val_len, ans, row_idx);
+	}
 	if (tags_buf != NULL)
 		add_tag_to_buf(tagval, tag_len, tags_buf);
 	return;
 }
 
-static void parse_GFF_attributes(const char *data, int data_len,
+/*
+ * It seems that embedded double-quotes might be allowed in the value part of
+ * the tag value pairs of a GFF2 file, and that they are represented with 2
+ * consecutive double-quotes. To handle them properly, we should replace the
+ * 2 double-quotes by only 1, but this would require to generate a (shrinked)
+ * copy of 'val'. So for now we don't do this and just leave the 2 consecutive
+ * double-quotes in 'val' as-is, and attach an attribute to 'ans' to indicate
+ * that we've found embedded double-quotes. We also issue a warning. If we ever
+ * get that warning on real-world files, then we'll revisit this.
+ */
+static void check_for_embedded_dblquotes(const char *val, int val_len,
+		SEXP ans)
+{
+	SEXP has_embedded_quotes;
+	int i, j;
+
+	has_embedded_quotes = GET_ATTR(ans, install("has_embedded_quotes"));
+	if (!isNull(has_embedded_quotes) && LOGICAL(has_embedded_quotes)[0])
+		return;
+	for (i = 0, j = 1; j < val_len; i++, j++) {
+		if (val[i] == '"' && val[j] == '"')
+			break;
+	}
+	if (j == val_len)
+		return;
+	PROTECT(has_embedded_quotes = ScalarLogical(1));
+	SET_ATTR(ans, install("has_embedded_quotes"), has_embedded_quotes);
+	UNPROTECT(1);
+	warning("the value part of some of the tag value pairs "
+		"contains embedded double-quotes");
+	return;
+}
+
+static void parse_GFF2_tagval(const char *tagval, int tagval_len,
+		SEXP ans, int row_idx, CharAEAE *tags_buf)
+{
+	int i, tag_len, val_len;
+	char c;
+	const char *val;
+
+	/* Trim leading space. */
+	for (i = 0; i < tagval_len; i++) {
+		c = tagval[i];
+		if (!isspace(c))
+			break;
+	}
+	tagval += i;
+	tagval_len -= i;
+	/* If 'tagval' has only white-space characters then we ignore it. */
+	if (tagval_len == 0)
+		return;
+	for (tag_len = 0; tag_len < tagval_len; tag_len++) {
+		c = tagval[tag_len];
+		if (isspace(c))
+			break;
+	}
+	if (ans != R_NilValue) {
+		val = tagval + tag_len + 1;
+		val_len = tagval_len - tag_len - 1;
+		/* Trim leading space in 'val'. */
+		for (i = 0; i < val_len; i++) {
+			c = val[i];
+			if (!isspace(c))
+				break;
+		}
+		val += i;
+		val_len -= i;
+		/* Trim trailing space in 'val'. */
+		for (i = val_len - 1; i >= 0; i--) {
+			c = val[i];
+			if (!isspace(c))
+				break;
+		}
+		val_len = i + 1;
+		/* Trim leading and trailing double-quotes in 'val'. */
+		if (val_len != 0 && val[0] == '"') {
+			val++;
+			val_len--;
+		}
+		if (val_len != 0 && val[val_len - 1] == '"') {
+			val_len--;
+		}
+		check_for_embedded_dblquotes(val, val_len, ans);
+		load_tagval(tagval, tag_len, val, val_len, ans, row_idx);
+	}
+	if (tags_buf != NULL)
+		add_tag_to_buf(tagval, tag_len, tags_buf);
+	return;
+}
+
+static void parse_GFF3_attribs(const char *data, int data_len,
 		SEXP ans, int row_idx, CharAEAE *tags_buf)
 {
 	const char *tagval;
@@ -389,11 +517,40 @@ static void parse_GFF_attributes(const char *data, int data_len,
 			tagval_len++;
 			continue;
 		}
-		parse_GFF_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+		parse_GFF3_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
 		tagval = data + i + 1;
 		tagval_len = 0;
 	}
-	parse_GFF_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+	parse_GFF3_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+	return;
+}
+
+static void parse_GFF2_attribs(const char *data, int data_len,
+		SEXP ans, int row_idx, CharAEAE *tags_buf)
+{
+	const char *tagval;
+	int tagval_len, in_quotes, i;
+	char c;
+
+	tagval = data;
+	tagval_len = 0;
+	in_quotes = 0;
+	for (i = 0; i < data_len; i++) {
+		c = data[i];
+		if (c == '"') {
+			tagval_len++;
+			in_quotes = !in_quotes;
+			continue;
+		}
+		if (in_quotes || c != ';') {
+			tagval_len++;
+			continue;
+		}
+		parse_GFF2_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+		tagval = data + i + 1;
+		tagval_len = 0;
+	}
+	parse_GFF2_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
 	return;
 }
 
@@ -412,22 +569,32 @@ static const char *set_data_holders(Chars_holder *data_holders,
 			data_len++;
 			continue;
 		}
-		if (col_idx >= GFF_NCOL - 1) {
-			snprintf(errmsg_buf, sizeof(errmsg_buf),
-				 "line %d has more than %d tabs",
-				 lineno, GFF_NCOL - 1);
-			return errmsg_buf;
-		}
+		if (col_idx >= GFF_NCOL - 1)
+			break;  /* 'c' contains the 9th tab */
 		data_holders[col_idx].ptr = data;
 		data_holders[col_idx].length = data_len;
 		col_idx++;
 		data = line + i;
 		data_len = 0;
 	}
+	if (c) {
+		/* We've seen 9 tabs but it's OK if the 9th tab is followed
+		   by white spaces only (some GTF files are like that).
+		   Otherwise we raise an error. */
+		while ((c = line[i++])) {
+			if (isspace(c))
+				continue;
+			snprintf(errmsg_buf, sizeof(errmsg_buf),
+				 "line %d has more than %d "
+				 "tab-separated columns",
+					 lineno, GFF_NCOL);
+			return errmsg_buf;
+		}
+	}
 	if (col_idx < GFF_NCOL - 2) {
 		snprintf(errmsg_buf, sizeof(errmsg_buf),
-			 "line %d has less than %d tabs",
-			 lineno, GFF_NCOL - 2);
+			 "line %d has less than %d tab-separated columns",
+			 lineno, GFF_NCOL - 1);
 		return errmsg_buf;
 	}
 	data_len = delete_trailing_LF_or_CRLF(data, data_len);
@@ -490,6 +657,7 @@ static int pass_filter(Chars_holder *data_holders, SEXP filter)
 static const char *parse_GFF_line(const char *line, int lineno,
 		SEXP filter,
 		SEXP ans, int *row_idx, const int *colmap0,
+		int *attribs_format,
 		CharAEAE *tags_buf)
 {
 	Chars_holder data_holders[GFF_NCOL];
@@ -508,9 +676,16 @@ static const char *parse_GFF_line(const char *line, int lineno,
 		if (ans != R_NilValue && colmap0[col_idx] != NA_INTEGER)
 			load_data(data, data_len,
 				  ans, *row_idx, col_idx, colmap0);
-		if (col_idx == ATTRIBUTES_IDX)
-			parse_GFF_attributes(data, data_len,
-					     ans, *row_idx, tags_buf);
+		if (col_idx != ATTRIBUTES_IDX)
+			continue;
+		if (*attribs_format == UNKNOWN_FORMAT)
+			*attribs_format = detect_attribs_format(data, data_len);
+		if (*attribs_format == GFF3_FORMAT)
+			parse_GFF3_attribs(data, data_len,
+					   ans, *row_idx, tags_buf);
+		else if (*attribs_format == GFF2_FORMAT)
+			parse_GFF2_attribs(data, data_len,
+					   ans, *row_idx, tags_buf);
 	}
 	(*row_idx)++;
 	return NULL;
@@ -520,10 +695,11 @@ static const char *parse_GFF_file(SEXP filexp, SEXP filter,
 		int *ans_nrow, SEXP ans, const int *colmap0,
 		CharAEAE *tags_buf, CharAEAE *pragmas_buf)
 {
-	int row_idx, lineno, ret_code, EOL_in_buf;
+	int row_idx, lineno, ret_code, EOL_in_buf, attribs_format;
 	char buf[IOBUF_SIZE], c;
 	const char *errmsg;
 
+	attribs_format = UNKNOWN_FORMAT;
 	row_idx = 0;
 	for (lineno = 1;
 	     (ret_code = filexp_gets(filexp, buf, IOBUF_SIZE, &EOL_in_buf));
@@ -555,7 +731,7 @@ static const char *parse_GFF_file(SEXP filexp, SEXP filter,
 			break;  /* stop parsing at first FASTA header */
 		errmsg = parse_GFF_line(buf, lineno, filter,
 					ans, &row_idx, colmap0,
-					tags_buf);
+					&attribs_format, tags_buf);
 		if (errmsg != NULL)
 			return errmsg;
 	}
