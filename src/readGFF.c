@@ -324,7 +324,7 @@ static void load_tagval(const char *tag, int tag_len,
 	return;
 }
 
-#define	IOBUF_SIZE 20002
+#define	IOBUF_SIZE 65536
 static char errmsg_buf[200];
 
 static void add_tag_to_buf(const char *tag, int tag_len, CharAEAE *tags_buf)
