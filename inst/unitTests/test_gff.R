@@ -9,10 +9,11 @@ test_gff <- function() {
            rep(94852, 3), rep(95178, 2), 95504,
            rep(c(91263, 88017, 88392, 88771, 89018, 89827, 90655, 91263),
                each = 2))
-  type <- factor(c("gene", "mRNA", "mRNA", "exon", "CDS", "exon", "exon",
-                   "CDS", "CDS", "exon", "exon", "CDS", "exon", "CDS", "exon",
-                   "gene", "mRNA", "exon", "CDS", "exon", "CDS", "exon", "CDS",
-                   "exon", "CDS", "exon", "CDS", "exon", "CDS", "exon", "CDS"))
+  type <- c("gene", "mRNA", "mRNA", "exon", "CDS", "exon", "exon",
+            "CDS", "CDS", "exon", "exon", "CDS", "exon", "CDS", "exon",
+            "gene", "mRNA", "exon", "CDS", "exon", "CDS", "exon", "CDS",
+            "exon", "CDS", "exon", "CDS", "exon", "CDS", "exon", "CDS")
+  type <- factor(type, unique(type))
   source <- factor("rtracklayer")
   phase <- NA_integer_
   score <- c(5, rep(NA, length(type) - 1L))
