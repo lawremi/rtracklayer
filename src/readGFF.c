@@ -171,7 +171,7 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0,
 	PROTECT(ans = NEW_LIST(ans_ncol));
 	PROTECT(ans_names = NEW_CHARACTER(ans_ncol));
 
-	/* Alloc main columns. */
+	/* Alloc standard GFF columns. */
 	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
 		j = colmap0[col_idx];
 		if (j == NA_INTEGER)

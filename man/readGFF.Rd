@@ -1,0 +1,105 @@
+\name{readGFF}
+
+\alias{readGFF}
+\alias{GFFcolnames}
+
+
+\title{Reads a file in GFF format}
+
+\description{
+  Reads a file in GFF format and creates a data frame or
+  \link[S4Vectors]{DataFrame} object from it.
+}
+
+\usage{
+readGFF(filepath, columns=NULL, tags=NULL, filter=NULL, raw_data=FALSE)
+
+GFFcolnames()
+}
+
+\arguments{
+  \item{filepath}{
+    A single string containing the path or URL to the file to read.
+    Cannot be a connection object at the moment.
+  }
+  \item{columns}{
+    The standard GFF columns to load. All of them are loaded by default.
+  }
+  \item{tags}{
+    The tags to load. All of them are loaded by default.
+  }
+  \item{filter}{
+  }
+  \item{raw_data}{
+  }
+}
+
+\details{
+}
+
+\value{
+}
+
+\author{
+  H. Pages
+}
+
+\seealso{
+  \itemize{
+    \item \code{\link{import}} for importing a GFF file as a
+          \link[GenomicRanges]{GRanges} object.
+
+    \item \code{\link[GenomicRanges]{makeGRangesFromDataFrame}} in the
+          \pkg{GenomicRanges} package for making a
+          \link[GenomicRanges]{GRanges} object from a data frame or
+          \link[S4Vectors]{DataFrame} object.
+
+    \item \code{\link[GenomicFeatures]{makeTxDbFromGFF}} in the
+          \pkg{GenomicFeatures} package for importing a GFF file as a
+          \link[GenomicFeatures]{TxDb} object.
+
+    \item The \link[S4Vectors]{DataFrame} class in the \pkg{S4Vectors}
+          package.
+  }
+}
+
+\examples{
+## Standard GFF columns.
+GFFcolnames()
+
+tests_dir <- system.file("tests", package="rtracklayer")
+test_gff3 <- file.path(tests_dir, "genes.gff3")
+
+## Load everything.
+df0 <- readGFF(test_gff3)
+head(df0)
+
+## Load some tags only (in addition to the standard GFF columns).
+my_tags <- c("ID", "Parent", "Name", "Dbxref", "geneID")
+df1 <- readGFF(test_gff3, tags=my_tags)
+head(df1)
+
+## Load no tags (in that case, the "attributes" standard column
+## is loaded).
+df2 <- readGFF(test_gff3, tags=character(0))
+head(df2)
+
+## Load some standard GFF columns only (in addition to all tags).
+my_columns <- c("seqid", "start", "end", "strand", "type")
+df3 <- readGFF(test_gff3, columns=my_columns)
+df3
+table(df3$seqid, df3$type)
+makeGRangesFromDataFrame(df3, keep.extra.columns=TRUE)
+
+## Combine use of 'columns' and 'tags' arguments.
+readGFF(test_gff3, columns=my_columns, tags=c("ID", "Parent", "Name"))
+readGFF(test_gff3, columns=my_columns, tags=character(0))
+
+## Use the 'filter' argument to load only features of type "gene"
+## or "mRNA" located on chr10.
+my_filter <- list(type=c("gene", "mRNA"), seqid="chr10")
+readGFF(test_gff3, filter=my_filter)
+readGFF(test_gff3, columns=my_columns, tags=character(0), filter=my_filter)
+}
+
+\keyword{manip}
