@@ -11,7 +11,8 @@
 static const R_CallMethodDef callMethods[] = {
   /* readGFF.c */
   CALLMETHOD_DEF(gff_colnames, 0),
-  CALLMETHOD_DEF(gff_read, 5),
+  CALLMETHOD_DEF(scan_gff, 3),
+  CALLMETHOD_DEF(load_gff, 8),
   /* bigWig.c */
   CALLMETHOD_DEF(BWGSectionList_add, 5),
   CALLMETHOD_DEF(BWGSectionList_write, 4),

@@ -6,6 +6,20 @@
 #include <string.h>  /* for memcpy() and memcmp() */
 
 /*
+#include <time.h>
+static clock_t clock0;
+static void init_clock(const char *msg)
+{
+	printf("%s", msg);
+	clock0 = clock();
+}
+static void print_elapsed_time()
+{
+	printf("%8.6f s\n", ((double) clock() - clock0) / CLOCKS_PER_SEC);
+}
+*/
+
+/*
  * Turn string pointed by 'val' into an int. The string has no terminating
  * null byte ('\0') and must have the following format:
  *     ^[[:space:]]*[+-]?[[:digit:]]+[[:space:]]*$
@@ -152,19 +166,14 @@ static int prepare_colmap0(int *colmap0, SEXP colmap)
 	return ans_ncol0;
 }
 
-static SEXP alloc_ans(int ans_nrow, int ans_ncol0,
-		const int *colmap0, SEXP tags, SEXP raw_data,
-		CharAEAE *tags_buf, CharAEAE *pragmas_buf)
+static SEXP alloc_ans(int ans_nrow, int ans_ncol0, const int *colmap0,
+		SEXP tags, SEXP pragmas, SEXP raw_data)
 {
 	int ans_ntag, ans_ncol, is_raw, col_idx, j, i;
 	SEXP ans, ans_attr, ans_names, ans_col, col_name, tags_elt;
 	SEXPTYPE col_type;
-	CharAE **ae_p, *ae;
 
-	if (tags == R_NilValue)
-		ans_ntag = CharAEAE_get_nelt(tags_buf);
-	else
-		ans_ntag = LENGTH(tags);
+	ans_ntag = LENGTH(tags);
 	ans_ncol = ans_ncol0 + ans_ntag;
 	is_raw = LOGICAL(raw_data)[0];
 
@@ -193,27 +202,14 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0,
 			SET_STRING_ELT(ans_col, i, NA_STRING);
 		SET_ELEMENT(ans, j, ans_col);
 		UNPROTECT(1);
+		tags_elt = STRING_ELT(tags, j - ans_ncol0);
+		PROTECT(col_name = duplicate(tags_elt));
+		SET_STRING_ELT(ans_names, j, col_name);
+		UNPROTECT(1);
 	}
-	if (tags == R_NilValue) {
-		for (j = ans_ncol0, ae_p = tags_buf->elts;
-		     j < ans_ncol;
-		     j++, ae_p++)
-		{
-			ae = *ae_p;
-			PROTECT(col_name = mkCharLen(ae->elts,
-						     CharAE_get_nelt(ae)));
-			SET_STRING_ELT(ans_names, j, col_name);
-			UNPROTECT(1);
-		}
-	} else {
-		for (j = ans_ncol0; j < ans_ncol; j++) {
-			tags_elt = STRING_ELT(tags, j - ans_ncol0);
-			PROTECT(col_name = duplicate(tags_elt));
-			SET_STRING_ELT(ans_names, j, col_name);
-			UNPROTECT(1);
-		}
-	}
+
 	SET_NAMES(ans, ans_names);
+	UNPROTECT(1);
 
 	/* list_as_data_frame() performs IN-PLACE coercion */
 	list_as_data_frame(ans, ans_nrow);
@@ -228,9 +224,11 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0,
 	PROTECT(ans_attr = duplicate(raw_data));
 	SET_ATTR(ans, install("raw_data"), raw_data);
 	UNPROTECT(1);
-	PROTECT(ans_attr = new_CHARACTER_from_CharAEAE(pragmas_buf));
+	PROTECT(ans_attr = duplicate(pragmas));
 	SET_ATTR(ans, install("pragmas"), ans_attr);
-	UNPROTECT(3);
+	UNPROTECT(1);
+
+	UNPROTECT(1);
 	return ans;
 }
 
@@ -352,18 +350,18 @@ static void add_tag_to_buf(const char *tag, int tag_len, CharAEAE *tags_buf)
 	return;
 }
 
-#define	UNKNOWN_FORMAT 0
-#define	GFF2_FORMAT 2
-#define	GFF3_FORMAT 3
+#define	UNKNOWN_FMT 0
+#define	GFF2_FMT 2
+#define	GFF3_FMT 3
 
 /*
  * The tag-val components (i.e. the chunks between ';') with only white-space
  * characters are uninformative so we skip them. If all tag-val components have
- * only white-space characters then we return UNKNOWN_FORMAT. Otherwise the
- * first tag-val chunk with a non white-space character is used to determine
- * the format of the attributes.
+ * only white-space characters then we return UNKNOWN_FMT. Otherwise the first
+ * tag-val chunk with a non white-space character is used to determine the
+ * format of the attributes.
  */
-static int detect_attribs_format(const char *data, int data_len)
+static int detect_attrcol_fmt(const char *data, int data_len)
 {
 	int only_spaces, i;
 	char c;
@@ -372,18 +370,18 @@ static int detect_attribs_format(const char *data, int data_len)
 	for (i = 0; i < data_len; i++) {
 		c = data[i];
 		if (c == '=')
-			return GFF3_FORMAT;
+			return GFF3_FMT;
 		if (c == '"')
-			return GFF2_FORMAT;
+			return GFF2_FMT;
 		if (c == ';') {
 			if (only_spaces)
 				continue;
-			return GFF2_FORMAT;
+			return GFF2_FMT;
 		}
 		if (!isspace(c))
 			only_spaces = 0;
 	}
-	return only_spaces ? UNKNOWN_FORMAT : GFF2_FORMAT;
+	return only_spaces ? UNKNOWN_FMT : GFF2_FMT;
 }
 
 static void parse_GFF3_tagval(const char *tagval, int tagval_len,
@@ -502,7 +500,7 @@ static void parse_GFF2_tagval(const char *tagval, int tagval_len,
 	return;
 }
 
-static void parse_GFF3_attribs(const char *data, int data_len,
+static void parse_GFF3_attrcol(const char *data, int data_len,
 		SEXP ans, int row_idx, CharAEAE *tags_buf)
 {
 	const char *tagval;
@@ -525,7 +523,7 @@ static void parse_GFF3_attribs(const char *data, int data_len,
 	return;
 }
 
-static void parse_GFF2_attribs(const char *data, int data_len,
+static void parse_GFF2_attrcol(const char *data, int data_len,
 		SEXP ans, int row_idx, CharAEAE *tags_buf)
 {
 	const char *tagval;
@@ -657,7 +655,7 @@ static int pass_filter(Chars_holder *data_holders, SEXP filter)
 static const char *parse_GFF_line(const char *line, int lineno,
 		SEXP filter,
 		SEXP ans, int *row_idx, const int *colmap0,
-		int *attribs_format,
+		int *attrcol_fmt,
 		CharAEAE *tags_buf)
 {
 	Chars_holder data_holders[GFF_NCOL];
@@ -678,13 +676,13 @@ static const char *parse_GFF_line(const char *line, int lineno,
 				  ans, *row_idx, col_idx, colmap0);
 		if (col_idx != ATTRIBUTES_IDX)
 			continue;
-		if (*attribs_format == UNKNOWN_FORMAT)
-			*attribs_format = detect_attribs_format(data, data_len);
-		if (*attribs_format == GFF3_FORMAT)
-			parse_GFF3_attribs(data, data_len,
+		if (*attrcol_fmt == UNKNOWN_FMT)
+			*attrcol_fmt = detect_attrcol_fmt(data, data_len);
+		if (*attrcol_fmt == GFF3_FMT)
+			parse_GFF3_attrcol(data, data_len,
 					   ans, *row_idx, tags_buf);
-		else if (*attribs_format == GFF2_FORMAT)
-			parse_GFF2_attribs(data, data_len,
+		else if (*attrcol_fmt == GFF2_FMT)
+			parse_GFF2_attrcol(data, data_len,
 					   ans, *row_idx, tags_buf);
 	}
 	(*row_idx)++;
@@ -692,14 +690,17 @@ static const char *parse_GFF_line(const char *line, int lineno,
 }
 
 static const char *parse_GFF_file(SEXP filexp, SEXP filter,
-		int *ans_nrow, SEXP ans, const int *colmap0,
-		CharAEAE *tags_buf, CharAEAE *pragmas_buf)
+		CharAEAE *tags_buf,	/* used during scan (1st pass) */
+		int *ans_nrow,		/* used during scan (1st pass) */
+		int *attrcol_fmt,	/* used during scan (1st pass) */
+		CharAEAE *pragmas_buf,	/* used during scan (1st pass) */
+		SEXP ans,		/* used during load (2nd pass) */
+		const int *colmap0)	/* used during load (2nd pass) */
 {
-	int row_idx, lineno, ret_code, EOL_in_buf, attribs_format;
+	int row_idx, lineno, ret_code, EOL_in_buf;
 	char buf[IOBUF_SIZE], c;
 	const char *errmsg;
 
-	attribs_format = UNKNOWN_FORMAT;
 	row_idx = 0;
 	for (lineno = 1;
 	     (ret_code = filexp_gets(filexp, buf, IOBUF_SIZE, &EOL_in_buf));
@@ -731,7 +732,7 @@ static const char *parse_GFF_file(SEXP filexp, SEXP filter,
 			break;  /* stop parsing at first FASTA header */
 		errmsg = parse_GFF_line(buf, lineno, filter,
 					ans, &row_idx, colmap0,
-					&attribs_format, tags_buf);
+					attrcol_fmt, tags_buf);
 		if (errmsg != NULL)
 			return errmsg;
 	}
@@ -740,50 +741,100 @@ static const char *parse_GFF_file(SEXP filexp, SEXP filter,
 }
 
 /* --- .Call ENTRY POINT ---
+ * Performs the 1st pass of readGFF().
  * Args:
  *   filexp: A "file external pointer" (see src/io_utils.c in the XVector
  *           package).
- *   colmap: An integer vector of length GFF_NCOL indicating which columns to
- *           load and in which order.
  *   tags:   NULL or a character vector indicating which tags to load. NULL
  *           means load all tags.
  *   filter: NULL or a list of length GFF_NCOL-1. Each list element must be
  *           NULL or a character vector with no NAs.
  */
-SEXP gff_read(SEXP filexp, SEXP colmap, SEXP tags, SEXP filter, SEXP raw_data)
+SEXP scan_gff(SEXP filexp, SEXP tags, SEXP filter)
 {
-	int colmap0[GFF_NCOL], ans_nrow, ans_ncol0;
+	int ans_nrow, attrcol_fmt;
+	CharAEAE *tags_buf, *pragmas_buf;
 	const char *errmsg;
-	CharAEAE *pragmas_buf, *tags_buf;
-	SEXP ans;
+	SEXP scan_ans, scan_ans_elt;
 
-	ans_ncol0 = prepare_colmap0(colmap0, colmap);
+	//init_clock("scan_gff: T1 = ");
 	check_filter(filter);
-
-	/* 1st pass */
 	if (tags == R_NilValue) {
 		tags_buf = new_CharAEAE(0, 0);
 	} else {
 		tags_buf = NULL;
 	}
+	attrcol_fmt = UNKNOWN_FMT;
 	pragmas_buf = new_CharAEAE(0, 0);
 	filexp_rewind(filexp);
-	errmsg = parse_GFF_file(filexp, filter, &ans_nrow,
-				R_NilValue, colmap0,
-				tags_buf, pragmas_buf);
+	errmsg = parse_GFF_file(filexp, filter,
+				tags_buf, &ans_nrow, &attrcol_fmt, pragmas_buf,
+				R_NilValue, NULL);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
 
-	/* 2nd pass */
-	PROTECT(ans = alloc_ans(ans_nrow, ans_ncol0, colmap0, tags, raw_data,
-				tags_buf, pragmas_buf));
+	PROTECT(scan_ans = NEW_LIST(4));
+
+	if (tags == R_NilValue) {
+		PROTECT(scan_ans_elt = new_CHARACTER_from_CharAEAE(tags_buf));
+		SET_ELEMENT(scan_ans, 0, scan_ans_elt);
+		UNPROTECT(1);
+	}
+	PROTECT(scan_ans_elt = ScalarInteger(ans_nrow));
+	SET_ELEMENT(scan_ans, 1, scan_ans_elt);
+	UNPROTECT(1);
+	PROTECT(scan_ans_elt = ScalarInteger(attrcol_fmt));
+	SET_ELEMENT(scan_ans, 2, scan_ans_elt);
+	UNPROTECT(1);
+	PROTECT(scan_ans_elt = new_CHARACTER_from_CharAEAE(pragmas_buf));
+	SET_ELEMENT(scan_ans, 3, scan_ans_elt);
+	UNPROTECT(1);
+
+	UNPROTECT(1);
+	//print_elapsed_time();
+	return scan_ans;
+}
+
+/* --- .Call ENTRY POINT ---
+ * Performs the 2nd pass of readGFF().
+ * Args:
+ *   filexp:      MUST be the same that was passed to scan_gff().
+ *   tags:        A character vector indicating which tags to load. Unlike for
+ *                scan_gff() above, it cannot be NULL.
+ *   filter:      MUST be the same that was passed to scan_gff(). This time we
+ *                don't check it.
+ *   ans_nrow:    Integer vector of length 1 containing the number of rows
+ *                scan_gff() said will end up in 'ans'.
+ *   attrcol_fmt: 
+ *   pragmas:     Character vector containing the pragma lines collected by
+ *                scan_gff().
+ *   colmap:      An integer vector of length GFF_NCOL indicating which columns
+ *                to load and in which order.
+ *   raw_data:    TRUE or FALSE. If TRUE, numeric columns (e.g. "start" or
+ *                "score") are loaded as character vectors and as-is i.e. how
+ *                they are found in the file.
+ */
+SEXP load_gff(SEXP filexp, SEXP tags, SEXP filter,
+		SEXP ans_nrow, SEXP attrcol_fmt, SEXP pragmas,
+		SEXP colmap, SEXP raw_data)
+{
+	int colmap0[GFF_NCOL], ans_ncol0;
+	SEXP ans;
+	const char *errmsg;
+
+	//init_clock("load_gff: T2 = ");
+	ans_ncol0 = prepare_colmap0(colmap0, colmap);
+	PROTECT(ans = alloc_ans(INTEGER(ans_nrow)[0], ans_ncol0, colmap0,
+				tags, pragmas, raw_data));
 	filexp_rewind(filexp);
-	errmsg = parse_GFF_file(filexp, filter, &ans_nrow,
-				ans, colmap0,
-				NULL, NULL);
+	errmsg = parse_GFF_file(filexp, filter,
+				NULL, INTEGER(ans_nrow),
+				INTEGER(attrcol_fmt), NULL,
+				ans, colmap0);
 	UNPROTECT(1);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
+	//print_elapsed_time();
 	return ans;
 }
 

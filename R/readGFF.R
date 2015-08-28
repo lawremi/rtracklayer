@@ -113,10 +113,20 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
         filter <- filter[valid_filter_names]
     }
 
-    ## Return 'ans' as an ordinary data frame.
-    ans <- .Call(gff_read, filexp, colmap, tags, filter, raw_data)
+    ## 1st pass.
+    scan_ans <- .Call(scan_gff, filexp, tags, filter)
+    if (is.null(tags))
+        tags <- scan_ans[[1L]]
+    ans_nrow <- scan_ans[[2L]]
+    attrcol_fmt <- scan_ans[[3L]]
+    pragmas <- scan_ans[[4L]]
+
+    ## 2nd pass: return 'ans' as an ordinary data frame.
+    ans <- .Call(load_gff, filexp, tags, filter,
+                           ans_nrow, attrcol_fmt, pragmas,
+                           colmap, raw_data)
     ncol0 <- attr(ans, "ncol0")
-    ntag <- attr(ans, "ntag")
+    ntag <- attr(ans, "ntag")          # should be the same as 'length(tags)'
     raw_data <- attr(ans, "raw_data")  # should be the same as user-supplied
     pragmas <- attr(ans, "pragmas")
 
