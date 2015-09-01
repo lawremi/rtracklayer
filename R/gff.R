@@ -165,7 +165,8 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
                     x_char <- paste0("\"", x_char, "\"")
                   paste(name, x_char, sep = tvsep)
                 }, simplify = FALSE))
-                attrs <- do.call(paste, c(attrs, sep = "; "))
+                if (version == "3") sep <- ";" else sep <- "; "
+                attrs <- do.call(paste, c(attrs, sep = sep))
                 attrs <- gsub("[^;]*?\r\"?(;|$)", "", attrs)
                 attrs[nchar(attrs) == 0] <- NA
               }
