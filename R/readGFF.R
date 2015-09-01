@@ -54,15 +54,28 @@ GFFcolnames <- function() .Call(gff_colnames)
     ans
 }
 
-### Does NOT work on a connection object.
 readGFF <- function(filepath, columns=NULL, tags=NULL,
                     filter=NULL, raw_data=FALSE)
 {
-    if (!isSingleString(filepath))
-        stop(wmsg("'filepath' must be a single string"))
-    if (!isTRUEorFALSE(raw_data))
-        stop(wmsg("'raw_data' must be TRUE or FALSE"))
-    filexp <- XVector:::open_input_files(filepath)[[1L]]
+    ## Check 'filepath'.
+    if (isSingleString(filepath)) {
+        filexp <- XVector:::open_input_files(filepath)[[1L]]
+    } else if (is(filepath, "connection")) {
+        if (!isSeekable(filepath))
+            stop(wmsg("connection is not seekable"))
+        if (!isOpen(filepath)) {
+            open(filepath)
+            on.exit(close(filepath))
+        }
+        if (seek(con) != 0) {
+            warning(wmsg("connection is not positioned at the start ",
+                         "of the file, rewinding it"), immediate.=TRUE)
+            seek(con, where=0)
+        }
+        filexp <- filepath
+    } else {
+        stop(wmsg("'filepath' must be a single string or a connection"))
+    }
 
     ## Check 'tags'.
     if (!is.null(tags)) {
@@ -113,6 +126,10 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
         filter <- filter[valid_filter_names]
     }
 
+    ## Check 'raw_data'.
+    if (!isTRUEorFALSE(raw_data))
+        stop(wmsg("'raw_data' must be TRUE or FALSE"))
+
     ## 1st pass.
     scan_ans <- .Call(scan_gff, filexp, tags, filter)
     if (is.null(tags))
@@ -120,6 +137,13 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
     ans_nrow <- scan_ans[[2L]]
     attrcol_fmt <- scan_ans[[3L]]
     pragmas <- scan_ans[[4L]]
+
+    ## Rewind file.
+    if (is(filexp, "connection")) {
+        seek(filexp, where=0)
+    } else {
+        XVector:::rewind_filexp(filexp)
+    }
 
     ## 2nd pass: return 'ans' as an ordinary data frame.
     ans <- .Call(load_gff, filexp, tags, filter,

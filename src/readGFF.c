@@ -1,6 +1,8 @@
 #include "XVector_interface.h"
 #include "S4Vectors_interface.h"
 
+#include <R_ext/Connections.h>  /* for R_ReadConnection() */
+
 #include <ctype.h>   /* for isdigit() and isspace() */
 #include <stdlib.h>  /* for strtod() */
 #include <string.h>  /* for memcpy() and memcmp() */
@@ -18,6 +20,61 @@ static void print_elapsed_time()
 	printf("%8.6f s\n", ((double) clock() - clock0) / CLOCKS_PER_SEC);
 }
 */
+
+
+/****************************************************************************
+ * filexp_gets2(): A version of filexp_gets() that also works on connections
+ */
+
+Rconnection getConnection(int n);  /* not in <R_ext/Connections.h>, why? */
+
+static char con_buf[25000];
+static int con_buf_len, con_buf_offset;
+
+static void init_con_buf()
+{
+	con_buf_len = con_buf_offset = 0;
+	return;
+}
+
+static int filexp_gets2(SEXP filexp, char *buf, int buf_size, int *EOL_in_buf)
+{
+	Rconnection con;
+	int buf_offset;
+	char c;
+
+	if (TYPEOF(filexp) == EXTPTRSXP)
+		return filexp_gets(filexp, buf, buf_size, EOL_in_buf);
+	buf_offset = *EOL_in_buf = 0;
+	while (buf_offset < buf_size - 1) {
+		if (con_buf_offset == con_buf_len) {
+			con = getConnection(asInteger(filexp));
+			con_buf_len = (int) R_ReadConnection(con,
+					con_buf,
+					sizeof(con_buf) / sizeof(char));
+			if (con_buf_len == 0)
+				break;
+			con_buf_offset = 0;
+		}
+		c = con_buf[con_buf_offset++];
+		buf[buf_offset++] = c;
+		if (c == '\n') {
+			*EOL_in_buf = 1;
+			break;
+		}
+	}
+	buf[buf_offset] = '\0';
+	if (buf_offset == 0)
+		return 0;
+	if (con_buf_len == 0 || *EOL_in_buf)
+		return 2;
+	return 1;
+}
+
+
+/****************************************************************************
+ * NCList_new() and NCList_free()
+ */
 
 /*
  * Turn string pointed by 'val' into an int. The string has no terminating
@@ -701,9 +758,11 @@ static const char *parse_GFF_file(SEXP filexp, SEXP filter,
 	char buf[IOBUF_SIZE], c;
 	const char *errmsg;
 
+	if (TYPEOF(filexp) != EXTPTRSXP)
+		init_con_buf();
 	row_idx = 0;
 	for (lineno = 1;
-	     (ret_code = filexp_gets(filexp, buf, IOBUF_SIZE, &EOL_in_buf));
+	     (ret_code = filexp_gets2(filexp, buf, IOBUF_SIZE, &EOL_in_buf));
 	     lineno += EOL_in_buf)
 	{
 		if (ret_code == -1) {
@@ -744,7 +803,7 @@ static const char *parse_GFF_file(SEXP filexp, SEXP filter,
  * Performs the 1st pass of readGFF().
  * Args:
  *   filexp: A "file external pointer" (see src/io_utils.c in the XVector
- *           package).
+ *           package). Alternatively can be a connection.
  *   tags:   NULL or a character vector indicating which tags to load. NULL
  *           means load all tags.
  *   filter: NULL or a list of length GFF_NCOL-1. Each list element must be
@@ -766,7 +825,6 @@ SEXP scan_gff(SEXP filexp, SEXP tags, SEXP filter)
 	}
 	attrcol_fmt = UNKNOWN_FMT;
 	pragmas_buf = new_CharAEAE(0, 0);
-	filexp_rewind(filexp);
 	errmsg = parse_GFF_file(filexp, filter,
 				tags_buf, &ans_nrow, &attrcol_fmt, pragmas_buf,
 				R_NilValue, NULL);
@@ -826,7 +884,6 @@ SEXP load_gff(SEXP filexp, SEXP tags, SEXP filter,
 	ans_ncol0 = prepare_colmap0(colmap0, colmap);
 	PROTECT(ans = alloc_ans(INTEGER(ans_nrow)[0], ans_ncol0, colmap0,
 				tags, pragmas, raw_data));
-	filexp_rewind(filexp);
 	errmsg = parse_GFF_file(filexp, filter,
 				NULL, INTEGER(ans_nrow),
 				INTEGER(attrcol_fmt), NULL,

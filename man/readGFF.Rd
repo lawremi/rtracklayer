@@ -20,7 +20,7 @@ GFFcolnames()
 \arguments{
   \item{filepath}{
     A single string containing the path or URL to the file to read.
-    Cannot be a connection object at the moment.
+    Alternatively can be a connection.
   }
   \item{columns}{
     The standard GFF columns to load. All of them are loaded by default.
