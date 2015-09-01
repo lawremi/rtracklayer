@@ -67,10 +67,10 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
             open(filepath)
             on.exit(close(filepath))
         }
-        if (seek(con) != 0) {
+        if (seek(filepath) != 0) {
             warning(wmsg("connection is not positioned at the start ",
                          "of the file, rewinding it"), immediate.=TRUE)
-            seek(con, where=0)
+            seek(filepath, where=0)
         }
         filexp <- filepath
     } else {
