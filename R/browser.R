@@ -198,10 +198,6 @@ setMethod("browserSession", "missing",
 # get one from a view
 setMethod("browserSession", "BrowserView", function(object) object@session)
 
-# load a sequence into the browser (probably should remove this)
-setGeneric("sequence<-", function(object, name, ..., value)
-           standardGeneric("sequence<-"))
-
 setGeneric("login",
            function(x, username, password, ...) standardGeneric("login"),
            signature = "x")

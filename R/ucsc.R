@@ -51,7 +51,7 @@ setMethod("seqinfo", "UCSCSession", function(x) {
 })
 
 normArgTrackData <- function(value, session) {
-  genomes <- sapply(value, function(x) singleGenome(genome(x)))
+  genomes <- vapply(value, function(x) singleGenome(genome(x)), character(1L))
   genomes[is.na(genomes)] <- ""
   tapply(value, unlist(genomes),
          function(tracks)
@@ -59,9 +59,9 @@ normArgTrackData <- function(value, session) {
            genome <- singleGenome(genome(tracks[[1]]))
            if (!is.na(genome))
              genome(session) <- genome
-           spaces <- unlist(lapply(tracks, names))
+           spaces <- do.call(c, unname(lapply(tracks, seqnames)))
            badSpaces <- setdiff(spaces, seqnames(session))
-           if (length(badSpaces))
+           if (length(badSpaces) > 0L)
              stop("Invalid chromosomes for ", genome(session), ": ",
                   paste(badSpaces, collapse = ", "))
          })
