@@ -427,7 +427,7 @@ setMethod("import", "GFFFile",
                 }
             }
 
-            sniffed <- sniffGFFVersion(resource(con))
+            sniffed <- .sniffGFFVersion(resource(con))
             version <- gffFileVersion(con)
             if (!length(version)) {
               if (is.null(sniffed))
@@ -568,7 +568,7 @@ setMethod("genome", "GFFFile", function(x) providerVersion(x))
 gffComment <- function(con, ...) 
   cat("##", paste(...), "\n", sep = "", file = con, append = TRUE)
 
-sniffGFFVersion <- function(con) {
+.sniffGFFVersion <- function(con) {
   con <- connectionForResource(con, "r")
   version <- NULL
   lines <- line <- readLines(con, n = 1)

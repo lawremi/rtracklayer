@@ -3,9 +3,74 @@
 ### -------------------------------------------------------------------------
 
 
+.make_filexp_from_filepath <- function(filepath)
+{
+    if (isSingleString(filepath))
+        return(XVector:::open_input_files(filepath)[[1L]])
+    if (!is(filepath, "connection"))
+        stop(wmsg("'filepath' must be a single string or a connection"))
+    if (!isSeekable(filepath))
+        stop(wmsg("connection is not seekable"))
+    filepath
+}
+
+readGFFPragmas <- function(filepath)
+{
+    filexp <- .make_filexp_from_filepath(filepath)
+    if (is(filexp, "connection")) {
+        if (!isOpen(filexp)) {
+            open(filexp)
+            on.exit(close(filexp))
+        }
+        if (seek(filexp) != 0) {
+            warning(wmsg("connection is not positioned at the start ",
+                         "of the file, rewinding it"), immediate.=TRUE)
+            seek(filexp, where=0)
+        }
+    }
+    .Call(read_gff_pragmas, filexp)
+}
+
+.get_version_from_pragmas <- function(pragmas)
+{
+    attrcol_fmt <- attr(pragmas, "attrcol_fmt")
+    idx <- grep("^##gff-version", pragmas)
+    if (length(idx) == 0L) {
+        if (is.null(attrcol_fmt))
+            stop("'attr(pragmas, \"attrcol_fmt\")' is NULL")
+        return(attrcol_fmt)
+    }
+    version <- sub("^##gff-version", "", pragmas[idx])
+    version <- unique(version)
+    if (length(version) > 1L) {
+        warning(wmsg("more than one GFF version found in the pragmas, ",
+                     "returning the first one"))
+        version <- version[[1L]]
+    }
+    version <- suppressWarnings(as.integer(version))
+    if (is.na(version)) {
+        warning(wmsg("unrecognized GFF version found in the pragmas"))
+        if (is.null(attrcol_fmt))
+            stop("'attr(pragmas, \"attrcol_fmt\")' is NULL")
+        return(attrcol_fmt)
+    }
+    version
+}
+
+sniffGFFVersion <- function(filepath)
+{
+    pragmas <- readGFFPragmas(filepath)
+    .get_version_from_pragmas(pragmas)
+}
+
 ### Return the 9 standard GFF columns as specified at:
 ###   http://www.sequenceontology.org/resources/gff3.html
-GFFcolnames <- function() .Call(gff_colnames)
+GFFcolnames <- function(GFF1=FALSE)
+{
+    if (!isTRUEorFALSE(GFF1))
+        stop("'GFF1' must be TRUE or FALSE")
+    .Call(gff_colnames, GFF1)
+}
 
 ### 'df' must be a data-frame-like object (typically an ordinary data frame or
 ### a DataFrame object). 'decode_idx' must be a non-empty integer vector
@@ -58,24 +123,30 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
                     filter=NULL, raw_data=FALSE)
 {
     ## Check 'filepath'.
-    if (isSingleString(filepath)) {
-        filexp <- XVector:::open_input_files(filepath)[[1L]]
-    } else if (is(filepath, "connection")) {
-        if (!isSeekable(filepath))
-            stop(wmsg("connection is not seekable"))
-        if (!isOpen(filepath)) {
-            open(filepath)
-            on.exit(close(filepath))
+    filexp <- .make_filexp_from_filepath(filepath)
+    if (is(filexp, "connection")) {
+        if (!isOpen(filexp)) {
+            open(filexp)
+            on.exit(close(filexp))
         }
-        if (seek(filepath) != 0) {
+        if (seek(filexp) != 0) {
             warning(wmsg("connection is not positioned at the start ",
                          "of the file, rewinding it"), immediate.=TRUE)
-            seek(filepath, where=0)
+            seek(filexp, where=0)
         }
-        filexp <- filepath
-    } else {
-        stop(wmsg("'filepath' must be a single string or a connection"))
     }
+
+    ## Get pragmas lines.
+    pragmas <- .Call(read_gff_pragmas, filexp)
+
+    ## Rewind file.
+    if (is(filexp, "connection")) {
+        seek(filexp, where=0)
+    } else {
+        XVector:::rewind_filexp(filexp)
+    }
+
+    attrcol_fmt <- .get_version_from_pragmas(pragmas)
 
     ## Check 'tags'.
     if (!is.null(tags)) {
@@ -86,14 +157,16 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
     }
 
     ## Prepare 'colmap'.
-    GFF_colnames <- GFFcolnames()
-    stopifnot(GFF_colnames[[length(GFF_colnames)]] == "attributes")
+    GFF_colnames <- GFFcolnames(attrcol_fmt == 1)
     if (is.null(columns)) {
         colmap <- seq_along(GFF_colnames)
-        ## We don't load the "attributes" column unless the user requested no
-        ## tags (i.e. by setting 'tags' to character(0)).
-        if (!(is.character(tags) && length(tags) == 0L))
-            colmap[[length(GFF_colnames)]] <- NA_integer_
+        if (attrcol_fmt != 1) {
+            stopifnot(GFF_colnames[[length(GFF_colnames)]] == "attributes")
+            ## We don't load the "attributes" column unless the user requested
+            ## no tags (i.e. by setting 'tags' to character(0)).
+            if (!(is.character(tags) && length(tags) == 0L))
+                colmap[[length(GFF_colnames)]] <- NA_integer_
+        }
     } else if (is.character(columns)) {
         if (!all(columns %in% GFF_colnames)) {
             in1string <- paste0(GFF_colnames, collapse=", ")
@@ -114,12 +187,21 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
         filter_names <- names(filter)
         if (is.null(filter_names))
             stop("'filter' must have names")
-        valid_filter_names <- head(GFF_colnames, n=-1L)
+        if (attrcol_fmt == 1) {
+            valid_filter_names <- GFF_colnames
+        } else {
+            valid_filter_names <- head(GFF_colnames, n=-1L)
+        }
         if (!all(filter_names %in% valid_filter_names)) {
             in1string <- paste0(valid_filter_names, collapse=", ")
+            if (attrcol_fmt == 1) {
+                excluding_note <- ""
+            } else {
+                excluding_note <- "(excluding \"attributes\")"
+            }
             stop(wmsg("The names on 'filter' must be valid GFF columns ",
-                      "(excluding \"attributes\"). ",
-                      "Valid names on 'filter': ", in1string))
+                      excluding_note, ". ",
+                      "Valid 'filter' names: ", in1string))
         }
         if (anyDuplicated(filter_names))
             stop(wmsg("names on 'filter' must be unique"))
@@ -131,12 +213,10 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
         stop(wmsg("'raw_data' must be TRUE or FALSE"))
 
     ## 1st pass.
-    scan_ans <- .Call(scan_gff, filexp, tags, filter)
+    scan_ans <- .Call(scan_gff, filexp, attrcol_fmt, tags, filter)
     if (is.null(tags))
         tags <- scan_ans[[1L]]
     ans_nrow <- scan_ans[[2L]]
-    attrcol_fmt <- scan_ans[[3L]]
-    pragmas <- scan_ans[[4L]]
 
     ## Rewind file.
     if (is(filexp, "connection")) {
@@ -146,17 +226,20 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
     }
 
     ## 2nd pass: return 'ans' as an ordinary data frame.
-    ans <- .Call(load_gff, filexp, tags, filter,
-                           ans_nrow, attrcol_fmt, pragmas,
+    ans <- .Call(load_gff, filexp, attrcol_fmt, tags, filter,
+                           ans_nrow, pragmas,
                            colmap, raw_data)
     ncol0 <- attr(ans, "ncol0")
     ntag <- attr(ans, "ntag")          # should be the same as 'length(tags)'
-    raw_data <- attr(ans, "raw_data")  # should be the same as user-supplied
-    pragmas <- attr(ans, "pragmas")
 
     ## Post-process standard GFF cols.
-    #factor_colnames <- c("seqid", "source", "type", "strand")
-    factor_colnames <- c("seqid", "source", "type")
+    if (attrcol_fmt == 1) {
+        #factor_colnames <- c("seqid", "source", "type", "strand", "group")
+        factor_colnames <- c("seqid", "source", "type", "group")
+    } else {
+        #factor_colnames <- c("seqid", "source", "type", "strand")
+        factor_colnames <- c("seqid", "source", "type")
+    }
     m <- match(factor_colnames, head(colnames(ans), n=ncol0))
     m <- m[!is.na(m)]
     factor_cols <- lapply(setNames(m, colnames(ans)[m]),

@@ -14,7 +14,7 @@
 \usage{
 readGFF(filepath, columns=NULL, tags=NULL, filter=NULL, raw_data=FALSE)
 
-GFFcolnames()
+GFFcolnames(GFF1=FALSE)
 }
 
 \arguments{
@@ -31,6 +31,8 @@ GFFcolnames()
   \item{filter}{
   }
   \item{raw_data}{
+  }
+  \item{GFF1}{
   }
 }
 
@@ -66,6 +68,7 @@ GFFcolnames()
 \examples{
 ## Standard GFF columns.
 GFFcolnames()
+GFFcolnames(GFF1=TRUE)  # "group" instead of "attributes"
 
 tests_dir <- system.file("tests", package="rtracklayer")
 test_gff3 <- file.path(tests_dir, "genes.gff3")

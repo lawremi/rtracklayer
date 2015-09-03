@@ -91,18 +91,18 @@ static int filexp_gets2(SEXP filexp, char *buf, int buf_size, int *EOL_in_buf)
 #define	TRAILING_SPACE 2
 static int as_int(const char *val, int val_len)
 {
-	int n, ndigit, sign, status, i;
+	int n, ndigit, sign, state, i;
 	char c;
 
 	n = ndigit = 0;
 	sign = 1;
-	status = LEADING_SPACE;
+	state = LEADING_SPACE;
 	for (i = 0; i < val_len; i++) {
 		c = val[i];
 		if (isdigit(c)) {
-			if (status == TRAILING_SPACE)
+			if (state == TRAILING_SPACE)
 				return NA_INTEGER;  /* malformed string */
-			status = NUMBER;
+			state = NUMBER;
 			ndigit++;
 			n = safe_int_mult(n, 10);
 			n = safe_int_add(n, c - '0');
@@ -111,19 +111,19 @@ static int as_int(const char *val, int val_len)
 			continue;
 		}
 		if (c == '+' || c == '-') {
-			if (status != LEADING_SPACE)
+			if (state != LEADING_SPACE)
 				return NA_INTEGER;  /* malformed string */
-			status = NUMBER;
+			state = NUMBER;
 			if (c == '-')
 				sign = -1;
 			continue;
 		}
 		if (!isspace(c))
 			return NA_INTEGER;  /* malformed string */
-		if (status == NUMBER) {
+		if (state == NUMBER) {
 			if (ndigit == 0)
 				return NA_INTEGER;  /* malformed string */
-			status = TRAILING_SPACE;
+			state = TRAILING_SPACE;
 		}
 	}
 	if (ndigit == 0)
@@ -163,26 +163,10 @@ static const char *col_names[] = {
 	"score",
 	"strand",
 	"phase",
-	"attributes"
+	"attributes"  /* "group" for GFF1 */
 };
 
 #define	GFF_NCOL ((int) (sizeof(col_names) / sizeof(char *)))
-
-/* --- .Call ENTRY POINT --- */
-SEXP gff_colnames()
-{
-	SEXP ans, ans_elt;
-	int col_idx;
-
-	PROTECT(ans = NEW_CHARACTER(GFF_NCOL));
-	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
-		PROTECT(ans_elt = mkChar(col_names[col_idx]));
-		SET_STRING_ELT(ans, col_idx, ans_elt);
-		UNPROTECT(1);
-	}
-	UNPROTECT(1);
-	return ans;
-}
 
 #define	SEQID_IDX 0
 #define	SOURCE_IDX 1
@@ -193,6 +177,31 @@ SEXP gff_colnames()
 #define	STRAND_IDX 6
 #define	PHASE_IDX 7
 #define	ATTRIBUTES_IDX 8
+
+static const char *gff_colname(int col_idx, int gff1)
+{
+	if (col_idx == ATTRIBUTES_IDX && gff1)
+		return "group";
+	return col_names[col_idx];
+}
+
+/* --- .Call ENTRY POINT --- */
+SEXP gff_colnames(SEXP GFF1)
+{
+	SEXP ans, ans_elt;
+	int col_idx;
+	const char *colname;
+
+	PROTECT(ans = NEW_CHARACTER(GFF_NCOL));
+	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
+		colname = gff_colname(col_idx, LOGICAL(GFF1)[0]);
+		PROTECT(ans_elt = mkChar(colname));
+		SET_STRING_ELT(ans, col_idx, ans_elt);
+		UNPROTECT(1);
+	}
+	UNPROTECT(1);
+	return ans;
+}
 
 static const SEXPTYPE col_types[] = {
 	STRSXP,   /* seqid */
@@ -224,14 +233,16 @@ static int prepare_colmap0(int *colmap0, SEXP colmap)
 }
 
 static SEXP alloc_ans(int ans_nrow, int ans_ncol0, const int *colmap0,
-		SEXP tags, SEXP pragmas, SEXP raw_data)
+		SEXP tags, SEXP attrcol_fmt, SEXP pragmas, SEXP raw_data)
 {
-	int ans_ntag, ans_ncol, is_raw, col_idx, j, i;
-	SEXP ans, ans_attr, ans_names, ans_col, col_name, tags_elt;
+	int ans_ntag, ans_ncol, gff1, is_raw, col_idx, j, i;
+	SEXP ans, ans_attr, ans_names, ans_col, ans_colname, tags_elt;
 	SEXPTYPE col_type;
+	const char *colname;
 
 	ans_ntag = LENGTH(tags);
 	ans_ncol = ans_ncol0 + ans_ntag;
+	gff1 = INTEGER(attrcol_fmt)[0] == 1;
 	is_raw = LOGICAL(raw_data)[0];
 
 	PROTECT(ans = NEW_LIST(ans_ncol));
@@ -246,8 +257,9 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0, const int *colmap0,
 		PROTECT(ans_col = allocVector(col_type, ans_nrow));
 		SET_ELEMENT(ans, j, ans_col);
 		UNPROTECT(1);
-		PROTECT(col_name = mkChar(col_names[col_idx]));
-		SET_STRING_ELT(ans_names, j, col_name);
+		colname = gff_colname(col_idx, gff1);
+		PROTECT(ans_colname = mkChar(colname));
+		SET_STRING_ELT(ans_names, j, ans_colname);
 		UNPROTECT(1);
 		j++;
 	}
@@ -260,8 +272,8 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0, const int *colmap0,
 		SET_ELEMENT(ans, j, ans_col);
 		UNPROTECT(1);
 		tags_elt = STRING_ELT(tags, j - ans_ncol0);
-		PROTECT(col_name = duplicate(tags_elt));
-		SET_STRING_ELT(ans_names, j, col_name);
+		PROTECT(ans_colname = duplicate(tags_elt));
+		SET_STRING_ELT(ans_names, j, ans_colname);
 		UNPROTECT(1);
 	}
 
@@ -278,11 +290,14 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0, const int *colmap0,
 	PROTECT(ans_attr = ScalarInteger(ans_ntag));
 	SET_ATTR(ans, install("ntag"), ans_attr);
 	UNPROTECT(1);
-	PROTECT(ans_attr = duplicate(raw_data));
-	SET_ATTR(ans, install("raw_data"), raw_data);
+	PROTECT(ans_attr = duplicate(attrcol_fmt));
+	SET_ATTR(ans, install("attrcol_fmt"), ans_attr);
 	UNPROTECT(1);
 	PROTECT(ans_attr = duplicate(pragmas));
 	SET_ATTR(ans, install("pragmas"), ans_attr);
+	UNPROTECT(1);
+	PROTECT(ans_attr = duplicate(raw_data));
+	SET_ATTR(ans, install("raw_data"), raw_data);
 	UNPROTECT(1);
 
 	UNPROTECT(1);
@@ -357,7 +372,7 @@ static void load_tagval(const char *tag, int tag_len,
 		const char *val, int val_len,
 		SEXP ans, int row_idx)
 {
-	SEXP ans_names, col_name, ans_col;
+	SEXP ans_names, ans_colname, ans_col;
 	int ans_ncol0, j;
 
 	ans_ncol0 = INTEGER(GET_ATTR(ans, install("ncol0")))[0];
@@ -367,9 +382,9 @@ static void load_tagval(const char *tag, int tag_len,
 	   and seems to be fast enough. */
 	ans_names = GET_NAMES(ans);
 	for (j = LENGTH(ans_names) - 1; j >= ans_ncol0; j--) {
-		col_name = STRING_ELT(ans_names, j);
-		if (LENGTH(col_name) == tag_len
-		 && memcmp(CHAR(col_name), tag, tag_len) == 0)
+		ans_colname = STRING_ELT(ans_names, j);
+		if (LENGTH(ans_colname) == tag_len
+		 && memcmp(CHAR(ans_colname), tag, tag_len) == 0)
 			break;
 	}
 	if (j < ans_ncol0)
@@ -407,38 +422,97 @@ static void add_tag_to_buf(const char *tag, int tag_len, CharAEAE *tags_buf)
 	return;
 }
 
+/*
+ * We use a heuristic to detect the format of the "attributes" col.
+ * Terminology:
+ *   - Chunks in 'data' separated by ';' are called units.
+ *   - A unit with only white-space characters is called a "white" unit.
+ *   - A "tag-like word" is a sequence of contiguous non-white-space characters
+ *     with no '=' in it.
+ *   - A unit made of one "tag-like word" (possibly surrounded by white-space
+ *     characters) is called a "tag-only" unit.
+ * Heuristic:
+ *   (a) If 'data' contains only 1 unit (i.e. no ';' in it),
+ *       then:
+ *         - if it's "white" -> return UNKNOWN_FMT
+ *         - if it's "tag-only" -> return GFF1_FMT
+ *         - otherwise -> (c) below applies.
+ *   (b) If 'data' contains > 1 units (i.e. at least 1 ';' in it), then the
+ *       format can't be GFF1_FMT anymore so we have to choose between GFF2_FMT
+ *       and GFF3_FMT. For that matter "white" and "tag-only" units are
+ *       considered uninformative so we skip them. If all units are
+ *       uninformative then we return UNKNOWN_FMT. Otherwise the first
+ *       informative unit is used and (c) below applies.
+ *   (c) Now we're looking at a unit that is not "white" or "tag-only" and
+ *       want to be able to tell whether its format is GFF2_FMT or GFF3_FMT
+ *       (UNKNOWN_FMT or GFF1_FMT are not an option anymore). The rule is: if
+ *       the unit contains a '=' and if this '=' is preceded by one
+ *       "tag-like word" only (possibly surrounded by white-space characters)
+ *       then the format is GFF3_FMT. Otherwise it's GFF2_FMT.
+ * Examples:
+ *    data                   detected format
+ *   |ID=4|----------------> GFF3_FMT
+ *   |  ID  = 4   |--------> GFF3_FMT
+ *   |=|-------------------> GFF3_FMT
+ *   |     = 4   |---------> GFF3_FMT
+ *   |   = ID 4    |-------> GFF3_FMT
+ *   |ID 4|----------------> GFF2_FMT
+ *   |  ID   4  |----------> GFF2_FMT
+ *   |X Y=4|---------------> inherently ambiguous (could be GFF2 or GFF3) but
+ *                           our heuristic returns GFF2_FMT (tag is "X" and
+ *                           value is "Y=4")
+ *   |XY z =|--------------> GFF2_FMT (tag is "XY" and value is "z =")
+ *   |; ;ID=4;Parent 12|---> GFF3_FMT (we look at the 1st informative unit)
+ *   |; ;ID 4;Parent=12|---> GFF2_FMT (we look at the 1st informative unit)
+ *   |99|------------------> GFF1_FMT
+ *   ||--------------------> UNKNOWN_FMT
+ *   |   |-----------------> UNKNOWN_FMT
+ *   | ; 99 ;   |----------> UNKNOWN_FMT
+ *   |99; ID =  4|---------> GFF3_FMT
+ */
 #define	UNKNOWN_FMT 0
+#define	GFF1_FMT 1
 #define	GFF2_FMT 2
 #define	GFF3_FMT 3
 
-/*
- * The tag-val components (i.e. the chunks between ';') with only white-space
- * characters are uninformative so we skip them. If all tag-val components have
- * only white-space characters then we return UNKNOWN_FMT. Otherwise the first
- * tag-val chunk with a non white-space character is used to determine the
- * format of the attributes.
- */
+#define	FIRST_SPACE 0
+#define	FIRST_WORD 1
+#define	SECOND_SPACE 2
 static int detect_attrcol_fmt(const char *data, int data_len)
 {
-	int only_spaces, i;
+	int nsep, state, i;
 	char c;
 
-	only_spaces = 1;
+	nsep = 0;
+	state = FIRST_SPACE;
 	for (i = 0; i < data_len; i++) {
 		c = data[i];
+		if (isspace(c)) {
+			if (state == FIRST_WORD)
+				state = SECOND_SPACE;
+			continue;
+		}
+		if (c == ';') {
+			nsep++;
+			/* We came to the end of a unit that was "white" (i.e.
+			   current state is FIRST_SPACE) or "tag-only" (i.e.
+			   current state is FIRST_WORD or SECOND_SPACE). This
+			   is considered uninformative i.e. it didn't allow us
+			   to decide between GFF2_FMT and GFF3_FMT (see (b)
+			   above). */
+			state = FIRST_SPACE;
+			continue;
+		}
 		if (c == '=')
 			return GFF3_FMT;
-		if (c == '"')
+		if (state == SECOND_SPACE)
 			return GFF2_FMT;
-		if (c == ';') {
-			if (only_spaces)
-				continue;
-			return GFF2_FMT;
-		}
-		if (!isspace(c))
-			only_spaces = 0;
+		if (state == FIRST_SPACE)
+			state = FIRST_WORD;
 	}
-	return only_spaces ? UNKNOWN_FMT : GFF2_FMT;
+	if (nsep == 0 && state != FIRST_SPACE)
+		return GFF1_FMT;
+	return UNKNOWN_FMT;
 }
 
 static void parse_GFF3_tagval(const char *tagval, int tagval_len,
@@ -448,14 +522,14 @@ static void parse_GFF3_tagval(const char *tagval, int tagval_len,
 	char c;
 	const char *val;
 
+	/* Compute 'tag_len'. */
 	for (tag_len = 0; tag_len < tagval_len; tag_len++) {
 		c = tagval[tag_len];
 		if (c == '=')
 			break;
 	}
-	/* If 'tagval' is not in the tag=value format (i.e. if it has no =)
-	   then we ignore it. */
-	if (tag_len == tagval_len)
+	/* If 'tagval' is not in the "tag=value" format then we ignore it. */
+	if (tag_len >= tagval_len)
 		return;
 	if (ans != R_NilValue) {
 		val = tagval + tag_len + 1;
@@ -490,7 +564,7 @@ static void check_for_embedded_dblquotes(const char *val, int val_len,
 		if (val[i] == '"' && val[j] == '"')
 			break;
 	}
-	if (j == val_len)
+	if (j >= val_len)
 		return;
 	PROTECT(has_embedded_quotes = ScalarLogical(1));
 	SET_ATTR(ans, install("has_embedded_quotes"), has_embedded_quotes);
@@ -515,14 +589,15 @@ static void parse_GFF2_tagval(const char *tagval, int tagval_len,
 	}
 	tagval += i;
 	tagval_len -= i;
-	/* If 'tagval' has only white-space characters then we ignore it. */
-	if (tagval_len == 0)
-		return;
+	/* Compute 'tag_len'. */
 	for (tag_len = 0; tag_len < tagval_len; tag_len++) {
 		c = tagval[tag_len];
 		if (isspace(c))
 			break;
 	}
+	/* If 'tagval' is not in the "tag value" format then we ignore it. */
+	if (tag_len >= tagval_len)
+		return;
 	if (ans != R_NilValue) {
 		val = tagval + tag_len + 1;
 		val_len = tagval_len - tag_len - 1;
@@ -642,32 +717,39 @@ static const char *set_data_holders(Chars_holder *data_holders,
 			snprintf(errmsg_buf, sizeof(errmsg_buf),
 				 "line %d has more than %d "
 				 "tab-separated columns",
-					 lineno, GFF_NCOL);
+				 lineno, GFF_NCOL);
 			return errmsg_buf;
 		}
+	} else {
+		if (col_idx < GFF_NCOL - 2) {
+			snprintf(errmsg_buf, sizeof(errmsg_buf),
+				 "line %d has less than %d "
+				 "tab-separated columns",
+				 lineno, GFF_NCOL - 1);
+			return errmsg_buf;
+		}
+		if (col_idx == GFF_NCOL - 1)
+			data_len = delete_trailing_LF_or_CRLF(data, data_len);
+		data_holders[col_idx].ptr = data;
+		data_holders[col_idx].length = data_len;
+		col_idx++;
+		if (col_idx == GFF_NCOL - 1)
+			data_holders[col_idx].length = 0;
 	}
-	if (col_idx < GFF_NCOL - 2) {
-		snprintf(errmsg_buf, sizeof(errmsg_buf),
-			 "line %d has less than %d tab-separated columns",
-			 lineno, GFF_NCOL - 1);
-		return errmsg_buf;
-	}
-	data_len = delete_trailing_LF_or_CRLF(data, data_len);
-	data_holders[col_idx].ptr = data;
-	data_holders[col_idx].length = data_len;
 	return NULL;
 }
 
-static void check_filter(SEXP filter)
+static void check_filter(SEXP filter, int attrcol_fmt)
 {
-	int col_idx, nval, i;
+	int filter_len, col_idx, nval, i;
 	SEXP filter_elt, val;
 
 	if (isNull(filter))
 		return;
-	if (!(IS_LIST(filter) && LENGTH(filter) == GFF_NCOL - 1))
+	filter_len = attrcol_fmt == 1 ? GFF_NCOL : GFF_NCOL - 1;
+	if (!(IS_LIST(filter) && LENGTH(filter) == filter_len))
 		error("incorrect 'filter'");
-	for (col_idx = 0; col_idx < GFF_NCOL - 1; col_idx++) {
+	for (col_idx = 0; col_idx < filter_len; col_idx++) {
 		filter_elt = VECTOR_ELT(filter, col_idx);
 		if (isNull(filter_elt))
 			continue;
@@ -686,11 +768,12 @@ static void check_filter(SEXP filter)
 
 static int pass_filter(Chars_holder *data_holders, SEXP filter)
 {
-	int col_idx, data_len, nval, i;
+	int filter_len, col_idx, data_len, nval, i;
 	SEXP filter_elt, val;
 	const char *data;
 
-	for (col_idx = 0; col_idx < GFF_NCOL - 1; col_idx++) {
+	filter_len = LENGTH(filter);
+	for (col_idx = 0; col_idx < filter_len; col_idx++) {
 		filter_elt = VECTOR_ELT(filter, col_idx);
 		if (isNull(filter_elt))
 			continue;
@@ -710,47 +793,63 @@ static int pass_filter(Chars_holder *data_holders, SEXP filter)
 }
 
 static const char *parse_GFF_line(const char *line, int lineno,
-		SEXP filter,
-		SEXP ans, int *row_idx, const int *colmap0,
 		int *attrcol_fmt,
-		CharAEAE *tags_buf)
+		SEXP filter,		/* used during scan and load */
+		CharAEAE *tags_buf,	/* used during scan (1st pass) */
+		int *row_idx,		/* used during scan (1st pass) */
+		SEXP ans,		/* used during load (2nd pass) */
+		const int *colmap0)	/* used during load (2nd pass) */
 {
-	Chars_holder data_holders[GFF_NCOL];
 	const char *errmsg;
-	int col_idx, data_len;
+	Chars_holder data_holders[GFF_NCOL];
+	const Chars_holder *data_holder;
 	const char *data;
+	int data_len, col_idx;
 
 	errmsg = set_data_holders(data_holders, line, lineno);
 	if (errmsg != NULL)
 		return errmsg;
+	/* Try to detect the format of the "attributes" col before
+	   filtering. */
+	if (*attrcol_fmt == UNKNOWN_FMT) {
+		data_holder = data_holders + ATTRIBUTES_IDX;
+		data = data_holder->ptr;
+		data_len = data_holder->length;
+		*attrcol_fmt = detect_attrcol_fmt(data, data_len);
+	}
 	if (!(isNull(filter) || pass_filter(data_holders, filter)))
 		return NULL;
-	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
-		data = data_holders[col_idx].ptr;
-		data_len = data_holders[col_idx].length;
+	for (col_idx = 0, data_holder = data_holders;
+	     col_idx < GFF_NCOL;
+	     col_idx++, data_holder++)
+	{
+		data = data_holder->ptr;
+		data_len = data_holder->length;
 		if (ans != R_NilValue && colmap0[col_idx] != NA_INTEGER)
 			load_data(data, data_len,
 				  ans, *row_idx, col_idx, colmap0);
 		if (col_idx != ATTRIBUTES_IDX)
 			continue;
-		if (*attrcol_fmt == UNKNOWN_FMT)
-			*attrcol_fmt = detect_attrcol_fmt(data, data_len);
-		if (*attrcol_fmt == GFF3_FMT)
+		switch (*attrcol_fmt) {
+		    case GFF3_FMT:
 			parse_GFF3_attrcol(data, data_len,
 					   ans, *row_idx, tags_buf);
-		else if (*attrcol_fmt == GFF2_FMT)
+		    break;
+		    case GFF2_FMT:
 			parse_GFF2_attrcol(data, data_len,
 					   ans, *row_idx, tags_buf);
+		    break;
+		}
 	}
 	(*row_idx)++;
 	return NULL;
 }
 
-static const char *parse_GFF_file(SEXP filexp, SEXP filter,
+static const char *parse_GFF_file(SEXP filexp,
+		CharAEAE *pragmas_buf, int *attrcol_fmt,
+		SEXP filter,		/* used during scan and load */
 		CharAEAE *tags_buf,	/* used during scan (1st pass) */
 		int *ans_nrow,		/* used during scan (1st pass) */
-		int *attrcol_fmt,	/* used during scan (1st pass) */
-		CharAEAE *pragmas_buf,	/* used during scan (1st pass) */
 		SEXP ans,		/* used during load (2nd pass) */
 		const int *colmap0)	/* used during load (2nd pass) */
 {
@@ -781,58 +880,94 @@ static const char *parse_GFF_file(SEXP filexp, SEXP filter,
 		if (c == '\n' || (c == '\r' && buf[1] == '\n'))
 			continue;  /* skip empty line */
 		if (c == '#') {
-			if (buf[1] != '#')
-				continue;  /* skip human-readable comment */
-			if (pragmas_buf != NULL)
+			/* ## pragma line
+                           # human-readable comment */
+			if (pragmas_buf != NULL && buf[1] == '#')
 				append_string_to_CharAEAE(pragmas_buf, buf);
 			continue;
 		}
 		if (c == '>')
-			break;  /* stop parsing at first FASTA header */
-		errmsg = parse_GFF_line(buf, lineno, filter,
-					ans, &row_idx, colmap0,
-					attrcol_fmt, tags_buf);
+			break;  /* stop parsing at 1st FASTA header */
+		errmsg = parse_GFF_line(buf, lineno,
+					attrcol_fmt,
+					filter,
+					tags_buf, &row_idx,
+					ans, colmap0);
 		if (errmsg != NULL)
 			return errmsg;
+		if (pragmas_buf != NULL)
+			break;  /* stop parsing after 1st GFF line */
 	}
 	*ans_nrow = row_idx;
 	return NULL;
 }
 
 /* --- .Call ENTRY POINT ---
- * Performs the 1st pass of readGFF().
- * Args:
+ * Return pragmas and detected format of the "attributes" col from the 1st
+ * GFF line.
+ * Arg:
  *   filexp: A "file external pointer" (see src/io_utils.c in the XVector
  *           package). Alternatively can be a connection.
- *   tags:   NULL or a character vector indicating which tags to load. NULL
- *           means load all tags.
- *   filter: NULL or a list of length GFF_NCOL-1. Each list element must be
- *           NULL or a character vector with no NAs.
  */
-SEXP scan_gff(SEXP filexp, SEXP tags, SEXP filter)
+SEXP read_gff_pragmas(SEXP filexp)
 {
-	int ans_nrow, attrcol_fmt;
-	CharAEAE *tags_buf, *pragmas_buf;
+	CharAEAE *pragmas_buf;
+	int attrcol_fmt0, ans_nrow;
+	const char *errmsg;
+	SEXP pragmas, attrcol_fmt;
+
+	pragmas_buf = new_CharAEAE(0, 0);
+	attrcol_fmt0 = UNKNOWN_FMT;
+	errmsg = parse_GFF_file(filexp,
+				pragmas_buf, &attrcol_fmt0,
+				R_NilValue,
+				NULL, &ans_nrow,
+				R_NilValue, NULL);
+	if (errmsg != NULL)
+		error("reading GFF file: %s", errmsg);
+
+	PROTECT(pragmas = new_CHARACTER_from_CharAEAE(pragmas_buf));
+	PROTECT(attrcol_fmt = ScalarInteger(attrcol_fmt0));
+	SET_ATTR(pragmas, install("attrcol_fmt"), attrcol_fmt);
+	UNPROTECT(2);
+	return pragmas;
+}
+
+/* --- .Call ENTRY POINT ---
+ * Perform the 1st pass of readGFF().
+ * Args:
+ *   filexp:      MUST be the same as passed to read_gff_pragmas().
+ *   attrcol_fmt:
+ *   tags:        NULL or a character vector indicating which tags to load.
+ *                NULL means load all tags.
+ *   filter:      NULL or a list of length GFF_NCOL-1 (or GFF_NCOL if
+ *                'attrcol_fmt' is 1). Each list element must be NULL or a
+ *                character vector with no NAs.
+ */
+SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter)
+{
+	CharAEAE *tags_buf;
+	int attrcol_fmt0, ans_nrow;
 	const char *errmsg;
 	SEXP scan_ans, scan_ans_elt;
 
 	//init_clock("scan_gff: T1 = ");
-	check_filter(filter);
 	if (tags == R_NilValue) {
 		tags_buf = new_CharAEAE(0, 0);
 	} else {
 		tags_buf = NULL;
 	}
-	attrcol_fmt = UNKNOWN_FMT;
-	pragmas_buf = new_CharAEAE(0, 0);
-	errmsg = parse_GFF_file(filexp, filter,
-				tags_buf, &ans_nrow, &attrcol_fmt, pragmas_buf,
+	attrcol_fmt0 = INTEGER(attrcol_fmt)[0];
+	check_filter(filter, attrcol_fmt0);
+	errmsg = parse_GFF_file(filexp,
+				NULL, &attrcol_fmt0,
+				filter,
+				tags_buf, &ans_nrow,
 				R_NilValue, NULL);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
 
-	PROTECT(scan_ans = NEW_LIST(4));
-
+	PROTECT(scan_ans = NEW_LIST(2));
 	if (tags == R_NilValue) {
 		PROTECT(scan_ans_elt = new_CHARACTER_from_CharAEAE(tags_buf));
 		SET_ELEMENT(scan_ans, 0, scan_ans_elt);
@@ -840,53 +975,46 @@ SEXP scan_gff(SEXP filexp, SEXP tags, SEXP filter)
 	}
 	PROTECT(scan_ans_elt = ScalarInteger(ans_nrow));
 	SET_ELEMENT(scan_ans, 1, scan_ans_elt);
-	UNPROTECT(1);
-	PROTECT(scan_ans_elt = ScalarInteger(attrcol_fmt));
-	SET_ELEMENT(scan_ans, 2, scan_ans_elt);
-	UNPROTECT(1);
-	PROTECT(scan_ans_elt = new_CHARACTER_from_CharAEAE(pragmas_buf));
-	SET_ELEMENT(scan_ans, 3, scan_ans_elt);
-	UNPROTECT(1);
-
-	UNPROTECT(1);
+	UNPROTECT(2);
 	//print_elapsed_time();
 	return scan_ans;
 }
 
 /* --- .Call ENTRY POINT ---
- * Performs the 2nd pass of readGFF().
+ * Perform the 2nd pass of readGFF().
  * Args:
- *   filexp:      MUST be the same that was passed to scan_gff().
+ *   filexp:      MUST be the same as passed to scan_gff().
+ *   attrcol_fmt: 
  *   tags:        A character vector indicating which tags to load. Unlike for
  *                scan_gff() above, it cannot be NULL.
- *   filter:      MUST be the same that was passed to scan_gff(). This time we
+ *   filter:      MUST be the same as passed to scan_gff(). This time we
  *                don't check it.
  *   ans_nrow:    Integer vector of length 1 containing the number of rows
  *                scan_gff() said will end up in 'ans'.
- *   attrcol_fmt: 
- *   pragmas:     Character vector containing the pragma lines collected by
- *                scan_gff().
+ *   pragmas:     Character vector containing the pragma lines returned by
+ *                read_gff_pragmas().
  *   colmap:      An integer vector of length GFF_NCOL indicating which columns
  *                to load and in which order.
  *   raw_data:    TRUE or FALSE. If TRUE, numeric columns (e.g. "start" or
  *                "score") are loaded as character vectors and as-is i.e. how
  *                they are found in the file.
  */
-SEXP load_gff(SEXP filexp, SEXP tags, SEXP filter,
-		SEXP ans_nrow, SEXP attrcol_fmt, SEXP pragmas,
-		SEXP colmap, SEXP raw_data)
+SEXP load_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter,
+		SEXP ans_nrow, SEXP pragmas, SEXP colmap, SEXP raw_data)
 {
-	int colmap0[GFF_NCOL], ans_ncol0;
+	int attrcol_fmt0, colmap0[GFF_NCOL], ans_ncol0;
 	SEXP ans;
 	const char *errmsg;
 
 	//init_clock("load_gff: T2 = ");
+	attrcol_fmt0 = INTEGER(attrcol_fmt)[0];
 	ans_ncol0 = prepare_colmap0(colmap0, colmap);
 	PROTECT(ans = alloc_ans(INTEGER(ans_nrow)[0], ans_ncol0, colmap0,
-				tags, pragmas, raw_data));
-	errmsg = parse_GFF_file(filexp, filter,
+				tags, attrcol_fmt, pragmas, raw_data));
+	errmsg = parse_GFF_file(filexp,
+				NULL, &attrcol_fmt0,
+				filter,
 				NULL, INTEGER(ans_nrow),
-				INTEGER(attrcol_fmt), NULL,
 				ans, colmap0);
 	UNPROTECT(1);
 	if (errmsg != NULL)
