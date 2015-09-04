@@ -853,7 +853,7 @@ static const char *parse_GFF_file(SEXP filexp,
 		SEXP ans,		/* used during load (2nd pass) */
 		const int *colmap0)	/* used during load (2nd pass) */
 {
-	int row_idx, lineno, ret_code, EOL_in_buf;
+	int row_idx, lineno, ret_code, EOL_in_buf, buf_len;
 	char buf[IOBUF_SIZE], c;
 	const char *errmsg;
 
@@ -880,10 +880,13 @@ static const char *parse_GFF_file(SEXP filexp,
 		if (c == '\n' || (c == '\r' && buf[1] == '\n'))
 			continue;  /* skip empty line */
 		if (c == '#') {
-			/* ## pragma line
-                           # human-readable comment */
-			if (pragmas_buf != NULL && buf[1] == '#')
+			/* # human-readable comment
+			   ## pragma line */
+			if (pragmas_buf != NULL && buf[1] == '#') {
+				buf_len = delete_trailing_LF_or_CRLF(buf, -1);
+				buf[buf_len] = '\0';
 				append_string_to_CharAEAE(pragmas_buf, buf);
+			}
 			continue;
 		}
 		if (c == '>')
