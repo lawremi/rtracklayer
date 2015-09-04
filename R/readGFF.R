@@ -14,6 +14,11 @@
     filepath
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### readGFFPragmas()
+###
+
 readGFFPragmas <- function(filepath)
 {
     filexp <- .make_filexp_from_filepath(filepath)
@@ -31,27 +36,32 @@ readGFFPragmas <- function(filepath)
     .Call(read_gff_pragmas, filexp)
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### sniffGFFVersion()
+###
+
 .get_version_from_pragmas <- function(pragmas)
 {
     attrcol_fmt <- attr(pragmas, "attrcol_fmt")
     idx <- grep("^##gff-version", pragmas)
     if (length(idx) == 0L) {
         if (is.null(attrcol_fmt))
-            stop("'attr(pragmas, \"attrcol_fmt\")' is NULL")
+            stop(wmsg("'attr(pragmas, \"attrcol_fmt\")' is NULL"))
         return(attrcol_fmt)
     }
     version <- sub("^##gff-version", "", pragmas[idx])
     version <- unique(version)
     if (length(version) > 1L) {
-        warning(wmsg("more than one GFF version found in the pragmas, ",
+        warning(wmsg("more than one GFF version specified in the file, ",
                      "returning the first one"))
         version <- version[[1L]]
     }
     version <- suppressWarnings(as.integer(version))
     if (is.na(version)) {
-        warning(wmsg("unrecognized GFF version found in the pragmas"))
+        warning(wmsg("unrecognized GFF version specified in the file"))
         if (is.null(attrcol_fmt))
-            stop("'attr(pragmas, \"attrcol_fmt\")' is NULL")
+            stop(wmsg("'attr(pragmas, \"attrcol_fmt\")' is NULL"))
         return(attrcol_fmt)
     }
     version
@@ -63,20 +73,125 @@ sniffGFFVersion <- function(filepath)
     .get_version_from_pragmas(pragmas)
 }
 
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### GFFcolnames()
+###
 ### Return the 9 standard GFF columns as specified at:
 ###   http://www.sequenceontology.org/resources/gff3.html
+###
+
 GFFcolnames <- function(GFF1=FALSE)
 {
     if (!isTRUEorFALSE(GFF1))
-        stop("'GFF1' must be TRUE or FALSE")
+        stop(wmsg("'GFF1' must be TRUE or FALSE"))
     .Call(gff_colnames, GFF1)
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### readGFF()
+###
+
+.prepare_colmap_and_tags <- function(columns=NULL, tags=NULL, attrcol_fmt=0L)
+{
+    ## Check 'columns'.
+    if (!(is.null(columns) || is.character(columns)))
+        stop(wmsg("'columns' must be NULL or a character vector"))
+
+    GFF_colnames <- GFFcolnames(attrcol_fmt == 1L)
+
+    ## Check 'tags'.
+    if (!is.null(tags)) {
+        if (!is.character(tags))
+            stop(wmsg("'tags' must be NULL or character vector"))
+        if (any(is.na(tags)) || anyDuplicated(tags))
+            stop(wmsg("'tags' cannot contain NAs or duplicates"))
+        if (attrcol_fmt == 1L) {
+            ## Move any GFF colname found in 'tags' to 'columns'.
+            columns <- union(columns, intersect(tags, GFF_colnames))
+            tags <- setdiff(tags, GFF_colnames)
+            if (length(tags) != 0L)
+                warning(wmsg("trying to extract tags from a GFF1 file"))
+        }
+    }
+
+    ## Prepare 'colmap'.
+    if (is.null(columns)) {
+        colmap <- seq_along(GFF_colnames)
+        if (attrcol_fmt != 1L) {
+            stopifnot(GFF_colnames[[length(GFF_colnames)]] == "attributes")
+            ## We don't load the "attributes" column unless the user
+            ## requested no tags (i.e. by setting 'tags' to character(0)).
+            if (!(is.character(tags) && length(tags) == 0L))
+                colmap[[length(GFF_colnames)]] <- NA_integer_
+        }
+    } else if (is.character(columns)) {
+        if (!all(columns %in% GFF_colnames)) {
+            in1string <- paste0(GFF_colnames, collapse=", ")
+            stop(wmsg("'columns' must contain valid GFF columns. ",
+                  "Valid GFF columns are: ", in1string))
+        }
+        if (anyDuplicated(columns))
+            stop(wmsg("'columns' cannot contain duplicates"))
+        colmap <- match(GFF_colnames, columns)
+    } else {
+        stop(wmsg("'columns' must be NULL or a character vector"))
+    }
+
+    list(colmap=colmap, tags=tags)
+}
+
+.normarg_filter <- function(filter, attrcol_fmt=0L)
+{
+    GFF_colnames <- GFFcolnames(attrcol_fmt == 1L)
+    if (is.null(filter))
+        return(NULL)
+    if (!is.list(filter))
+        stop(wmsg("'filter' must be NULL or a named list"))
+    filter_names <- names(filter)
+    if (is.null(filter_names))
+        stop(wmsg("'filter' must have names"))
+    if (attrcol_fmt == 1L) {
+        valid_filter_names <- GFF_colnames
+    } else {
+        valid_filter_names <- head(GFF_colnames, n=-1L)
+    }
+    if (!all(filter_names %in% valid_filter_names)) {
+        in1string <- paste0(valid_filter_names, collapse=", ")
+        if (attrcol_fmt == 1L) {
+            excluding_note <- ""
+        } else {
+            excluding_note <- "(excluding \"attributes\")"
+        }
+        stop(wmsg("The names on 'filter' must be valid GFF columns ",
+                  excluding_note, ". ",
+                  "Valid 'filter' names: ", in1string))
+    }
+    if (anyDuplicated(filter_names))
+        stop(wmsg("the names on 'filter' must be unique"))
+    unname(filter[valid_filter_names])
+}
+
+### 'df' must be a data-frame-like object (typically an ordinary data frame or
+### a DataFrame object).
+.is_multi_tag <- function(df, ntag, attrcol_fmt=0L)
+{
+    if (ntag == 0L || attrcol_fmt != 3L)
+        return(logical(ntag))
+    multi_tags <- c("Parent", "Alias", "Note",
+                    "Dbxref", "Ontology_term")
+    sapply(seq_len(ntag) + ncol(df) - ntag,
+           function(j)
+               colnames(df)[[j]] %in% multi_tags ||
+                   any(grepl(",", df[[j]], fixed=TRUE)))
 }
 
 ### 'df' must be a data-frame-like object (typically an ordinary data frame or
 ### a DataFrame object). 'decode_idx' must be a non-empty integer vector
 ### indicating which columns to decode. The columns to decode must be character
 ### vectors.
-.urlDecodeCols <- function(df, decode_idx)
+.url_decode_cols <- function(df, decode_idx)
 {
     decoded_cols <- lapply(setNames(decode_idx, colnames(df)[decode_idx]),
                            function(j)
@@ -90,7 +205,7 @@ GFFcolnames <- function(GFF1=FALSE)
 ### indicating which columns to split. The columns to split must be character
 ### vectors. Split values are passed thru urlDecode() unless 'raw_data' is
 ### TRUE. Always returns a DataFrame.
-.strsplitCols <- function(df, split_idx, raw_data)
+.strsplit_cols <- function(df, split_idx, raw_data)
 {
     split_cols <- lapply(setNames(split_idx, colnames(df)[split_idx]),
         function(j) {
@@ -148,65 +263,13 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
 
     attrcol_fmt <- .get_version_from_pragmas(pragmas)
 
-    ## Check 'tags'.
-    if (!is.null(tags)) {
-        if (!is.character(tags))
-            stop(wmsg("'tags' must be NULL or character vector"))
-        if (any(is.na(tags)) || anyDuplicated(tags))
-            stop(wmsg("'tags' cannot contain NAs or duplicates"))
-    }
-
-    ## Prepare 'colmap'.
-    GFF_colnames <- GFFcolnames(attrcol_fmt == 1)
-    if (is.null(columns)) {
-        colmap <- seq_along(GFF_colnames)
-        if (attrcol_fmt != 1) {
-            stopifnot(GFF_colnames[[length(GFF_colnames)]] == "attributes")
-            ## We don't load the "attributes" column unless the user requested
-            ## no tags (i.e. by setting 'tags' to character(0)).
-            if (!(is.character(tags) && length(tags) == 0L))
-                colmap[[length(GFF_colnames)]] <- NA_integer_
-        }
-    } else if (is.character(columns)) {
-        if (!all(columns %in% GFF_colnames)) {
-            in1string <- paste0(GFF_colnames, collapse=", ")
-            stop(wmsg("'columns' must contain valid GFF columns. ",
-                      "Valid GFF columns are: ", in1string))
-        }
-        if (anyDuplicated(columns))
-            stop(wmsg("'columns' cannot contain duplicates"))
-        colmap <- match(GFF_colnames, columns)
-    } else {
-        stop(wmsg("'columns' must be NULL or character vector"))
-    }
+    ## Prepare 'colmap' and normalize 'tags'.
+    colmap_and_tags <- .prepare_colmap_and_tags(columns, tags, attrcol_fmt)
+    colmap <- colmap_and_tags$colmap
+    tags <- colmap_and_tags$tags
 
     ## Normalize 'filter'.
-    if (!is.null(filter)) {
-        if (!is.list(filter))
-            stop("'filter' must be NULL or a named list")
-        filter_names <- names(filter)
-        if (is.null(filter_names))
-            stop("'filter' must have names")
-        if (attrcol_fmt == 1) {
-            valid_filter_names <- GFF_colnames
-        } else {
-            valid_filter_names <- head(GFF_colnames, n=-1L)
-        }
-        if (!all(filter_names %in% valid_filter_names)) {
-            in1string <- paste0(valid_filter_names, collapse=", ")
-            if (attrcol_fmt == 1) {
-                excluding_note <- ""
-            } else {
-                excluding_note <- "(excluding \"attributes\")"
-            }
-            stop(wmsg("The names on 'filter' must be valid GFF columns ",
-                      excluding_note, ". ",
-                      "Valid 'filter' names: ", in1string))
-        }
-        if (anyDuplicated(filter_names))
-            stop(wmsg("names on 'filter' must be unique"))
-        filter <- filter[valid_filter_names]
-    }
+    filter <- .normarg_filter(filter, attrcol_fmt)
 
     ## Check 'raw_data'.
     if (!isTRUEorFALSE(raw_data))
@@ -233,7 +296,7 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
     ntag <- attr(ans, "ntag")          # should be the same as 'length(tags)'
 
     ## Post-process standard GFF cols.
-    if (attrcol_fmt == 1) {
+    if (attrcol_fmt == 1L) {
         #factor_colnames <- c("seqid", "source", "type", "strand", "group")
         factor_colnames <- c("seqid", "source", "type", "group")
     } else {
@@ -249,20 +312,16 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
 
     ## Post-process tags.
     if (ntag != 0L) {
-        multi_tags <- c("Parent", "Alias", "Note", "Dbxref", "Ontology_term")
-        is_multi_tag <- sapply(seq_len(ntag) + ncol0,
-                               function(j)
-                                 colnames(ans)[[j]] %in% multi_tags ||
-                                   any(grepl(",", ans[[j]], fixed=TRUE)))
+        is_multi_tag <- .is_multi_tag(ans, ntag, attrcol_fmt)
         if (!raw_data) {
             decode_idx <- which(!is_multi_tag) + ncol0
             if (length(decode_idx) != 0L)
-                ans <- .urlDecodeCols(ans, decode_idx)
+                ans <- .url_decode_cols(ans, decode_idx)
         }
         split_idx <- which(is_multi_tag) + ncol0
         if (length(split_idx) != 0L) {
             ## Returns 'ans' as a DataFrame.
-            ans <- .strsplitCols(ans, split_idx, raw_data)
+            ans <- .strsplit_cols(ans, split_idx, raw_data)
         }
     }
 
@@ -270,14 +329,119 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
     ## turned into a DataFrame), so we restore them and cross our fingers that
     ## they won't clash with the DataFrame slots the day the internals of
     ## DataFrame objects happen to change (very unlikely though).
+    if (is.null(attr(ans, "pragmas")))
+        attr(ans, "pragmas") <- pragmas
+    if (is.null(attr(ans, "attrcol_fmt")))
+        attr(ans, "attrcol_fmt") <- attrcol_fmt
     if (is.null(attr(ans, "ncol0")))
         attr(ans, "ncol0") <- ncol0
     if (is.null(attr(ans, "ntag")))
         attr(ans, "ntag") <- ntag
     if (is.null(attr(ans, "raw_data")))
         attr(ans, "raw_data") <- raw_data
-    if (is.null(attr(ans, "pragmas")))
-        attr(ans, "pragmas") <- pragmas
+    ans
+}
+
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### readGFFAsGRanges()
+###
+### Used in "import" method for GFFFile objects.
+### Not exported (user should use import()).
+###
+
+### sequence-region => Seqinfo -- by Michael
+.parseSequenceRegionsAsSeqinfo <- function(lines) {
+    sr <- grep("##sequence-region", lines, value=TRUE)
+    srcon <- file()
+    on.exit(close(srcon))
+    writeLines(sr, srcon)
+    srt <- read.table(srcon, comment.char="",
+                      colClasses=list(NULL, "character", "integer",
+                          "integer"))
+    if (any(srt[[2L]] != 1L)) {
+        warning("One or more ##sequence-region directives do not start at 1. ",
+                "The assumptions made by 'sequenceRegionsAsSeqinfo=TRUE' ",
+                "have been violated.")
+    }
+    Seqinfo(srt[[1L]], srt[[3L]])
+}
+
+### -- by Michael
+.parseSpeciesAsMetadata <- function(lines) {
+    species <- unique(grep("##species", lines, fixed=TRUE, value=TRUE))
+    if (length(species) > 1L) {
+        stop("multiple species definitions found")
+    }
+    metadata <- list()
+    if (length(species) == 1L) {
+        species <- sub("##species ", "", species, fixed=TRUE)
+        if (isNCBISpeciesURL(species)) {
+            ncbiError <- function(e) {
+                warning("failed to retrieve organism information from NCBI")
+            }
+            metadata <- tryCatch(metadataFromNCBI(species), error = ncbiError)
+        }
+    }
+    metadata
+}
+
+readGFFAsGRanges <- function(filepath, colnames=NULL,
+                             filter=NULL,
+                             genome=NA,
+                             sequenceRegionsAsSeqinfo=FALSE,
+                             speciesAsMetadata=FALSE)
+{
+    if (!isSingleStringOrNA(genome))
+        stop(wmsg("'genome' must be a single string or NA"))
+    if (!isTRUEorFALSE(sequenceRegionsAsSeqinfo))
+        stop(wmsg("'sequenceRegionsAsSeqinfo' must be TRUE or FALSE"))
+    if (!isTRUEorFALSE(speciesAsMetadata))
+        stop(wmsg("'speciesAsMetadata' must be TRUE or FALSE"))
+
+    ## Read as data frame.
+    if (is.null(colnames)) {
+        df <- readGFF(filepath, filter=filter)
+    } else {
+        if (!is.character(colnames))
+            stop(wmsg("'colnames' must be a character vector"))
+        ## Split 'colnames' between 'columns' and 'tags'.
+        GFF_colnames <- GFFcolnames()
+        columns <- intersect(colnames, GFF_colnames)
+        tags <- setdiff(colnames, GFF_colnames)
+        core_columns <- c("seqid", "start", "end", "strand")
+        columns <- union(columns, core_columns)
+        df <- readGFF(filepath, columns=columns, tags=tags, filter=filter)
+    }
+
+    ## Get 'ans_seqinfo' from pragmas.
+    pragmas <- attr(df, "pragmas")
+    attrcol_fmt <- attr(df, "attrcol_fmt")
+    if (sequenceRegionsAsSeqinfo && attrcol_fmt == 3L) {
+        ans_seqinfo <- .parseSequenceRegionsAsSeqinfo(pragmas)
+    } else {
+        ans_seqinfo <- NULL
+    }
+
+    ## Get 'ans_metadata' from pragmas.
+    if (speciesAsMetadata) {
+        ans_metadata <- .parseSpeciesAsMetadata(pragmas)
+    } else {
+        ans_metadata <- list()
+    }
+
+    ## Turn data frame into GRanges.
+    ## TODO: Maybe we should be able to pass the metadata to
+    ## makeGRangesFromDataFrame()?
+    if (is.null(colnames)) {
+        ans <- makeGRangesFromDataFrame(df, keep.extra.columns=TRUE,
+                                            seqinfo=ans_seqinfo)
+    } else {
+        ans <- makeGRangesFromDataFrame(df, seqinfo=ans_seqinfo)
+        mcols(ans) <- df[ , colnames, drop=FALSE]
+    }
+    genome(ans) <- genome
+    metadata(ans) <- ans_metadata
     ans
 }
 

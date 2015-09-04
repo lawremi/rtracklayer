@@ -60,6 +60,8 @@ test_gff <- function() {
   checkIdentical(correct_gff3, test)
   test <- import.gff3(test_gff3)
   checkIdentical(correct_gff3, test)
+  suppressWarnings(test <- import.gff2(test_gff3))
+  checkIdentical(correct_gff3, test)
   oldOpts <- options(warn = 2)
   checkException(import.gff2(test_gff3))
   options(oldOpts)
@@ -75,7 +77,11 @@ test_gff <- function() {
   test <- import(test_gff_file)
   checkIdentical(correct_gff3, test)
   test_gff_file <- GFF2File(test_gff3)
+  suppressWarnings(test <- import(test_gff_file))
+  checkIdentical(correct_gff3, test)
+  oldOpts <- options(warn = 2)
   checkException(test <- import(test_gff_file))
+  options(oldOpts)
 
   ## TEST: 'gff' extension
   test_gff_out <- file.path(tempdir(), "genes.gff")
@@ -98,8 +104,12 @@ test_gff <- function() {
   checkIdentical(test, correct_gff3)
   test <- import(test_gff_out, version = "3")
   checkIdentical(test, correct_gff3)
+  suppressWarnings(test <- import(test_gff_out, version = "2"))
+  checkIdentical(test, correct_gff3)
+  oldOpts <- options(warn = 2)
   checkException(test <- import(test_gff_out, version = "2"))
-  
+  options(oldOpts)
+
   ## TEST: 'gff2' extension
   test_gff2_out <- file.path(tempdir(), "genes.gff2")
   export(correct_gff3, test_gff2_out)
@@ -145,9 +155,7 @@ test_gff <- function() {
   test <- import(test_gff3, colnames = "geneName")
   target <- correct_gff3[,"geneName"]
   checkIdentical(target, test)
-  test <- import(test_gff3, colnames = "strand")
-  target <- correct_gff3[,character()]
-  checkIdentical(target, test)
+  checkException(import(test_gff3, colnames = "strand"))
 
   ## TEST: import from connection
   test_gff_con <- file(test_gff_out)

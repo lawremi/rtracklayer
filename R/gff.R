@@ -212,130 +212,6 @@ setMethod("export.gff3", "ANY",
 ### Import
 ###
 
-### sequence-region => Seqinfo
-.parseSequenceRegionsAsSeqinfo <- function(lines) {
-    sr <- grep("##sequence-region", lines, value=TRUE)
-    srcon <- file()
-    on.exit(close(srcon))
-    writeLines(sr, srcon)
-    srt <- read.table(srcon, comment.char="",
-                      colClasses=list(NULL, "character", "integer",
-                          "integer"))
-    if (any(srt[[2L]] != 1L)) {
-        warning("One or more ##sequence-region directives do not start at 1. ",
-                "The assumptions made by 'sequenceRegionsAsSeqinfo=TRUE' ",
-                "have been violated.")
-    }
-    Seqinfo(srt[[1L]], srt[[3L]])
-}
-
-.parseSpeciesAsMetadata <- function(lines) {
-    species <- unique(grep("##species", lines, fixed=TRUE, value=TRUE))
-    if (length(species) > 1L) {
-        stop("multiple species definitions found")
-    }
-    metadata <- list()
-    if (length(species) == 1L) {
-        species <- sub("##species ", "", species, fixed=TRUE)
-        if (isNCBISpeciesURL(species)) {
-            ncbiError <- function(e) {
-                warning("failed to retrieve organism information from NCBI")
-            }
-            metadata <- tryCatch(metadataFromNCBI(species), error = ncbiError)
-        }
-    }
-    metadata
-}
-
-### Return an ordinary data frame with the 9 columns specified at
-###   http://www.sequenceontology.org/resources/gff3.html
-.read_gff <- function(con, isGFF3File=TRUE, feature.type=NULL,
-                      sequenceRegionsAsSeqinfo=FALSE, speciesAsMetadata=FALSE)
-{
-    lines <- readLines(con, warn = FALSE) # unfortunately, not a table
-    lines <- lines[nzchar(lines)]
-
-    comments <- substr(lines, start=1L, stop=1L) == "#"
-    comment_lines <- lines[comments]
-    if (sequenceRegionsAsSeqinfo)
-        ans_seqinfo <- .parseSequenceRegionsAsSeqinfo(comment_lines)
-    if (speciesAsMetadata)
-        ans_metadata <- .parseSpeciesAsMetadata(comment_lines)
-    lines <- lines[!comments]
-    rm(comments)
-
-    ### TODO: handle ontologies (store in RangedData)
-
-    ## strip FASTA sequence
-    fastaHeaders <- which(substr(lines, start=1L, stop=1L) == ">")
-    if (length(fastaHeaders))
-        lines <- head(lines, fastaHeaders[1] - 1)
-
-    ## construct table (character matrix)
-    fields <- c("seqid", "source", "type", "start", "end", "score",
-                "strand", "phase", "attributes")
-    linesSplit <- strsplit(lines, "\t", fixed=TRUE)
-    fieldCounts <- elementLengths(linesSplit)
-    if (any(fieldCounts > length(fields)) ||
-        any(fieldCounts < (length(fields) - 1)))
-      stop("GFF files must have ", length(fields), " tab-separated columns")
-    haveAttr <- fieldCounts == length(fields)
-    data <- unlist(linesSplit[haveAttr], use.names=FALSE)
-    if (is.null(data))
-        data <- character(0)
-    haveAttrMat <- matrix(data, ncol=length(fields), byrow=TRUE)
-    data <- unlist(linesSplit[!haveAttr], use.names=FALSE)
-    if (is.null(data))
-        data <- character(0)
-    rm(linesSplit)
-    noAttrMat <- matrix(data, ncol=length(fields)-1L, byrow=TRUE)
-    noAttrMat <- cbind(noAttrMat, rep.int("", nrow(noAttrMat)))
-    table <- rbind(noAttrMat, haveAttrMat)
-    rm(haveAttrMat, noAttrMat)
-    colnames(table) <- fields
-
-    if (!is.null(feature.type))
-        table <- table[table[,"type"] %in% feature.type,,drop=FALSE]
-
-    table[table == "."] <- NA_character_
-
-    if (isGFF3File) {
-      table[table[, "strand"] == "?", "strand"] <- NA_character_
-      table[ , -9L] <- urlDecode(table[ , -9L], na.strings=NA_character_)
-    }
-
-    ## turn 'table' (matrix) into data frame
-    ans_seqid <- table[ , "seqid"]
-    ans_seqid <- factor(ans_seqid, levels=unique(ans_seqid))
-    ans_source <- table[ , "source"]
-    ans_source <- factor(ans_source, levels=unique(ans_source))
-    ans_type <- table[ , "type"]
-    ans_type <- factor(ans_type, levels=unique(ans_type))
-    ans_start <- as.integer(table[ , "start"])
-    ans_end <- as.integer(table[ , "end"])
-    suppressWarnings(ans_score <- as.numeric(table[ , "score"]))
-    ans_strand <- table[ , "strand"]
-    ans_strand <- factor(ans_strand, levels=unique(ans_strand))
-    ans_phase <- as.integer(table[ , "phase"])
-    ans_attributes <- table[ , "attributes"]
-    ans <- data.frame(seqid=ans_seqid,
-                      source=ans_source,
-                      type=ans_type,
-                      start=ans_start,
-                      end=ans_end,
-                      score=ans_score,
-                      strand=ans_strand,
-                      phase=ans_phase,
-                      attributes=ans_attributes,
-                      stringsAsFactors=FALSE)
-
-    if (sequenceRegionsAsSeqinfo)
-        attr(ans, "seqinfo") <- ans_seqinfo
-    if (speciesAsMetadata)
-        attr(ans, "metadata") <- ans_metadata
-    ans
-}
-
 setGeneric("import.gff", function(con, ...) standardGeneric("import.gff"))
 
 setMethod("import.gff", "ANY",
@@ -343,66 +219,6 @@ setMethod("import.gff", "ANY",
           {
             import(con, "gff", ...)
           })
-
-.parse_attrCol <- function(attrCol, file, colnames) {
-  if (is(file, "GFF1File")) {
-    if (is.null(colnames) || "group" %in% colnames)
-      attrList <- list(group = factor(attrCol, levels=unique(attrCol)))
-    else attrList <- list()
-  } else {
-    if (length(attrCol) == 0L)
-        return(list())
-    sentinel <- "\b"
-    con <- file()
-    on.exit(close(con))
-    writeLines(paste0(sub("; *$", "", attrCol), sentinel), con)
-    attrs <- scan(con, what=character(),
-                  strip.white = TRUE, quiet = TRUE, sep = ";",
-                  quote = if (is(file, "GFF3File")) "" else "\"")
-    lines <- togroup(PartitioningByEnd(grep(sentinel, attrs, fixed = TRUE)))
-    attrs <- sub(sentinel, "", attrs, fixed = TRUE)
-    tag.value.sep <- if (is(file, "GFF3File")) "=" else " "
-    sep.pos <- regexpr(tag.value.sep, attrs, fixed=TRUE)
-    if (any(sep.pos == -1L))
-      stop("Some attributes do not conform to 'tag", tag.value.sep,
-           "value' format")
-    tags <- substring(attrs, 1L, sep.pos - 1L)
-    vals <- substring(attrs, sep.pos + 1L, nchar(attrs))
-    if (!is.null(colnames)) {
-      keep <- tags %in% colnames
-      lines <- lines[keep]
-      vals <- vals[keep]
-      tags <- urlDecode(tags[keep])
-    }
-    tags <- factor(tags, levels=unique(tags))
-    lineByTag <- split(lines, tags)
-    valByTag <- split(vals, tags)
-
-    multiTags <- c("Parent", "Alias", "Note", "DBxref", "Ontology_term")
-    attrList <- sapply(levels(tags), function(tagName) {
-      vals <- valByTag[[tagName]]
-      if (is(file, "GFF3File") &&
-          (any(grepl(",", vals, fixed=TRUE)) || tagName %in% multiTags)) {
-        vals <- CharacterList(strsplit(vals, ",", fixed=TRUE))
-        vals <- relist(urlDecode(unlist(vals)), vals)
-        coerced <- suppressWarnings(as(vals, "NumericList"))
-        if (!any(any(is.na(coerced))))
-          vals <- coerced
-        vec <- as(rep.int(list(character()), length(attrCol)), class(vals))
-      } else {
-        coerced <- suppressWarnings(as.numeric(vals))
-        if (!any(is.na(coerced)))
-          vals <- coerced
-        if (is(file, "GFF3File"))
-          vals <- urlDecode(vals)
-        vec <- rep.int(NA, length(attrCol))
-      }
-      vec[lineByTag[[tagName]]] <- vals
-      vec
-    }, simplify = FALSE)
-  }
-  attrList
-}
 
 setMethod("import", "GFFFile",
           function(con, format, text, version = c("", "1", "2", "3"),
@@ -440,38 +256,36 @@ setMethod("import", "GFFFile",
               warning("gff-version directive indicates version is ", sniffed,
                       ", not ", version)
 
-            if (is.na(genome))
+            if (is.na(genome)) {
               genome <- genome(con)
+              if (is.null(genome))
+                  genome <- NA
+            }
             
 ### FIXME: a queryForLines() function would be more efficient
-            file <- con
-            con <- queryForResource(con, which)
 
-            df <- .read_gff(con,
-                            isGFF3File=is(file, "GFF3File"),
-                            feature.type=feature.type,
-                            sequenceRegionsAsSeqinfo=
-                              sequenceRegionsAsSeqinfo && is(file, "GFF3File"),
-                            speciesAsMetadata=TRUE)
-            if (!is.null(attr(df, "seqinfo")))
-                attr(con, "seqinfo") <- attr(df, "seqinfo")
+            ## Temporarily disable use of Tabix Index.
+            ## TODO: Restore use of Tabix Index!
+            #con <- queryForResource(con, which)
+            con <- queryForResource(con)
 
-            extraCols <- c("source", "type", "score", "strand", "phase")
-            if (!is.null(colnames))
-              extraCols <- intersect(extraCols, c(colnames, "strand"))
-            xd <- as(df[ , extraCols, drop=FALSE], "DataFrame")
-
-            if (is.null(colnames) || length(setdiff(colnames, extraCols))) {
-              attrCol <- df[ , "attributes"]
-              attrList <- .parse_attrCol(attrCol, file, colnames)
-              xd <- DataFrame(xd, attrList)
+            gr <- readGFFAsGRanges(con,
+                                   colnames=colnames,
+                                   filter=list(type=feature.type),
+                                   genome=genome,
+                                   sequenceRegionsAsSeqinfo=
+                                       sequenceRegionsAsSeqinfo,
+                                   speciesAsMetadata=TRUE)
+            if (is.na(genome)) {
+                ans_seqinfo <- seqinfo(gr)
+            } else {
+                ans_seqinfo <- NULL
             }
- 
-            GenomicData(IRanges(df[ , "start"], df[ , "end"]),
-                        xd, chrom = df[ , "seqid"], genome = genome,
-                        seqinfo = attr(con, "seqinfo"),
+            GenomicData(ranges(gr), mcols(gr),
+                        strand = strand(gr), chrom = seqnames(gr),
+                        genome = genome, seqinfo = ans_seqinfo,
                         which = if (attr(con, "usedWhich")) NULL else which,
-                        metadata = attr(df, "metadata"))
+                        metadata = metadata(gr))
           })
 
 setGeneric("import.gff1",

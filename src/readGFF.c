@@ -233,7 +233,7 @@ static int prepare_colmap0(int *colmap0, SEXP colmap)
 }
 
 static SEXP alloc_ans(int ans_nrow, int ans_ncol0, const int *colmap0,
-		SEXP tags, SEXP attrcol_fmt, SEXP pragmas, SEXP raw_data)
+		SEXP tags, SEXP pragmas, SEXP attrcol_fmt, SEXP raw_data)
 {
 	int ans_ntag, ans_ncol, gff1, is_raw, col_idx, j, i;
 	SEXP ans, ans_attr, ans_names, ans_col, ans_colname, tags_elt;
@@ -284,17 +284,17 @@ static SEXP alloc_ans(int ans_nrow, int ans_ncol0, const int *colmap0,
 	list_as_data_frame(ans, ans_nrow);
 
 	/* Set additional attributes. */
+	PROTECT(ans_attr = duplicate(pragmas));
+	SET_ATTR(ans, install("pragmas"), ans_attr);
+	UNPROTECT(1);
+	PROTECT(ans_attr = duplicate(attrcol_fmt));
+	SET_ATTR(ans, install("attrcol_fmt"), ans_attr);
+	UNPROTECT(1);
 	PROTECT(ans_attr = ScalarInteger(ans_ncol0));
 	SET_ATTR(ans, install("ncol0"), ans_attr);
 	UNPROTECT(1);
 	PROTECT(ans_attr = ScalarInteger(ans_ntag));
 	SET_ATTR(ans, install("ntag"), ans_attr);
-	UNPROTECT(1);
-	PROTECT(ans_attr = duplicate(attrcol_fmt));
-	SET_ATTR(ans, install("attrcol_fmt"), ans_attr);
-	UNPROTECT(1);
-	PROTECT(ans_attr = duplicate(pragmas));
-	SET_ATTR(ans, install("pragmas"), ans_attr);
 	UNPROTECT(1);
 	PROTECT(ans_attr = duplicate(raw_data));
 	SET_ATTR(ans, install("raw_data"), raw_data);
@@ -1010,7 +1010,7 @@ SEXP load_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter,
 	attrcol_fmt0 = INTEGER(attrcol_fmt)[0];
 	ans_ncol0 = prepare_colmap0(colmap0, colmap);
 	PROTECT(ans = alloc_ans(INTEGER(ans_nrow)[0], ans_ncol0, colmap0,
-				tags, attrcol_fmt, pragmas, raw_data));
+				tags, pragmas, attrcol_fmt, raw_data));
 	errmsg = parse_GFF_file(filexp,
 				NULL, &attrcol_fmt0,
 				filter,

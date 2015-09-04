@@ -39,14 +39,14 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
       stop("length of 'ranges' not a multiple of 'chrom' length")
     if (is.null(seqinfo))
       seqinfo <- Seqinfo(as.character(unique(chrom)), genome = genome)
-    if (!is.factor(chrom))
+    if (!(is.factor(chrom) || is(chrom, "Rle") && is.factor(runValue(chrom))))
       chrom <- factor(chrom, seqlevels(seqinfo))
     normStrand <- function(strand) {
       strand <- as.character(strand)
       strand[is.na(strand)] <- "*"
       strand(strand)
     }
-    if (!is.null(strand))
+    if (!(is.null(strand) || is(strand, "Rle")))
       strand <- normStrand(strand)
     if (asRangedData) {
       if (is.na(genome))
@@ -79,7 +79,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
       if (is.null(strand))
         strand <- Rle("*", length(ranges))
       if (!is.null(seqinfo))
-        chrom <- factor(chrom, seqlevels(seqinfo))
+        chrom <- factor(as.character(chrom), seqlevels(seqinfo))
       df <- DataFrame(...)
       invalidNames <- names(df) %in% GenomicRanges:::INVALID.GR.COLNAMES
       names(df)[invalidNames] <- paste0(".", names(df)[invalidNames])
