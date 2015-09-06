@@ -270,6 +270,7 @@ setMethod("import", "GFFFile",
             con <- queryForResource(con)
 
             gr <- readGFFAsGRanges(con,
+                                   version=version,
                                    colnames=colnames,
                                    filter=list(type=feature.type),
                                    genome=genome,

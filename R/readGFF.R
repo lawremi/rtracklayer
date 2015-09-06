@@ -93,6 +93,29 @@ GFFcolnames <- function(GFF1=FALSE)
 ### readGFF()
 ###
 
+### Returns 0L, 1L, 2L, or 3L.
+.normarg_version <- function(version=0)
+{
+    if (isSingleString(version)) {
+        ## For compatibility with "import" method for GFFFile objects.
+        IMPORT_STYLE_VERSIONS <- c("", "1", "2", "3")
+        m <- match(version, IMPORT_STYLE_VERSIONS)
+        if (is.na(m))
+            stop(wmsg("when a single string, 'version' must ",
+                      "be \"\", \"1\", \"2\", or \"3\""))
+        version <- m - 1L
+        return(version)
+    }
+    if (isSingleNumber(version)) {
+        if (!is.integer(version))
+            version <- as.integer(version)
+        if (version < 0L || version > 3L)
+            stop(wmsg("'version' must be 0, 1, 2, or 3"))
+        return(version)
+    }
+    stop(wmsg("'version' must be a single number"))
+}
+
 .prepare_colmap_and_tags <- function(columns=NULL, tags=NULL, attrcol_fmt=0L)
 {
     ## Check 'columns'.
@@ -234,7 +257,7 @@ GFFcolnames <- function(GFF1=FALSE)
     ans
 }
 
-readGFF <- function(filepath, columns=NULL, tags=NULL,
+readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
                     filter=NULL, raw_data=FALSE)
 {
     ## Check 'filepath'.
@@ -251,6 +274,9 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
         }
     }
 
+    ## Check 'version'.
+    version <- .normarg_version(version)
+
     ## Get pragmas lines.
     pragmas <- .Call(read_gff_pragmas, filexp)
 
@@ -261,7 +287,11 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
         XVector:::rewind_filexp(filexp)
     }
 
-    attrcol_fmt <- .get_version_from_pragmas(pragmas)
+    if (version == 0L) {
+        attrcol_fmt <- .get_version_from_pragmas(pragmas)
+    } else {
+        attrcol_fmt <- version
+    }
 
     ## Prepare 'colmap' and normalize 'tags'.
     colmap_and_tags <- .prepare_colmap_and_tags(columns, tags, attrcol_fmt)
@@ -386,8 +416,7 @@ readGFF <- function(filepath, columns=NULL, tags=NULL,
     metadata
 }
 
-readGFFAsGRanges <- function(filepath, colnames=NULL,
-                             filter=NULL,
+readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
                              genome=NA,
                              sequenceRegionsAsSeqinfo=FALSE,
                              speciesAsMetadata=FALSE)
@@ -401,7 +430,7 @@ readGFFAsGRanges <- function(filepath, colnames=NULL,
 
     ## Read as data frame.
     if (is.null(colnames)) {
-        df <- readGFF(filepath, filter=filter)
+        df <- readGFF(filepath, version=version, filter=filter)
     } else {
         if (!is.character(colnames))
             stop(wmsg("'colnames' must be a character vector"))
@@ -411,7 +440,8 @@ readGFFAsGRanges <- function(filepath, colnames=NULL,
         tags <- setdiff(colnames, GFF_colnames)
         core_columns <- c("seqid", "start", "end", "strand")
         columns <- union(columns, core_columns)
-        df <- readGFF(filepath, columns=columns, tags=tags, filter=filter)
+        df <- readGFF(filepath, version=version,
+                      columns=columns, tags=tags, filter=filter)
     }
 
     ## Get 'ans_seqinfo' from pragmas.

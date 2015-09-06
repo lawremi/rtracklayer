@@ -12,7 +12,8 @@
 }
 
 \usage{
-readGFF(filepath, columns=NULL, tags=NULL, filter=NULL, raw_data=FALSE)
+readGFF(filepath, version=0, columns=NULL, tags=NULL, filter=NULL,
+                  raw_data=FALSE)
 
 GFFcolnames(GFF1=FALSE)
 }
@@ -21,6 +22,14 @@ GFFcolnames(GFF1=FALSE)
   \item{filepath}{
     A single string containing the path or URL to the file to read.
     Alternatively can be a connection.
+  }
+  \item{version}{
+    \code{readGFF} should do a pretty descent job at detecting the GFF
+    version. Use this argument \emph{only} if it doesn't or if you want to
+    force it to parse and import the file as if its 9-th column was in a
+    different format than what it really is (e.g. specify \code{version=1}
+    on a GTF or GFF3 file to interpret its 9-th column as the \code{"group"}
+    column of a GFF1 file). Supported versions are 1, 2, and 3.
   }
   \item{columns}{
     The standard GFF columns to load. All of them are loaded by default.
