@@ -96,15 +96,19 @@ GFFcolnames <- function(GFF1=FALSE)
 ### Returns 0L, 1L, 2L, or 3L.
 .normarg_version <- function(version=0)
 {
-    if (isSingleString(version)) {
+    if (is.character(version)) {
         ## For compatibility with "import" method for GFFFile objects.
-        IMPORT_STYLE_VERSIONS <- c("", "1", "2", "3")
-        m <- match(version, IMPORT_STYLE_VERSIONS)
-        if (is.na(m))
-            stop(wmsg("when a single string, 'version' must ",
-                      "be \"\", \"1\", \"2\", or \"3\""))
-        version <- m - 1L
-        return(version)
+        if (length(version) == 0L)
+            return(0L)
+        if (isSingleString(version)) {
+            IMPORT_STYLE_VERSIONS <- c("", "1", "2", "3")
+            m <- match(version, IMPORT_STYLE_VERSIONS)
+            if (is.na(m))
+                stop(wmsg("when a single string, 'version' must ",
+                          "be \"\", \"1\", \"2\", or \"3\""))
+            version <- m - 1L
+            return(version)
+        }
     }
     if (isSingleNumber(version)) {
         if (!is.integer(version))
