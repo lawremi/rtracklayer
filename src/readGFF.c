@@ -699,15 +699,15 @@ static const char *set_data_holders(Chars_holder *data_holders,
 			data_len++;
 			continue;
 		}
-		if (col_idx >= GFF_NCOL - 1)
-			break;  /* 'c' contains the 9th tab */
 		data_holders[col_idx].ptr = data;
 		data_holders[col_idx].length = data_len;
 		col_idx++;
+		if (col_idx == GFF_NCOL)
+			break; 
 		data = line + i;
 		data_len = 0;
 	}
-	if (c) {
+	if (col_idx == GFF_NCOL) {
 		/* We've seen 9 tabs but it's OK if the 9th tab is followed
 		   by white spaces only (some GTF files are like that).
 		   Otherwise we raise an error. */
@@ -728,8 +728,7 @@ static const char *set_data_holders(Chars_holder *data_holders,
 				 lineno, GFF_NCOL - 1);
 			return errmsg_buf;
 		}
-		if (col_idx == GFF_NCOL - 1)
-			data_len = delete_trailing_LF_or_CRLF(data, data_len);
+		data_len = delete_trailing_LF_or_CRLF(data, data_len);
 		data_holders[col_idx].ptr = data;
 		data_holders[col_idx].length = data_len;
 		col_idx++;
