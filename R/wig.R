@@ -136,12 +136,11 @@ setMethod("import.wig", "ANY",
           })
 
 setMethod("import", "WIGFile",
-          function(con, format, text, genome = NA, asRangedData = FALSE,
+          function(con, format, text, genome = NA,
                    trackLine = TRUE, which = NULL, seqinfo = NULL, ...)
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            asRangedData <- normarg_asRangedData(asRangedData, "import")
             file <- con
             con <- connection(con, "r")
             ## check for a track line
@@ -150,8 +149,7 @@ setMethod("import", "WIGFile",
               pushBack(line, con)
               return(import.ucsc(initialize(file, resource = con), drop = TRUE,
                                  trackLine = FALSE, genome = genome,
-                                 asRangedData = asRangedData, which = which,
-                                 seqinfo = seqinfo,
+                                 which = which, seqinfo = seqinfo,
                                  ...))
             }
             lines <- readLines(con, warn = FALSE)
@@ -174,15 +172,9 @@ setMethod("import", "WIGFile",
                 # parse the data values
                 block_lines <- window(lines, starts[i], ends[i])
                 if (!length(block_lines)) {
-                  if (asRangedData) {
-                    rl <- RangesList(IRanges())
-                    names(rl) <- formatVals[["chrom"]]
-                    return(RangedData(rl, score = numeric()))
-                  } else {
-                    gr <- GRanges(score = numeric())
-                    seqlevels(gr) <- seqlevels
-                    return(gr)
-                  }
+                  gr <- GRanges(score = numeric())
+                  seqlevels(gr) <- seqlevels
+                  return(gr)
                 }
                 block_lines <- grep("^#", block_lines, invert = TRUE,
                                     value = TRUE)
@@ -205,7 +197,6 @@ setMethod("import", "WIGFile",
                 end <- start + as.integer(span) - 1
                 gd <- GenomicData(IRanges(start, end), score = score,
                                   chrom = formatVals[["chrom"]],
-                                  asRangedData = asRangedData,
                                   which = which)
                 seqlevels(gd) <- seqlevels
                 gd
@@ -218,16 +209,7 @@ setMethod("import", "WIGFile",
                 parseInds <- parseInds[chrom %in% names(which)]
               }
               resultList <- lapply(parseInds, parseData)
-              if (asRangedData) {
-                rl <- do.call(c, lapply(resultList, ranges))
-                gd <- RangedData(unlist(rl, use.names=FALSE),
-                                 score = unlist(lapply(resultList, score)),
-                                 space = factor(names(rl)[togroup(rl)],
-                                   seqlevels))
-                universe(gd) <- if (is.na(genome)) NULL else genome
-              }
-              else
-                gd <- do.call(c, resultList)
+              gd <- do.call(c, resultList)
               if (!is.null(seqinfo))
                 seqinfo(gd) <- seqinfo
               else if (!is.null(genome))
@@ -235,7 +217,6 @@ setMethod("import", "WIGFile",
               gd
             } else {
               import(text = lines, format = "bedGraph",
-                     genome = genome, asRangedData = asRangedData,
-                     which = which, seqinfo = seqinfo)
+                     genome = genome, which = which, seqinfo = seqinfo)
             }
         })

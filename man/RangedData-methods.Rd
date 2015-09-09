@@ -49,19 +49,15 @@ Similarly the universe refers to the genome.}
   \describe{
     \item{}{
       \code{GenomicData(ranges, ..., strand = NULL, chrom = NULL,
-        genome = NULL, asRangedData = FALSE)}: If \code{asRangedData} is
-      \code{FALSE} (the default), constructs a \code{GRanges} instance with
+        genome = NULL)}: Constructs a \code{GRanges} instance with
       the given \code{ranges} and variables in \code{...} (see the
       \code{\link[GenomicRanges]{GRanges}} constructor).
-      If \code{asRangedData} is \code{TRUE}, constructs a \code{RangedData}
-      instance with the given \code{ranges} and variables in \code{...}.
 
       If non-\code{NULL}, the \code{strand} argument specifies the strand
       of each range. It should be a character vector or factor of length
       equal to that of \code{ranges}. All values should be either \code{-},
-      \code{+}, \code{*} or \code{NA}. (The \code{NA} code for \code{strand}
-      is only acceptable when \code{asRangedData} is \code{TRUE}.) To get the
-      levels for \code{strand}, call \code{levels(strand())}.
+      \code{+}, or \code{*}. To get the levels for \code{strand}, call
+      \code{levels(strand())}.
 
       \code{chrom} argument is analogous to \code{seqnames} in the
       \code{GRanges} and \code{space} in \code{RangedData} constructors.

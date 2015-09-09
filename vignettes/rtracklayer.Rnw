@@ -260,12 +260,7 @@ format is determined from the filename, by default.
 restoredTrack <- import("targets.bed")
 @
 %
-The \Robject{restoredTrack} object is of class \Rclass{GRanges}. To
-obtain a \Rclass{RangedData} object directly upon importing, pass
-\Rcode{asRangedData = TRUE} to \Rfunction{import}:
-<<import-gr, eval=FALSE>>=
-restoredTrack <- import("targets.bed", asRangedData = TRUE)
-@
+The \Robject{restoredTrack} object is of class \Rclass{GRanges}.
 %
 
 \paragraph{Exercises}
@@ -413,9 +408,8 @@ subTargetTrack <- track(session, "targets")
 @
 %
 The returned object is a \Rclass{GRanges}, even if the data was
-originally uploaded as a \Rclass{RangedData} or other object. To get a
-\Rclass{RangedData} instead, pass \Rcode{asRangedData = TRUE}. By
-default, the segment of the track downloaded is the current default
+originally uploaded as a \Rclass{RangedData} or other object.
+By default, the segment of the track downloaded is the current default
 genome segment associated with the session. One may download track
 data for any genome segment, such as those on a particular
 chromosome. Note that this does not distinguish by strand; we are only
@@ -634,12 +628,8 @@ nrsfTrack <- GenomicData(ranges(nrsfHits), strand="+", chrom="chr1",
                          genome = "hg19")
 @ 
 %
-\Rfunction{GenomicData} is a convenience function that by default
-constructs a \Rclass{GRanges} object. A \Rclass{RangedData} may be
-obtained by passing \Rcode{asRangedData = TRUE} and may be preferred
-in this case, as the \Robject{nrsfHits} object will then be stored as a
-\Rclass{Views} object in \Robject{nrsfTrack} without any loss of information,
-in particular the sequence of chr1.
+\Rfunction{GenomicData} is a convenience function that constructs a
+\Rclass{GRanges} object.
 
 \subsection{Browsing the binding sites}
 

@@ -223,12 +223,11 @@ scanTrackLine <- function(con) {
 
 setMethod("import", "BEDFile",
           function(con, format, text, trackLine = TRUE,
-                   genome = NA, asRangedData = FALSE, colnames = NULL,
+                   genome = NA, colnames = NULL,
                    which = NULL, seqinfo = NULL, extraCols = character())
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            asRangedData <- normarg_asRangedData(asRangedData, "import")
             file <- con
             con <- queryForConnection(con, which)
             if (attr(con, "usedWhich"))
@@ -241,7 +240,6 @@ setMethod("import", "BEDFile",
               pushBack(line, con)
               ans <- import.ucsc(initialize(file, resource = con), drop = TRUE,
                                  trackLine = FALSE, genome = genome,
-                                 asRangedData = asRangedData,
                                  colnames = colnames,
                                  which = which, seqinfo = seqinfo,
                                  extraCols = extraCols)
@@ -347,7 +345,7 @@ setMethod("import", "BEDFile",
                         bed[-(1:3)],
                         chrom = bed$chrom, genome = genome,
                         seqinfo = seqinfo,
-                        asRangedData = asRangedData, which = which)
+                        which = which)
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -356,49 +354,29 @@ setMethod("import", "BEDFile",
 
 setMethod("import", "BED15File",
           function(con, format, text, trackLine = NULL, genome = NA,
-                   asRangedData = FALSE, which = NULL)
+                   which = NULL)
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            asRangedData <- normarg_asRangedData(asRangedData, "import")
             if (is.null(trackLine))
               return(import.ucsc(con, TRUE, genome = genome,
-                                 asRangedData = asRangedData, which = which))
+                                 which = which))
             bed <- callNextMethod()
-            if (asRangedData) {
-              if (!nrow(bed))
-                return(bed)
-              ids <- strsplit(bed$expIds[1], ",", fixed=TRUE)[[1]]
-              expNames <- trackLine@expNames[as.integer(ids) + 1L]
-              scores <- unlist(strsplit(bed$expScores, ",", fixed=TRUE),
-                               use.names=FALSE)
-              scores <- as.numeric(scores)
-              scores[scores == -10000] <- NA # stupid UCSC convention
-              scores <- split(scores, gl(length(expNames), 1, length(scores)))
-              names(scores) <- expNames
-              nonExpCols <- setdiff(colnames(bed),
-                                    c("expCount", "expScores", "expIds"))
-              bed <- bed[,nonExpCols]
-              for (samp in names(scores))
-                bed[[samp]] <- scores[[samp]]
-              bed
-            } else {
-              if (!length(bed))
-                return(bed)
-              ids <- strsplit(values(bed)$expIds[1], ",", fixed=TRUE)[[1]]
-              expNames <- trackLine@expNames[as.integer(ids) + 1L]
-              scores <- unlist(strsplit(values(bed)$expScores, ",", fixed=TRUE),
-                               use.names=FALSE)
-              scores <- as.numeric(scores)
-              scores[scores == -10000] <- NA # stupid UCSC convention
-              scores <- split(scores, gl(length(expNames), 1, length(scores)))
-              names(scores) <- expNames
-              nonExpCols <- setdiff(colnames(values(bed)),
-                                    c("expCount", "expScores", "expIds"))
-              values(bed) <- values(bed)[,nonExpCols]
-              values(bed) <- cbind(values(bed), do.call(DataFrame, scores))
-              bed              
-            }
+            if (!length(bed))
+              return(bed)
+            ids <- strsplit(values(bed)$expIds[1], ",", fixed=TRUE)[[1]]
+            expNames <- trackLine@expNames[as.integer(ids) + 1L]
+            scores <- unlist(strsplit(values(bed)$expScores, ",", fixed=TRUE),
+                             use.names=FALSE)
+            scores <- as.numeric(scores)
+            scores[scores == -10000] <- NA # stupid UCSC convention
+            scores <- split(scores, gl(length(expNames), 1, length(scores)))
+            names(scores) <- expNames
+            nonExpCols <- setdiff(colnames(values(bed)),
+                                  c("expCount", "expScores", "expIds"))
+            values(bed) <- values(bed)[,nonExpCols]
+            values(bed) <- cbind(values(bed), do.call(DataFrame, scores))
+            bed
           })
 
 setGeneric("import.bed15",

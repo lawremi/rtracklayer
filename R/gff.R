@@ -222,7 +222,7 @@ setMethod("import.gff", "ANY",
 
 setMethod("import", "GFFFile",
           function(con, format, text, version = c("", "1", "2", "3"),
-                   genome = NA, asRangedData = FALSE, colnames = NULL,
+                   genome = NA, colnames = NULL,
                    which = NULL, feature.type = NULL,
                    sequenceRegionsAsSeqinfo = FALSE)
           {
@@ -230,7 +230,6 @@ setMethod("import", "GFFFile",
               checkArgFormat(con, format)
             if (!missing(version))
               con <- asGFFVersion(con, match.arg(version))
-            asRangedData <- normarg_asRangedData(asRangedData, "import")
             stopifnot(isTRUEorFALSE(sequenceRegionsAsSeqinfo))
             
             ## download the file first if it's remote

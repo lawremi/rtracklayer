@@ -47,7 +47,7 @@
 
 \usage{
 \S4method{import}{BEDFile,ANY,ANY}(con, format, text, trackLine = TRUE,
-                   genome = NA, asRangedData = FALSE, colnames = NULL,
+                   genome = NA, colnames = NULL,
                    which = NULL, seqinfo = NULL, extraCols = character())
 import.bed(con, ...)
 import.bed15(con, ...)
@@ -100,9 +100,6 @@ export.bedGraph(object, con, ...)
     value using either an installed BSgenome package or UCSC, if network
     access is available.
   }
-  \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
-    instead of a \code{GRanges}.
-  }
   \item{colnames}{A character vector naming the columns to parse. These
     should name columns in the result, not those in the BED spec, so
     e.g. specify \dQuote{thick}, instead of \dQuote{thickStart}.
@@ -148,8 +145,7 @@ export.bedGraph(object, con, ...)
 }
 
 \value{
-  A \code{GRanges} (or \code{RangedData} if \code{asRangedData} is
-  \code{TRUE}), with the metadata columns described in the details.
+  A \code{GRanges} with the metadata columns described in the details.
 }
 
 \details{

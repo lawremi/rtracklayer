@@ -113,10 +113,9 @@
   
   \describe{
     \item{}{
-      \code{track(object, asRangedData = FALSE)}:
+      \code{track(object)}:
       Retrieves the indicated table as a track, i.e. a \code{GRanges}
-      object. Note that not all tables are available as tracks. Pass
-      \code{asRangedData = TRUE} to obtain a \code{RangedData} object.
+      object. Note that not all tables are available as tracks.
     }
     \item{}{
       \code{getTable(object)}: Retrieves the indicated table as a

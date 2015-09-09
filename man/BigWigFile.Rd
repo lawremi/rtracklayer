@@ -44,7 +44,7 @@
 \usage{
 \S4method{import}{BigWigFile,ANY,ANY}(con, format, text,
                    selection = BigWigSelection(which, ...),
-                   which = con, asRangedData = FALSE, asRle = FALSE, 
+                   which = con, asRle = FALSE, 
                    as = c("GRanges", "RleList", "NumericList"), ...)
 import.bw(con, ...)
 
@@ -82,7 +82,6 @@ export.bw(object, con, ...)
     sequence. As of version 1.23.11 \code{import} no longer returns
     \code{RangedData}.
   }
-  \item{asRangedData}{Defunct.}
   \item{asRle}{Deprecated. Use \code{as} instead.
     If \code{TRUE}, the BigWig file is assumed to contain
     contiguous ranges that define a run-length encoding of a

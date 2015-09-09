@@ -7,10 +7,8 @@
 ###
 
 GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
-                        seqinfo = NULL,
-                        asRangedData = FALSE, which = NULL, metadata = list())
+                        seqinfo = NULL, which = NULL, metadata = list())
 {
-  asRangedData <- normarg_asRangedData(asRangedData, "GenomicData")
   if (is.null(genome))
     genome <- NA
   if (!isSingleStringOrNA(genome))
@@ -30,8 +28,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
     if (is.na(genome))
       genome <- NULL # universe expects NULL if unknown
     gd <- RangedData(ranges, universe = genome) # direct coercion
-    if (!asRangedData)
-      gd <- as(gd, "GRanges")
+    gd <- as(gd, "GRanges")
   } else {
     if (length(chrom) > length(ranges))
       stop("length of 'chrom' greater than length of 'ranges'")
@@ -48,45 +45,31 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
     }
     if (!(is.null(strand) || is(strand, "Rle")))
       strand <- normStrand(strand)
-    if (asRangedData) {
-      if (is.na(genome))
-        genome <- NULL # universe expects NULL if unknown
-      if (!is.null(strand)) {
-        gd <- RangedData(ranges, ..., strand = strand, space = chrom,
-                         universe = genome)
-      } else {
-        gd <- RangedData(ranges, ..., space = chrom, universe = genome)
-        if (!is.null(gd[["strand"]]))
-          gd[["strand"]] <- normStrand(gd[["strand"]])
+    if (is.null(chrom))
+      chrom <- Rle(factor("1"), length(ranges))
+    dots <- list(...)
+    if (length(dots) == 1) {
+      dots <- dots[[1L]]
+      if ((is(dots, "data.frame") || is(dots, "DataTable")) &&
+          !is.null(dots[["strand"]])) {
+        strand <- dots[["strand"]]
+        dots[["strand"]] <- NULL
+        return(GenomicData(ranges = ranges, dots, strand = strand,
+                           chrom = chrom, genome = genome,
+                           seqinfo = seqinfo, which = which,
+                           metadata = metadata))
       }
-    } else {
-      if (is.null(chrom))
-        chrom <- Rle(factor("1"), length(ranges))
-      dots <- list(...)
-      if (length(dots) == 1) {
-        dots <- dots[[1L]]
-        if ((is(dots, "data.frame") || is(dots, "DataTable")) &&
-            !is.null(dots[["strand"]])) {
-          strand <- dots[["strand"]]
-          dots[["strand"]] <- NULL
-          return(GenomicData(ranges = ranges, dots, strand = strand,
-                             chrom = chrom, genome = genome,
-                             seqinfo = seqinfo,
-                             asRangedData = asRangedData, which = which,
-                             metadata = metadata))
-        }
-      }
-      if (is.null(strand))
-        strand <- Rle("*", length(ranges))
-      if (!is.null(seqinfo))
-        chrom <- factor(as.character(chrom), seqlevels(seqinfo))
-      df <- DataFrame(...)
-      invalidNames <- names(df) %in% GenomicRanges:::INVALID.GR.COLNAMES
-      names(df)[invalidNames] <- paste0(".", names(df)[invalidNames])
-      gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, df)
-      if (!is.null(genome))
-        genome(gd) <- genome
     }
+    if (is.null(strand))
+      strand <- Rle("*", length(ranges))
+    if (!is.null(seqinfo))
+      chrom <- factor(as.character(chrom), seqlevels(seqinfo))
+    df <- DataFrame(...)
+    invalidNames <- names(df) %in% GenomicRanges:::INVALID.GR.COLNAMES
+    names(df)[invalidNames] <- paste0(".", names(df)[invalidNames])
+    gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, df)
+    if (!is.null(genome))
+      genome(gd) <- genome
   }
   if (!is.null(seqinfo))
     seqinfo(gd) <- seqinfo

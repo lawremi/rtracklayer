@@ -548,9 +548,8 @@ outputTruncated <- function(x) {
 
 ## download a trackSet by name
 setMethod("track", "UCSCTableQuery",
-          function(object, asRangedData = FALSE)
+          function(object)
           {
-            asRangedData <- normarg_asRangedData(asRangedData, "track")
             tables <- tableNames(object)
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
@@ -581,7 +580,7 @@ setMethod("track", "UCSCTableQuery",
               stop("Output is incomplete: ",
                    "track may have more than 100,000 elements. ",
                    "Try downloading the data via the UCSC FTP site.")
-            import(text = output, format = format, asRangedData = asRangedData,
+            import(text = output, format = format,
                    seqinfo = seqinfo(range(object)))
           })
 
@@ -1377,11 +1376,8 @@ parseFormatFromTrackLine <- function(x) {
 
 setMethod("import", "UCSCFile",
           function(con, format, text, subformat = "auto", drop = FALSE,
-                   asRangedData = FALSE, genome = NA, ...)
+                   genome = NA, ...)
           {
-            asRangedData <- normarg_asRangedData(asRangedData, "import",
-                                                 if.FALSE="GenomicRangesList",
-                                                 if.TRUE="RangedDataList")
             lines <- readLines(resource(con), warn = FALSE)
             tracks <- grep("^track", lines)
             trackLines <- lines[tracks]
@@ -1408,37 +1404,25 @@ setMethod("import", "UCSCFile",
               if (subformat == "bed15") { # need to pass track line
                 ucsc <- import(format = "bed15", text = text,
                                trackLine = line,
-                               asRangedData = asRangedData,
                                genome = genome, ...)
               } else {
                 ucsc <- import(format = subformat, text = text,
-                               asRangedData = asRangedData,
                                genome = genome, ...)
               }
               if (is(line, "BasicTrackLine") && length(line@offset))
                 ranges(ucsc) <- shift(ranges(ucsc), line@offset)
-              if (asRangedData) {
-                metadata(ranges(ucsc))$trackLine <- line
-              } else {
-                ucsc <- as(ucsc, "UCSCData", FALSE)
-                ucsc@trackLine <- line
-              }
+              ucsc <- as(ucsc, "UCSCData", FALSE)
+              ucsc@trackLine <- line
               ucsc
             }
             tsets <- lapply(seq_along(trackLines), makeTrackSet)
-            if (asRangedData) {
-              trackNames <- sapply(tsets,
-                function(x) metadata(ranges(x))$trackLine@name)
-            } else {
-              trackNames <- sapply(tsets, function(x) x@trackLine@name)
-            }
+            trackNames <- sapply(tsets, function(x) x@trackLine@name)
             if (!any(is.na(trackNames)))
               names(tsets) <- trackNames
             if (drop && length(tsets) == 1)
               return(tsets[[1]])
             ans <- do.call(RangedDataList, lapply(tsets, as, "RangedData"))
-            if (!asRangedData) {
-              ans <- GenomicRangesList(
+            GenomicRangesList(
                        lapply(ans,
                          function(rd) {
                            line <- metadata(ranges(rd))$trackLine
@@ -1448,8 +1432,6 @@ setMethod("import", "UCSCFile",
                              Class <- "UCSCData"
                            as(rd, Class)
                          }))
-            }
-            ans
           })
 
 

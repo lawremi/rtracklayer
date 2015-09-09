@@ -42,7 +42,7 @@
 \usage{
 \S4method{import}{UCSCFile,ANY,ANY}(con, format, text,
                    subformat = "auto", drop = FALSE,
-                   asRangedData = FALSE, genome = NA, ...)
+                   genome = NA, ...)
 import.ucsc(con, ...)
 
 \S4method{export}{ANY,UCSCFile,ANY}(object, con, format, ...)
@@ -93,11 +93,6 @@ export.ucsc(object, con, ...)
     access is available. This defaults to the \code{db} BED track line
     parameter, if any.
   }
-  \item{asRangedData}{If \code{FALSE} (the default), a \code{GenomicRangesList}
-    is returned and the track line is stored in the \code{metadata} of
-    each \code{GRanges} in the list. If \code{TRUE}, a \code{RangedDataList}
-    of \code{UCSCData} objects is returned.
-  }
   \item{drop}{If \code{TRUE}, and there is only one track in the file,
     return the track object directly, rather than embedding it in a list.
   }
@@ -117,8 +112,7 @@ export.ucsc(object, con, ...)
 }
 
 \value{
-  A \code{GenomicRangesList} if \code{asRangedData} is \code{FALSE})
-  (and a \code{RangedDataList} otherwise), unless \code{drop} is \code{TRUE}
+  A \code{GenomicRangesList} unless \code{drop} is \code{TRUE}
   and there is only a single track in the file. In that case, the first and
   only object is extracted from the list and returned.
   The structure of that object depends on the format of the
@@ -136,12 +130,9 @@ export.ucsc(object, con, ...)
   track being annotated. See \code{\linkS4class{TrackLine}} and its
   derivatives for how these lines are represented in R. The
   class \code{\linkS4class{UCSCData}} is an extension
-  of \code{RangedData} with a formal slot for a \code{TrackLine}, and
-  objects of this type are returned in a \code{RangedDataList} by the
-  import functions described above, as long as \code{asRangedData}
-  is \code{TRUE}. If \code{FALSE}, then each \code{GRanges} in the
-  returned \code{GenomicRangesList} has the track line stored in its
-  metadata, under the \code{trackLine} key. 
+  of \code{GRanges} with a formal slot for a \code{TrackLine}.
+  Each \code{GRanges} in the returned \code{GenomicRangesList} has the
+  track line stored in its metadata, under the \code{trackLine} key. 
 
   For each track object to be exported, if the object is not a
   \code{UCSCData}, and there is no \code{trackLine} element in the

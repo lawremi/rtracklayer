@@ -30,8 +30,7 @@
 
 \usage{
 \S4method{import}{WIGFile,ANY,ANY}(con, format, text, genome = NA,
-                    asRangedData = FALSE, trackLine = TRUE, which = NULL,
-                    seqinfo = NULL, ...)
+                    trackLine = TRUE, which = NULL, seqinfo = NULL, ...)
 import.wig(con, ...)
 
 \S4method{export}{ANY,WIGFile,ANY}(object, con, format, ...)
@@ -78,9 +77,6 @@ export.wig(object, con, ...)
     the result. If the \code{genome} argument is not \code{NA}, it must
     agree with \code{genome(seqinfo)}.
   }
-  \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
-    instead of a \code{GRanges}.
-  }
   \item{which}{A range data structure like \code{RangesList}
     or \code{GRanges}. Only the intervals in the file overlapping the
     given ranges are returned. This is inefficient; use BigWig for
@@ -106,8 +102,7 @@ export.wig(object, con, ...)
 }
 
 \value{
-  A \code{GRanges} (or \code{RangedData} if \code{asRangedData} is
-  \code{TRUE}), with the score values in the \code{score} metadata column,
+  A \code{GRanges} with the score values in the \code{score} metadata column,
   which is accessible via the \code{score} function.
 }
 

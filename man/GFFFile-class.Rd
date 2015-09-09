@@ -61,7 +61,7 @@
 \usage{
 \S4method{import}{GFFFile,ANY,ANY}(con, format, text,
            version = c("", "1", "2", "3"),
-           genome = NA, asRangedData = FALSE, colnames = NULL, which = NULL,
+           genome = NA, colnames = NULL, which = NULL,
            feature.type = NULL, sequenceRegionsAsSeqinfo = FALSE)
 import.gff(con, ...)
 import.gff1(con, ...)
@@ -116,9 +116,6 @@ export.gff3(object, con, ...)
     value using either an installed BSgenome package or UCSC, if network
     access is available.
   }
-  \item{asRangedData}{If \code{TRUE}, a \code{RangedData} is returned,
-    instead of a \code{GRanges}.
-  }
   \item{colnames}{A character vector naming the columns to parse. These
     should name either fixed fields, like \code{source} or
     \code{type}, or, for GFF2 and GFF3, any attribute.
@@ -160,8 +157,7 @@ export.gff3(object, con, ...)
 }
 
 \value{
-  A \code{GRanges} (or \code{RangedData} if \code{asRangedData} is
-  \code{TRUE}), with the metadata columns described in the details.
+  A \code{GRanges} with the metadata columns described in the details.
 }
 
 \details{

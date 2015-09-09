@@ -53,10 +53,9 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
         override modes indicated by the \code{track} parameter. }
     \item{\code{\link{browserViews}}(object)}{ Gets the
       \code{\linkS4class{BrowserView}} instances for this session. }
-    \item{\code{\link{range}}(x, asRangedData = TRUE)}{ Gets the
+    \item{\code{\link{range}}(x)}{ Gets the
       \code{\link[GenomicRanges:GRanges-class]{GRanges}} last
-      displayed in this session. Set \code{asRangedData}
-      to \code{FALSE} to obtain a \code{GRanges} object.}
+      displayed in this session.}
     \item{\code{\link[rtracklayer:RangedData-methods]{genome}(x)}}{Gets
       the genome identifier of the session,
       i.e. \code{genome(range(x))}.}
