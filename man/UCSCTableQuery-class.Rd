@@ -185,7 +185,7 @@ tableNames(query)
 ## get the phastCons30way track
 tableName(query) <- "phastCons30way"
 ## retrieve the track data
-track(query, asRangedData = FALSE)  # as a GRanges object
+track(query)  # a GRanges object
 ## get a data.frame summarizing the multiple alignment
 tableName(query) <- "multiz30waySummary"
 getTable(query)

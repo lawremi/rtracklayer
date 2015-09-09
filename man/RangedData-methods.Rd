@@ -86,11 +86,11 @@ Similarly the universe refers to the genome.}
 
   ## just ranges ##
   ## GRanges instance
-  gr <- GenomicData(range1, asRangedData = FALSE)
+  gr <- GenomicData(range1)
 
   ## with a genome (universe) ##
   ## GRanges instance
-  gr <- GenomicData(range1, genome = "hg18", asRangedData = FALSE)
+  gr <- GenomicData(range1, genome = "hg18")
   genome(gr) ## "hg18"
 
   ## with some data ##
@@ -98,12 +98,11 @@ Similarly the universe refers to the genome.}
   score <- c(10L, 2L, NA)
   strand <- factor(c("+", NA, "-"), levels = levels(strand()))
   ## GRanges instance
-  gr <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18",
-                    asRangedData = FALSE)
+  gr <- GenomicData(range1[[1]], score, chrom = "chr1", genome = "hg18")
   mcols(gr)[["score"]]
   strand(gr) ## all '*'
   gr <- GenomicData(range1[[1]], score, filt = filter, strand = strand,
-                    chrom = "chr1", asRangedData = FALSE)
+                    chrom = "chr1")
   mcols(gr)[["filt"]]
   strand(gr) ## equal to 'strand'
   ## coercion from data.frame ##

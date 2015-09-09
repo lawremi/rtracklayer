@@ -68,7 +68,7 @@ exportToTabix(object, con, ...)
   }
 }
 \value{
-  For \code{import}, a \code{RangedData} or \code{GRanges}, depending on
+  For \code{import}, a \code{GRanges} or \code{RangedData}, depending on
   arguments.
 
   For \code{exportToTabix}, a \code{TabixFile} object that is directly

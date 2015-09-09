@@ -242,23 +242,22 @@ export.bedGraph(object, con, ...)
   test_path <- system.file("tests", package = "rtracklayer")
   test_bed <- file.path(test_path, "test.bed")
 
-  test <- import(test_bed, asRangedData = FALSE)
+  test <- import(test_bed)
   test
   
   test_bed_file <- BEDFile(test_bed)
-  import(test_bed_file, asRangedData = FALSE)
+  import(test_bed_file)
   
   test_bed_con <- file(test_bed)
-  import(test_bed_con, format = "bed", asRangedData = FALSE)
+  import(test_bed_con, format = "bed")
   close(test_bed_con)
   
-  import(test_bed, trackLine = FALSE, asRangedData = FALSE)
-  import(test_bed, genome = "hg19", asRangedData = FALSE)
-  import(test_bed, colnames = c("name", "strand", "thick"),
-         asRangedData = FALSE)
+  import(test_bed, trackLine = FALSE)
+  import(test_bed, genome = "hg19")
+  import(test_bed, colnames = c("name", "strand", "thick"))
 
   which <- RangesList(chr7 = as(test, "RangesList")[[1]][1:2]) 
-  import(test_bed, which = which, asRangedData = FALSE)
+  import(test_bed, which = which)
 
 \dontrun{
   test_bed_out <- file.path(tempdir(), "test.bed")
@@ -276,7 +275,7 @@ export.bedGraph(object, con, ...)
   export(test, test_bed_out, index = TRUE, trackLine = FALSE)
   
   bed_text <- export(test, format = "bed")
-  test <- import(format = "bed", text = bed_text, asRangedData = FALSE)
+  test <- import(format = "bed", text = bed_text)
 }
 }
 

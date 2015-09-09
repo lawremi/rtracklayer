@@ -148,23 +148,23 @@ export.wig(object, con, ...)
   test_wig <- file.path(test_path, "step.wig")
 
   ## basic import calls
-  test <- import(test_wig, asRangedData = FALSE)
+  test <- import(test_wig)
   test
-  import.wig(test_wig, asRangedData = FALSE)
+  import.wig(test_wig)
   test_wig_file <- WIGFile(test_wig)
-  import(test_wig_file, asRangedData = FALSE)
+  import(test_wig_file)
   test_wig_con <- file(test_wig)
-  import(test_wig_con, format = "wig", asRangedData = FALSE)
+  import(test_wig_con, format = "wig")
   close(test_wig_con)
   test_wig_con <- file(test_wig)
-  import(WIGFile(test_wig_con), asRangedData = FALSE)
+  import(WIGFile(test_wig_con))
   close(test_wig_con)
 
   ## various options
-  import(test_wig, genome = "hg19", asRangedData = FALSE)
-  import(test_wig, trackLine = FALSE, asRangedData = FALSE)
+  import(test_wig, genome = "hg19")
+  import(test_wig, trackLine = FALSE)
   which <- as(test[3:4,], "RangesList")
-  import(test_wig, which = which, asRangedData = FALSE)
+  import(test_wig, which = which)
 
 \dontrun{
   ## basic export calls

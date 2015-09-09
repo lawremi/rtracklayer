@@ -274,34 +274,34 @@ export.gff3(object, con, ...)
   test_gff3 <- file.path(test_path, "genes.gff3")
 
   ## basic import
-  test <- import(test_gff3, asRangedData = FALSE)
+  test <- import(test_gff3)
   test
 
   ## import.gff functions
-  import.gff(test_gff3, asRangedData = FALSE)
-  import.gff3(test_gff3, asRangedData = FALSE)
+  import.gff(test_gff3)
+  import.gff3(test_gff3)
 
   ## GFFFile derivatives
   test_gff_file <- GFF3File(test_gff3)
-  import(test_gff_file, asRangedData = FALSE)
+  import(test_gff_file)
   test_gff_file <- GFFFile(test_gff3)
-  import(test_gff_file, asRangedData = FALSE)
+  import(test_gff_file)
   test_gff_file <- GFFFile(test_gff3, version = "3")
-  import(test_gff_file, asRangedData = FALSE)
+  import(test_gff_file)
 
   ## from connection
   test_gff_con <- file(test_gff3)
-  test <- import(test_gff_con, format = "gff", asRangedData = FALSE)
+  test <- import(test_gff_con, format = "gff")
   close(test_gff_con)
 
   ## various arguments
-  import(test_gff3, genome = "hg19", asRangedData = FALSE)
-  import(test_gff3, colnames = character(), asRangedData = FALSE)
-  import(test_gff3, colnames = c("type", "geneName"), asRangedData = FALSE)
+  import(test_gff3, genome = "hg19")
+  import(test_gff3, colnames = character())
+  import(test_gff3, colnames = c("type", "geneName"))
 
   ## 'which'
   which <- RangesList(chr10 = IRanges(90000, 93000))
-  import(test_gff3, which = which, asRangedData = FALSE)
+  import(test_gff3, which = which)
 
 \dontrun{
   ## 'append'
@@ -309,12 +309,12 @@ export.gff3(object, con, ...)
 
   export(test[seqnames(test) == "chr10"], test_gff3_out)
   export(test[seqnames(test) == "chr12"], test_gff3_out, append = TRUE)
-  import(test_gff3_out, asRangedData = FALSE)
+  import(test_gff3_out)
   
   ## 'index'
   export(test, test_gff3_out, index = TRUE)
   test_bed_gz <- paste(test_gff3_out, ".gz", sep = "")
-  import(test_bed_gz, which = which, asRangedData = FALSE)
+  import(test_bed_gz, which = which)
 
   ## RangedDataList  
   rdl <-
@@ -324,7 +324,7 @@ export.gff3(object, con, ...)
                        trackLine = new("BasicTrackLine", name = "chr12")))
   names(rdl) <- names(test)
   export(rdl, test_gff3_out)
-  import.ucsc(test_gff3_out, asRangedData = FALSE)
+  import.ucsc(test_gff3_out)
 }
 }
 

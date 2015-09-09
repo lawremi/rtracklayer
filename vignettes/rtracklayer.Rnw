@@ -257,7 +257,7 @@ of the data may be given as a connection, a filename or a character
 vector containing the data. Like the \texttt{export} function, the
 format is determined from the filename, by default. 
 <<import, eval=FALSE>>=
-restoredTrack <- import("targets.bed", asRangedData = FALSE)
+restoredTrack <- import("targets.bed")
 @
 %
 The \Robject{restoredTrack} object is of class \Rclass{GRanges}. To
@@ -278,7 +278,7 @@ restoredTrack <- import("targets.bed", asRangedData = TRUE)
 
 <<sol-3, echo=FALSE, results=hide>>=
 export(targetTrack, "targets.gff")
-targetGff <- import("targets.gff", asRangedData = FALSE)
+targetGff <- import("targets.gff")
 targetChar <- export(targetTrack, format = "gff1")
 @ 
 
@@ -409,7 +409,7 @@ One may download any of the tracks, such as the ``targets'' track that
 was loaded previously in this example.
 %
 <<get-track-data, eval=FALSE>>=
-subTargetTrack <- track(session, "targets", asRangedData = FALSE)
+subTargetTrack <- track(session, "targets")
 @
 %
 The returned object is a \Rclass{GRanges}, even if the data was
@@ -422,7 +422,7 @@ chromosome. Note that this does not distinguish by strand; we are only
 indicating a position on the genome.
 %
 <<get-track-segment, eval=FALSE>>=
-chr1Targets <- track(session, "targets", chr1Targets, asRangedData = FALSE)
+chr1Targets <- track(session, "targets", chr1Targets)
 @
 
 \paragraph{Exercises}
@@ -434,9 +434,9 @@ chr1Targets <- track(session, "targets", chr1Targets, asRangedData = FALSE)
 
 <<sol-7, eval=FALSE, echo=FALSE, results=hide>>=
 region <- range(subTargetTrack) + 500
-targetSNP <- track(session, "snp130", region, asRangedData = FALSE)
+targetSNP <- track(session, "snp130", region)
 as.data.frame(targetSNP)
-targetGene <- track(session, "knownGene", region, asRangedData = FALSE)
+targetGene <- track(session, "knownGene", region)
 as.data.frame(targetGene)
 @ 
 
@@ -631,7 +631,7 @@ instance.
 %
 <<track-nrsf>>=
 nrsfTrack <- GenomicData(ranges(nrsfHits), strand="+", chrom="chr1",
-                         genome = "hg19", asRangedData = FALSE)
+                         genome = "hg19")
 @ 
 %
 \Rfunction{GenomicData} is a convenience function that by default
