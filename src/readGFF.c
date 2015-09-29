@@ -73,6 +73,134 @@ static int filexp_gets2(SEXP filexp, char *buf, int buf_size, int *EOL_in_buf)
 
 
 /****************************************************************************
+ * Handling of tags
+ */
+
+#define	MAX_NTAG 4096
+struct {
+	struct htab htab;
+	SEXP tags;
+	CharAEAE *collected_tags;
+} tags_buf;
+	
+/* Copied from R_HOME/src/main/envir.c */
+static unsigned int char_hash(const char *s, int len)
+{
+	/* djb2 as from http://www.cse.yorku.ca/~oz/hash.html */
+	int i;
+	unsigned int h = 5381;
+
+	for (i = 0; i < len; i++)
+		h = ((h << 5) + h) + (*s);
+	return h;
+}
+
+static int get_bucket_idx_for_tag(const char *tag, int tag_len)
+{
+	unsigned int hval;
+	int bucket_idx, i2;
+	const int *buckets;
+	const CharAE *tag_ae;
+	SEXP tags_elt;
+
+	hval = char_hash(tag, tag_len);
+	bucket_idx = hval & tags_buf.htab.Mminus1;
+	buckets = tags_buf.htab.buckets;
+	while ((i2 = buckets[bucket_idx]) != NA_INTEGER) {
+		if (tags_buf.tags == R_NilValue) {
+			tag_ae = tags_buf.collected_tags->elts[i2];
+			if (CharAE_get_nelt(tag_ae) == tag_len
+			 && memcmp(tag_ae->elts, tag, tag_len) == 0)
+				break;
+		} else {
+			tags_elt = STRING_ELT(tags_buf.tags, i2);
+			if (LENGTH(tags_elt) == tag_len
+			 && memcmp(CHAR(tags_elt), tag, tag_len) == 0)
+				break;
+		}
+		bucket_idx = (bucket_idx + 1) % tags_buf.htab.M;
+	}
+	return bucket_idx;
+}
+
+/* The tags in 'tags' must be unique. */
+static void hash_tags(SEXP tags)
+{
+	int ntag, i, tag_len, bucket_idx;
+	SEXP tags_elt;
+	const char *tag;
+
+	ntag = LENGTH(tags);
+	if (ntag > MAX_NTAG)
+		error("number of tags must be <= %d", MAX_NTAG);
+	for (i = 0; i < ntag; i++) {
+		tags_elt = STRING_ELT(tags, i);
+		if (tags_elt == NA_STRING)
+			error("'tags' cannot contain NAs");
+		tag = CHAR(tags_elt);
+		tag_len = LENGTH(tags_elt);
+		bucket_idx = get_bucket_idx_for_tag(tag, tag_len);
+		if (get_hbucket_val(&(tags_buf.htab), bucket_idx) != NA_INTEGER)
+			error("'tags' cannot contain duplicates");
+		set_hbucket_val(&(tags_buf.htab), bucket_idx, i);
+	}
+	return;
+}
+
+static void init_tags_buf(SEXP tags)
+{
+	tags_buf.htab = new_htab(MAX_NTAG);
+	tags_buf.tags = tags;
+	if (tags == R_NilValue) {
+		tags_buf.collected_tags = new_CharAEAE(0, 0);
+	} else {
+		tags_buf.collected_tags = NULL;
+		hash_tags(tags);
+	}
+	return;
+}
+
+static void collect_tag(const char *tag, int tag_len)
+{
+	int bucket_idx;
+	int i;
+	CharAE *ae;
+
+	/* We want to store unique tags in 'tags_buf' so we first check
+	   to see if 'tag' is already stored and don't do anything if it is. */
+	bucket_idx = get_bucket_idx_for_tag(tag, tag_len);
+	if (get_hbucket_val(&(tags_buf.htab), bucket_idx) != NA_INTEGER)
+		return;  /* 'tag' was found ==> nothing to do */
+	/* 'tag' was not found ==> add it */
+	i = CharAEAE_get_nelt(tags_buf.collected_tags);
+	if (i >= MAX_NTAG)
+		error("GFF files with more than %d tags are not supported",
+		      MAX_NTAG);
+	set_hbucket_val(&(tags_buf.htab), bucket_idx, i);
+	ae = new_CharAE(tag_len);
+	CharAE_set_nelt(ae, tag_len);
+	memcpy(ae->elts, tag, tag_len);
+	CharAEAE_insert_at(tags_buf.collected_tags, i, ae);
+	return;
+}
+
+static int match_tag(const char *tag, int tag_len)
+{
+	int bucket_idx;
+
+	bucket_idx = get_bucket_idx_for_tag(tag, tag_len);
+	return get_hbucket_val(&(tags_buf.htab), bucket_idx);
+}
+
+static SEXP get_collected_tags()
+{
+	if (tags_buf.tags == R_NilValue)
+		return new_CHARACTER_from_CharAEAE(tags_buf.collected_tags);
+	return R_NilValue;
+}
+
+
+/****************************************************************************
  * gff_colnames()
  *
  * See http://www.sequenceontology.org/resources/gff3.html for the official
@@ -377,23 +505,13 @@ static void load_tagval(const char *tag, int tag_len,
 		const char *val, int val_len,
 		SEXP ans, int row_idx)
 {
-	SEXP ans_names, ans_colname, ans_col;
-	int ans_ncol0, j;
+	int j;
+	SEXP ans_col;
 
-	ans_ncol0 = INTEGER(GET_ATTR(ans, install("ncol0")))[0];
-	/* Lookup the current tag in 'names(ans)', starting from the end.
-	   Since the number of tags in 'names(ans)' is typically very small
-	   (< 25), we do this in a naive way (no hashing), because it's simple
-	   and seems to be fast enough. */
-	ans_names = GET_NAMES(ans);
-	for (j = LENGTH(ans_names) - 1; j >= ans_ncol0; j--) {
-		ans_colname = STRING_ELT(ans_names, j);
-		if (LENGTH(ans_colname) == tag_len
-		 && memcmp(CHAR(ans_colname), tag, tag_len) == 0)
-			break;
-	}
-	if (j < ans_ncol0)
+	j = match_tag(tag, tag_len);
+	if (j == NA_INTEGER)
 		return;  /* 'tag' was not found ==> nothing to do */
+	j += INTEGER(GET_ATTR(ans, install("ncol0")))[0];
 	ans_col = VECTOR_ELT(ans, j);
 	load_string(val, val_len, ans_col, row_idx);
 	return;
@@ -401,31 +519,6 @@ static void load_tagval(const char *tag, int tag_len,
 
 #define	IOBUF_SIZE 65536
 static char errmsg_buf[200];
-
-static void add_tag_to_buf(const char *tag, int tag_len, CharAEAE *tags_buf)
-{
-	CharAE **ae_p, *ae;
-	int ntag, i;
-
-	/* We want to store unique tags in 'tags_buf' so we first check
-	   to see if 'tag' is already stored and don't do anything if it is.
-	   Since the number of unique tags in a GFF file is typically very
-	   small (< 25), we do this in a naive way (no hashing), because it's
-	   simple and seems to be fast enough. */
-	ntag = CharAEAE_get_nelt(tags_buf);
-	for (i = 0, ae_p = tags_buf->elts; i < ntag; i++, ae_p++) {
-		ae = *ae_p;
-		if (CharAE_get_nelt(ae) == tag_len
-		 && memcmp(ae->elts, tag, tag_len) == 0)
-			return;  /* 'tag' was found ==> nothing to do */
-	}
-	/* 'tag' was not found ==> add it */
-	ae = new_CharAE(tag_len);
-	CharAE_set_nelt(ae, tag_len);
-	memcpy(ae->elts, tag, tag_len);
-	CharAEAE_insert_at(tags_buf, ntag, ae);
-	return;
-}
 
 /*
  * We use a heuristic to detect the format of the "attributes" col.
@@ -521,7 +614,7 @@ static int detect_attrcol_fmt(const char *data, int data_len)
 }
 
 static void parse_GFF3_tagval(const char *tagval, int tagval_len,
-		SEXP ans, int row_idx, CharAEAE *tags_buf)
+		SEXP ans, int row_idx)
 {
 	int tag_len, val_len;
 	char c;
@@ -541,8 +634,8 @@ static void parse_GFF3_tagval(const char *tagval, int tagval_len,
 		val_len = tagval_len - tag_len - 1;
 		load_tagval(tagval, tag_len, val, val_len, ans, row_idx);
 	}
-	if (tags_buf != NULL)
-		add_tag_to_buf(tagval, tag_len, tags_buf);
+	if (tags_buf.collected_tags != NULL)
+		collect_tag(tagval, tag_len);
 	return;
 }
 
@@ -580,7 +673,7 @@ static void check_for_embedded_dblquotes(const char *val, int val_len,
 }
 
 static void parse_GFF2_tagval(const char *tagval, int tagval_len,
-		SEXP ans, int row_idx, CharAEAE *tags_buf)
+		SEXP ans, int row_idx)
 {
 	int i, tag_len, val_len;
 	char c;
@@ -632,13 +725,13 @@ static void parse_GFF2_tagval(const char *tagval, int tagval_len,
 		check_for_embedded_dblquotes(val, val_len, ans);
 		load_tagval(tagval, tag_len, val, val_len, ans, row_idx);
 	}
-	if (tags_buf != NULL)
-		add_tag_to_buf(tagval, tag_len, tags_buf);
+	if (tags_buf.collected_tags != NULL)
+		collect_tag(tagval, tag_len);
 	return;
 }
 
 static void parse_GFF3_attrcol(const char *data, int data_len,
-		SEXP ans, int row_idx, CharAEAE *tags_buf)
+		SEXP ans, int row_idx)
 {
 	const char *tagval;
 	int tagval_len, i;
@@ -652,16 +745,16 @@ static void parse_GFF3_attrcol(const char *data, int data_len,
 			tagval_len++;
 			continue;
 		}
-		parse_GFF3_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+		parse_GFF3_tagval(tagval, tagval_len, ans, row_idx);
 		tagval = data + i + 1;
 		tagval_len = 0;
 	}
-	parse_GFF3_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+	parse_GFF3_tagval(tagval, tagval_len, ans, row_idx);
 	return;
 }
 
 static void parse_GFF2_attrcol(const char *data, int data_len,
-		SEXP ans, int row_idx, CharAEAE *tags_buf)
+		SEXP ans, int row_idx)
 {
 	const char *tagval;
 	int tagval_len, in_quotes, i;
@@ -681,11 +774,11 @@ static void parse_GFF2_attrcol(const char *data, int data_len,
 			tagval_len++;
 			continue;
 		}
-		parse_GFF2_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+		parse_GFF2_tagval(tagval, tagval_len, ans, row_idx);
 		tagval = data + i + 1;
 		tagval_len = 0;
 	}
-	parse_GFF2_tagval(tagval, tagval_len, ans, row_idx, tags_buf);
+	parse_GFF2_tagval(tagval, tagval_len, ans, row_idx);
 	return;
 }
 
@@ -800,7 +893,6 @@ static const char *parse_GFF_line(const char *line, int lineno,
 		int *attrcol_fmt,
 		SEXP filter,		/* used during scan and load */
 		int *row_idx,		/* used during scan and load */
-		CharAEAE *tags_buf,	/* used during scan (1st pass) */
 		SEXP ans,		/* used during load (2nd pass) */
 		const int *colmap0)	/* used during load (2nd pass) */
 {
@@ -836,12 +928,10 @@ static const char *parse_GFF_line(const char *line, int lineno,
 			continue;
 		switch (*attrcol_fmt) {
 		    case GFF3_FMT:
-			parse_GFF3_attrcol(data, data_len,
-					   ans, *row_idx, tags_buf);
+			parse_GFF3_attrcol(data, data_len, ans, *row_idx);
 		    break;
 		    case GFF2_FMT:
-			parse_GFF2_attrcol(data, data_len,
-					   ans, *row_idx, tags_buf);
+			parse_GFF2_attrcol(data, data_len, ans, *row_idx);
 		    break;
 		}
 	}
@@ -886,7 +976,7 @@ static const char *load_GFF_pragmas(SEXP filexp,
 			/* ... or at 1st GFF line. */
 			return parse_GFF_line(buf, lineno, attrcol_fmt,
 					      R_NilValue, &row_idx,
-					      NULL, R_NilValue, NULL);
+					      R_NilValue, NULL);
 		}
 		/* Line starting with a single # -> human-readable comment. */
 		if (buf[1] != '#')
@@ -902,7 +992,6 @@ static const char *load_GFF_pragmas(SEXP filexp,
 static const char *parse_GFF_file(SEXP filexp, int *attrcol_fmt,
 		SEXP filter,		/* used during scan and load */
 		int *nrows,		/* used during scan and load */
-		CharAEAE *tags_buf,	/* used during scan (1st pass) */
 		SEXP ans,		/* used during load (2nd pass) */
 		const int *colmap0)	/* used during load (2nd pass) */
 {
@@ -940,7 +1029,7 @@ static const char *parse_GFF_file(SEXP filexp, int *attrcol_fmt,
 			break;  /* stop parsing at 1st FASTA header */
 		errmsg = parse_GFF_line(buf, lineno, attrcol_fmt,
 					filter, &row_idx,
-					tags_buf, ans, colmap0);
+					ans, colmap0);
 		if (errmsg != NULL)
 			return errmsg;
 	}
@@ -990,32 +1079,25 @@ SEXP read_gff_pragmas(SEXP filexp)
 SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags,
 	      SEXP filter, SEXP nrows)
 {
-	CharAEAE *tags_buf;
 	int attrcol_fmt0, nrows0;
 	const char *errmsg;
 	SEXP scan_ans, scan_ans_elt;
 
 	//init_clock("scan_gff: T1 = ");
-	if (tags == R_NilValue) {
-		tags_buf = new_CharAEAE(0, 0);
-	} else {
-		tags_buf = NULL;
-	}
 	attrcol_fmt0 = INTEGER(attrcol_fmt)[0];
+	init_tags_buf(tags);
 	check_filter(filter, attrcol_fmt0);
 	nrows0 = INTEGER(nrows)[0];
 	errmsg = parse_GFF_file(filexp, &attrcol_fmt0,
 				filter, &nrows0,
-				tags_buf, R_NilValue, NULL);
+				R_NilValue, NULL);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
 
 	PROTECT(scan_ans = NEW_LIST(2));
-	if (tags == R_NilValue) {
-		PROTECT(scan_ans_elt = new_CHARACTER_from_CharAEAE(tags_buf));
-		SET_ELEMENT(scan_ans, 0, scan_ans_elt);
-		UNPROTECT(1);
-	}
+	PROTECT(scan_ans_elt = get_collected_tags());
+	SET_ELEMENT(scan_ans, 0, scan_ans_elt);
+	UNPROTECT(1);
 	PROTECT(scan_ans_elt = ScalarInteger(nrows0));
 	SET_ELEMENT(scan_ans, 1, scan_ans_elt);
 	UNPROTECT(2);
@@ -1043,7 +1125,7 @@ SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags,
  *                they are found in the file.
  */
 SEXP load_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags,
-              SEXP filter, SEXP nrows,
+	      SEXP filter, SEXP nrows,
 	      SEXP pragmas, SEXP colmap, SEXP raw_data)
 {
 	int attrcol_fmt0, colmap0[GFF_NCOL], ans_ncol0;
@@ -1052,12 +1134,13 @@ SEXP load_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags,
 
 	//init_clock("load_gff: T2 = ");
 	attrcol_fmt0 = INTEGER(attrcol_fmt)[0];
+	init_tags_buf(tags);
 	ans_ncol0 = prepare_colmap0(colmap0, colmap);
 	PROTECT(ans = alloc_ans(INTEGER(nrows)[0], ans_ncol0, colmap0,
 				tags, pragmas, attrcol_fmt, raw_data));
 	errmsg = parse_GFF_file(filexp, &attrcol_fmt0,
 				filter, INTEGER(nrows),
-				NULL, ans, colmap0);
+				ans, colmap0);
 	UNPROTECT(1);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
