@@ -73,7 +73,76 @@ static int filexp_gets2(SEXP filexp, char *buf, int buf_size, int *EOL_in_buf)
 
 
 /****************************************************************************
- * NCList_new() and NCList_free()
+ * gff_colnames()
+ *
+ * See http://www.sequenceontology.org/resources/gff3.html for the official
+ * GFF3 specs.
+ */
+
+static const char *col_names[] = {
+	"seqid",
+	"source",
+	"type",
+	"start",
+	"end",
+	"score",
+	"strand",
+	"phase",
+	"attributes"  /* "group" for GFF1 */
+};
+
+static const SEXPTYPE col_types[] = {
+	STRSXP,   /* seqid */
+	STRSXP,   /* source */
+	STRSXP,   /* type */
+	INTSXP,   /* start */
+	INTSXP,   /* end */
+	REALSXP,  /* score */
+	STRSXP,   /* strand */
+	INTSXP,   /* phase */
+	STRSXP    /* attributes */
+};
+
+#define	GFF_NCOL ((int) (sizeof(col_names) / sizeof(char *)))
+
+#define	SEQID_IDX 0
+#define	SOURCE_IDX 1
+#define	TYPE_IDX 2
+#define	START_IDX 3
+#define	END_IDX 4
+#define	SCORE_IDX 5
+#define	STRAND_IDX 6
+#define	PHASE_IDX 7
+#define	ATTRIBUTES_IDX 8
+
+static const char *gff_colname(int col_idx, int gff1)
+{
+	if (col_idx == ATTRIBUTES_IDX && gff1)
+		return "group";
+	return col_names[col_idx];
+}
+
+/* --- .Call ENTRY POINT --- */
+SEXP gff_colnames(SEXP GFF1)
+{
+	SEXP ans, ans_elt;
+	int col_idx;
+	const char *colname;
+
+	PROTECT(ans = NEW_CHARACTER(GFF_NCOL));
+	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
+		colname = gff_colname(col_idx, LOGICAL(GFF1)[0]);
+		PROTECT(ans_elt = mkChar(colname));
+		SET_STRING_ELT(ans, col_idx, ans_elt);
+		UNPROTECT(1);
+	}
+	UNPROTECT(1);
+	return ans;
+}
+
+
+/****************************************************************************
+ * read_gff_pragmas(), scan_gff(), and load_gff()
  */
 
 /*
@@ -150,70 +219,6 @@ static double as_double(const char *val, int val_len)
 	}
 	return x;
 }
-
-/* See http://www.sequenceontology.org/resources/gff3.html for the official
- * GFF3 specs. */
-
-static const char *col_names[] = {
-	"seqid",
-	"source",
-	"type",
-	"start",
-	"end",
-	"score",
-	"strand",
-	"phase",
-	"attributes"  /* "group" for GFF1 */
-};
-
-#define	GFF_NCOL ((int) (sizeof(col_names) / sizeof(char *)))
-
-#define	SEQID_IDX 0
-#define	SOURCE_IDX 1
-#define	TYPE_IDX 2
-#define	START_IDX 3
-#define	END_IDX 4
-#define	SCORE_IDX 5
-#define	STRAND_IDX 6
-#define	PHASE_IDX 7
-#define	ATTRIBUTES_IDX 8
-
-static const char *gff_colname(int col_idx, int gff1)
-{
-	if (col_idx == ATTRIBUTES_IDX && gff1)
-		return "group";
-	return col_names[col_idx];
-}
-
-/* --- .Call ENTRY POINT --- */
-SEXP gff_colnames(SEXP GFF1)
-{
-	SEXP ans, ans_elt;
-	int col_idx;
-	const char *colname;
-
-	PROTECT(ans = NEW_CHARACTER(GFF_NCOL));
-	for (col_idx = 0; col_idx < GFF_NCOL; col_idx++) {
-		colname = gff_colname(col_idx, LOGICAL(GFF1)[0]);
-		PROTECT(ans_elt = mkChar(colname));
-		SET_STRING_ELT(ans, col_idx, ans_elt);
-		UNPROTECT(1);
-	}
-	UNPROTECT(1);
-	return ans;
-}
-
-static const SEXPTYPE col_types[] = {
-	STRSXP,   /* seqid */
-	STRSXP,   /* source */
-	STRSXP,   /* type */
-	INTSXP,   /* start */
-	INTSXP,   /* end */
-	REALSXP,  /* score */
-	STRSXP,   /* strand */
-	INTSXP,   /* phase */
-	STRSXP    /* attributes */
-};
 
 static int prepare_colmap0(int *colmap0, SEXP colmap)
 {
@@ -794,8 +799,8 @@ static int pass_filter(Chars_holder *data_holders, SEXP filter)
 static const char *parse_GFF_line(const char *line, int lineno,
 		int *attrcol_fmt,
 		SEXP filter,		/* used during scan and load */
+		int *row_idx,		/* used during scan and load */
 		CharAEAE *tags_buf,	/* used during scan (1st pass) */
-		int *row_idx,		/* used during scan (1st pass) */
 		SEXP ans,		/* used during load (2nd pass) */
 		const int *colmap0)	/* used during load (2nd pass) */
 {
@@ -844,15 +849,64 @@ static const char *parse_GFF_line(const char *line, int lineno,
 	return NULL;
 }
 
-static const char *parse_GFF_file(SEXP filexp,
-		CharAEAE *pragmas_buf, int *attrcol_fmt,
+/* Stop parsing after 1st GFF line. */
+static const char *load_GFF_pragmas(SEXP filexp,
+		CharAEAE *pragmas_buf, int *attrcol_fmt)
+{
+	int row_idx, lineno, ret_code, EOL_in_buf, buf_len;
+	char buf[IOBUF_SIZE], c;
+
+	if (TYPEOF(filexp) != EXTPTRSXP)
+		init_con_buf();
+	row_idx = 0;
+	for (lineno = 1;
+	     (ret_code = filexp_gets2(filexp, buf, IOBUF_SIZE, &EOL_in_buf));
+	     lineno += EOL_in_buf)
+	{
+		if (ret_code == -1) {
+			snprintf(errmsg_buf, sizeof(errmsg_buf),
+				 "read error while reading characters "
+				 "from line %d", lineno);
+			return errmsg_buf;
+		}
+		if (!EOL_in_buf) {
+			snprintf(errmsg_buf, sizeof(errmsg_buf),
+				 "cannot read line %d, "
+				 "line is too long", lineno);
+			return errmsg_buf;
+		}
+		c = buf[0];
+		if (c != '#') {
+			/* Skip empty line. */
+			if (c == '\n' || (c == '\r' && buf[1] == '\n'))
+				continue;
+			/* Stop parsing at 1st FASTA header... */
+			if (c == '>')
+				return NULL;
+			/* ... or at 1st GFF line. */
+			return parse_GFF_line(buf, lineno, attrcol_fmt,
+					      R_NilValue, &row_idx,
+					      NULL, R_NilValue, NULL);
+		}
+		/* Line starting with a single # -> human-readable comment. */
+		if (buf[1] != '#')
+			continue;
+		/* Line starting with ## -> pragma line. */
+		buf_len = delete_trailing_LF_or_CRLF(buf, -1);
+		buf[buf_len] = '\0';
+		append_string_to_CharAEAE(pragmas_buf, buf);
+	}
+	return NULL;
+}
+
+static const char *parse_GFF_file(SEXP filexp, int *attrcol_fmt,
 		SEXP filter,		/* used during scan and load */
+		int *nrows,		/* used during scan and load */
 		CharAEAE *tags_buf,	/* used during scan (1st pass) */
-		int *ans_nrow,		/* used during scan (1st pass) */
 		SEXP ans,		/* used during load (2nd pass) */
 		const int *colmap0)	/* used during load (2nd pass) */
 {
-	int row_idx, lineno, ret_code, EOL_in_buf, buf_len;
+	int row_idx, lineno, ret_code, EOL_in_buf;
 	char buf[IOBUF_SIZE], c;
 	const char *errmsg;
 
@@ -875,32 +929,22 @@ static const char *parse_GFF_file(SEXP filexp,
 				 "line is too long", lineno);
 			return errmsg_buf;
 		}
+		if (*nrows >= 0 && row_idx == *nrows)
+			return NULL;
 		c = buf[0];
+		if (c == '#') 
+			continue;
 		if (c == '\n' || (c == '\r' && buf[1] == '\n'))
 			continue;  /* skip empty line */
-		if (c == '#') {
-			/* # human-readable comment
-			   ## pragma line */
-			if (pragmas_buf != NULL && buf[1] == '#') {
-				buf_len = delete_trailing_LF_or_CRLF(buf, -1);
-				buf[buf_len] = '\0';
-				append_string_to_CharAEAE(pragmas_buf, buf);
-			}
-			continue;
-		}
 		if (c == '>')
 			break;  /* stop parsing at 1st FASTA header */
-		errmsg = parse_GFF_line(buf, lineno,
-					attrcol_fmt,
-					filter,
-					tags_buf, &row_idx,
-					ans, colmap0);
+		errmsg = parse_GFF_line(buf, lineno, attrcol_fmt,
+					filter, &row_idx,
+					tags_buf, ans, colmap0);
 		if (errmsg != NULL)
 			return errmsg;
-		if (pragmas_buf != NULL)
-			break;  /* stop parsing after 1st GFF line */
 	}
-	*ans_nrow = row_idx;
+	*nrows = row_idx;
 	return NULL;
 }
 
@@ -914,20 +958,15 @@ static const char *parse_GFF_file(SEXP filexp,
 SEXP read_gff_pragmas(SEXP filexp)
 {
 	CharAEAE *pragmas_buf;
-	int attrcol_fmt0, ans_nrow;
+	int attrcol_fmt0;
 	const char *errmsg;
 	SEXP pragmas, attrcol_fmt;
 
 	pragmas_buf = new_CharAEAE(0, 0);
 	attrcol_fmt0 = UNKNOWN_FMT;
-	errmsg = parse_GFF_file(filexp,
-				pragmas_buf, &attrcol_fmt0,
-				R_NilValue,
-				NULL, &ans_nrow,
-				R_NilValue, NULL);
+	errmsg = load_GFF_pragmas(filexp, pragmas_buf, &attrcol_fmt0);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
-
 	PROTECT(pragmas = new_CHARACTER_from_CharAEAE(pragmas_buf));
 	PROTECT(attrcol_fmt = ScalarInteger(attrcol_fmt0));
 	SET_ATTR(pragmas, install("attrcol_fmt"), attrcol_fmt);
@@ -945,11 +984,14 @@ SEXP read_gff_pragmas(SEXP filexp)
  *   filter:      NULL or a list of length GFF_NCOL-1 (or GFF_NCOL if
  *                'attrcol_fmt' is 1). Each list element must be NULL or a
  *                character vector with no NAs.
+ *   nrows:       -1 or the maximum number of rows to read in (after
+ *                filtering).
  */
-SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter)
+SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags,
+	      SEXP filter, SEXP nrows)
 {
 	CharAEAE *tags_buf;
-	int attrcol_fmt0, ans_nrow;
+	int attrcol_fmt0, nrows0;
 	const char *errmsg;
 	SEXP scan_ans, scan_ans_elt;
 
@@ -961,11 +1003,10 @@ SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter)
 	}
 	attrcol_fmt0 = INTEGER(attrcol_fmt)[0];
 	check_filter(filter, attrcol_fmt0);
-	errmsg = parse_GFF_file(filexp,
-				NULL, &attrcol_fmt0,
-				filter,
-				tags_buf, &ans_nrow,
-				R_NilValue, NULL);
+	nrows0 = INTEGER(nrows)[0];
+	errmsg = parse_GFF_file(filexp, &attrcol_fmt0,
+				filter, &nrows0,
+				tags_buf, R_NilValue, NULL);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);
 
@@ -975,7 +1016,7 @@ SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter)
 		SET_ELEMENT(scan_ans, 0, scan_ans_elt);
 		UNPROTECT(1);
 	}
-	PROTECT(scan_ans_elt = ScalarInteger(ans_nrow));
+	PROTECT(scan_ans_elt = ScalarInteger(nrows0));
 	SET_ELEMENT(scan_ans, 1, scan_ans_elt);
 	UNPROTECT(2);
 	//print_elapsed_time();
@@ -991,7 +1032,7 @@ SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter)
  *                scan_gff() above, it cannot be NULL.
  *   filter:      MUST be the same as passed to scan_gff(). This time we
  *                don't check it.
- *   ans_nrow:    Integer vector of length 1 containing the number of rows
+ *   nrows:       Integer vector of length 1 containing the number of rows
  *                scan_gff() said will end up in 'ans'.
  *   pragmas:     Character vector containing the pragma lines returned by
  *                read_gff_pragmas().
@@ -1001,8 +1042,9 @@ SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter)
  *                "score") are loaded as character vectors and as-is i.e. how
  *                they are found in the file.
  */
-SEXP load_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter,
-		SEXP ans_nrow, SEXP pragmas, SEXP colmap, SEXP raw_data)
+SEXP load_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags,
+              SEXP filter, SEXP nrows,
+	      SEXP pragmas, SEXP colmap, SEXP raw_data)
 {
 	int attrcol_fmt0, colmap0[GFF_NCOL], ans_ncol0;
 	SEXP ans;
@@ -1011,13 +1053,11 @@ SEXP load_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags, SEXP filter,
 	//init_clock("load_gff: T2 = ");
 	attrcol_fmt0 = INTEGER(attrcol_fmt)[0];
 	ans_ncol0 = prepare_colmap0(colmap0, colmap);
-	PROTECT(ans = alloc_ans(INTEGER(ans_nrow)[0], ans_ncol0, colmap0,
+	PROTECT(ans = alloc_ans(INTEGER(nrows)[0], ans_ncol0, colmap0,
 				tags, pragmas, attrcol_fmt, raw_data));
-	errmsg = parse_GFF_file(filexp,
-				NULL, &attrcol_fmt0,
-				filter,
-				NULL, INTEGER(ans_nrow),
-				ans, colmap0);
+	errmsg = parse_GFF_file(filexp, &attrcol_fmt0,
+				filter, INTEGER(nrows),
+				NULL, ans, colmap0);
 	UNPROTECT(1);
 	if (errmsg != NULL)
 		error("reading GFF file: %s", errmsg);

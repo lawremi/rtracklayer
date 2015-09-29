@@ -262,7 +262,7 @@ GFFcolnames <- function(GFF1=FALSE)
 }
 
 readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
-                    filter=NULL, raw_data=FALSE)
+                    filter=NULL, nrows=-1, raw_data=FALSE)
 {
     ## Check 'filepath'.
     filexp <- .make_filexp_from_filepath(filepath)
@@ -305,15 +305,21 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
     ## Normalize 'filter'.
     filter <- .normarg_filter(filter, attrcol_fmt)
 
+    ## Normalize 'nrows'.
+    if (!isSingleNumber(nrows))
+        stop(wmsg("'nrows' must be a single number"))
+    if (!is.integer(nrows))
+        nrows <- as.integer(nrows)
+
     ## Check 'raw_data'.
     if (!isTRUEorFALSE(raw_data))
         stop(wmsg("'raw_data' must be TRUE or FALSE"))
 
     ## 1st pass.
-    scan_ans <- .Call(scan_gff, filexp, attrcol_fmt, tags, filter)
+    scan_ans <- .Call(scan_gff, filexp, attrcol_fmt, tags, filter, nrows)
     if (is.null(tags))
         tags <- scan_ans[[1L]]
-    ans_nrow <- scan_ans[[2L]]
+    nrows <- scan_ans[[2L]]
 
     ## Rewind file.
     if (is(filexp, "connection")) {
@@ -324,25 +330,27 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
 
     ## 2nd pass: return 'ans' as an ordinary data frame.
     ans <- .Call(load_gff, filexp, attrcol_fmt, tags, filter,
-                           ans_nrow, pragmas,
+                           nrows, pragmas,
                            colmap, raw_data)
     ncol0 <- attr(ans, "ncol0")
     ntag <- attr(ans, "ntag")          # should be the same as 'length(tags)'
 
     ## Post-process standard GFF cols.
-    if (attrcol_fmt == 1L) {
-        #factor_colnames <- c("seqid", "source", "type", "strand", "group")
-        factor_colnames <- c("seqid", "source", "type", "group")
-    } else {
-        #factor_colnames <- c("seqid", "source", "type", "strand")
-        factor_colnames <- c("seqid", "source", "type")
+    if (!raw_data) {
+        if (attrcol_fmt == 1L) {
+            #factor_colnames <- c("seqid", "source", "type", "strand", "group")
+            factor_colnames <- c("seqid", "source", "type", "group")
+        } else {
+            #factor_colnames <- c("seqid", "source", "type", "strand")
+            factor_colnames <- c("seqid", "source", "type")
+        }
+        m <- match(factor_colnames, head(colnames(ans), n=ncol0))
+        m <- m[!is.na(m)]
+        factor_cols <- lapply(setNames(m, colnames(ans)[m]),
+                              function(j)
+                                factor(ans[[j]], levels=unique(ans[[j]])))
+        ans[m] <- factor_cols
     }
-    m <- match(factor_colnames, head(colnames(ans), n=ncol0))
-    m <- m[!is.na(m)]
-    factor_cols <- lapply(setNames(m, colnames(ans)[m]),
-                          function(j)
-                            factor(ans[[j]], levels=unique(ans[[j]])))
-    ans[m] <- factor_cols
 
     ## Post-process tags.
     if (ntag != 0L) {

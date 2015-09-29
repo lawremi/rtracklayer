@@ -12,8 +12,9 @@
 }
 
 \usage{
-readGFF(filepath, version=0, columns=NULL, tags=NULL, filter=NULL,
-                  raw_data=FALSE)
+readGFF(filepath, version=0,
+        columns=NULL, tags=NULL, filter=NULL, nrows=-1,
+        raw_data=FALSE)
 
 GFFcolnames(GFF1=FALSE)
 }
@@ -38,6 +39,9 @@ GFFcolnames(GFF1=FALSE)
     The tags to load. All of them are loaded by default.
   }
   \item{filter}{
+  }
+  \item{nrows}{
+    \code{-1} or the maximum number of rows to read in (after filtering).
   }
   \item{raw_data}{
   }
