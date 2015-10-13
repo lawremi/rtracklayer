@@ -1,3 +1,17 @@
+CHANGES IN VERSION 1.30
+-----------------------
+
+NEW FEATURES
+
+    o Add readGFF(), a fast and flexible GFF/GTF parser implemented in C. See
+      ?readGFF for more information.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o import.gff() now uses readGFF() internally which makes it at least 5x
+      faster in most use cases and dramatically reduces its memory footprint.
+
+
 CHANGES IN VERSION 1.26
 -----------------------
 
