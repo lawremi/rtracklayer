@@ -477,9 +477,11 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
     ## makeGRangesFromDataFrame()?
     if (is.null(colnames)) {
         ans <- makeGRangesFromDataFrame(df, keep.extra.columns=TRUE,
-                                            seqinfo=ans_seqinfo)
+                                            seqinfo=ans_seqinfo,
+                                            seqnames.field="seqid")
     } else {
-        ans <- makeGRangesFromDataFrame(df, seqinfo=ans_seqinfo)
+        ans <- makeGRangesFromDataFrame(df, seqinfo=ans_seqinfo,
+                                            seqnames.field="seqid")
         mcols(ans) <- df[ , colnames, drop=FALSE]
     }
     genome(ans) <- genome
