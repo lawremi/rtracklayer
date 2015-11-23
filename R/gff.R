@@ -78,6 +78,15 @@ setMethod("export", c("GRangesList", "GFFFile"),
           }
           )
 
+setMethod("export", c("GRangesList", "GTFFile"),
+          function(object, con, format, ...) {
+              stop("export of GRangesList to GTF is not yet supported")
+              ## there is a start on asGTF() later in this file
+              ## object <- asGTF(object)
+              ## callGeneric()
+          }
+          )
+
 setMethod("export", c("GenomicRanges", "GFFFile"),
           function(object, con, format, version = c("1", "2", "3"),
                    source = "rtracklayer", append = FALSE, index = FALSE)
@@ -343,6 +352,79 @@ setMethod("asGFF", "GRangesList",
             values(parents) <- rectifyDataFrame(values(parents))
             c(parents, children)
           })
+
+### FIXME: We wrote this but never tested it, and it is not yet
+### used. People should use GFF3 instead of this.
+###
+### KNOWN ISSUES:
+### 1) The stop codon should not be included in the CDS (annoying)
+### 2) pmapFromTranscripts() does not yet support our usage of it
+### 3) Needs to move to GenomicFeatures
+
+setGeneric("asGTF", function(x, ...) standardGeneric("asGTF"))
+
+frame <- function(x) {
+    cs <- cumsum(width(x))
+    ucs <- unlist(cs, use.names=FALSE)
+    ucs[end(PartitioningByEnd(x))] <- 0L
+    ucs <- c(0L, head(ucs, -1L))
+    ucs %% 3L
+}
+
+setMethod("asGTF", "GRangesList",
+          function(x) {
+              tx_ids <- names(x)
+              if (is.null(tx_ids)) {
+                  tx_ids <- seq_along(x)
+              }
+              processFeatures <- function(f) {
+                  ans <- unlist(f, use.names=FALSE)
+                  ans$frame <- frame(f)
+                  if (is.null(ans$gene_id)) {
+                      ans$gene_id <- ""
+                  }
+                  if (is.null(ans$transcript_id)) {
+                      ans$transcript_id <- tx_id[togroup(f)]
+                  }
+                  ans
+              }
+              start_codon_tx <- pmapFromTranscripts(IRanges(1L, 3L), x)
+              start_codon <- processFeatures(start_codon_tx)
+              mcols(start_codon)$type <- "start_codon"
+              stop_ranges <- IRanges(end=sum(width(x)), width=3L)
+              stop_codon_tx <- pmapFromTranscripts(stop_ranges, x)
+              stop_codon <- processFeatures(stop_codon_tx)
+              mcols(stop_codon)$type <- "stop_codon"
+              codons <- c(start_codon, stop_codon)
+              cds <- processFeatures(x)
+              mcols(cds)$type <- "CDS"
+              values(codons) <- rectifyDataFrame(values(codons), colnames(cds))
+              c(codons, cds)
+          })
+
+## setMethod("asGTF", "TxDb",
+##           function(x, by) {
+##               cds <- cds(x, columns="tx_id")
+##               cds <- cds[togroup(cds$tx_id)]
+##               cds$transcript_id <- unlist(cds$tx_id)
+##               cds$tx_id <- NULL
+##               txGene <- transcriptsBy(x)
+##               txToGene <- setNames(names(txGene)[togroup(txGene)],
+##                                    unlist(txGene, use.names=FALSE)$tx_id)
+##               cds$gene_id <- txToGene[cds$transcript_id]
+##               processUTRs <- function(utr) {
+##                   ans <- unlist(utr, use.names=FALSE)
+##                   ans$transcript_id <- names(utr)[togroup(utr)]
+##                   ans$gene_id <- txToGene[ans$transcript_id]
+##                   ans
+##               }
+##               three_utr <- processUTRs(threeUTRsByTranscript(x))
+##               three_utr$type <- "3UTR"
+##               five_utr <- processUTRs(fiveUTRsByTranscript(x))
+##               five_utr$type <- "5UTR"
+##               c(asGTF(split(cds, cds$transcript_id)), five_utr, three_utr)
+##           })
+
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
