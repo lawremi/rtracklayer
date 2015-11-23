@@ -470,7 +470,7 @@ gffComment <- function(con, ...)
   lines <- line <- readLines(con, n = 1)
   while(grepl("^#", line)) {
     if (grepl("^##gff-version", line)) {
-      version <- sub("^##gff-version ", "", line)
+      version <- sub("^##gff-version *", "", line)
       break
     }
     line <- readLines(con, n = 1)
