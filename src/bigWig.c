@@ -393,3 +393,9 @@ SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_seqlengths, SEXP r_outfile) {
   popRHandlers();
   return r_outfile;
 }
+
+SEXP R_udcCleanup(SEXP r_maxDays) {
+    double maxDays = asReal(r_maxDays);
+    bits64 size = udcCleanup(udcDefaultDir(), maxDays, FALSE);
+    return ScalarReal(size);
+}

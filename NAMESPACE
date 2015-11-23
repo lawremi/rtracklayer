@@ -68,7 +68,7 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
 exportClasses(RTLFile, CompressedFile, GFFFile, UCSCFile, BEDFile, WIGFile,
               ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,
               BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, 
-              TwoBitFile)
+              TwoBitFile, RTLFileList)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
@@ -116,7 +116,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        uri, Quickload, quickload, QuickloadGenome,
        organism, releaseDate, mcols, wigToBigWig,
        SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path,
-       FileForFormat)
+       FileForFormat, cleanupBigWigCache)
 
 export(GFFFile, UCSCFile, BEDFile, WIGFile,
        ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,

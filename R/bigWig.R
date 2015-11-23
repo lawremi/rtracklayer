@@ -21,7 +21,7 @@ setMethod("seqinfo", "BigWigFile", function(x) {
   Seqinfo(names(seqlengths), seqlengths) # no circularity information
 })
 
-setClass("BigWigFileList", contains = "SimpleList",
+setClass("BigWigFileList", contains = "RTLFileList",
     prototype = prototype(elementType = "BigWigFile"))
 
 BigWigFileList <- function(path)
@@ -325,3 +325,18 @@ wigToBigWig <-
     ans <- .Call(BWGFile_fromWIG, x, seqlengths, dest)
     invisible(BigWigFile(ans))
   }
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Utilities
+###
+
+## Remote data are cached locally. Need a way to cleanup.
+
+cleanupBigWigCache <- function(maxDays = 0) {
+  stopifnot(isSingleNumber(maxDays))
+  dir <- "/tmp/udcCache"
+  if (file.exists(dir)) {
+      invisible(.Call(R_udcCleanup, maxDays))
+  }
+}
+

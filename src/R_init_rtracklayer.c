@@ -22,6 +22,7 @@ static const R_CallMethodDef callMethods[] = {
   CALLMETHOD_DEF(BWGFile_seqlengths, 1),
   CALLMETHOD_DEF(BWGFile_summary, 6),
   CALLMETHOD_DEF(BWGFile_fromWIG, 3),
+  CALLMETHOD_DEF(R_udcCleanup, 1),
   /* twobit.c */
   CALLMETHOD_DEF(DNAString_to_twoBit, 3),
   CALLMETHOD_DEF(TwoBits_write, 2),
