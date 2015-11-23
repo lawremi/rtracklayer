@@ -14,6 +14,10 @@
 setClass("RTLFile", representation(resource = "characterORconnection"),
          contains = "VIRTUAL")
 
+setClass("RTLFileList",
+         prototype = prototype(elementType = "RTLFile"),
+         contains = "SimpleList")
+
 resource <- function(x) x@resource
 
 connection <- function(x, open = "") {
