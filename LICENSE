@@ -1,0 +1,9 @@
+The contents of "src/ucsc" fall under the license below. Note that
+the "src/lib", "src/inc" and "src/utils" refer to directories within
+the original Kent source tree. In rtracklayer, the files are all under
+"src/ucsc".
+
+All files are copyrighted, but license is hereby granted for personal,
+academic, and non-profit use.  A license is also granted for the
+contents of the src/lib, src/inc and src/utils and python directories
+for commercial users.

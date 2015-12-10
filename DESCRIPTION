@@ -19,9 +19,7 @@ Description: Extensible framework for interacting with multiple genome
   supported browsers, as well as query and modify the browser state, such as the
   current viewport.
 Maintainer: Michael Lawrence <michafla@gene.com>
-License: Artistic-2.0
-ExtraLicenses: The files in the 'src/ucsc' directory are licensed for all
-  use by Jim Kent, in a manner compatible with the Artistic 2.0 license.
+License: Artistic-2.0 + file LICENSE
 Collate: io.R web.R ranges.R trackDb.R browser.R ucsc.R readGFF.R gff.R bed.R
          wig.R utils.R bigWig.R chain.R quickload.R twobit.R fasta.R tabix.R
          bam.R trackTable.R index.R compression.R test_rtracklayer_package.R
