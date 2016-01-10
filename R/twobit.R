@@ -24,10 +24,19 @@ TwoBitFile <- function(path) {
 }
 `2BitFile` <- TwoBitFile
 
+.seqlengths_TwoBitFile <- function(x) {
+    .Call(TwoBitFile_seqlengths, path(x))
+}
+
+fastaSeqnames <- function(x) {
+    sub(" .*", "", x)
+}
+
 setMethod("seqinfo", "TwoBitFile", function(x) {
-  seqlengths <- .Call(TwoBitFile_seqlengths, path(x))
-  Seqinfo(names(seqlengths), seqlengths) # no circularity or genome information
-})
+              seqlengths <- .seqlengths_TwoBitFile(x)
+              names(seqlengths) <- fastaSeqnames(names(seqlengths))
+              Seqinfo(names(seqlengths), seqlengths)
+          })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Export
@@ -108,9 +117,15 @@ setMethod("import", "TwoBitFile",
                    ...)
           {
             lkup <- get_seqtype_conversion_lookup("B", "DNA")
+            sl <- .seqlengths_TwoBitFile(con)
+            sn <- extractROWS(names(sl), match(seqnames(which), seqlevels(con)))
+            if (any(is.na(sn))) {
+                stop("'seqnames' not in 2bit file: ",
+                     paste0("'", unique(seqnames(which)[is.na(sn)]), "'",
+                            collapse=", "))
+            }
             ans <- .Call(TwoBitFile_read, twoBitPath(path(con)),
-                         as.character(seqnames(which)),
-                         as(ranges(which), "IRanges"), lkup)
+                         sn, as(ranges(which), "IRanges"), lkup)
             names(ans) <- names(which)
             ans
           })

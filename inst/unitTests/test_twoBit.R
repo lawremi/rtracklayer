@@ -3,7 +3,7 @@ test_twoBit <- function() {
 
   test_2bit <- file.path(test_path, "test.2bit")
 
-  correct_name <- "gi|157704452|ref|AC_000143.1| Homo sapiens chromosome 11, alternate assembly (based on HuRef), whole genome shotgun sequence"
+  correct_name <- "gi|157704452|ref|AC_000143.1|"
   correct_seq <- "TGATGGAAGAATTATTTGAAAGCCATATAGAATGAAATGACTCTATACCCAAATTAAAACTCAAAAACTTACTCAAAATAGTCCAGAGACTACAACTTCA"
   correct_char <- setNames(correct_seq, correct_name)
   correct_2bit <- Biostrings::DNAStringSet(correct_char)
