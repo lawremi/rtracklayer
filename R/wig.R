@@ -205,8 +205,7 @@ setMethod("import", "WIGFile",
               if (!is.null(which)) {
                 message("For efficiency, consider converting this WIG file",
                         " to a BigWig file;\nsee ?wigToBigWig")
-                which <- as(which, "RangesList")
-                parseInds <- parseInds[chrom %in% names(which)]
+                parseInds <- parseInds[chrom %in% seqlevels(which)]
               }
               resultList <- lapply(parseInds, parseData)
               gd <- do.call(c, resultList)

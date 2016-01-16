@@ -90,7 +90,7 @@ test_bed <- function() {
   test <- import(test_bed, colnames = subcols)
   checkIdentical(correct_subcols, test)
   
-  which <- RangesList(chr7 = ranges(correct_gr)[1:2])
+  which <- correct_gr[1:2]
   correct_which <- subsetByOverlaps(correct_ucsc, which)
   test <- import(test_bed, which = which)
   checkIdentical(correct_which, test)

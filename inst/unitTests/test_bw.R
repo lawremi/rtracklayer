@@ -46,7 +46,7 @@ test_bw <- function() {
   checkIdentical(test, correct_which)
   
   ## TEST: empty which
-  which <- RangesList()
+  which <- GRanges()
   correct_which <- subsetByOverlaps(correct_bedgraph, which)
   test <- import(test_bw_out, which = which)
   checkIdentical(test, correct_which)  
