@@ -104,10 +104,10 @@ export.bedGraph(object, con, ...)
     should name columns in the result, not those in the BED spec, so
     e.g. specify \dQuote{thick}, instead of \dQuote{thickStart}.
   }
-  \item{which}{A range data structure like \code{RangesList}
-    or \code{GRanges}. Only the intervals in the file overlapping the
-    given ranges are returned. This is much more efficient when the
-    file is indexed with the tabix utility.
+  \item{which}{A \code{GRanges} object or other range-based object supported
+    by \code{\link[IRanges]{findOverlaps}}. Only the intervals in the file
+    overlapping the given ranges are returned. This is much more efficient
+    when the file is indexed with the tabix utility.
   }
   \item{index}{If \code{TRUE}, automatically compress and index the
     output file with bgzf and tabix. Note that tabix indexing will
@@ -252,7 +252,7 @@ export.bedGraph(object, con, ...)
   import(test_bed, genome = "hg19")
   import(test_bed, colnames = c("name", "strand", "thick"))
 
-  which <- RangesList(chr7 = as(test, "RangesList")[[1]][1:2]) 
+  which <- GRanges("chr7:1-127473000")
   import(test_bed, which = which)
 
 \dontrun{
