@@ -148,14 +148,13 @@ test_gff <- function() {
   test <- import(test_gff3_out)
   checkIdentical(test, correct_hg19)
 
-  ## TEST: colnames empty, colnames := "geneName", colnames := "strand"
+  ## TEST: colnames empty, colnames := "geneName"
   test <- import(test_gff3, colnames = character())
   target <- correct_gff3[,character()]
   checkIdentical(target, test)
   test <- import(test_gff3, colnames = "geneName")
   target <- correct_gff3[,"geneName"]
   checkIdentical(target, test)
-  checkException(import(test_gff3, colnames = "strand"))
 
   ## TEST: import from connection
   test_gff_con <- file(test_gff_out)

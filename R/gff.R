@@ -277,24 +277,17 @@ setMethod("import", "GFFFile",
             #con <- queryForResource(con, which)
             con <- queryForResource(con)
 
-            gr <- readGFFAsGRanges(con,
-                                   version=version,
-                                   colnames=colnames,
-                                   filter=list(type=feature.type),
-                                   genome=genome,
-                                   sequenceRegionsAsSeqinfo=
-                                       sequenceRegionsAsSeqinfo,
-                                   speciesAsMetadata=TRUE)
-            if (is.na(genome)) {
-                ans_seqinfo <- seqinfo(gr)
-            } else {
-                ans_seqinfo <- NULL
-            }
-            GenomicData(ranges(gr), mcols(gr),
-                        strand = strand(gr), chrom = seqnames(gr),
-                        genome = genome, seqinfo = ans_seqinfo,
-                        which = if (attr(con, "usedWhich")) NULL else which,
-                        metadata = metadata(gr))
+            ans <- readGFFAsGRanges(con,
+                                    version=version,
+                                    colnames=colnames,
+                                    filter=list(type=feature.type),
+                                    genome=genome,
+                                    sequenceRegionsAsSeqinfo=
+                                        sequenceRegionsAsSeqinfo,
+                                    speciesAsMetadata=TRUE)
+            if (!attr(con, "usedWhich") && !is.null(which))
+                ans <- subsetByOverlaps(ans, which)
+            ans
           })
 
 setGeneric("import.gff1",

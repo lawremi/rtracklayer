@@ -461,8 +461,10 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
     attrcol_fmt <- attr(df, "attrcol_fmt")
     if (sequenceRegionsAsSeqinfo && attrcol_fmt == 3L) {
         ans_seqinfo <- .parseSequenceRegionsAsSeqinfo(pragmas)
-    } else {
+    } else if (is.na(genome)) {
         ans_seqinfo <- NULL
+    } else {
+        ans_seqinfo <- seqinfoForGenome(genome)
     }
 
     ## Get 'ans_metadata' from pragmas.
