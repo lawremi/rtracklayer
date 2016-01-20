@@ -120,10 +120,10 @@ export.gff3(object, con, ...)
     should name either fixed fields, like \code{source} or
     \code{type}, or, for GFF2 and GFF3, any attribute.
   }
-  \item{which}{A range data structure like \code{RangesList}
-    or \code{GRanges}. Only the intervals in the file overlapping the
-    given ranges are returned. This is much more efficient when the
-    file is indexed with the tabix utility.
+  \item{which}{A \code{GRanges} or other range-based object supported
+    by \code{\link[IRanges]{findOverlaps}}. Only the intervals in the file
+    overlapping the given ranges are returned. This is much more efficient
+    when the file is indexed with the tabix utility.
   }
   \item{feature.type}{\code{NULL} (the default) or a character vector of
     valid feature types. If not \code{NULL}, then only the features of the
@@ -296,7 +296,7 @@ export.gff3(object, con, ...)
   import(test_gff3, colnames = c("type", "geneName"))
 
   ## 'which'
-  which <- RangesList(chr10 = IRanges(90000, 93000))
+  which <- GRanges("chr10:90000-93000")
   import(test_gff3, which = which)
 
 \dontrun{

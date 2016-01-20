@@ -188,7 +188,7 @@ test_gff <- function() {
   checkIdentical(target, test)
 
   ## TEST: 'which'
-  which <- RangesList(chr10 = IRanges(90000, 93000))
+  which <- GRanges("chr10:90000-93000")
   which_target <- subsetByOverlaps(correct_gff3, which)
   test <- import(test_gff3, which = which)
   checkIdentical(which_target, test)

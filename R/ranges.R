@@ -73,8 +73,11 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
   }
   if (!is.null(seqinfo))
     seqinfo(gd) <- seqinfo
-  if (!is.null(which))
+  if (!is.null(which)) {
+    if (is(which, "RangesList"))
+      which <- as(which, "GRanges")
     gd <- subsetByOverlaps(gd, which)
+  }
   metadata(gd) <- metadata
   gd
 }

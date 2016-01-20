@@ -104,7 +104,7 @@ export.bedGraph(object, con, ...)
     should name columns in the result, not those in the BED spec, so
     e.g. specify \dQuote{thick}, instead of \dQuote{thickStart}.
   }
-  \item{which}{A \code{GRanges} object or other range-based object supported
+  \item{which}{A \code{GRanges} or other range-based object supported
     by \code{\link[IRanges]{findOverlaps}}. Only the intervals in the file
     overlapping the given ranges are returned. This is much more efficient
     when the file is indexed with the tabix utility.
