@@ -102,7 +102,7 @@ setMethod("export", c("GenomicRanges", "BEDFile"),
                 if (any(df[[2]] + lastSize + lastStart != df[[3]]) ||
                     any(sub(",.*", "", blockStarts) != "0"))
                   stop("blocks must span entire feature")
-                blockCount <- elementLengths(object$blocks)
+                blockCount <- elementNROWS(object$blocks)
                 if (!is.null(object$blockCount))
                   if (!identical(blockCount, as.integer(object$blockCount)))
                     stop("incorrect block counts given block sizes")
@@ -485,14 +485,14 @@ setGeneric("asBED", function(x, ...) standardGeneric("asBED"))
 
 setMethod("asBED", "GRangesList", function(x) {
   x_range <- range(x)
-  if (any(elementLengths(x_range) != 1L))
+  if (any(elementNROWS(x_range) != 1L))
     stop("Empty or multi-strand/seqname elements not supported by BED")
   gr <- unlist(x_range, use.names=FALSE)
   values(gr) <- values(x)
   values(gr)$name <- names(x)
   x_ranges <- ranges(unlist(x, use.names=FALSE))
   ord_start <- order(start(x_ranges))
-  x_ranges <- shift(x_ranges, 1L - rep(start(gr), elementLengths(x)))[ord_start]
+  x_ranges <- shift(x_ranges, 1L - rep(start(gr), elementNROWS(x)))[ord_start]
   values(gr)$blocks <- split(x_ranges, togroup(x)[ord_start])
   gr
 })
@@ -512,7 +512,7 @@ setMethod("blocks", "RangedData",
 setMethod("blocks", "GenomicRanges",
           function(x)
           {
-            block_counts <- elementLengths(values(x)$blocks)
+            block_counts <- elementNROWS(values(x)$blocks)
             gr <- GRanges(rep(seqnames(x), block_counts),
                           shift(unlist(values(x)$blocks, use.names = FALSE),
                                 rep(start(x), block_counts) - 1L),

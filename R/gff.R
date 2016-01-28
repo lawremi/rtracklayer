@@ -166,7 +166,7 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
                   if (is(x, "List")) {
                     x_char[is.na(x_char)] <- "."
                     x_char <- pasteCollapse(relist(x_char, x))
-                    x_char[elementLengths(x) == 0] <- NA
+                    x_char[elementNROWS(x) == 0] <- NA
                   }
                   ## FIXME: add option so these become "." instead of removing
                   x_char[is.na(x_char)] <- "\r"
@@ -320,7 +320,7 @@ setGeneric("asGFF", function(x, ...) standardGeneric("asGFF"))
 setMethod("asGFF", "GRangesList",
           function(x, parentType = "mRNA", childType = "exon") {
             parent_range <- range(x)
-            if (!all(elementLengths(parent_range) == 1))
+            if (!all(elementNROWS(parent_range) == 1))
               stop("Elements in a group must be on same sequence and strand")
             parents <- unlist(parent_range, use.names = FALSE)
             children <- unlist(x, use.names = FALSE)
@@ -334,7 +334,7 @@ setMethod("asGFF", "GRangesList",
             values(children)$type <- childType
             values(children)$ID <- makeId(children, childType)
             values(children)$Name <- names(children)
-            values(children)$Parent <- rep.int(parentIds, elementLengths(x))
+            values(children)$Parent <- rep.int(parentIds, elementNROWS(x))
             allColumns <- union(colnames(values(parents)),
                                 colnames(values(children)))
             rectifyDataFrame <- function(x) {

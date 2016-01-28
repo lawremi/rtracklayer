@@ -411,14 +411,14 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
       expr <- sprintf("tr/td[%d]", ind)
       children <- sapply(getNodeSet(tableNode, expr), xmlChildren)
       col <- rep(NA, length(children))
-      col[elementLengths(children) > 0] <-
+      col[elementNROWS(children) > 0] <-
         alphaNum(sapply(unlist(children), xmlValue))
       col
     }
     columnNames <- sapply(getNodeSet(tableNode, "tr[1]/th//text()"), xmlValue)
     columns <- lapply(seq_along(columnNames), getColumn)
     names(columns) <- columnNames
-    columns <- columns[elementLengths(columns) > 0]
+    columns <- columns[elementNROWS(columns) > 0]
     DataFrame(columns)
   }
   doc <- ucscTableGet(object, hgta_doSchema = "describe table schema")
@@ -644,7 +644,7 @@ setMethod("browserView", "UCSCSession",
             form <- list()
             if (!missing(range)) {
               if (is(range, "RangesList"))
-                range <- range[elementLengths(range) > 0L]
+                range <- range[elementNROWS(range) > 0L]
               if (length(range) > 1) {
                 ranges <- range
                 views <- vector("list", length(ranges))

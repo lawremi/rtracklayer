@@ -71,14 +71,14 @@ test_bw <- function() {
   ## TEST: export/import NumericList
   correct_cov_short <- correct_cov[correct_cov != 0L]
   correct_int <- as(correct_cov_short, "NumericList")
-  which <- GRanges(names(correct_int), IRanges(1, elementLengths(correct_int)))
+  which <- GRanges(names(correct_int), IRanges(1, elementNROWS(correct_int)))
   metadata(correct_int) <- list(ranges=which)
   export(correct_int, test_bw_out)
 
   test <- import(test_bw_out, as="NumericList")
   checkIdentical(correct_int, test)
   test <- import(test_bw_out, which=which[1], as="NumericList")
-  checkIdentical(elementLengths(correct_int[1]), elementLengths(test))
+  checkIdentical(elementNROWS(correct_int[1]), elementNROWS(test))
   test <- import(test_bw_out, which=which[1:2], as="NumericList")
   checkIdentical(correct_int, test)
 }
