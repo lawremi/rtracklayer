@@ -100,7 +100,7 @@ setMethod("export", c("GenomicRanges", "BigWigFile"),
           function(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep",
                                   "bedGraph"),
-                   compress = TRUE)
+                   compress = TRUE, fixedSummaries = FALSE)
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -139,11 +139,12 @@ setMethod("export", c("GenomicRanges", "BigWigFile"),
                             writer = .bigWigWriter, trackLine = FALSE)
             storage.mode(seqlengths) <- "integer"
             invisible(BigWigFile(.Call(BWGSectionList_write, sectionPtr,
-                                       seqlengths, compress, con)))
+                                       seqlengths, compress, fixedSummaries,
+                                       con)))
           })
 
 setMethod("export", c("List", "BigWigFile"),
-          function(object, con, format, compress = TRUE)
+          function(object, con, format, compress = TRUE, fixedSummaries = FALSE)
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -158,7 +159,8 @@ setMethod("export", c("List", "BigWigFile"),
               sectionPtr <- writer(chr, sectionPtr)
             }
             invisible(BigWigFile(.Call(BWGSectionList_write, sectionPtr,
-                                       seqlengths, compress, con)))
+                                       seqlengths, compress, fixedSummaries,
+                                       con)))
           })
 
 setGeneric("BigWigWriter", function(x) standardGeneric("BigWigWriter"))

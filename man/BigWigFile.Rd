@@ -51,7 +51,7 @@ import.bw(con, ...)
 \S4method{export}{ANY,BigWigFile,ANY}(object, con, format, ...)
 \S4method{export}{GenomicRanges,BigWigFile,ANY}(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep",
-                     "bedGraph"), compress = TRUE)
+                     "bedGraph"), compress = TRUE, fixedSummaries = FALSE)
 export.bw(object, con, ...)
 }
 
@@ -101,7 +101,18 @@ export.bw(object, con, ...)
     for historical reasons.
   }
   \item{compress}{If \code{TRUE}, compress the data. No reason to change this.
-  } 
+  }
+  \item{fixedSummaries}{If \code{TRUE}, compute summaries at fixed
+    resolutions corresponding to the default zoom levels in the Ensembl
+    genome browser (with some extrapolation): 30X, 65X, 130X, 260X,
+    450X, 648X, 950X, 1296X, 4800X, 19200X. Otherwise, the resolutions
+    are dynamically determined by an algorithm that computes an initial
+    summary size by initializing to 10X the size of the smallest feature
+    and doubling the size as needed until the size of the summary is
+    less than half that of the data (or there are no further gains). It
+    then computes up to 10 more levels of summary, quadrupling the size
+    each time, until the summaries start to exceed the sequence size.
+  }
   \item{...}{Arguments to pass down to methods to other methods. For
     import, the flow eventually reaches the \code{BigWigFile} method on
     \code{import}. For export, the \code{RangedData}, \code{BigWigFile}

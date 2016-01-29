@@ -94,8 +94,8 @@ createBWGSection_Atomic(const char *seq, int start, double *score,
   return section;
 }
 
-static int itemsPerSlot = 512;
-static int blockSize = 1024;
+static int itemsPerSlot = 1024;
+static int blockSize = 256;
 
 static void BWGSectionList_addRle(struct bwgSection **sections, const char *seq,
                                   SEXP r_ranges, double *score,
@@ -179,7 +179,7 @@ static struct hash *createIntHash(SEXP v) {
 
 /* --- .Call ENTRY POINT --- */
 SEXP BWGSectionList_write(SEXP r_sections, SEXP r_seqlengths, SEXP r_compress,
-                          SEXP r_file)
+                          SEXP r_fixed_summaries, SEXP r_file)
 {
   struct bwgSection *sections = NULL;
   struct hash *lenHash = createIntHash(r_seqlengths);
@@ -189,7 +189,7 @@ SEXP BWGSectionList_write(SEXP r_sections, SEXP r_seqlengths, SEXP r_compress,
   }
   pushRHandlers();
   bwgCreate(sections, lenHash, blockSize, itemsPerSlot, asLogical(r_compress),
-            FALSE /*keepAllChromosomes*/, TRUE /*fixedSummaries*/,
+            FALSE /*keepAllChromosomes*/, asLogical(r_fixed_summaries),
             (char *)CHAR(asChar(r_file)));
   freeHash(&lenHash);
   popRHandlers();
