@@ -386,7 +386,7 @@ SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_seqlengths, SEXP r_outfile) {
   struct bwgSection *sections =
     bwgParseWig((char *)CHAR(asChar(r_infile)), FALSE, lenHash, itemsPerSlot,
                 lm);
-  bwgCreate(sections, lenHash, blockSize, itemsPerSlot, TRUE, TRUE, TRUE,
+  bwgCreate(sections, lenHash, blockSize, itemsPerSlot, TRUE, TRUE, FALSE,
             (char *)CHAR(asChar(r_outfile)));
   lmCleanup(&lm);
   freeHash(&lenHash);
