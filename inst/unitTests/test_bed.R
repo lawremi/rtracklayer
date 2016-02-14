@@ -288,3 +288,21 @@ test_extendedBed <- function()
 
     
 } 
+
+test_bedpe <- function() {
+    path <- system.file("tests", "test.bedpe", package="rtracklayer")
+    nms <- c("TUPAC_0001:3:1:0:1452#0", "TUPAC_0001:3:1:0:1472#0",
+             "TUPAC_0001:3:1:1:1833#0")
+    gr1 <- GRanges(c("chr7", "chr11", "chr20"),
+                   IRanges(c(118965073, 46765607, 54704675),
+                           c(118965122, 46765656, 54704724)),
+                   strand="+")
+    gr2 <- GRanges(c("chr7", "chr11", "chr20"),
+                   IRanges(c(118970080, 46769935, 54708988),
+                           c(118970129, 46769984, 54709037)),
+                   strand="-")
+    pairs <- Pairs(gr1, gr2, name=nms, score=37)
+    bedpe <- import(path)
+
+    checkIdentical(pairs, bedpe)
+}

@@ -50,7 +50,7 @@ importMethodsFrom("Rsamtools", ScanBamParam, asBam, headerTabix, isOpen, path,
                   scanTabix)
 importClassesFrom("Rsamtools", RsamtoolsFile, TabixFile, BamFile)
 
-importMethodsFrom("GenomicAlignments", readGAlignments, cigar, last, first)
+importMethodsFrom("GenomicAlignments", readGAlignments, cigar)
 importClassesFrom("GenomicAlignments", GAlignments)
 
 ## ============================================================
@@ -68,7 +68,7 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
 exportClasses(RTLFile, CompressedFile, GFFFile, UCSCFile, BEDFile, WIGFile,
               ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,
               BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, 
-              TwoBitFile, RTLFileList)
+              TwoBitFile, RTLFileList, BEDPEFile)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
@@ -120,4 +120,5 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
 
 export(GFFFile, UCSCFile, BEDFile, WIGFile,
        ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,
-       BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, TwoBitFile)
+       BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, TwoBitFile,
+       BEDPEFile)

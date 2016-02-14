@@ -21,6 +21,11 @@ BED15File <- function(resource) {
   new("BED15File", resource = resource)
 }
 
+setClass("BEDPEFile", contains = "BEDFile")
+BEDPEFile <- function(resource) {
+    new("BEDPEFile", resource = resource)
+}
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Export
 ###
@@ -245,20 +250,8 @@ setMethod("import", "BEDFile",
                                  extraCols = extraCols)
               return(ans)
             }
-            if (is(file, "BEDGraphFile")) {
-              bedClasses <- c("character", "integer", "integer", "numeric")
-              bedNames <- c("chrom", "start", "end", "score")
-            } else {
-              bedNames <- c("chrom", "start", "end", "name",
-                            "score", "strand", "thickStart",
-                            "thickEnd", "itemRgb", "blockCount",
-                            "blockSizes", "blockStarts")
-              bedClasses <- c("character", "integer", "integer", "character",
-                              "numeric", "character", "integer", "integer",
-                              "character", "integer", "character", "character")
-            }
-            if (is(file, "BED15File"))
-              bedNames <- c(bedNames, "expCount", "expIds", "expScores")
+            bedClasses <- colClasses(file)
+            bedNames <- names(bedClasses)
             normArgColnames <- function(validNames) {
               if (is.null(colnames))
                 colnames <- validNames
@@ -346,6 +339,16 @@ setMethod("import", "BEDFile",
                         chrom = bed$chrom, genome = genome,
                         seqinfo = seqinfo,
                         which = which)
+          })
+
+setGeneric("colClasses", function(x) standardGeneric("colClasses"))
+
+setMethod("colClasses", "BEDFile", function(x) {
+              c(chrom="character", start="integer", end="integer",
+                name="character", score="numeric", strand="character",
+                thickStart="integer", thickEnd="integer",
+                itemRgb="character", blockCount="integer",
+                blockSizes="character", blockStarts="character")
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -453,6 +456,11 @@ setAs("character", "Bed15TrackLine",
 
 setMethod("fileFormat", "Bed15TrackLine", function(x) "bed15")
 
+setMethod("colClasses", "BED15File", function(x) {
+              c(callNextMethod(), expCount="integer", expIds="character",
+                expScores="character")
+          })
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### bedGraph (formerly subset of WIG) support
 ###
@@ -476,6 +484,36 @@ setMethod("export.bedGraph", "ANY",
           {
             export(object, con, "bedGraph", ...)
           })
+
+setMethod("colClasses", "BEDGraphFile", function(x) {
+              c(chrom="character", start="integer", end="integer",
+                score="numeric")
+          })
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### BEDPE (bedtools paired end) support
+###
+
+setMethod("import", "BEDPEFile",
+          function(con, format, text, ...) {
+              gr <- callNextMethod()
+              df <- mcols(gr)
+              mcols(gr) <- NULL
+              gr2 <- with(df, GRanges(chrom2, IRanges(start2+1L, end2),
+                                      strand2))
+              df <- subset(df, select=-(chrom2:end2))
+              df$strand2 <- NULL
+              Pairs(gr, gr2, df)
+          })
+
+setMethod("colClasses", "BEDPEFile", function(x) {
+              c(chrom="character", start="integer", end="integer",
+                chrom2="character", start2="integer", end2="integer",
+                name="character", score="numeric", strand="character",
+                strand2="character")
+          })
+
+### TODO: export
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Coercion

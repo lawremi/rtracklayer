@@ -8,15 +8,18 @@
 \alias{BEDFile-class}
 \alias{BED15File-class}
 \alias{BEDGraphFile-class}
+\alias{BEDPEFile-class}
 
 %% Constructor:
 \alias{BEDFile}
 \alias{BED15File}
 \alias{BEDGraphFile}
+\alias{BEDPEFile}
 
 %% Import:
 \alias{import,BEDFile,ANY,ANY-method}
 \alias{import,BED15File,ANY,ANY-method}
+\alias{import,BEDPEFile,ANY,ANY-method}
 \alias{import.bed}
 \alias{import.bed,ANY-method}
 \alias{import.bed15}
@@ -73,8 +76,9 @@ export.bedGraph(object, con, ...)
     \code{export} and \code{import} functions, the format must be
     indicated another way. If \code{con} is a path, URL or connection,
     either the file extension or the \code{format} argument needs to be
-    one of \dQuote{bed}, \dQuote{bed15} or \dQuote{bedGraph}. Compressed
-    files (\dQuote{gz}, \dQuote{bz2} and \dQuote{xz}) are handled transparently.
+    one of \dQuote{bed}, \dQuote{bed15}, \dQuote{bedGraph} or
+    \dQuote{bedpe}. Compressed files (\dQuote{gz}, \dQuote{bz2} and
+    \dQuote{xz}) are handled transparently.
   }
   \item{object}{The object to export, should be a \code{GRanges} or
     something coercible to a \code{GRanges}.  If the object has a method
@@ -86,7 +90,8 @@ export.bedGraph(object, con, ...)
     one.
   }
   \item{format}{If not missing, should be one of \dQuote{bed},
-    \dQuote{bed15} or \dQuote{bedGraph}.}  \item{text}{If \code{con} is
+    \dQuote{bed15}, \dQuote{bedGraph} or \dQuote{bedpe}.}
+  \item{text}{If \code{con} is
     missing, a character vector to use as the input}
   \item{trackLine}{For import, an imported track line will be stored
     in a \code{\linkS4class{TrackLine}} object, as part of the returned
@@ -145,7 +150,12 @@ export.bedGraph(object, con, ...)
 }
 
 \value{
-  A \code{GRanges} with the metadata columns described in the details.
+  For a \dQuote{bedpe} file, a \code{Pairs} object combining two
+  \code{GRanges}. The \code{name} and \code{score} are carried over to
+  the metadata columns.
+  
+  Otherwise, a \code{GRanges} with the metadata columns described in the
+  details.
 }
 
 \details{
@@ -225,7 +235,8 @@ export.bedGraph(object, con, ...)
   formal represention of a resource in the BED format.
   To cast a path, URL or connection to a \code{BEDFile}, pass it to
   the \code{BEDFile} constructor. Classes and constructors also exist
-  for the subclasses \code{BED15File} and \code{BEDGraphFile}.
+  for the subclasses \code{BED15File}, \code{BEDGraphFile} and
+  \code{BEDPEFile}.
 }
 
 \author{Michael Lawrence}

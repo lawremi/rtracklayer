@@ -87,6 +87,8 @@ FileForFormat <- function(path, format = file_ext(path)) {
   get(constructorName, ns)(path)
 }
 
+setMethod("as.character", "RTLFile", function(x) path(x))
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Export
 ###
