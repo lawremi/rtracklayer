@@ -285,7 +285,8 @@ setMethod("import", "BEDFile",
               `tail<-` <- function(x, n, value)
                 if (n != 0) c(head(x, -n), value) else x
               pushBack(line, con)
-              colsInFile <- seq_len(length(strsplit(line, "[\t ]")[[1]]))
+              #colsInFile <- seq_len(length(strsplit(line, "[ \t ]")[[1]]))
+              colsInFile <- seq_len(length(strsplit(line, "\\s+")[[1]]))
               presentNames <- bedNames[colsInFile]
               tail(presentNames, length(extraCols)) <- names(extraCols)
               bedNames <- presentNames
