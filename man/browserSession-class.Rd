@@ -57,17 +57,14 @@
     \item{\emph{virtual} \code{\link[=track<-]{track}(object, name =
         deparse(substitute(track)), view = TRUE, ...) <- value}}{
       Loads one or more \code{track}s into the session and optionally open a
-      \code{view} of the track. The default implementation will coerce
-      \code{value} to \code{RangedData}, so the backend should implement
-      at least a method for \code{RangedData}.
+      \code{view} of the track.
     }
     \item{\code{x[[i]] <- value}}{Loads the track \code{value} into
       session \code{x}, under the name \code{i}. Shortcut to above.}
     \item{\code{x$name <- value}}{Loads the track \code{value} into
       session \code{x}, under the name \code{name}. Shortcut to above.}
     \item{\emph{virtual} \code{\link{track}(object, ...)}}{
-      Gets a track from a session as a
-      \code{\link[IRanges:RangedData-class]{RangedData}}.
+      Gets a track from a session.
     }
     \item{\code{x[[i]]}}{Gets the track named \code{i} from session
       \code{x}. A shortcut to \code{track}.

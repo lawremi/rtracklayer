@@ -56,8 +56,7 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
     \item{\code{\link{range}}(x)}{ Gets the
       \code{\link[GenomicRanges:GRanges-class]{GRanges}} last
       displayed in this session.}
-    \item{\code{\link[rtracklayer:RangedData-methods]{genome}(x)}}{Gets
-      the genome identifier of the session,
+    \item{\code{genome(x)}}{Gets the genome identifier of the session,
       i.e. \code{genome(range(x))}.}
     \item{\code{seqinfo}}{ Gets
       the \code{\link[GenomeInfoDb]{Seqinfo}} object with the
@@ -70,7 +69,7 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       this setting only lasts until a view is created or
       manipulated. This mechanism is useful, for example, when treating the UCSC
       browser as a database, rather than a genome viewer.}
-    \item{\code{\link[rtracklayer:RangedData-methods]{genome}(x) <- value}}{ 
+    \item{\code{genome(x) <- value}}{ 
       Sets the genome identifier on the range of session \code{x}.}
     \item{\code{\link[Biostrings]{getSeq}(object, range, track = "Assembly")}}{
       Gets the sequence in \code{range} and \code{track}.
@@ -91,8 +90,7 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
     }
     \item{\code{\link{track}(object, name, range = range(object),
         table = NULL)}}{
-      Retrieves a \code{\link[IRanges:RangedData-class]{RangedData}}
-      with features in 
+      Retrieves a \code{\link{GRanges}} with features in 
       \code{range} from track named \code{name}. Some built-in tracks
       have multiple series, each stored in a separate database
       table. A specific table may be retrieved by passing its name in

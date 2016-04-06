@@ -1150,26 +1150,6 @@ setAs("UCSCData", "GRanges", function(from) {
   gr
 })
 
-setAs("RangedData", "UCSCData", function(from) {
-  line <- metadata(ranges(from))$trackLine
-  if (is.null(line)) {
-    if (is.numeric(score(from))) { # have numbers, let's plot them
-      type <- chooseGraphType(from)
-      line <- new("GraphTrackLine", type = type)
-    } else {
-      line <- new("BasicTrackLine")
-      db <- unique(genome(from))
-      if (length(db) == 1 && !is.na(db))
-        line@db <- db
-    }
-  }
-  new("UCSCData", as(from, "GRanges"), trackLine = line)
-})
-
-setAs("UCSCData", "RangedData", function(from) {
-  as(as(from, "GRanges"), "RangedData")
-})
-
 splitUCSCData <- function(x, f, drop=FALSE, ...) {
   GenomicRangesList(
     lapply(split(seq_along(x), f, drop=drop, ...),
@@ -1421,17 +1401,7 @@ setMethod("import", "UCSCFile",
               names(tsets) <- trackNames
             if (drop && length(tsets) == 1)
               return(tsets[[1]])
-            ans <- do.call(RangedDataList, lapply(tsets, as, "RangedData"))
-            GenomicRangesList(
-                       lapply(ans,
-                         function(rd) {
-                           line <- metadata(ranges(rd))$trackLine
-                           if (is.null(line))
-                             Class <- "GRanges"
-                           else
-                             Class <- "UCSCData"
-                           as(rd, Class)
-                         }))
+            GenomicRangesList(tsets)
           })
 
 

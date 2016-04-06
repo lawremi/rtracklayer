@@ -41,17 +41,12 @@ divided into two categories: 1) the import/export of track data and 2)
 the control and querying of external genome browser sessions and
 views.
 
-There are two basic track data structures in Bioconductor:
-\Rclass{GRanges}, defined by the \Rpackage{GenomicRanges} package, 
-and \Rclass{RangedData}, a more general data structure from the
-\Rpackage{IRanges} package. For most purposes, \Rclass{GRanges} is
-preferred in the context of \Rpackage{rtracklayer}; however,
-\Rclass{RangedData} has some particular use cases. 
+The basic track data structure in Bioconductor is the \Rclass{GRanges}
+class, defined in the \Rpackage{GenomicRanges} package.
 
 \textbf{rtracklayer} supports the import and export of tracks from and
 to files in various formats, see Section~\ref{sec:import-export}. All
-positions in a \Rclass{GRanges} or \Rclass{RangedData} should be
-1-based, as in R itself.
+positions in a \Rclass{GRanges} should be 1-based, as in R itself.
 
 The \textbf{rtracklayer} package currently interfaces with the
 \textbf{UCSC} web-based genome browser. Other packages may provide
@@ -234,8 +229,8 @@ negChr2Targets <- targetTrack[strand(targetTrack) == "-" &
 \subsubsection{Exporting and importing tracks}
 \label{sec:import-export}
 
-Import and export of \Rclass{GRanges} and \Rclass{RangedData}
-instances is supported in the following formats: Browser Extended
+Import and export of \Rclass{GRanges} instances is supported
+in the following formats: Browser Extended
 Display (BED), versions 1, 2 and 3 of the General Feature Format
 (GFF), and Wiggle (WIG). Support for additional formats may be
 provided by other packages through a plugin system.
@@ -408,7 +403,7 @@ subTargetTrack <- track(session, "targets")
 @
 %
 The returned object is a \Rclass{GRanges}, even if the data was
-originally uploaded as a \Rclass{RangedData} or other object.
+originally uploaded as another object.
 By default, the segment of the track downloaded is the current default
 genome segment associated with the session. One may download track
 data for any genome segment, such as those on a particular
@@ -511,12 +506,12 @@ data(cpneTrack)
 
 \subsection{Loading and manipulating the track}
 
-The data values for a track are stored in the columns on the
-\textit{RangedData} instance. Often, a track contains a single column
+The data values for a track are stored in the metadata columns of the
+\textit{GRanges} instance. Often, a track contains a single column
 of numeric values, conventionally known as the \textit{score}. The
-\texttt{score} function retrieves the column named or \textit{score}
-or, if one does not exist, the first column in the
-\textit{RangedData}, as long as it is numeric. Otherwise,
+\texttt{score} function retrieves the metadata column named \textit{score}
+or, if one does not exist, the first metadata column in the
+\textit{GRanges}, as long as it is numeric. Otherwise,
 \texttt{NULL} is returned.
 <<datavals-accessor>>=
 head(score(cpneTrack))
@@ -619,9 +614,8 @@ length(nrsfHits)  # number of hits
 @ 
 %
 
-We then convert the hits, stored as a \textit{Views} object (a
-particular type of \textit{IRanges} object), to a \textit{RangedData}
-instance.
+We then convert the hits, stored as a \textit{Views} object, to a
+\textit{GRanges} instance.
 %
 <<track-nrsf>>=
 nrsfTrack <- GenomicData(ranges(nrsfHits), strand="+", chrom="chr1",

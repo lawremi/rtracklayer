@@ -6,5 +6,5 @@ hmFou = hmceuB36.2021[, which(hmceuB36.2021$isFounder)]
 ## show basic formula fit
 f1 = gwSnpTests(genesym("CPNE1")~male, hmFou, chrnum(20))
 
-cpneTrack <- as(f1, "RangedData")
+cpneTrack <- as(f1, "GRanges")
 save(cpneTrack, file="../../data/cpneTrack.rda")

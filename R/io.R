@@ -174,9 +174,7 @@ setMethod("import", c(con = "missing", text = "character"),
 setGeneric("bestFileFormat",
            function(x, dest, ...) standardGeneric("bestFileFormat"))
 
-setClassUnion("RangedDataORGenomicRanges", c("RangedData", "GenomicRanges"))
-
-setMethod("bestFileFormat", c("RangedDataORGenomicRanges", "ANY"),
+setMethod("bestFileFormat", c("GenomicRanges", "ANY"),
           function(x, dest) {
             ## have numbers on a single strand, use BigWig
             if (is.numeric(score(x)) && length(unique(strand(x))) == 1L)

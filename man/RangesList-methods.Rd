@@ -11,9 +11,7 @@
 \description{
   Genomic coordinates are often specified in terms of a genome identifier,
   chromosome name, start position and end
-  position. \code{\link[IRanges:RangedData-class]{RangedData}} represents
-  this with a \code{\link[IRanges:RangesList-class]{RangesList}}
-  instance, and the \code{rtracklayer} package adds convenience methods to
+  position. The \code{rtracklayer} package adds convenience methods to
   \code{RangesList} for the manipulation of genomic ranges. The spaces (or
   names) of \code{RangesList} are the chromosome names. The
   \code{universe} slot indicates the genome, usually as given by UCSC

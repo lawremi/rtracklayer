@@ -13,8 +13,6 @@
 
 %% Data Access:
 \alias{track<-,TrackDb,ANY-method}
-\alias{track<-,TrackDb,RangedData-method}
-\alias{track<-,TrackDb,RangedDataList-method}
 
 \title{Track Databases}
 

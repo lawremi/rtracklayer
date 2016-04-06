@@ -1,7 +1,5 @@
 \name{browseGenome}
 \alias{browseGenome}
-\alias{browseGenome,RangedData-method}
-\alias{browseGenome,RangedDataList-method}
 \alias{GenomicRangesORGenomicRangesList-class}
 \alias{browseGenome,GenomicRangesORGenomicRangesList-method}
 \alias{browseGenome,missing-method}
@@ -18,9 +16,8 @@ browseGenome(object, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{object}{ A \code{\link[GenomicRanges]{GRanges}} object,
-    a \code{\link[IRanges]{RangedData}} object, or a list of
-    those objects  (e.g. a
+  \item{object}{ A \code{\link[GenomicRanges]{GRanges}} object or a list
+    of \code{\link[GenomicRanges]{GRanges}} objects (e.g. a
     \code{\link[GenomicRanges]{GenomicRangesList}} object). }
   \item{browser}{ The name of the genome browser. }
   \item{range}{ A genome identifier or a
@@ -32,9 +29,7 @@ browseGenome(object, ...)
     \code{\link{track<-}}. }
   \item{viewParams}{ Named list of parameters to pass to
     \code{\link{browserView}}. }
-  \item{name}{ The name for the track. Ignored if \code{object} is
-    a \code{RangedDataList}, in which case the names are taken from the
-    list names. }
+  \item{name}{ The name for the track. }
   \item{\dots}{ Arguments passed to \code{\link{browserSession}}. } 
 }
 \value{
@@ -55,7 +50,7 @@ browseGenome(object, ...)
   browseGenome(range = range, end = 75000)
   ## with a track:
   track <- import(system.file("tests", "v1.gff", package = "rtracklayer"))
-  browseGenome(RangedDataList(track))
+  browseGenome(GRangesList(track))
   }
 }
 \keyword{interface}

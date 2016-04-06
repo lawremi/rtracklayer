@@ -79,8 +79,7 @@ export.bw(object, con, ...)
     \code{NumericList}, one numeric vector is returned for each range in
     the \code{selection} argument. For \code{RleList}, there is one
     \code{Rle} per sequence, and that \code{Rle} spans the entire
-    sequence. As of version 1.23.11 \code{import} no longer returns
-    \code{RangedData}.
+    sequence.
   }
   \item{asRle}{Deprecated. Use \code{as} instead.
     If \code{TRUE}, the BigWig file is assumed to contain
@@ -115,18 +114,17 @@ export.bw(object, con, ...)
   }
   \item{...}{Arguments to pass down to methods to other methods. For
     import, the flow eventually reaches the \code{BigWigFile} method on
-    \code{import}. For export, the \code{RangedData}, \code{BigWigFile}
-    method on \code{export} is the sink. 
+    \code{import}.
   }
 }
 
 \value{
-  A \code{GRanges} (default), \code{RangedData}, \code{RleList} or 
-  \code{NumericList}. \code{GRanges} and \code{RangedData} return ranges
-  with non-zero score values in a \code{score} metadata column. The 
-  length of the \code{NumericList} is the same length as the \code{selection} 
-  argument (one list element per range). The return order in the 
-  \code{NumericList} matches the order of the \code{BigWigSelection} object. 
+  A \code{GRanges} (default), \code{RleList} or \code{NumericList}.
+  \code{GRanges} return ranges with non-zero score values in a \code{score}
+  metadata column. The length of the \code{NumericList} is the same length
+  as the \code{selection} argument (one list element per range).
+  The return order in the  \code{NumericList} matches the order of the
+  \code{BigWigSelection} object. 
 }
 
 \section{\code{BigWigFile} objects}{

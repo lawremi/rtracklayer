@@ -222,7 +222,7 @@ setGeneric("sortBySeqnameAndStart",
 
 ## Seems not really possible for GRangesList
 
-setMethod("sortBySeqnameAndStart", "RangedDataORGenomicRanges", function(x) {
+setMethod("sortBySeqnameAndStart", "GenomicRanges", function(x) {
   x[order(as.factor(seqnames(x)), start(x)),]
 })
 

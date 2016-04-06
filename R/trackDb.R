@@ -18,8 +18,6 @@ setReplaceMethod("track", c("TrackDb", "ANY"),
                    object
                  })
 
-setClassUnion("RangedDataORRangedDataList", c("RangedData", "RangedDataList"))
-
 setMethod("[[<-", c("TrackDb", value="ANY"),
           function(x, i, j, ..., value) {
             if (!missing(j))

@@ -2,12 +2,11 @@
 \docType{methods}
 \alias{blocks}
 \alias{blocks-methods}
-\alias{blocks,RangedData-method}
 \alias{blocks,GenomicRanges-method}
 \title{Get blocks/exons}
 \description{
  Obtains the block ranges (subranges, usually exons) from an object,
- such as a \code{\link[IRanges:RangedData-class]{RangedData}} imported
+ such as a \code{\link[GenomicRanges]{GRanges}} imported
  from a BED file.
 }
 \usage{
@@ -15,10 +14,9 @@ blocks(x, ...)
 }
 \arguments{
   \item{x}{The instance from which to obtain the block/exon
-    information. Currently must be a \code{RangedData} or
-    \code{GenomicRanges}, with a value column of name \dQuote{blocks}
-    and of type \code{RangesList}. Such an object is returned by
-    \code{\link{import.bed}} and \code{\link{asBED}}.
+    information. Currently must be a \code{GenomicRanges}, with a metadata
+    column of name \dQuote{blocks} and of type \code{RangesList}. Such an
+    object is returned by \code{\link{import.bed}} and \code{\link{asBED}}.
   }
   \item{...}{Additional arguments for methods}
 }

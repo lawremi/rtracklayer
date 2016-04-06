@@ -94,8 +94,7 @@ export.wig(object, con, ...)
   } 
   \item{...}{Arguments to pass down to methods to other methods. For
     import, the flow eventually reaches the \code{WIGFile} method on
-    \code{import}. For export, the \code{RangedData}, \code{WIGFile}
-    method on \code{export} is the sink. When \code{trackLine} is
+    \code{import}. When \code{trackLine} is
     \code{TRUE}, the arguments are passed through \code{export.ucsc}, so
     track line parameters are supported.
   }

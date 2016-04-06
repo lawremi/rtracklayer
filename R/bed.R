@@ -541,12 +541,6 @@ setMethod("asBED", "GRangesList", function(x) {
 
 setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
 
-setMethod("blocks", "RangedData",
-          function(x)
-          {
-            blocks(as(x, "GRanges"))
-          })
-
 setMethod("blocks", "GenomicRanges",
           function(x)
           {

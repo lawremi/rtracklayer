@@ -293,7 +293,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
       hits = slCat(queryHits, hits);
     } 
 
-    /* RangedData */
+    /* GRanges */
     if (!return_list) {
       int nhits = slCount(hits);
       slReverse(&hits);
@@ -333,8 +333,10 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
     PROTECT(dataFrameList =
             new_SimpleList("SimpleSplitDataFrameList", dataFrameListEls));
     PROTECT(rangesList = new_SimpleList("SimpleRangesList", rangesListEls));
-    ans = new_RangedData("RangedData", rangesList, dataFrameList);
-    UNPROTECT(4);
+    PROTECT(ans = allocVector(VECSXP, 2));
+    SET_ELEMENT(ans, 0, rangesList);
+    SET_ELEMENT(ans, 1, dataFrameList);
+    UNPROTECT(5);
   }
 
   lmCleanup(&lm);

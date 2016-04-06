@@ -79,7 +79,7 @@
   instance of \code{UCSCTableQuery} using the \code{ucscTableQuery}
   constructor, invoke \code{tableNames} to list the available tables for
   a track, and finally to retrieve the desired table either as a
-  \code{data.frame} via \code{getTable} or as a \code{RangedData} track
+  \code{data.frame} via \code{getTable} or as a track
   via \code{track}. See the examples.
 
   The reason for a formal query class is to facilitate multiple queries

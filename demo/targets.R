@@ -7,9 +7,8 @@ data(targets)
 ###################################################
 ### chunk number 2: rtl-miRNA-track
 ###################################################
-targetTrack <- with(targets, 
-    RangedData(IRanges(start, end), 
-               target, strand, space = chrom))
+targetTrack <- makeGRangesFromDataFrame(targets,
+                   keep.extra.columns=TRUE)
 
 
 ###################################################

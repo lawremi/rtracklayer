@@ -139,8 +139,7 @@ export.gff3(object, con, ...)
   }
   \item{index}{If \code{TRUE}, automatically compress and index the
     output file with bgzf and tabix. Note that tabix indexing will
-    sort the data by chromosome and start. Does not work when exporting
-    a \code{RangedDataList} with multiple elements; tabix supports a
+    sort the data by chromosome and start. Tabix supports a
     single track in a file.
   }
   \item{append}{If \code{TRUE}, and \code{con} points to a file path,
@@ -149,8 +148,7 @@ export.gff3(object, con, ...)
   }
   \item{...}{Arguments to pass down to methods to other methods. For
     import, the flow eventually reaches the \code{GFFFile} method on
-    \code{import}. For export, the \code{RangedData}, \code{GFFFile}
-    method on \code{export} is the sink. When \code{trackLine} is
+    \code{import}. When \code{trackLine} is
     \code{TRUE} or the target format is BED15, the arguments are passed
     through \code{export.ucsc}, so track line parameters are supported.
   }
@@ -200,8 +198,8 @@ export.gff3(object, con, ...)
   still supports it. To export or import GFF data in the track line
   format, call \code{\link{export.ucsc}} or \code{\link{import.ucsc}}.
   
-  The following is the mapping of GFF elements to a \code{GRanges} or
-  \code{RangedData} object. NA values are allowed only where indicated.
+  The following is the mapping of GFF elements to a \code{GRanges} object.
+  NA values are allowed only where indicated.
   These appear as a \dQuote{.} in the file. GFF requires that all columns
   are included, so \code{export} generates defaults for missing columns.
 
@@ -311,16 +309,6 @@ export.gff3(object, con, ...)
   export(test, test_gff3_out, index = TRUE)
   test_bed_gz <- paste(test_gff3_out, ".gz", sep = "")
   import(test_bed_gz, which = which)
-
-  ## RangedDataList  
-  rdl <-
-    RangedDataList(new("UCSCData", test[1],
-                       trackLine = new("BasicTrackLine", name = "chr10")),
-                   new("UCSCData", test[2],
-                       trackLine = new("BasicTrackLine", name = "chr12")))
-  names(rdl) <- names(test)
-  export(rdl, test_gff3_out)
-  import.ucsc(test_gff3_out)
 }
 }
 

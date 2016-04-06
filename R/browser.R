@@ -136,13 +136,6 @@ setGeneric("browseGenome",
 setMethod("browseGenome", "missing",
           function(object, ...) browseGenome(GenomicRangesList(), ...))
 
-setMethod("browseGenome", "RangedData",
-          function(object, ...) browseGenome(as(object, "GRanges"), ...))
-
-setMethod("browseGenome", "RangedDataList",
-          function(object, ...)
-          browseGenome(as(object, "GenomicRangesList"), ...))
-
 setClassUnion("GenomicRangesORGenomicRangesList",
               c("GenomicRanges", "GenomicRangesList"))
 

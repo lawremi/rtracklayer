@@ -29,8 +29,7 @@
   These functions support the import and export of tracks emucscded
   within the UCSC track line metaformat, whereby multiple tracks may be
   concatenated within a single file, along with metadata mostly oriented
-  towards visualization. Any \code{\linkS4class{UCSCData}} or
-  \code{RangedDataList} object is
+  towards visualization. Any \code{\linkS4class{UCSCData}} object is
   automatically exported in this format, if the targeted format is known
   to be compatible. The BED and WIG import methods check for a track
   line, and delegate to these functions if one is found. Thus, calling
@@ -102,8 +101,7 @@ export.ucsc(object, con, ...)
   }
   \item{index}{If \code{TRUE}, automatically compress and index the
     output file with bgzf and tabix. Note that tabix indexing will
-    sort the data by chromosome and start. Does not work when exporting
-    a \code{RangedDataList} with multiple elements; tabix supports a
+    sort the data by chromosome and start. Tabix supports a
     single track in a file.
   }
   \item{...}{Should either specify track line parameters or arguments to
@@ -116,9 +114,7 @@ export.ucsc(object, con, ...)
   and there is only a single track in the file. In that case, the first and
   only object is extracted from the list and returned.
   The structure of that object depends on the format of the
-  data. The \code{GenomicRangesList} contains \code{GRanges} objects
-  with a \code{trackLine} element in their metadata,
-  whereas the \code{RangedDataList} contains \code{UCSCData} objects.
+  data. The \code{GenomicRangesList} contains \code{UCSCData} objects.
 }
 
 \details{

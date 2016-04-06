@@ -9,8 +9,6 @@
 \alias{show,UCSCData-method}
 \alias{coerce,GRanges,UCSCData-method}
 \alias{coerce,UCSCData,GRanges-method}
-\alias{coerce,RangedData,UCSCData-method}
-\alias{coerce,UCSCData,RangedData-method}
 \alias{split,UCSCData,ANY-method}
 \alias{split,UCSCData,Vector-method}
 
@@ -48,7 +46,7 @@
       Exports the track and its track line to \code{con} in the
       \acronym{UCSC} meta-format.  }
     \item{\code{as(object, "UCSCData")}}{Constructs a \code{UCSCData}
-      from a \code{RangedData} instance, by adding a default track line
+      from a \code{GRanges} instance, by adding a default track line
       and ensuring that the sequence/chromosome names are compliant with
       UCSC conventions. If there is a numeric score, the track line type
       is either "bedGraph" or "wig", depending on the feature

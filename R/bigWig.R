@@ -193,23 +193,14 @@ setMethod("import.bw", "ANY",
             import(con, "BigWig", ...)
           })
 
-
-### FIXME: For chr20, WGS coverage, coercion RangedData->GRanges takes
-### 2X as long as reading. The most common use case is reading long
-### vectors as Rles. Constructing an RleList is complicated by
-### 'which'. As long as 'which' spans chromosomes, we can quickly
-### coerce the GRanges (or faster yet, a RangedData) to an
-### RleList. Consumes memory, but time cost is minimal, when 'which'
-### is trivial (an entire genome or chromosome).
-
 ### Consider the use cases:
 ### - Extract whole genome or whole chromosome coverage as Rle (ChIP-seq)
-###   - Use rdToRle() fast path
+###   - Use coverage() fast path
 ### - Extract single position coverage for millions of variants
 ###   - Slow to query by position, so extract whole genome/chromosome (above),
 ###     then use findRun trick.
 ### - Extract single position coverage for a hundred hot-spot variants
-###   - rdToRle() should be fast enough, followed by findRun trick.
+###   - coverage() should be fast enough, followed by findRun trick.
 ### - Extract coverage for one/all genes and summarize (RNA-seq?)
 ###   - probably want summarize,BigWigFile
 
@@ -244,31 +235,27 @@ setMethod("import", "BigWigFile",
             if (as != "NumericList") {
               which <- as(which, "NormalIRangesList")
             }
-            rd <- .Call(BWGFile_query, path.expand(path(con)),
-                        as.list(which),
-                        identical(colnames(selection), "score"), 
-                        as == "NumericList")
+            C_ans <- .Call(BWGFile_query, path.expand(path(con)),
+                           as.list(which),
+                           identical(colnames(selection), "score"), 
+                           as == "NumericList")
             if (as == "NumericList") {
-                rd <- as(rd, "NumericList")
-                names(rd) <- rep(names(which), elementNROWS(which))
-                metadata(rd) <- list(ranges = as(which, "GRanges"))
-                rd
+              ans <- as(C_ans, "NumericList")
+              names(ans) <- rep(names(which), elementNROWS(which))
+              metadata(ans) <- list(ranges = as(which, "GRanges"))
+              ans
             } else {
-              seqinfo(rd) <- si
+              gr <- as(C_ans[[1L]], "GRanges")
+              mcols(gr) <- unlist(C_ans[[2L]], use.names=FALSE)
+              seqinfo(gr) <- si
               if (as == "RleList") {
-                rdToRle(rd)
-              } else if (as == "GRanges") {
-                strand(rd) <- "*"
-                rd <- as(rd, "GRanges")
-              } else rd
+                coverage(gr, weight="score")
+              } else {
+                strand(gr) <- "*"
+                gr
+              }
             }
            })
-
-rdToRle <- function(x) {
-  RleList(mapply(function(r, v, sl) {
-    coverage(r, width=sl, weight=v$score)
-  }, ranges(x), values(x), seqlengths(x), SIMPLIFY=FALSE), compress=FALSE)
-}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Summary

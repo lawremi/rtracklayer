@@ -116,8 +116,7 @@ export.bedGraph(object, con, ...)
   }
   \item{index}{If \code{TRUE}, automatically compress and index the
     output file with bgzf and tabix. Note that tabix indexing will
-    sort the data by chromosome and start. Does not work when exporting
-    a \code{RangedDataList} with multiple elements; tabix supports a
+    sort the data by chromosome and start. Tabix supports a
     single track in a file.
   }
   \item{ignore.strand}{Whether to output the strand when not required
@@ -142,8 +141,7 @@ export.bedGraph(object, con, ...)
     export as sample columns in the BED15 file.}
   \item{...}{Arguments to pass down to methods to other methods. For
     import, the flow eventually reaches the \code{BEDFile} method on
-    \code{import}. For export, the \code{RangedData}, \code{BEDFile}
-    method on \code{export} is the sink. When \code{trackLine} is
+    \code{import}. When \code{trackLine} is
     \code{TRUE} or the target format is BED15, the arguments are passed
     through \code{export.ucsc}, so track line parameters are supported.
   }
@@ -177,8 +175,8 @@ export.bedGraph(object, con, ...)
   belong in \link[Rsamtools:BamFile]{BAM}, and gene models are more
   richly expressed in \link[=GFFFile]{GFF}.
 
-  The following is the mapping of BED elements to a \code{GRanges} or
-  \code{RangedData} object. NA values are allowed only where indicated.
+  The following is the mapping of BED elements to a \code{GRanges} object.
+  NA values are allowed only where indicated.
   These appear as a \dQuote{.} in the file. Only the first three columns
   (chrom, start and strand) are required. The other columns can only be
   included if all previous columns (to the left) are included. Upon export,

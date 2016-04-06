@@ -3,7 +3,7 @@
 \docType{data}
 \title{CPNE1 SNP track}
 \description{
-  A \code{RangedData} object (created by the \code{GGtools} package)
+  A \code{GRanges} object (created by the \code{GGtools} package)
   with features from a subset of the SNPs on chromosome 20 from 60
   HapMap founders in the CEU cohort. Each SNP has an associated data
   value indicating its association with the expression of the CPNE1 gene

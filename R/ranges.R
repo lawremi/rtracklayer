@@ -1,9 +1,9 @@
 ### =========================================================================
-### Genome-oriented methods for GRanges/RangedData/RangesList classes
+### Genome-oriented methods for GRanges and RangesList objects
 ### -------------------------------------------------------------------------
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### RangedData/GRanges convenience constructor
+### GRanges convenience constructor
 ###
 
 GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
@@ -21,56 +21,46 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
   }
   if (is.null(seqinfo) && !is.na(genome))
     seqinfo <- seqinfoForGenome(genome)
-  if (!is(ranges, "Ranges")) {
-    if (is(ranges, "data.frame") || is(ranges, "DataTable")) {
-      colnames(ranges)[match("chrom", colnames(ranges))] <- "space"
-    }
-    if (is.na(genome))
-      genome <- NULL # universe expects NULL if unknown
-    gd <- RangedData(ranges, universe = genome) # direct coercion
-    gd <- as(gd, "GRanges")
-  } else {
-    if (length(chrom) > length(ranges))
-      stop("length of 'chrom' greater than length of 'ranges'")
-    if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))
-      stop("length of 'ranges' not a multiple of 'chrom' length")
-    if (is.null(seqinfo))
-      seqinfo <- Seqinfo(as.character(unique(chrom)), genome = genome)
-    if (!(is.factor(chrom) || is(chrom, "Rle") && is.factor(runValue(chrom))))
-      chrom <- factor(chrom, seqlevels(seqinfo))
-    normStrand <- function(strand) {
-      strand <- as.character(strand)
-      strand[is.na(strand)] <- "*"
-      strand(strand)
-    }
-    if (!(is.null(strand) || is(strand, "Rle")))
-      strand <- normStrand(strand)
-    if (is.null(chrom))
-      chrom <- Rle(factor("1"), length(ranges))
-    dots <- list(...)
-    if (length(dots) == 1) {
-      dots <- dots[[1L]]
-      if ((is(dots, "data.frame") || is(dots, "DataTable")) &&
-          !is.null(dots[["strand"]])) {
-        strand <- dots[["strand"]]
-        dots[["strand"]] <- NULL
-        return(GenomicData(ranges = ranges, dots, strand = strand,
-                           chrom = chrom, genome = genome,
-                           seqinfo = seqinfo, which = which,
-                           metadata = metadata))
-      }
-    }
-    if (is.null(strand))
-      strand <- Rle("*", length(ranges))
-    if (!is.null(seqinfo))
-      chrom <- factor(as.character(chrom), seqlevels(seqinfo))
-    df <- DataFrame(...)
-    invalidNames <- names(df) %in% GenomicRanges:::INVALID.GR.COLNAMES
-    names(df)[invalidNames] <- paste0(".", names(df)[invalidNames])
-    gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, df)
-    if (!is.null(genome))
-      genome(gd) <- genome
+  if (length(chrom) > length(ranges))
+    stop("length of 'chrom' greater than length of 'ranges'")
+  if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))
+    stop("length of 'ranges' not a multiple of 'chrom' length")
+  if (is.null(seqinfo))
+    seqinfo <- Seqinfo(as.character(unique(chrom)), genome = genome)
+  if (!(is.factor(chrom) || is(chrom, "Rle") && is.factor(runValue(chrom))))
+    chrom <- factor(chrom, seqlevels(seqinfo))
+  normStrand <- function(strand) {
+    strand <- as.character(strand)
+    strand[is.na(strand)] <- "*"
+    strand(strand)
   }
+  if (!(is.null(strand) || is(strand, "Rle")))
+    strand <- normStrand(strand)
+  if (is.null(chrom))
+    chrom <- Rle(factor("1"), length(ranges))
+  dots <- list(...)
+  if (length(dots) == 1) {
+    dots <- dots[[1L]]
+    if ((is(dots, "data.frame") || is(dots, "DataTable")) &&
+        !is.null(dots[["strand"]])) {
+      strand <- dots[["strand"]]
+      dots[["strand"]] <- NULL
+      return(GenomicData(ranges = ranges, dots, strand = strand,
+                         chrom = chrom, genome = genome,
+                         seqinfo = seqinfo, which = which,
+                         metadata = metadata))
+    }
+  }
+  if (is.null(strand))
+    strand <- Rle("*", length(ranges))
+  if (!is.null(seqinfo))
+    chrom <- factor(as.character(chrom), seqlevels(seqinfo))
+  df <- DataFrame(...)
+  invalidNames <- names(df) %in% GenomicRanges:::INVALID.GR.COLNAMES
+  names(df)[invalidNames] <- paste0(".", names(df)[invalidNames])
+  gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, df)
+  if (!is.null(genome))
+    genome(gd) <- genome
   if (!is.null(seqinfo))
     seqinfo(gd) <- seqinfo
   if (!is.null(which)) {
@@ -157,22 +147,17 @@ setMethod("score", "ANY", function(x) NULL)
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### chrom(): Returns chromosome name vector of length 'length(x)'.
 ###          Not to be confused with 'seqnames', which returns a List for
-###          RangesList and a vector of length 'nrow(x)' for RangedData.
+###          RangesList.
 ###          More or less a pre-GenomicRanges relic.
 ###
 
 setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
-setMethod("chrom", "RangedData", function(x) chrom(ranges(x)))
 setMethod("chrom", "GRanges", function(x) seqnames(x))
 setMethod("chrom", "RangesList", function(x) {
   names(x)
 })
 
 setGeneric("chrom<-", function(x, ..., value) standardGeneric("chrom<-"))
-setReplaceMethod("chrom", "RangedData", function(x, value) {
-  chrom(ranges(x)) <- value
-  x
-})
 setReplaceMethod("chrom", "GRanges", function(x, value) {
   seqnames(x) <- value
   x

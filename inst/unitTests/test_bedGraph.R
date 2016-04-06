@@ -102,7 +102,7 @@ test_bedGraph <- function() {
   test <- import(test_bg_out)
   checkIdentical(test, correct_gr)
   
-  ## TEST: RangedDataList
+  ## TEST: GenomicRangesList
   export(correct_list, test_bg_out)
   test <- import(test_bg_out)
   checkIdentical(correct_list, test)

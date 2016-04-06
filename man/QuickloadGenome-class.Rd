@@ -24,7 +24,6 @@
 %% Data Access:
 \alias{track,QuickloadGenome-method}
 \alias{track<-,QuickloadGenome,ANY-method}
-\alias{track<-,QuickloadGenome,RangedData-method}
 \alias{track<-,QuickloadGenome,RTLFile-method}
 \alias{track<-,QuickloadGenome,RsamtoolsFile-method}
 \alias{track<-,QuickloadGenome,character-method}
