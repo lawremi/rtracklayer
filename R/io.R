@@ -74,7 +74,7 @@ FileForFormat <- function(path, format = file_ext(path)) {
   fileClassName <- fileClassNames[fileClassIndex]
   fileClass <- getClass(fileClassName)
   pkg <- packageSlot(fileClass)
-  if (is.null(pkg))
+  if (is.null(pkg) || identical(pkg, ".GlobalEnv"))
     ns <- topenv()
   else ns <- getNamespace(pkg[1])
   constructorName <- fileClassName
