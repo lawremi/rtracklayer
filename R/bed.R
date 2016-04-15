@@ -499,8 +499,9 @@ setMethod("import", "BEDPEFile",
               gr <- callNextMethod()
               df <- mcols(gr)
               mcols(gr) <- NULL
+              df$strand2[is.na(df$strand2)] <- "*"
               gr2 <- with(df, GRanges(chrom2, IRanges(start2+1L, end2),
-                                      strand2))
+                                      strand2, seqinfo=seqinfo(gr)))
               df <- subset(df, select=-(chrom2:end2))
               df$strand2 <- NULL
               Pairs(gr, gr2, df)
@@ -513,7 +514,69 @@ setMethod("colClasses", "BEDPEFile", function(x) {
                 strand2="character")
           })
 
-### TODO: export
+setMethod("export", c("ANY", "BEDPEFile"),
+          function(object, con, format, ...)
+          {
+            if (!missing(format))
+              checkArgFormat(con, format)
+            cl <- class(object)
+            track <- try(as(object, "Pairs"), silent = TRUE)
+            if (class(track) == "try-error") {
+              stop("cannot export object of class '", cl, "': ", track)
+            }
+            export(track, con, ...)
+          })
+
+setMethod("export", c("Pairs", "BEDPEFile"),
+          function(object, con, format, append = FALSE, ignore.strand = FALSE)
+          {
+            if (!missing(format))
+              checkArgFormat(con, format)
+            df <- data.frame(
+                             seqnames(first(object)),
+                             start(first(object)) - 1L,
+                             end(first(object)),
+                             seqnames(second(object)),
+                             start(second(object)) - 1L,
+                             end(second(object))
+                            )
+            score <- mcols(object)$score
+            if (!is.null(score)) {
+              if (!is.numeric(score) || any(is.na(score)))
+                stop("Scores must be non-NA numeric values")
+            } else {
+                score <- 0
+            }
+            name <- mcols(object)$name
+            if (is.null(name))
+              name <- names(object)
+            if (is.null(name))
+              name <- rep(NA, length(object))
+            df$name <- name
+            df$score <- score
+            if (ignore.strand) {
+                strand1 <- NA # strand cannot be null in bedpe
+                strand2 <- NA
+            } else {
+                strand1 <- strand(first(object))
+                strand2 <- strand(second(object))
+                strand1[strand1 == "*"] <- NA
+                strand2[strand2 == "*"] <- NA
+            }
+            df$strand1 <- strand1
+            df$strand2 <- strand2
+            mcol_names <- setdiff(names(mcols(object)), c("name", "score"))
+            df <- cbind(df, mcols(object)[,mcol_names])
+            scipen <- getOption("scipen")
+            options(scipen = 100) # prevent use of scientific notation
+            on.exit(options(scipen = scipen))
+            file <- con
+            con <- connection(con, if (append) "a" else "w")
+            write.table(df, con, sep = "\t", col.names = FALSE,
+                        row.names = FALSE, quote = FALSE, na = ".")
+            release(con)
+            invisible(file)
+          })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Coercion

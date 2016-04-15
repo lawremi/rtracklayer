@@ -305,4 +305,23 @@ test_bedpe <- function() {
     bedpe <- import(path)
 
     checkIdentical(pairs, bedpe)
+
+    # test export
+    test_bedpe_out <- file.path(tempdir(), "test.bedpe")
+    on.exit(unlink(test_bedpe_out))
+    export(bedpe, test_bedpe_out)
+    test <- import(test_bedpe_out)
+    checkIdentical(bedpe, test)
+
+    bedpe2 <- bedpe
+    mcols(bedpe2)$qvalue <- c(0.02, 0.03, 0.05)
+    mcols(bedpe2)$annotation <- c("promoter", "enhancer", "intron")
+
+    # test extended bedpe
+    test_bedpe2_out <- file.path(tempdir(), "test2.bedpe")
+    on.exit(unlink(test_bedpe2_out))
+    export(bedpe2, test_bedpe2_out)
+    test <- import(test_bedpe2_out,
+                   extraCols=c(qvalue="numeric", annotation="character"))
+    checkIdentical(bedpe2, test)
 }

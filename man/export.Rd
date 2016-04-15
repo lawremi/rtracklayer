@@ -86,9 +86,9 @@ import(con, format, text, ...)
       columns. These are not officially valid BED files, and as such
       rtracklayer does not yet support them (this will be addressed
       soon). The rtracklayer package does support two official
-      extensions of BED: Bed15 and bedGraph, see below.  BED files can
-      be indexed with the tabix utility for fast range-based queries via
-      rtracklayer and Rsamtools.
+      extensions of BED: Bed15 and bedGraph, and the unofficial BEDPE
+      format, see below.  BED files can be indexed with the tabix utility
+      for fast range-based queries via rtracklayer and Rsamtools.
     }
  
     \item{\acronym{\link[=BED15File]{Bed15}}}{An extension of BED with 15
@@ -106,7 +106,13 @@ import(con, format, text, ...)
       graph. For large data (the typical case), \code{BigWig} is
       preferred.
     }
-    
+
+    \item{\acronym{\link[=BEDPEFile]{bedGraph}}}{A variant of BED that
+      represents pairs of genomic regions, such as interaction data or
+      chromosomal rearrangements. The data cannot be displayed in UCSC
+      directly but can be represented using the BED12 format.
+    }
+
     \item{\acronym{\link[=WIGFile]{WIG}}}{The Wiggle format is meant for
       storing dense numerical data, such as window-based GC and
       conservation scores. The data is displayed in UCSC as a bar or
