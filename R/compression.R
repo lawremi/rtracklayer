@@ -73,13 +73,13 @@ setGeneric("ungzip", function(x, ...) standardGeneric("ungzip"))
 setMethod("ungzip", "character", function(x) {
   uri <- .parseURI(x)
   if (uri$scheme != "" && uri$scheme != "file")
-    con <- gzcon(url(x))
+    con <- gzcon(url(x, open="rb"), text=TRUE)
   else con <- gzfile(uri$path)
   manage(con)
 })
 
 setMethod("ungzip", "connection", function(x) {
-  gzcon(x)
+  gzcon(x, text=TRUE)
 })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
