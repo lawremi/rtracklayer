@@ -11,7 +11,8 @@
 }
 \usage{
 wigToBigWig(x, seqinfo,
-            dest = paste(file_path_sans_ext(x, TRUE), "bw", sep = "."))
+            dest = paste(file_path_sans_ext(x, TRUE), "bw", sep = "."),
+            clip = FALSE)
 }
 \arguments{
   \item{x}{
@@ -24,6 +25,10 @@ wigToBigWig(x, seqinfo,
   \item{dest}{
     The path to which to write the BigWig file. Defaults to \code{x}
     with the extension changed to \dQuote{bw}.
+  }
+  \item{clip}{
+    If \code{TRUE}, regions outside of \code{seqinfo} will be clipped,
+    so that no error is thrown.
   }
 }
 

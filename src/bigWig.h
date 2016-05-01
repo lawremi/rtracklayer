@@ -15,7 +15,8 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_colnames,
 SEXP BWGFile_seqlengths(SEXP r_filename);
 SEXP BWGFile_summary(SEXP r_filename, SEXP r_chrom, SEXP r_ranges,
                      SEXP r_size, SEXP r_type, SEXP r_default_value);
-SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_outfile, SEXP r_seqlengths);
+SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_clip, SEXP r_outfile,
+		     SEXP r_seqlengths);
 
 SEXP R_udcCleanup(SEXP r_maxDays);
 

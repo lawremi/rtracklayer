@@ -298,7 +298,8 @@ setMethod("summary", "BigWigFile",
 
 wigToBigWig <-
   function(x, seqinfo,
-           dest = paste(file_path_sans_ext(x, TRUE), "bw", sep = "."))
+           dest = paste(file_path_sans_ext(x, TRUE), "bw", sep = "."),
+           clip = FALSE)
   {
     if (!isSingleString(x))
       stop("'x' must be a single string, the path to a WIG file")
@@ -306,12 +307,14 @@ wigToBigWig <-
       stop("'dest' must be a single string, the path to the BigWig output")
     if (!is(seqinfo, "Seqinfo"))
       stop("'seqinfo' must be NULL or a Seqinfo object")
+    if (!isTRUEorFALSE(clip))
+      stop("'clip' must be TRUE or FALSE")
     seqlengths <- seqlengths(seqinfo)
     if (any(is.na(seqlengths)))
       stop("'seqlengths(seqinfo)' must not contain any 'NA' values")
     x <- path.expand(x)
     dest <- path.expand(dest)
-    ans <- .Call(BWGFile_fromWIG, x, seqlengths, dest)
+    ans <- .Call(BWGFile_fromWIG, x, clip, seqlengths, dest)
     invisible(BigWigFile(ans))
   }
 

@@ -381,10 +381,13 @@ SEXP BWGFile_summary(SEXP r_filename, SEXP r_chrom, SEXP r_ranges,
 
 #include "ucsc/verbose.h"
 
-SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_seqlengths, SEXP r_outfile) {
+SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_clip, SEXP r_seqlengths,
+		     SEXP r_outfile)
+{
   pushRHandlers();
   struct lm *lm = lmInit(0);
   struct hash *lenHash = createIntHash(r_seqlengths);
+  Rboolean clip = asLogical(r_clip);
   struct bwgSection *sections =
     bwgParseWig((char *)CHAR(asChar(r_infile)), FALSE, lenHash, itemsPerSlot,
                 lm);
