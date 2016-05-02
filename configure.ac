@@ -10,4 +10,4 @@ fi
 
 AC_SUBST(SSL_CPPFLAGS)
 
-AC_OUTPUT(src/Makevars.common)
+AC_OUTPUT(src/Makevars)
