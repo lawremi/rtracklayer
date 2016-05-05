@@ -1880,6 +1880,14 @@ fi
 
 if test "${OPENSSL}" != "no"; then
   SSL_CPPFLAGS="-DUSE_SSL"
+else
+  case "$OSTYPE" in "darwin"*)
+  BREWDIR=`brew --prefix`
+  OPENSSL_CFLAGS="-I$BREWDIR/opt/openssl/include"
+  OPENSSL_LIBS="-L$BREWDIR/opt/openssl/lib"
+  SSL_CPPFLAGS="-DUSE_SSL"
+  ;;
+  esac
 fi
 
 
