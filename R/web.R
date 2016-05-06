@@ -58,3 +58,27 @@ urlDecode <- function(str, na.strings="NA")
       ans[is.na(str)] <- na.strings
   ans
 }
+
+expandPath <- function(x) {
+    if (startsWith(x, "http|ftp"))
+        expandURL(x)
+    else path.expand(x)
+}
+
+expandURL <- function(uri) {
+    if(!url.exists(uri))
+        return(uri)
+    else {
+        opts <- list(
+            followlocation = TRUE,  # resolve redirects
+            ssl.verifyhost = FALSE, # suppress certain SSL errors
+            ssl.verifypeer = FALSE, 
+            nobody = TRUE, # perform HEAD request
+            verbose = FALSE
+            )
+        curlhandle <- getCurlHandle(.opts = opts)
+        getURL(uri, curl = curlhandle)
+        info <- getCurlInfo(curlhandle)
+        info$effective.url
+    }
+}

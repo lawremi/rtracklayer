@@ -235,7 +235,7 @@ setMethod("import", "BigWigFile",
             if (as != "NumericList") {
               which <- as(which, "NormalIRangesList")
             }
-            C_ans <- .Call(BWGFile_query, path.expand(path(con)),
+            C_ans <- .Call(BWGFile_query, expandPath(path(con)),
                            as.list(which),
                            identical(colnames(selection), "score"), 
                            as == "NumericList")
