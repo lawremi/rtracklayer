@@ -107,7 +107,7 @@ import(con, format, text, ...)
       preferred.
     }
 
-    \item{\acronym{\link[=BEDPEFile]{bedGraph}}}{A variant of BED that
+    \item{\acronym{\link[=BEDPEFile]{BEDPE}}}{A variant of BED that
       represents pairs of genomic regions, such as interaction data or
       chromosomal rearrangements. The data cannot be displayed in UCSC
       directly but can be represented using the BED12 format.
