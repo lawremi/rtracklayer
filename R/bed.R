@@ -500,6 +500,7 @@ setMethod("import", "BEDPEFile",
               df <- mcols(gr)
               mcols(gr) <- NULL
               df$strand2[is.na(df$strand2)] <- "*"
+              seqlevels(gr) <- union(seqlevels(gr), unique(df$chrom2))
               gr2 <- with(df, GRanges(chrom2, IRanges(start2+1L, end2),
                                       strand2, seqinfo=seqinfo(gr)))
               df <- subset(df, select=-(chrom2:end2))

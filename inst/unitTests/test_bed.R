@@ -297,10 +297,12 @@ test_bedpe <- function() {
                    IRanges(c(118965073, 46765607, 54704675),
                            c(118965122, 46765656, 54704724)),
                    strand="+")
-    gr2 <- GRanges(c("chr7", "chr11", "chr20"),
+    gr2 <- GRanges(c("chr7", "chr10", "chr20"),
                    IRanges(c(118970080, 46769935, 54708988),
                            c(118970129, 46769984, 54709037)),
                    strand="-")
+    seqlevels(gr1) <- union(seqlevels(gr1), seqlevels(gr2))
+    seqlevels(gr2) <- seqlevels(gr1)
     pairs <- Pairs(gr1, gr2, name=nms, score=37)
     bedpe <- import(path)
 
