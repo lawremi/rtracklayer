@@ -1,6 +1,6 @@
 AC_PREREQ([2.65])
 
-AC_INIT("rtracklayer")
+AC_INIT
 
 PKG_CHECK_MODULES(OPENSSL, [openssl >= 1.0], [OPENSSL="yes"], [OPENSSL="no"])
 
