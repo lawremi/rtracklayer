@@ -60,7 +60,7 @@ urlDecode <- function(str, na.strings="NA")
 }
 
 expandPath <- function(x) {
-    if (startsWith(x, "http|ftp"))
+    if (startsWith(x, "http") || startsWith(x, "ftp"))
         expandURL(x)
     else path.expand(x)
 }
