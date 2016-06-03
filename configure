@@ -1883,7 +1883,7 @@ else
   case "$OSTYPE" in "darwin"*)
   BREWDIR=`brew --prefix`
   OPENSSL_CFLAGS="-I$BREWDIR/opt/openssl/include"
-  OPENSSL_LIBS="-L$BREWDIR/opt/openssl/lib"
+  OPENSSL_LIBS="-L$BREWDIR/opt/openssl/lib -lssl -lcrypto"
   SSL_CPPFLAGS="-DUSE_SSL"
   ;;
   esac
