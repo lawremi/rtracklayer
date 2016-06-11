@@ -637,6 +637,14 @@ static void parse_GFF3_tagval(const char *tagval, int tagval_len,
 	char c;
 	const char *val;
 
+	/* Some GFF3 files have a space betwwen the tag=value and the
+	   preceding ; e.g.
+	       ID=Csa1M000010.1; Parent=Csa1G000010; Name=Csa1M000010.1
+	   We skip those spaces. */
+	while (tagval_len > 0 && tagval[0] == ' ') {
+		tagval++;
+		tagval_len--;
+	}
 	/* Compute 'tag_len'. */
 	for (tag_len = 0; tag_len < tagval_len; tag_len++) {
 		c = tagval[tag_len];
