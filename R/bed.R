@@ -236,7 +236,11 @@ setMethod("import", "BEDFile",
             file <- con
             con <- queryForConnection(con, which)
             if (attr(con, "usedWhich"))
-              which <- NULL
+                which <- NULL
+            if (is(genome, "Seqinfo")) {
+                seqinfo <- genome
+                genome <- NA_character_
+            }
             if (is.null(seqinfo))
               seqinfo <- attr(con, "seqinfo")
             ## check for a track line
