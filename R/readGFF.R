@@ -433,8 +433,8 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
                              sequenceRegionsAsSeqinfo=FALSE,
                              speciesAsMetadata=FALSE)
 {
-    if (!isSingleStringOrNA(genome))
-        stop(wmsg("'genome' must be a single string or NA"))
+    if (!isSingleStringOrNA(genome) && !is(genome, "Seqinfo"))
+        stop(wmsg("'genome' must be a single string or NA, or a Seqinfo"))
     if (!isTRUEorFALSE(sequenceRegionsAsSeqinfo))
         stop(wmsg("'sequenceRegionsAsSeqinfo' must be TRUE or FALSE"))
     if (!isTRUEorFALSE(speciesAsMetadata))
@@ -463,6 +463,8 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
         ans_seqinfo <- .parseSequenceRegionsAsSeqinfo(pragmas)
     } else if (is.na(genome)) {
         ans_seqinfo <- NULL
+    } else if (is(genome, "Seqinfo")) {
+        ans_seqinfo <- genome
     } else {
         ans_seqinfo <- seqinfoForGenome(genome)
     }

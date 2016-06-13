@@ -1,7 +1,6 @@
 \name{TabixFile-methods}
 
-\alias{import,TabixFile,character,ANY-method}
-\alias{import,TabixFile,missing,ANY-method}
+\alias{import,TabixFile,ANY,ANY-method}
 
 \alias{exportToTabix}
 \alias{exportToTabix,ANY,character-method}
@@ -24,11 +23,10 @@
 }
 
 \usage{
-\S4method{import}{TabixFile,character,ANY}(con, format, text,
+\S4method{import}{TabixFile,ANY,ANY}(con, format, text,
                    which = if (is.na(genome)) NULL
                            else as(seqinfoForGenome(genome), "GenomicRanges"),
                    genome = NA, header = TRUE, ...)
-\S4method{import}{TabixFile,missing,ANY}(con, format, text, ...)
 exportToTabix(object, con, ...)
 }
 \arguments{

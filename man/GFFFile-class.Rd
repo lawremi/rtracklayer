@@ -110,9 +110,9 @@ export.gff3(object, con, ...)
   \item{text}{If \code{con} is missing, a character vector to use as the
     input.
   }
-  \item{genome}{The identifier of a genome, or \code{NA} if
+  \item{genome}{The identifier of a genome, or a \code{Seqinfo}, or \code{NA} if
     unknown. Typically, this is a UCSC identifier like \dQuote{hg19}. An
-    attempt will be made to derive the \code{seqinfo} on the return
+    attempt will be made to derive the \code{Seqinfo} on the return
     value using either an installed BSgenome package or UCSC, if network
     access is available.
   }
