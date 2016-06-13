@@ -99,7 +99,7 @@ export.bedGraph(object, con, ...)
     whether to output the UCSC track line stored on the object, for the
     other export methods, the actual TrackLine object to export.
   }
-  \item{genome}{The identifier of a genome, or \code{NA} if
+  \item{genome}{The identifier of a genome, or a \code{Seqinfo}, or \code{NA} if
     unknown. Typically, this is a UCSC identifier like \dQuote{hg19}. An
     attempt will be made to derive the \code{seqinfo} on the return
     value using either an installed BSgenome package or UCSC, if network
@@ -123,7 +123,8 @@ export.bedGraph(object, con, ...)
     (by the existence of later fields).
   }
   \item{seqinfo}{If not \code{NULL}, the \code{Seqinfo} object to set on
-    the result. If the \code{genome} argument is not \code{NA}, it must
+    the result. Ignored if \code{genome} is a \code{Seqinfo} object.
+    If the \code{genome} argument is not \code{NA}, it must
     agree with \code{genome(seqinfo)}.
   }
   \item{extraCols}{A character vector in the same form as
