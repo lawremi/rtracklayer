@@ -3,12 +3,15 @@
 ### -------------------------------------------------------------------------
 ###
 
-setMethod("import", c("TabixFile", "character"),
+setMethod("import", "TabixFile",
           function(con, format, text,
                    which = if (is.na(genome)) NULL
                            else as(seqinfoForGenome(genome), "GenomicRanges"),
                    genome = NA, header = TRUE, ...)
           {
+            if (missing(format)) {
+                  format <- file_ext(file_path_sans_ext(path(con)))
+            }
             buffer <- queryForResource(con, which, header = header)
             on.exit(release(buffer))
             file <- try(FileForFormat(buffer, format), silent = TRUE)
@@ -25,12 +28,6 @@ setMethod("import", c("TabixFile", "character"),
                       c(list(buffer), genome = genome, tabixHeader$indexColumns,
                         skip = skip, header = header, args))
             } else import(file, genome = genome, ...)
-          })
-
-setMethod("import", c("TabixFile", "missing"),
-          function(con, format, text, ...)
-          {
-            import(con, file_ext(file_path_sans_ext(path(con))), ...)
           })
 
 setGeneric("exportToTabix",
