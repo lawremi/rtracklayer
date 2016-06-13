@@ -13,20 +13,15 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
     genome <- NA
   if (!isSingleStringOrNA(genome))
     stop("'genome' must be a single string, or NULL, or NA")
-  if (!is.null(seqinfo)) {
-    if (is.na(genome))
-      genome <- singleGenome(genome(seqinfo))
-    else if (!all(genome == genome(seqinfo), na.rm=TRUE))
+  if (!is.null(seqinfo) && !all(genome == genome(seqinfo), na.rm=TRUE)) {
       stop("'genome' ", genome, "' does not match that in 'seqinfo'")
   }
-  if (is.null(seqinfo) && !is.na(genome))
+  if (is.null(seqinfo))
     seqinfo <- seqinfoForGenome(genome)
   if (length(chrom) > length(ranges))
     stop("length of 'chrom' greater than length of 'ranges'")
   if (length(chrom) > 0 && (length(ranges) %% length(chrom) != 0))
     stop("length of 'ranges' not a multiple of 'chrom' length")
-  if (is.null(seqinfo))
-    seqinfo <- Seqinfo(genome = genome)
   normStrand <- function(strand) {
     strand <- as.character(strand)
     strand[is.na(strand)] <- "*"
@@ -35,7 +30,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
   if (!(is.null(strand) || is(strand, "Rle")))
     strand <- normStrand(strand)
   if (is.null(chrom))
-    chrom <- Rle(factor("1"), length(ranges))
+    chrom <- droplevels(Rle(factor("1"), length(ranges)))
   dots <- list(...)
   if (length(dots) == 1) {
     dots <- dots[[1L]]
@@ -54,11 +49,10 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
   df <- DataFrame(...)
   invalidNames <- names(df) %in% GenomicRanges:::INVALID.GR.COLNAMES
   names(df)[invalidNames] <- paste0(".", names(df)[invalidNames])
-  gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, df)
-  if (!is.null(genome))
+  gd <- GRanges(seqnames = chrom, ranges = ranges, strand = strand, df,
+                seqinfo = seqinfo)
+  if (!is.na(genome))
     genome(gd) <- genome
-  if (!is.null(seqinfo))
-    seqinfo(gd) <- merge(seqinfo, seqinfo(gd))
   if (!is.null(which)) {
     if (is(which, "RangesList"))
       which <- as(which, "GRanges")
@@ -74,6 +68,8 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
 
 seqinfoForGenome <- function(genome, method = c("auto", "BSgenome", "UCSC")) {
   method <- match.arg(method)
+  if (is.na(genome))
+    return(NULL)
   if (method == "auto" || method == "BSgenome")
     sl <- SeqinfoForBSGenome(genome)
   if (method == "UCSC" || (method == "auto" && is.null(sl)))
