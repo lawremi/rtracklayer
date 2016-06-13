@@ -1,6 +1,7 @@
 \name{asBED}
 \alias{asBED}
 \alias{asBED,GRangesList-method}
+\alias{asBED,GAlignments-method}
 
 \title{Coerce to BED structure}
 \description{
@@ -10,6 +11,7 @@
 \usage{
 asBED(x, ...)
 \S4method{asBED}{GRangesList}(x)
+\S4method{asBED}{GAlignments}(x)
 }
 
 \arguments{
@@ -29,6 +31,9 @@ asBED(x, ...)
       transcript. The \code{blockStarts} and
       \code{blockSizes} columns are derived from the ranges in each
       element. Also, add \code{name} column from \code{names(object)}.
+    }
+    \item{\code{GAlignments}}{Converts to GRangesList via \code{grglist}
+      and procedes accordingly.
     }
   }
 }

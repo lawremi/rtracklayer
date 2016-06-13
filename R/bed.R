@@ -594,13 +594,18 @@ setMethod("asBED", "GRangesList", function(x) {
   if (any(elementNROWS(x_range) != 1L))
     stop("Empty or multi-strand/seqname elements not supported by BED")
   gr <- unlist(x_range, use.names=FALSE)
-  values(gr) <- values(x)
-  values(gr)$name <- names(x)
+  mcols(gr) <- mcols(x)
+  mcols(gr)$name <- names(x)
   x_ranges <- ranges(unlist(x, use.names=FALSE))
-  ord_start <- order(start(x_ranges))
+  ord_start <- order(togroup(PartitioningByEnd(x)), start(x_ranges))
   x_ranges <- shift(x_ranges, 1L - rep(start(gr), elementNROWS(x)))[ord_start]
-  values(gr)$blocks <- split(x_ranges, togroup(x)[ord_start])
+  mcols(gr)$blocks <- relist(x_ranges, x)
   gr
+})
+
+setMethod("asBED", "GAlignments", function(x) {
+    x <- grglist(x)
+    callGeneric()
 })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
