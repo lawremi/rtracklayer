@@ -617,11 +617,16 @@ setGeneric("blocks", function(x, ...) standardGeneric("blocks"))
 setMethod("blocks", "GenomicRanges",
           function(x)
           {
-            block_counts <- elementNROWS(values(x)$blocks)
+            if (is.null(mcols(x)$blocks)) {
+                return(as(x, "GRangesList"))
+            }
+            block_counts <- elementNROWS(mcols(x)$blocks)
             gr <- GRanges(rep(seqnames(x), block_counts),
-                          shift(unlist(values(x)$blocks, use.names = FALSE),
+                          shift(unlist(mcols(x)$blocks, use.names = FALSE),
                                 rep(start(x), block_counts) - 1L),
                           rep(strand(x), block_counts))
             seqinfo(gr) <- seqinfo(x)
-            split(gr, togroup(values(x)$blocks))
+            ans <- relist(gr, mcols(x)$blocks)
+            mcols(ans) <- subset(mcols(x), select=-blocks)
+            ans
           })
