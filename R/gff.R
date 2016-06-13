@@ -264,6 +264,10 @@ setMethod("import", "GFFFile",
               warning("gff-version directive indicates version is ", sniffed,
                       ", not ", version)
 
+            if (is(genome, "Seqinfo") && length(genome) == 0L) {
+                genome <- NA_character_
+            }
+               
             if (is.na(genome)) {
               genome <- genome(con)
               if (is.null(genome))
