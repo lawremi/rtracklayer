@@ -3,12 +3,25 @@
 ### -------------------------------------------------------------------------
 
 setMethod("import", "BamFile",
-          function(con, format, text, use.names = FALSE,
-                   param = ScanBamParam(...), ...)
+          function(con, format, text, paired = FALSE, use.names = FALSE,
+                   param = ScanBamParam(...), genome = NA_character_, ...)
           {
             if (!missing(format))
-              checkArgFormat(con, format)
-            readGAlignments(con, use.names = use.names, param = param)
+                checkArgFormat(con, format)
+            stopifnot(isSingleStringOrNA(genome) || is(genome, "Seqinfo"))
+            stopifnot(isTRUEorFALSE(paired))
+            if (paired) {
+                ans <- readGAlignmentPairs(con, use.names = use.names,
+                                           param = param)
+            } else {
+                ans <- readGAlignments(con, use.names = use.names,
+                                       param = param)
+            }
+            if (isSingleStringOrNA(genome)) {
+                genome <- Seqinfo(genome=genome)
+            }
+            seqinfo(ans) <- merge(seqinfo(ans), genome)
+            ans
           })
 
 setMethod("export", c("GAlignments", "BamFile"),

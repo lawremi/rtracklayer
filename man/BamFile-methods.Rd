@@ -13,8 +13,10 @@
   files, represented as \code{\link[Rsamtools]{BamFile}} objects.
 }
 \usage{
-\S4method{import}{BamFile,ANY,ANY}(con, format, text, use.names = FALSE,
-                                   param = ScanBamParam(...), ...)
+\S4method{import}{BamFile,ANY,ANY}(con, format, text, paired = FALSE,
+                                   use.names = FALSE,
+                                   param = ScanBamParam(...),
+                                   genome = NA_character_, ...)
 \S4method{export}{ANY,BamFile,ANY}(object, con, format, ...)
 }
 \arguments{
@@ -24,10 +26,14 @@
   \item{con}{A path, URL, connection or \code{BamFile} object.}
   \item{format}{If not missing, should be \dQuote{bam}.}
   \item{text}{Not supported.}
+  \item{paired}{If \code{TRUE}, return a GAlignmentPairs object,
+    otherwise a GAlignments.
+  }
   \item{use.names}{Whether to parse QNAME as the names on the result.}
   \item{param}{The \code{\link[Rsamtools]{ScanBamParam}} object
     governing the import.
   }
+  \item{genome}{Single string or \code{Seqinfo} object identifying the genome}
   \item{\dots}{Arguments that are passed to \code{ScanBamParam}
     if \code{param} is missing.
   }
