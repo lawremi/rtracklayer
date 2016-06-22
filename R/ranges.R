@@ -16,7 +16,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
   if (!is.null(seqinfo) && !all(genome == genome(seqinfo), na.rm=TRUE)) {
       stop("'genome' ", genome, "' does not match that in 'seqinfo'")
   }
-  if (is.null(seqinfo))
+  if (length(seqinfo) == 0L)
     seqinfo <- seqinfoForGenome(genome)
   if (length(chrom) > length(ranges))
     stop("length of 'chrom' greater than length of 'ranges'")
