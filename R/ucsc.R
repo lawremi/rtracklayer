@@ -13,10 +13,7 @@ setMethod("initialize", "UCSCSession",
           {
             .Object@url <- url
             .Object@views <- new.env()
-            gwURL <- ucscURL(.Object, "gateway")
-            if (force) {
-                gwURL <- paste0(gwURL, '?redirect="manual"')
-            }
+            gwURL <- ucscURL(.Object, "gateway", force=force)
             gw <- httpGet(gwURL, cookiefile = tempfile(), header = TRUE,
                           .parse=FALSE, ...)
             if (grepl("redirectTd", gw)) {
@@ -1694,12 +1691,15 @@ ucscURLTable <- c(gateway = "hgGateway", tracks = "hgTracks",
                   cart = "cartDump")
 
 ucscURL <-
-  function(object, key)
+  function(object, key, force=TRUE)
   {
     path <- ucscURLTable[key]
     if (is.na(path))
-      stop("Key '", key, "' does not match a known URL")
-    else paste(object@url, path, sep="")
+        stop("Key '", key, "' does not match a known URL")
+    if (force && key == "gateway") {
+        path <- paste0(path, '?redirect="manual"')
+    }
+    paste(object@url, path, sep="")
   }
 
 # convenience wrappers for _initialized_ sessions
