@@ -28,7 +28,7 @@ importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
 importMethodsFrom("XML", saveXML)
 
 importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
-           postForm)
+           postForm, url.exists)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Bioconductor packages
