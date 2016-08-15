@@ -404,3 +404,9 @@ SEXP R_udcCleanup(SEXP r_maxDays) {
     bits64 size = udcCleanup(udcDefaultDir(), maxDays, FALSE);
     return ScalarReal(size);
 }
+
+SEXP R_setUserUdcDir(SEXP r_dir) {
+  char *dir = (char *)CHAR(asChar(r_dir));
+  udcSetDefaultDir(dir);
+  return R_NilValue;
+}

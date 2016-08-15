@@ -20,4 +20,6 @@ SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_clip, SEXP r_outfile,
 
 SEXP R_udcCleanup(SEXP r_maxDays);
 
+SEXP R_setUserUdcDir(SEXP dir);
+
 #endif
