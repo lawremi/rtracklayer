@@ -188,7 +188,8 @@ SEXP BWGSectionList_write(SEXP r_sections, SEXP r_seqlengths, SEXP r_compress,
     slReverse(&sections);
   }
   pushRHandlers();
-  bwgCreate(sections, lenHash, blockSize, itemsPerSlot, asLogical(r_compress),
+  bwgCreate(sections, lenHash, max(blockSize, length(r_seqlengths)),
+	    itemsPerSlot, asLogical(r_compress),
             FALSE /*keepAllChromosomes*/, asLogical(r_fixed_summaries),
             (char *)CHAR(asChar(r_file)));
   freeHash(&lenHash);
@@ -391,7 +392,8 @@ SEXP BWGFile_fromWIG(SEXP r_infile, SEXP r_clip, SEXP r_seqlengths,
   struct bwgSection *sections =
     bwgParseWig((char *)CHAR(asChar(r_infile)), clip, lenHash, itemsPerSlot,
                 lm);
-  bwgCreate(sections, lenHash, blockSize, itemsPerSlot, TRUE, TRUE, FALSE,
+  bwgCreate(sections, lenHash, max(blockSize, length(r_seqlengths)),
+	    itemsPerSlot, TRUE, TRUE, FALSE,
             (char *)CHAR(asChar(r_outfile)));
   lmCleanup(&lm);
   freeHash(&lenHash);
