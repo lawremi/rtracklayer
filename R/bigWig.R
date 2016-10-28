@@ -151,6 +151,8 @@ setMethod("export", c("List", "BigWigFile"),
             con <- path.expand(path(con))
             if (!isTRUEorFALSE(compress))
               stop("'compress' must be TRUE or FALSE")
+            if (is.null(names(object)))
+                stop("'object' must have names")
             seqlengths <- elementNROWS(object)
             sectionPtr <- NULL # keep adding to the same linked list
             on.exit(.Call(BWGSectionList_cleanup, sectionPtr))
