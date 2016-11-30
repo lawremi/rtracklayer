@@ -44,7 +44,7 @@
 \usage{
 \S4method{import}{BigWigFile,ANY,ANY}(con, format, text,
                    selection = BigWigSelection(which, ...),
-                   which = con, asRle = FALSE, 
+                   which = con,
                    as = c("GRanges", "RleList", "NumericList"), ...)
 import.bw(con, ...)
 
@@ -80,11 +80,6 @@ export.bw(object, con, ...)
     the \code{selection} argument. For \code{RleList}, there is one
     \code{Rle} per sequence, and that \code{Rle} spans the entire
     sequence.
-  }
-  \item{asRle}{Deprecated. Use \code{as} instead.
-    If \code{TRUE}, the BigWig file is assumed to contain
-    contiguous ranges that define a run-length encoding of a
-    vector (like coverage), and a \code{RleList} is returned.
   }
   \item{selection}{A \code{\linkS4class{BigWigSelection}} object
     indicating the ranges to load.

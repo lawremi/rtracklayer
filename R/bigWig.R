@@ -209,14 +209,9 @@ setMethod("import.bw", "ANY",
 
 setMethod("import", "BigWigFile",
           function(con, format, text, selection = BigWigSelection(which, ...),
-                   which = con, asRle = FALSE,
+                   which = con,
                    as = c("GRanges", "RleList", "NumericList"), ...)
           {
-            if (asRle) {
-              warning("'asRle' argument has been deprecated, ",
-                      "use 'as=\"RleList\"' instead")
-              as <- "RleList"
-            }
             if (!missing(format))
               checkArgFormat(con, format)
             as <- match.arg(as)
