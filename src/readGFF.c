@@ -1016,7 +1016,7 @@ static const char *load_GFF_pragmas(SEXP filexp,
 		/* Line starting with ## -> pragma line. */
 		buf_len = delete_trailing_LF_or_CRLF(buf, -1);
 		buf[buf_len] = '\0';
-		append_string_to_CharAEAE(pragmas_buf, buf);
+		CharAEAE_append_string(pragmas_buf, buf);
 	}
 	return NULL;
 }

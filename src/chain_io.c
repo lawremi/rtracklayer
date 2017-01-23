@@ -77,7 +77,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       } else block = value;
       IntAE_insert_at(block->score, IntAE_get_nelt(block->score),
                       atoi(header[1]));
-      append_string_to_CharAEAE(block->space, header[7]);
+      CharAEAE_append_string(block->space, header[7]);
       header_line = line;
       trc = strcmp("+", header[4]);
       qrc = strcmp("+", header[9]);
