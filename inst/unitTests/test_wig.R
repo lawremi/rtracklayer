@@ -111,11 +111,13 @@ test_wig <- function() {
   default_line <- new("GraphTrackLine", name = "R Track", type = "bedGraph")
   correct_default <- new("UCSCData", correct_gr, trackLine = default_line)
   checkIdentical(test, correct_default)
-  correct_chr18 <- keepSeqlevels(correct_gr, "chr18")
+  correct_chr18 <- keepSeqlevels(correct_gr, "chr18", pruning.mode="coarse")
   export.ucsc(correct_chr18, test_wig_out)
   test <- import(test_wig_out)
   default_line <- new("GraphTrackLine", name = "R Track", type = "wig")
-  correct_default <- new("UCSCData", keepSeqlevels(correct_gr, "chr18"),
+  correct_default <- new("UCSCData",
+                         keepSeqlevels(correct_gr, "chr18",
+                                       pruning.mode="coarse"),
                          trackLine = default_line)
   checkIdentical(test, correct_default)
   
