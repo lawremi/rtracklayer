@@ -145,12 +145,12 @@ GRangesForUCSCGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 ## context for querying UCSC tables
 setClass("UCSCTableQuery",
          representation(session = "UCSCSession",
-                        track = "characterORNULL",
-                        table = "characterORNULL",
+                        track = "character_OR_NULL",
+                        table = "character_OR_NULL",
                         range = "GRanges",
-                        outputType = "characterORNULL",
-                        NAMES = "characterORNULL",
-                        intersectTrack = "characterORNULL"))
+                        outputType = "character_OR_NULL",
+                        NAMES = "character_OR_NULL",
+                        intersectTrack = "character_OR_NULL"))
 
 setMethod("show", "UCSCTableQuery",
           function(object) {
@@ -275,7 +275,7 @@ setMethod("ucscTableQuery", "UCSCSession",
           function(x, track = NULL, range = genome(x), table = NULL,
                    names = NULL, intersectTrack = NULL)
           {
-            if (!is(names, "characterORNULL"))
+            if (!is(names, "character_OR_NULL"))
               stop("'names' must be 'NULL' or a character vector")
             ## only inherit the genome from the session
             range <- normTableQueryRange(range, x)

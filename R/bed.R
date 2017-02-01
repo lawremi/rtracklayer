@@ -432,7 +432,7 @@ setMethod("export", c("GenomicRanges", "BED15File"),
 
 setClass("Bed15TrackLine",
          representation(expStep = "numeric", expScale = "numeric",
-                        expNames = "characterORNULL"),
+                        expNames = "character_OR_NULL"),
          prototype(expStep = 0.5, expScale = 3.0), 
          contains = "BasicTrackLine") # not sure which fields work
 
