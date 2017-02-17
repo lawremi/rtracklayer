@@ -1518,13 +1518,7 @@ setMethod("ucscTrackModes", "ucscTracks",
 
 ucscGenomes <- function(organism=FALSE) {
   url <- "http://genome.ucsc.edu/FAQ/FAQreleases"
-  doc <- httpGet(url)
-  table <- getNodeSet(doc, "//table[@class='descTbl']")[[1L]]
-  species <- sapply(getNodeSet(table, "tr/td[1]"), xmlValue)
-  dbs <- sapply(getNodeSet(table, "tr/td[2]"), xmlValue)
-  dates <- sapply(getNodeSet(table, "tr/td[3]"), xmlValue)
-  nms <- sapply(getNodeSet(table, "tr/td[4]"), xmlValue)
-  status <- sapply(getNodeSet(table, "tr/td[5]"), xmlValue)
+  df <- readHTMLTable(url)[[1L]][c(2,1,3,4,5)]
   .cleanTableCells <- function(x)
   {
     x <- sub("^ *", "", x)
@@ -1537,17 +1531,13 @@ ucscGenomes <- function(organism=FALSE) {
     x[is_empty_cell] <- ""
     x
   }
-  df <- data.frame(db=.cleanTableCells(dbs),
-                   species=.cleanTableCells(species),
-                   date=.cleanTableCells(dates),
-                   name=.cleanTableCells(nms),
-                   status=.cleanTableCells(status),
-                   stringsAsFactors=FALSE)
   COLS <- c("UCSC VERSION", "SPECIES", "RELEASE DATE", "RELEASE NAME", "STATUS")
-  if (!identical(as.character(df[1L, ]), COLS))
+  if (!identical(names(df), COLS))
     stop("table of UCSC genome releases (found at ", url, "#release1) ",
          "doesn't have expected columns ", paste(COLS, collapse=", ")) 
-  df <- df[-1L, ]
+  ## readHTMLTable is returning one NA row for some reason
+  names(df) <- c("db","species","date","name","status")
+  df <- df[!apply(df, 1, function(x) all(is.na(x))),]
   df <- df[df$db != "" , ]
   not_empty <- df$species != ""
   df$species <- rep.int(df$species[not_empty], diff(which(c(not_empty, TRUE))))

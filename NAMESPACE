@@ -24,7 +24,7 @@ importFrom("grDevices", col2rgb, rgb)
 
 importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
            xmlInternalTreeParse, parseURI, newXMLNode, xmlChildren,
-           addChildren, removeChildren)
+           addChildren, removeChildren, readHTMLTable)
 importMethodsFrom("XML", saveXML)
 
 importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
