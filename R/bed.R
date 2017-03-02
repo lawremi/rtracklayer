@@ -169,7 +169,7 @@ setMethod("export", c("GenomicRanges", "BEDFile"),
             on.exit(options(scipen = scipen))
             file <- con
             con <- connection(con, if (append) "a" else "w")
-            on.exit(release(con))
+            on.exit(release(con), add=TRUE)
             write.table(df, con, sep = "\t", col.names = FALSE,
                         row.names = FALSE, quote = FALSE, na = ".")
             release(con)
@@ -577,6 +577,7 @@ setMethod("export", c("Pairs", "BEDPEFile"),
             on.exit(options(scipen = scipen))
             file <- con
             con <- connection(con, if (append) "a" else "w")
+            on.exit(release(con), add=TRUE)
             write.table(df, con, sep = "\t", col.names = FALSE,
                         row.names = FALSE, quote = FALSE, na = ".")
             release(con)
