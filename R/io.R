@@ -269,10 +269,10 @@ connectionForResource <- function(x, open = "") {
     if (uri$scheme != "")
       con <- url(resource)
     else con <- file(resource)
-    con <- manage(con)
   } else con <- resource
   if (!isOpen(con) && nzchar(open)) {
-    open(con, open)
+      open(con, open)
+      con <- manage(con)
   }
   con
 }
@@ -291,7 +291,6 @@ manage <- function(con) {
     } else FALSE
   }
   env$finalizer <- finalizer
-  reg.finalizer(env, finalizer)
   attr(con, "finalizerEnv") <- env
   rm(env)
   con

@@ -41,11 +41,9 @@ test_bedGraph <- function() {
   test_bg_con <- file(test_bg)
   test <- import(test_bg_con, format = "wig")
   checkIdentical(correct_ucsc, test)
-  close(test_bg_con)
   test_bg_con <- file(test_bg)
   test <- import(WIGFile(test_bg_con))
   checkIdentical(correct_ucsc, test)
-  close(test_bg_con)
 
   ## TEST: 'genome'
   hg19_seqinfo <- SeqinfoForBSGenome("hg19")

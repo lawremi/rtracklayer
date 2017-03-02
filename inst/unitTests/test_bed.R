@@ -55,7 +55,6 @@ test_bed <- function() {
   test_bed_con <- file(test_bed)
   test <- import(test_bed_con, format = "bed")
   checkIdentical(test, correct_ucsc)
-  close(test_bed_con)
   
   test_bed_con <- file(test_bed, "r")
   test <- import(test_bed_con, format = "bed")
@@ -65,7 +64,6 @@ test_bed <- function() {
   test_bed_con <- file(test_bed)
   test <- import(BEDFile(test_bed_con))
   checkIdentical(test, correct_ucsc)
-  close(test_bed_con)
   
   test <- import(test_bed, trackLine = FALSE)
   checkIdentical(test, correct_gr)
@@ -109,7 +107,6 @@ test_bed <- function() {
                        trackLine = correct_ucsc@trackLine)
   seqinfo(correct_empty) <- Seqinfo()
   checkIdentical(test, correct_empty)
-  close(test_bed_con)
   
   ## export()
 

@@ -159,7 +159,6 @@ test_gff <- function() {
   ## TEST: import from connection
   test_gff_con <- file(test_gff_out)
   test <- import(test_gff_con, format = "gff")
-  close(test_gff_con)
   checkIdentical(correct_gff3, test)
 
   ## TEST: export to connection, with preceding comment

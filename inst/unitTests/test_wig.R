@@ -42,11 +42,9 @@ test_wig <- function() {
   test_wig_con <- file(test_wig)
   test <- import(test_wig_con, format = "wig")
   checkIdentical(correct_ucsc, test)
-  close(test_wig_con)
   test_wig_con <- file(test_wig)
   test <- import(WIGFile(test_wig_con))
   checkIdentical(correct_ucsc, test)
-  close(test_wig_con)
   
   ## TEST: 'genome'
   hg19_seqinfo <- SeqinfoForBSGenome("hg19")
