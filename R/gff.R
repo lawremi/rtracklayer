@@ -122,14 +122,15 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
               seqname <- urlEncode(seqname, "a-zA-Z0-9.:^*$@!+_?|-")
             if (!is.null(object$source) && missing(source))
               source <- object$source
+            else source <- rep(source, length(object))
             if (version == "3")
               source <- urlEncode(source, "\t\n\r;=%&,", FALSE)
             feature <- object$type
             if (is.null(feature))
-              feature <- "sequence_feature"
+              feature <- rep("sequence_feature", length(object))
             score <- score(object)
             if (is.null(score)) {
-              score <- NA
+              score <- rep(NA_real_, length(object))
             } else {
               if (!("score" %in% colnames(mcols(object))))
                 ## avoid outputting as attribute
@@ -137,10 +138,11 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
             }
             strand <- strand(object)
             if (is.null(strand))
-              strand <- NA
+                strand <- rep(strand(NA_character_), length(object))
+            strand[strand == "*"] <- NA_integer_
             frame <- object$phase
             if (is.null(frame))
-              frame <- NA
+              frame <- rep(NA_integer_, length(object))
             
             table <- data.frame(seqname, source, feature, start(object),
                                 end(object), score, strand, frame)
