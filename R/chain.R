@@ -119,3 +119,63 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
                            levels=seq_len(length(x)), class="factor")
             setNames(split(lifted, f), names(x))
           })
+
+setMethod("liftOver", c("ANY", "ANY"),
+          function(x, chain) {
+    chain <- as(chain, "Chain")
+    callGeneric()
+})
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Coercion
+###
+
+
+## mismatches take into account dels but not start, need opposite
+mapMismatches <- function(mismatch, range, dels) {
+    names(mismatch) <- seq_along(mismatch)
+    mmflat <- unlist(mismatch)
+    mmgr <- GRanges(names(mmflat), IRanges(mmflat, width=1L))
+    seqlevels(mmgr) <- names(mismatch)
+    start(mapToUnaligned(mmgr, range, dels))
+}
+
+mapToUnaligned <- function(x, range, dels) {
+    tx <- gaps(dels, 1L, end(range) + sum(width(dels)))
+    txgr <- as(setNames(tx, seqlevels(x)), "GRanges")
+    txgrl <- split(txgr, seqnames(txgr))
+    mmlocal <- mapToTranscripts(x, txgrl)
+    ##seqlevels(mmlocal) <- seqlevels(x)
+    shift(split(mmlocal, seqnames(mmlocal)), start(range) - 1L)
+}
+
+deletionsFromGaps <- function(x) {
+    gapraw <- as.raw(DNAString("-"))
+    as(RleList(as(x, "RawList") == gapraw), "IRangesList")
+}
+
+mapContiguousRanges <- function(x, aln) {
+    ranges(unlist(mapToUnaligned(x, ranges(aln), indel(aln)), use.names=FALSE))
+}
+
+setAs("AlignedXStringSetList", "Chain", function(from) {
+    pairs <- zipdown(from[lengths(from) == 2L])
+    dels <- c(indel(first(pairs)), indel(second(pairs)))
+    names(dels) <- rep(seq_along(pairs), 2)
+    delgr <- as(dels, "GRanges")
+    seqlengths(delgr) <-
+        width(first(pairs)) + sum(width(indel(first(pairs))))          
+    dr <- disjoin(subset(gaps(delgr), strand=="*"))
+    r1 <- mapContiguousRanges(dr, first(pairs))
+    r2 <- mapContiguousRanges(dr, second(pairs))
+    block <- new("ChainBlock",
+                 ranges = r1,
+                 offset = start(r1) - start(r2),
+                 score = rep(NA_integer_, length(pairs)),
+                 space = rep("second", length(pairs)),
+                 reversed =
+                     inverted(first(pairs)) != inverted(second(pairs)),
+                 length = as.integer(table(seqnames(dr))))
+    new("Chain", SimpleList(first=block))
+})
+

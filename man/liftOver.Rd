@@ -2,6 +2,7 @@
 
 \alias{liftOver}
 \alias{liftOver,GenomicRanges,Chain-method}
+\alias{liftOver,ANY,ANY-method}
 
 \title{
   Lift intervals between genome builds
@@ -23,7 +24,7 @@ liftOver(x, chain, ...)
   }
   \item{chain}{
     A \code{\linkS4class{Chain}} object, usually imported with
-    \code{\link{import.chain}}. 
+    \code{\link{import.chain}}, or something coercible to one.
   }
   \item{\dots}{
     Arguments for methods.
