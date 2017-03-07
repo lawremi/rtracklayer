@@ -1542,8 +1542,12 @@ ucscGenomes <- function(organism=FALSE) {
   not_empty <- df$species != ""
   df$species <- rep.int(df$species[not_empty], diff(which(c(not_empty, TRUE))))
   df <- df[df$status == "Available", -5L]
-  if (organism)
-    df$organism <- .getOrganism(df$db)
+  if (organism) {
+    df$organism <- NA_character_
+    org <- lapply(as.character(df$db), function(xx) 
+                  unique(suppressWarnings(mapGenomeBuilds(xx)$organism)))
+    df$organism[!sapply(org, is.null)] <- unlist(org) 
+  }
   rownames(df) <- NULL
   df
 }
