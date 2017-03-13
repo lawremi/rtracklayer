@@ -37,7 +37,8 @@ setMethod("initialize", "UCSCSession",
 setMethod("seqlengths", "UCSCSession", function(x) {
   query <- ucscTableQuery(x, range = GRanges(), table = "chromInfo")
   chromInfo <- getTable(query)
-  setNames(chromInfo$size, chromInfo$chrom)
+  ans <- setNames(chromInfo$size, chromInfo$chrom)
+  ans[sortSeqlevels(names(ans))]
 })
 
 setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
