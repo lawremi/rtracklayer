@@ -4,7 +4,7 @@ AC_INIT
 
 case "$OSTYPE" in "darwin"*)
   BREWDIR=`brew --prefix`
-  PKG_CONFIG_PATH=$BREWDIR/opt/openssl/lib/pkgconfig
+  export PKG_CONFIG_PATH=$BREWDIR/opt/openssl/lib/pkgconfig
   ;;
 esac
 
