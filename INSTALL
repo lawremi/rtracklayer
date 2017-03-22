@@ -1,0 +1,4 @@
+The rtracklayer package can use openssl for accessing https URLs when
+e.g. importing BigWig files. One can set the OPENSSL_LIBS and
+OPENSSL_CFLAGS environment variables for specifying the relevant
+linker and preprocessor/compiler flags, respectively.
