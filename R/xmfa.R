@@ -10,13 +10,15 @@ XMFAFile <- function(resource) {
 setMethod("import", "XMFAFile", function(con, format, text) {
     lines <- readLines(resource(con))
     lines <- lines[!grepl("^#", lines)]
-        header.pos <- grep("^>", lines)
+    header.pos <- grep("^>", lines)
     header.df <-
         strcapture("^> .*?:([[:digit:]]+)-([[:digit:]]+) ([+-]) (.*)",
                    lines[header.pos],
                    DataFrame(start=integer(), end=integer(),
                              strand=character(),
                              seqnames=character()))
+    
+    inverted <- header.df$strand == "-"
     
     lcp.pos <- grep("^=", lines)
     seq.breaks <- sort(c(header.pos, lcp.pos))
@@ -27,6 +29,7 @@ setMethod("import", "XMFAFile", function(con, format, text) {
         DNAStringSet(unstrsplit(extractList(lines, seq.ranges), ""))
     dels <- deletionsFromGaps(seqs)
     unaligned.lcp <- seqs[gaps(dels, 1L, width(seqs))]
+    unaligned.lcp[inverted] <- reverseComplement(unaligned.lcp[inverted])
     
     range <- with(header.df, IRanges(start, end))
     ord.lcp <- order(start(range))
@@ -39,8 +42,6 @@ setMethod("import", "XMFAFile", function(con, format, text) {
 
     mismatch <- mismatchesFromLCPDiscordance(seqs, lcp)
     mismatch <- mapMismatches(mismatch, range, dels)
-    
-    inverted <- header.df$strand == "-"
     
     aln <- AlignedXStringSet(unaligned,
                              range,
