@@ -144,7 +144,7 @@ mapToUnaligned <- function(x, range, dels) {
     tx <- gaps(dels, 1L, end(range) + sum(width(dels)))
     txgr <- as(setNames(tx, seqlevels(x)), "GRanges")
     txgrl <- split(txgr, seqnames(txgr))
-    mmlocal <- mapToTranscripts(x, txgrl)
+    mmlocal <- GenomicFeatures::mapToTranscripts(x, txgrl)
     ##seqlevels(mmlocal) <- seqlevels(x)
     shift(split(mmlocal, seqnames(mmlocal)), start(range) - 1L)
 }

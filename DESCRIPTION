@@ -9,7 +9,7 @@ Imports: XML (>= 1.98-0), BiocGenerics (>= 0.13.8),
          Biostrings (>= 2.43.5), zlibbioc, RCurl (>= 1.4-2),
          Rsamtools (>= 1.17.8), GenomicAlignments (>= 1.5.4), tools
 Suggests: BSgenome (>= 1.33.4), humanStemCell, microRNA (>= 1.1.1), genefilter,
-          limma, org.Hs.eg.db, hgu133plus2.db,
+          limma, org.Hs.eg.db, hgu133plus2.db, GenomicFeatures,
           BSgenome.Hsapiens.UCSC.hg19, TxDb.Hsapiens.UCSC.hg19.knownGene
 LinkingTo: S4Vectors, IRanges, XVector
 Description: Extensible framework for interacting with multiple genome 
