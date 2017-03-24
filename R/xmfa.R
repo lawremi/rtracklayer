@@ -48,7 +48,6 @@ setMethod("import", "XMFAFile", function(con, format, text) {
                              mismatch,
                              dels,
                              inverted)
-    mcols(aln)$seqname <- header.df$seqname
     unname(splitAsList(aln, lcp))
 })
 

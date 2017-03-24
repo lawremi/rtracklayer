@@ -115,7 +115,7 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
             liftedList <- mapply(liftOverSpace, rl[sharedNames],
                                  chain[sharedNames], ind, SIMPLIFY=FALSE)
             lifted <- unlist(GRangesList(liftedList), use.names=FALSE)
-            f <- structure(unlist(ind, use.names=FALSE),
+            f <- structure(as.integer(unlist(ind, use.names=FALSE)),
                            levels=seq_len(length(x)), class="factor")
             setNames(split(lifted, f), names(x))
           })
@@ -159,7 +159,8 @@ mapContiguousRanges <- function(x, aln) {
 }
 
 setAs("AlignedXStringSetList", "Chain", function(from) {
-    pairs <- zipdown(from[lengths(from) == 2L])
+    stopifnot(all(lengths(from) == 2L))
+    pairs <- zipdown(from)
     dels <- c(indel(first(pairs)), indel(second(pairs)))
     names(dels) <- rep(seq_along(pairs), 2)
     delgr <- as(dels, "GRanges")
@@ -172,10 +173,13 @@ setAs("AlignedXStringSetList", "Chain", function(from) {
                  ranges = r1,
                  offset = start(r1) - start(r2),
                  score = rep(NA_integer_, length(pairs)),
-                 space = rep("second", length(pairs)),
+                 space = names(second(pairs)),
                  reversed =
                      inverted(first(pairs)) != inverted(second(pairs)),
                  length = as.integer(table(seqnames(dr))))
-    new("Chain", SimpleList(first=block))
+    blocks <- SimpleList(block)
+    if (length(pairs) > 0L)
+        names(blocks) <- names(first(pairs))[1L]
+    new("Chain", blocks)
 })
 
