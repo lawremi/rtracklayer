@@ -62,9 +62,11 @@
 aln <- import(system.file("tests", "test.xmfa", package="rtracklayer"))
 
 ## access inverted status
-inverted(aln)
+Biostrings::inverted(aln[[2L]])
 
 ## convert to Chain and liftover a feature from one sequence to another
+## this only works for an alignment between two sequences
+aln <- phead(aln, 2L)
 chain <- as(aln, "Chain")
 liftOver(GRanges("ST1:1-10"), chain)
 }
