@@ -42,7 +42,7 @@ import(GenomicRanges)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
            DNAStringSet, DNAString, DNA_BASES, DNA_ALPHABET, alphabetFrequency,
-           consensusMatrix, AlignedXStringSet, indel, inverted,
+           consensusMatrix, AlignedXStringSet, indel,
            reverseComplement)
 importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
 importClassesFrom("Biostrings", DNAStringSet, XStringSet, AlignedXStringSetList)
@@ -70,7 +70,7 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
 exportClasses(RTLFile, CompressedFile, GFFFile, UCSCFile, BEDFile, WIGFile,
               ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,
               BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, 
-              TwoBitFile, RTLFileList, BEDPEFile, XMFAFile)
+              TwoBitFile, RTLFileList, BEDPEFile)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
@@ -123,4 +123,4 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
 export(GFFFile, UCSCFile, BEDFile, WIGFile,
        ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,
        BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, TwoBitFile,
-       BEDPEFile, XMFAFile)
+       BEDPEFile)

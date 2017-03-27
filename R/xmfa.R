@@ -47,7 +47,7 @@ setMethod("import", "XMFAFile", function(con, format, text) {
                              range,
                              mismatch,
                              dels,
-                             inverted)
+                             header.df$strand)
     unname(splitAsList(aln, lcp))
 })
 
