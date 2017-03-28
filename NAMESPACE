@@ -13,8 +13,9 @@ import(zlibbioc)
 ###
 
 importFrom("stats", offset, setNames)
-importFrom("utils", count.fields, URLdecode, URLencode, browseURL, download.file,
-           read.table, type.convert, write.table)
+importFrom("utils", count.fields, URLdecode, URLencode, browseURL,
+           download.file, read.table, type.convert, write.table,
+           packageVersion, strcapture)
 importFrom("tools", file_path_as_absolute, file_ext, file_path_sans_ext)
 importFrom("grDevices", col2rgb, rgb)
 
@@ -50,7 +51,8 @@ importMethodsFrom("Rsamtools", ScanBamParam, asBam, headerTabix, isOpen, path,
                   scanTabix)
 importClassesFrom("Rsamtools", RsamtoolsFile, TabixFile, BamFile)
 
-importMethodsFrom("GenomicAlignments", readGAlignments, cigar)
+importMethodsFrom("GenomicAlignments", readGAlignments, cigar,
+                  pmapFromTranscripts, last, readGAlignmentPairs)
 importClassesFrom("GenomicAlignments", GAlignments)
 
 ## ============================================================

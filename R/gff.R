@@ -103,7 +103,7 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
             if (!append) {
               cat("", file = con) # clear any existing file
               gffComment(con, "gff-version", version)
-              sourceVersion <- try(package.version(source), TRUE)
+              sourceVersion <- try(packageVersion(source), TRUE)
               if (!inherits(sourceVersion, "try-error"))
                 gffComment(con, "source-version", source, sourceVersion)
               gffComment(con, "date", base::format(Sys.time(), "%Y-%m-%d"))
@@ -343,14 +343,15 @@ setMethod("asGFF", "GRangesList",
             values(children)$Parent <- rep.int(parentIds, elementNROWS(x))
             allColumns <- union(colnames(values(parents)),
                                 colnames(values(children)))
-            rectifyDataFrame <- function(x) {
-              x[setdiff(allColumns, colnames(x))] <- DataFrame(NA)
-              x[allColumns]
-            }
-            values(children) <- rectifyDataFrame(values(children))
-            values(parents) <- rectifyDataFrame(values(parents))
+            values(children) <- rectifyDataFrame(values(children), allColumns)
+            values(parents) <- rectifyDataFrame(values(parents), allColumns)
             c(parents, children)
           })
+
+rectifyDataFrame <- function(x, allColumns) {
+    x[setdiff(allColumns, colnames(x))] <- DataFrame(NA)
+    x[allColumns]
+}
 
 ### FIXME: We wrote this but never tested it, and it is not yet
 ### used. People should use GFF3 instead of this.
@@ -383,7 +384,7 @@ setMethod("asGTF", "GRangesList",
                       ans$gene_id <- ""
                   }
                   if (is.null(ans$transcript_id)) {
-                      ans$transcript_id <- tx_id[togroup(f)]
+                      ans$transcript_id <- tx_ids[togroup(f)]
                   }
                   ans
               }

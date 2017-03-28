@@ -324,8 +324,9 @@ setMethod("import", "BEDFile",
                              use.names=FALSE)
               cols <- matrix(as.integer(cols), 3)
               color <- rep(NA, nrow(bed))
-              color[spec] <- rgb(cols[1,], cols[2,], cols[3,], max = 255)
-              bed$itemRgb <- color              
+              color[spec] <- rgb(cols[1,], cols[2,], cols[3,],
+                                 maxColorValue = 255L)
+              bed$itemRgb <- color
             }
             fromCSV <- function(b) {
               as.integer(unlist(strsplit(b, ",", fixed = TRUE)))

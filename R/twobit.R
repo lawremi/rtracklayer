@@ -131,6 +131,6 @@ setMethod("import", "TwoBitFile",
           })
 
 setMethod("getSeq", "TwoBitFile",
-          function(x, which = as(seqinfo(con), "GenomicRanges")) {
+          function(x, which = as(seqinfo(x), "GenomicRanges")) {
             import(x, which = which)
           })

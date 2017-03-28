@@ -6,6 +6,7 @@
 \alias{RTLFile-class}
 \alias{class:CompressedFile}
 \alias{CompressedFile-class}
+\alias{RTLFileList-class}
 
 %% Accessors
 \alias{path}
@@ -18,12 +19,16 @@
 %% Related functions:
 \alias{FileForFormat}
 
+%% Coerce:
+\alias{as.character,RTLFile-method}
+
 \title{RTLFile objects}
 
 \description{
   A \code{RTLFile} object is the base class for classes representing
-  files accessible with rtracklayer. It wraps a resource
-  (either a path, URL or connection).
+  files accessible with rtracklayer. It wraps a resource (either a path,
+  URL or connection). We can represent a list of \code{RTLFile} objects
+  with a \code{RTLFileList}.
 }
 
 \section{Accessor Methods}{
@@ -40,6 +45,15 @@
       \code{resource(x)}:
       Gets the low-level resource, either a character vector (a path or
       URL) or a connection.
+    }
+  }
+}
+
+\section{Coercion}{
+  \describe{
+    \item{}{
+      \code{as.character(x)}:
+      Returns the path of the file as a character vector.
     }
   }
 }

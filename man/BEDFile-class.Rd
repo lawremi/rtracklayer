@@ -34,6 +34,8 @@
 \alias{export,GenomicRangesList,BEDFile,ANY-method}
 \alias{export,UCSCData,BEDFile,ANY-method}
 \alias{export,GenomicRanges,BED15File,ANY-method}
+\alias{export,ANY,BEDPEFile,ANY-method}
+\alias{export,Pairs,BEDPEFile,ANY-method}
 \alias{export.bed}
 \alias{export.bed,ANY-method}
 \alias{export.bed15}
@@ -81,7 +83,9 @@ export.bedGraph(object, con, ...)
     \dQuote{xz}) are handled transparently.
   }
   \item{object}{The object to export, should be a \code{GRanges} or
-    something coercible to a \code{GRanges}.  If the object has a method
+    something coercible to a \code{GRanges}. If targeting the BEDPE
+    format, this should be something coercible to \code{Pairs}.
+    If the object has a method
     for \code{asBED} (like \code{GRangesList}), it is called prior to
     coercion. This makes it possible to export a \code{GRangesList} or
     \code{TxDb} in a way that preserves the hierarchical
@@ -165,8 +169,7 @@ export.bedGraph(object, con, ...)
   and BEDGraph (a compressed means of storing a single score variable, e.g.
   coverage; overlapping features are not allowed). Many tools and
   organizations have extended the BED format with additional columns for
-  particular use cases. Currently only BEDPE is supported by rtracklayer;
-  others are not yet supported but a mechanism will be added soon. The
+  particular use cases. The
   advantage of BED is its balance between simplicity and expressiveness. It
   is also relatively scalable, because only the first three columns (chrom,
   start and end) are required. Thus, BED is best suited for representing

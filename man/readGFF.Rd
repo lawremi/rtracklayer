@@ -8,7 +8,8 @@
 
 \description{
   Reads a file in GFF format and creates a data frame or
-  \link[S4Vectors]{DataFrame} object from it.
+  \link[S4Vectors]{DataFrame} object from it. This is a low-level
+  function that should not be called by user code.
 }
 
 \usage{
@@ -49,10 +50,8 @@ GFFcolnames(GFF1=FALSE)
   }
 }
 
-\details{
-}
-
 \value{
+  A DataFrame with columns corresponding to those in the GFF.
 }
 
 \author{

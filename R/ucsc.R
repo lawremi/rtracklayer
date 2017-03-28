@@ -236,7 +236,7 @@ setMethod("intersectTrack", "UCSCTableQuery", function(x) x@intersectTrack)
 setGeneric("intersectTrack<-", function(x, ..., value)
            standardGeneric("intersectTrack<-"))
 setReplaceMethod("intersectTrack", "UCSCTableQuery", function(x, value) {
-  x@intersectTrack <- normArgTrack(value, x, TRUE)
+  x@intersectTrack <- normArgTrack(value, x)
   x
 })
 
