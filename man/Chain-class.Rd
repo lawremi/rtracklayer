@@ -23,9 +23,6 @@
 \alias{reversed}
 \alias{reversed,ChainBlock-method}
 
-%% Coercion:
-\alias{coerce,AlignedXStringSetList,Chain-method}
-
 \title{Chain objects}
 
 \description{
@@ -88,17 +85,6 @@
       Imports a chain file named \code{con} as a \code{Chain} object, a
       list of \code{ChainBlock}s. Alignments for chromosomes matching the
       \code{exclude} pattern are not imported.
-    }
-  }
-}
-
-\section{Coercion}{
-  One can convert each of these types to a Chain object via
-  \code{as(from, "Chain")}:
-  \describe{
-    \item{AlignedXStringSetList}{
-      Each element of \code{from} of length 2 is assumed to represent
-      a mapping, derived from the indels, for one sequence.
     }
   }
 }

@@ -42,10 +42,9 @@ import(GenomicRanges)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
            DNAStringSet, DNAString, DNA_BASES, DNA_ALPHABET, alphabetFrequency,
-           consensusMatrix, AlignedXStringSet, indel,
-           reverseComplement)
+           consensusMatrix, indel, reverseComplement)
 importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
-importClassesFrom("Biostrings", DNAStringSet, XStringSet, AlignedXStringSetList)
+importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 
 importFrom("Rsamtools", indexTabix, bgzip, TabixFile, index)
 importMethodsFrom("Rsamtools", ScanBamParam, asBam, headerTabix, isOpen, path,
