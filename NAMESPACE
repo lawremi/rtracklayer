@@ -52,7 +52,7 @@ importMethodsFrom("Rsamtools", ScanBamParam, asBam, headerTabix, isOpen, path,
 importClassesFrom("Rsamtools", RsamtoolsFile, TabixFile, BamFile)
 
 importMethodsFrom("GenomicAlignments", readGAlignments, cigar,
-                  pmapFromTranscripts, last, readGAlignmentPairs)
+                  last, readGAlignmentPairs)
 importClassesFrom("GenomicAlignments", GAlignments)
 
 ## ============================================================

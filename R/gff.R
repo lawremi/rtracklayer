@@ -388,11 +388,13 @@ setMethod("asGTF", "GRangesList",
                   }
                   ans
               }
-              start_codon_tx <- pmapFromTranscripts(IRanges(1L, 3L), x)
+              start_codon_tx <-
+                  GenomicFeatures::pmapFromTranscripts(IRanges(1L, 3L), x)
               start_codon <- processFeatures(start_codon_tx)
               mcols(start_codon)$type <- "start_codon"
               stop_ranges <- IRanges(end=sum(width(x)), width=3L)
-              stop_codon_tx <- pmapFromTranscripts(stop_ranges, x)
+              stop_codon_tx <-
+                  GenomicFeatures::pmapFromTranscripts(stop_ranges, x)
               stop_codon <- processFeatures(stop_codon_tx)
               mcols(stop_codon)$type <- "stop_codon"
               codons <- c(start_codon, stop_codon)
