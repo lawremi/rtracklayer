@@ -57,8 +57,9 @@
     \item{trackName}{The name of a track from which to retrieve a
       table. Each track can have multiple tables. Many times there is a
       primary table that is used to display the track, while the other
-      tables are supplemental. Sometimes, tracks are displayed by aggregating
-      multiple tables.
+      tables are supplemental. Sometimes, tracks are displayed by
+      aggregating multiple tables. If \code{NULL}, search for a primary
+      table across all of the tracks (will not find secondary tables).
     }
     \item{tableName}{The name of the specific table to retrieve. May be
       \code{NULL}, in which case the behavior depends on how the query
