@@ -367,7 +367,7 @@ setMethod("import", "BED15File",
             if (!missing(format))
               checkArgFormat(con, format)
             if (is.null(trackLine))
-              return(import.ucsc(con, TRUE, genome = genome,
+              return(import.ucsc(con, drop = TRUE, genome = genome,
                                  which = which))
             bed <- callNextMethod()
             if (!length(bed))
@@ -408,7 +408,9 @@ setMethod("export.bed15", "ANY",
 
 ### FIXME: dispatch will break when 'object' is a UCSCData
 ### Possible solution: just merge this code with the main BEDFile method?
-setMethod("export", c("GenomicRanges", "BED15File"),
+setMethods("export",
+           list(c("GenomicRanges", "BED15File"),
+                c("UCSCData", "BED15File")),
           function(object, con, format, expNames = NULL, trackLine = NULL, ...)
           {
             if (!missing(format))
@@ -424,9 +426,12 @@ setMethod("export", c("GenomicRanges", "BED15File"),
             object$expCount <- rep(length(expNames), length(object))
             object$expIds <- rep(paste(seq_along(expNames)-1, collapse=","),
                                  length(object))
-            scores <- as.list(unlist(values(object[,expNames])))
+            scores <- as.list(mcols(object)[expNames])
             scores <- do.call(paste, c(scores, sep = ","))
             scores <- gsub("NA", "-10000", scores, fixed=TRUE)
+            if (length(scores) == 0L) {
+                scores <- rep("", length(object))
+            }
             object$expScores <- scores
             callNextMethod(object, con, ...)
           })

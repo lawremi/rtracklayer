@@ -142,8 +142,12 @@ export.bedGraph(object, con, ...)
     the data is appended to the file. Obviously, if \code{con} is a
     connection, the data is always appended.
   }
-  \item{expNames}{character vector of column names in \code{object} to
-    export as sample columns in the BED15 file.}
+  \item{expNames}{character vector naming columns in
+    \code{mcols(object)} to export as data columns in the BED15
+    file. These correspond to the sample names in the experiment. If
+    \code{NULL} (the default), there is an attempt to extract these from
+    \code{trackLine}. If the attempt fails, no scores are exported.
+  }
   \item{...}{Arguments to pass down to methods to other methods. For
     import, the flow eventually reaches the \code{BEDFile} method on
     \code{import}. When \code{trackLine} is
@@ -213,14 +217,11 @@ export.bedGraph(object, con, ...)
     }
   }
 
-  These columns are present only in BED15:
-  \describe{
-    \item{expCount, expIds, expScores}{A column for each unique element
-      in \code{expIds}, containing the corresponding values from
-      \code{expScores}. When a value is not present for a feature, NA is
-      substituted. NA values become -10000 in the file.
-    }
-  }
+  For BED15 files, there should be a column of scores in
+  \code{mcols(object)} for each sample in the experiment. The columns
+  are named according to the \code{expNames} (found in the file, or
+  passed as an argument during export). \code{NA} scores are stored as
+  \dQuote{-10000} in the file.
 }
 
 \section{BEDX+Y formats}{
@@ -269,6 +270,9 @@ export.bedGraph(object, con, ...)
   which <- GRanges("chr7:1-127473000")
   import(test_bed, which = which)
 
+  bed15_file <- file.path(test_path, "test.bed15")
+  bed15 <- import(bed15_file)
+  
 \dontrun{
   test_bed_out <- file.path(tempdir(), "test.bed")
   export(test, test_bed_out)
@@ -286,6 +290,11 @@ export.bedGraph(object, con, ...)
   
   bed_text <- export(test, format = "bed")
   test <- import(format = "bed", text = bed_text)
+
+  test_bed15_out <- file.path(tempdir(), "test.bed15")
+  export(bed15, test_bed15_out) # UCSCData knows the expNames
+  export(as(bed15, "GRanges"), test_bed15_out, # have to specify expNames
+         expNames=paste0("breast_", c("A", "B", "C")))
 }
 }
 
