@@ -50,7 +50,7 @@ setMethod("export", c("ANY", "BEDFile"),
             if (class(track) == "try-error") {
               track <- try(as(object, "GenomicRangesList"), silent = TRUE)
               if (is(track, "try-error"))
-                stop("cannot export object of class '", cl, "': ", track)
+                stop("cannot export object of class '", cl, "'")
             }
             export(track, con, ...)
           })
