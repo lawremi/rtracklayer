@@ -61,8 +61,7 @@ setMethod("export", c("ANY", "GFFFile"),
             if (is(res, "try-error")) {
               res <- try(as(object, "GenomicRangedDataList"), silent = TRUE)
               if (is(res, "try-error"))
-                stop("cannot export object of class '", class(object), "': ",
-                     res)
+                stop("cannot export object of class '", class(object), "'")
             }
             object <- res
             if (!missing(format))
