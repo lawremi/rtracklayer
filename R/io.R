@@ -291,6 +291,7 @@ manage <- function(con) {
     } else FALSE
   }
   env$finalizer <- finalizer
+  reg.finalizer(env, finalizer)
   attr(con, "finalizerEnv") <- env
   rm(env)
   con
