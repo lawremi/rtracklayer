@@ -36,6 +36,7 @@
 \alias{export,GenomicRanges,BED15File,ANY-method}
 \alias{export,ANY,BEDPEFile,ANY-method}
 \alias{export,Pairs,BEDPEFile,ANY-method}
+\alias{export,UCSCData,BED15File,ANY-method}
 \alias{export.bed}
 \alias{export.bed,ANY-method}
 \alias{export.bed15}
@@ -261,7 +262,6 @@ export.bedGraph(object, con, ...)
   
   test_bed_con <- file(test_bed)
   import(test_bed_con, format = "bed")
-  close(test_bed_con)
   
   import(test_bed, trackLine = FALSE)
   import(test_bed, genome = "hg19")
