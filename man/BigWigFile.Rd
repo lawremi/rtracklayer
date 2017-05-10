@@ -32,6 +32,7 @@
 %% Utilites:
 \alias{summary,BigWigFile-method}
 \alias{path,BigWigFileList-method}
+\alias{cleanupBigWigCache}
 
 \title{BigWig Import and Export}
 
@@ -162,6 +163,11 @@ export.bw(object, con, ...)
         \code{NA_real_} is returned.
     }
   }
+
+  When accessing remote data, the UCSC library caches data in the
+  \file{/tmp/udcCache} directory. To clean the cache, call
+  \code{cleanBigWigCache(maxDays)}, where any files older than
+  \code{maxDays} days old will be deleted.
 }
 
 \section{\code{BigWigFileList} objects}{
