@@ -42,7 +42,7 @@
 \usage{
 \S4method{import}{TwoBitFile,ANY,ANY}(con, format, text,
            which = as(seqinfo(con), "GenomicRanges"), ...)
-\S4method{getSeq}{TwoBitFile}(x, which = as(seqinfo(con), "GenomicRanges"))
+\S4method{getSeq}{TwoBitFile}(x, which = as(seqinfo(x), "GenomicRanges"))
 import.2bit(con, ...)
 
 \S4method{export}{ANY,TwoBitFile,ANY}(object, con, format, ...)
