@@ -261,7 +261,6 @@ export.bedGraph(object, con, ...)
   
   test_bed_con <- file(test_bed)
   import(test_bed_con, format = "bed")
-  close(test_bed_con)
   
   import(test_bed, trackLine = FALSE)
   import(test_bed, genome = "hg19")

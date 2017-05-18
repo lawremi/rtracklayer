@@ -53,7 +53,7 @@ setMethod("queryForResource", "TabixFile",
 
 queryForConnection <- function(x, which = NULL, ...) {
   resource <- queryForResource(x, which = which, ...)
-  con <- connectionForResource(resource)
+  con <- connectionForResource(resource, open = "r")
   structure(con, usedWhich = attr(resource, "usedWhich"))
 }
 
