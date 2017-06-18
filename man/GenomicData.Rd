@@ -9,7 +9,6 @@
 \alias{chrom<-}
 \alias{chrom<-,GRanges-method}
 \alias{score,ANY-method}
-\alias{score,GenomicRangesORGRangesList-method}
 
 \title{Data on a Genome}
 

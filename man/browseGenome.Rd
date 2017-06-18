@@ -1,7 +1,7 @@
 \name{browseGenome}
 \alias{browseGenome}
-\alias{GenomicRangesORGenomicRangesList-class}
-\alias{browseGenome,GenomicRangesORGenomicRangesList-method}
+\alias{GenomicRanges_OR_GenomicRangesList-class}
+\alias{browseGenome,GenomicRanges_OR_GenomicRangesList-method}
 \alias{browseGenome,missing-method}
 \title{ Browse a genome }
 \description{
@@ -9,7 +9,7 @@
 }
 \usage{
 browseGenome(object, ...)
-\S4method{browseGenome}{GenomicRangesORGenomicRangesList}(object,
+\S4method{browseGenome}{GenomicRanges_OR_GenomicRangesList}(object,
   browser = "UCSC", range = base::range(object),
   view = TRUE, trackParams = list(), viewParams = list(),
   name = "customTrack", ...)

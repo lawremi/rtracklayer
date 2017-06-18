@@ -136,10 +136,10 @@ setGeneric("browseGenome",
 setMethod("browseGenome", "missing",
           function(object, ...) browseGenome(GenomicRangesList(), ...))
 
-setClassUnion("GenomicRangesORGenomicRangesList",
+setClassUnion("GenomicRanges_OR_GenomicRangesList",
               c("GenomicRanges", "GenomicRangesList"))
 
-setMethod("browseGenome", "GenomicRangesORGenomicRangesList",
+setMethod("browseGenome", "GenomicRanges_OR_GenomicRangesList",
           function(object, browser = "UCSC",
                    range = base::range(object), view = TRUE,
                    trackParams = list(), viewParams = list(),
