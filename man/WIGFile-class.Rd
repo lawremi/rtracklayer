@@ -149,10 +149,8 @@ export.wig(object, con, ...)
   import(test_wig_file)
   test_wig_con <- file(test_wig)
   import(test_wig_con, format = "wig")
-  close(test_wig_con)
   test_wig_con <- file(test_wig)
   import(WIGFile(test_wig_con))
-  close(test_wig_con)
 
   ## various options
   import(test_wig, genome = "hg19")
