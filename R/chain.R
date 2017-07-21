@@ -53,7 +53,9 @@ setMethod("import", "ChainFile", function(con, format, text, exclude = "_") {
 ### Accessors
 ###
 
-setMethod("ranges", "ChainBlock", function(x) x@ranges)
+setMethod("ranges", "ChainBlock",
+    function(x, use.names=TRUE, use.mcols=FALSE) x@ranges
+)
 setMethod("offset", "ChainBlock", function(object) object@offset)
 setMethod("score", "ChainBlock", function(x) Rle(x@score, x@length))
 setMethod("space", "ChainBlock", function(x) Rle(x@space, x@length))
@@ -89,7 +91,7 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
               r <- ranges(gr)
               ol <- findOverlaps(r, ranges(chain))
               shits <- subjectHits(ol)
-              r <- ranges(ol, r, ranges(chain))
+              r <- overlapsRanges(r, ranges(chain), ol)
               rev <- as.vector(reversed(chain)[shits])
               starts <- ifelse(rev,
                                start(reflect(r, ranges(chain)[shits])),
