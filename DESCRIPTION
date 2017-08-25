@@ -1,5 +1,5 @@
 Package: rtracklayer
-Title: R interface to genome browsers and their annotation tracks
+Title: R interface to genome annotation files and the UCSC genome browser
 Version: 1.37.3
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
 Depends: R (>= 3.3), methods, GenomicRanges (>= 1.21.20)
