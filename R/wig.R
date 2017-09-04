@@ -78,7 +78,12 @@ setMethod("export", c("GenomicRanges", "WIGFile"),
             dataFormat <- match.arg(dataFormat)            
             doBlock <- function(chromData) {
               if (length(chromData) == 0L)
-                return()
+                  return()
+              if (is(chromData, "GPos")) {
+                  ans <- writer(chromData, con, "fixedStep", append)
+                  append <<- TRUE
+                  return(ans)
+              }
               if (is.unsorted(start(chromData)))
                 chromData <- chromData[order(start(chromData)),]
               starts <- start(chromData)
