@@ -58,6 +58,11 @@ setMethod("export", c("ANY", "WIGFile"),
               row.names = FALSE, quote = FALSE)
 }
 
+isValidScore <- function(score) {
+    !(is.numeric(score) || is(score, "Rle") && is.numeric(runValue(score))) ||
+        any(is.na(score))
+}
+
 setMethod("export", c("GenomicRanges", "WIGFile"),
           function(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep"),
@@ -65,7 +70,7 @@ setMethod("export", c("GenomicRanges", "WIGFile"),
           {
             if (!missing(format))
               checkArgFormat(con, format)
-            if (!is.numeric(score(object)) || any(is.na(score(object))))
+            if (isValidScore(score(object)))
               stop("The score must be numeric, without any NA's")
             scipen <- getOption("scipen")
             options(scipen = 100) # prevent use of scientific notation

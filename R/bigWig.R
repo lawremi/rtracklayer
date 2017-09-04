@@ -107,7 +107,7 @@ setMethod("export", c("GenomicRanges", "BigWigFile"),
             con <- path.expand(path(con))
             object <- sortBySeqnameAndStart(object)
             score <- score(object)
-            if (!is.numeric(score) || any(is.na(score)))
+            if (isValidScore(score))
               stop("The score must be numeric, without any NA's")
             if (!isTRUEorFALSE(compress))
               stop("'compress' must be TRUE or FALSE")
