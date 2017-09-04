@@ -86,6 +86,19 @@ flipStrandTricky <- function(strand, flip) {
   strandRevCodes[as.vector(flipped)]
 }
 
+smoothGaps <- function(qhits, ranges, offsets) {
+    congruent_gaps <- width(gaps(ranges)) == abs(offsets)
+    congruent_gaps_rle <- Rle(congruent)
+    congruent_rle <- c(Rle(FALSE), congruent_gaps_rle)
+    group_rle <- Rle(cumsum(!congruent_rle))
+    group_ranges <- disjoin(ranges(Rle(qhits)), ranges(group_rle))
+    ans <- range(relist(ranges, group_ranges))
+    mcols(ans)$qhits <- qhits[start(group_ranges)]
+    mcols(ans)$offsets <- offsets[start(group_ranges)]
+    ans
+}
+
+
 setGeneric("liftOver", function(x, chain, ...) standardGeneric("liftOver"))
 setMethod("liftOver", c("GenomicRanges", "Chain"),
           function(x, chain)
