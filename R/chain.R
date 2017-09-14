@@ -43,7 +43,7 @@ setMethod("import", "ChainFile", function(con, format, text, exclude = "_") {
   if (!missing(format))
     checkArgFormat(con, format)
   ### FIXME: use readLines() to read the file, parse lines in C
-  if (!is(con <- connection(con), "file")) {
+  if (!is(connection(con), "file")) {
     if (isOpen(con))
       close(con)
     stop("chain import currently only handles local, uncompressed files")
