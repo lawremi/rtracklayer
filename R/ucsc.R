@@ -442,7 +442,7 @@ setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
     links <- new("UCSCLinks", genome = linkGenome, tableName = linkTable,
                  fieldName = linkField, viaName = linkVia)
   } else links <- new("UCSCLinks")
-  sampNode <- getNodeSet(doc, "//div[@class = 'subheadingBar' and contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
+  sampNode <- getNodeSet(doc, "//div[contains(@class, 'subheadingBar') and contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
   sample <- getDataFrame(sampNode)
   schema <- new("UCSCSchema", schema, genome = genome, tableName = tableName,
                 rowCount = rowCount, formatDescription = format)
