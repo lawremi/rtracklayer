@@ -1,0 +1,6 @@
+.Rhistory
+*.log
+/config.status
+*.o
+*.so
+/src/Makevars
