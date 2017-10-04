@@ -297,8 +297,13 @@ ucscTableGet <- function(query, .parse = TRUE, tracks = FALSE, ...)
   ucscGet(browserSession(query), "tables",
           c(ucscForm(query, tracks = tracks), ...), .parse = .parse)
 
+dropCookie <- function(object) {
+    object@hguid <- character()
+    object
+}
+
 ucscTablePost <- function(query, .parse = TRUE, tracks = FALSE, ...)
-  ucscPost(browserSession(query), "tables",
+  ucscPost(dropCookie(browserSession(query)), "tables",
            c(ucscForm(query, tracks = tracks), list(...)), .parse = .parse)
 
 ## gets the track names available from the table browser
