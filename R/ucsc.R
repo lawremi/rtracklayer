@@ -658,8 +658,9 @@ setMethod("browserView", "UCSCSession",
             view <- new("UCSCView", session = object)
             ## new hgsid for each browser launch
             doc <- ucscGet(object, "gateway")
-            node <- getNodeSet(doc, "//input[@name = 'hgsid']/@value")[[1]]
-            hgsid <- node ##xmlValue(node)
+            hgsid <- sub(".*=", "",
+                         grep("hgsid=", getNodeSet(doc, "//a/@href"),
+                              value=TRUE)[1L])
             view@hgsid <- as.character(hgsid)
             ## figure out track modes
             origModes <- modes <- ucscTrackModes(view)
