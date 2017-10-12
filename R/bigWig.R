@@ -261,7 +261,8 @@ setMethod("import", "BigWigFile",
 setMethod("summary", "BigWigFile",
           function(object, which = as(seqinfo(object), "GenomicRanges"),
                    size = 1L, type = c("mean", "min", "max", "coverage", "sd"),
-                   defaultValue = NA_real_, asRle = FALSE, ...)
+                   defaultValue = NA_real_, asRle = FALSE,
+                   as = c("GRangesList", "RleList", "matrix"), ...)
           {
             ### FIXME: could do with "GenomicRanges" here, but
             ### coercions generally only exist for GRanges specifically
@@ -269,7 +270,17 @@ setMethod("summary", "BigWigFile",
             if (!is.numeric(size))
               stop("'size' must be numeric")
             size <- recycleIntegerArg(size, "size", length(which))
+            as <- match.arg(as)
+            if (any(size > width(which)) && as != "matrix")
+              stop("some 'which' are smaller than 'size'; ",
+                   "consider passing as='matrix'")
+            if (as == "matrix" && (length(size) == 0L || any(size != size[1L])))
+                stop("for as='matrix', there must be one unique 'size'")
             type <- match.arg(type)
+            if (!missing(asRle))
+              warning("argument asRle is deprecated; use as='RleList'")
+            if (asRle)
+              as <- "RleList"
             if (type == "sd") type <- "std"
             if (!isSingleNumberOrNA(defaultValue))
               stop("'defaultValue' must be a single number or NA")
@@ -277,6 +288,9 @@ setMethod("summary", "BigWigFile",
                                  as.character(seqnames(which)),
                                  ranges(which), size, type,
                                  as.numeric(defaultValue))
+            if (as == "matrix") {
+                return(do.call(rbind, summaryList))
+            }
             tiles <- tile(which, n = size)
             if (asRle) {
               setNames(RleList(mapply(Rle, summaryList, as.list(width(tiles))),
