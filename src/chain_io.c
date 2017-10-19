@@ -31,12 +31,12 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
   char linebuf[LINEBUF_SIZE];
   char *header[HEADER_SIZE];
   char *data[DATA_SIZE];
-  int tstart, qstart;
-  Rboolean new_block = TRUE, excluded = FALSE, trc, qrc;
-  ChainBlock *block, **result;
+  int tstart = 0, qstart = 0;
+  Rboolean new_block = TRUE, excluded = FALSE, trc = FALSE, qrc = FALSE;
+  ChainBlock *block = NULL, **result = NULL;
   struct hash *hash = hashNew(6);
   struct hashEl *hash_elements;
-  int line = 0, i = 0, header_line;
+  int line = 0, i = 0, header_line = 0;
   while (fgets(linebuf, LINEBUF_SIZE, stream) != NULL) {
     line++;
     if (strlen(linebuf) == LINEBUF_SIZE - 1) {
@@ -116,7 +116,8 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
         IntAE_insert_at(block->length, IntAE_get_nelt(block->length),
                         line-header_line);
         //Rprintf("end of %s block, line: %d\n", block->name, line);
-        fgets(linebuf, LINEBUF_SIZE, stream); /* skip empty line */
+        if (fgets(linebuf, LINEBUF_SIZE, stream) == NULL) /* skip empty line */
+	    error("incomplete block");
         line++;
       }
     }

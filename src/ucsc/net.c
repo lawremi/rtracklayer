@@ -1445,8 +1445,8 @@ while(TRUE)
 	}
     if (startsWith("HTTP/", line))
         {
-	char *version, *code;
-	version = nextWord(&line);
+	char *code;
+	nextWord(&line);
 	code = nextWord(&line);
 	if (code == NULL)
 	    {

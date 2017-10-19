@@ -474,6 +474,19 @@ temp = *pStart;
 *pEnd = size - temp;
 }
 
+boolean isAllNt(char *seq, int size)
+/* Return TRUE if all letters in seq are ACGTNU-. */
+{
+    int i;
+    dnaUtilOpen();
+    for (i=0; i<size-1; ++i)
+	{
+	    if (ntChars[(int)seq[i]] == 0)
+		return FALSE;
+	}
+    return TRUE;
+}
+
 char *reverseComplementSlashSeparated(char *alleleStr)
 /* Given a slash-separated series of sequences (a common representation of variant alleles),
  * returns a slash-sep series with the reverse complement of each sequence (if it is a
@@ -974,7 +987,6 @@ int i;
 int score = 10;
 int bestScore = 10;
 int bestPos = -1;
-int pastPoly = 0;
 int trimSize = 0;
 
 for (i=0; i<size; ++i)
@@ -1003,7 +1015,6 @@ for (i=0; i<size; ++i)
 	}
     if (score < 0)
 	{
-	pastPoly = i;
         break;
 	}
     }
@@ -1050,19 +1061,6 @@ for (i=0; i<size; ++i)
 	dnaCount += 1;
     }
 return (dnaCount >= round(0.9 * size));
-}
-
-boolean isAllNt(char *seq, int size)
-/* Return TRUE if all letters in seq are ACGTNU-. */
-{
-int i;
-dnaUtilOpen();
-for (i=0; i<size-1; ++i)
-    {
-    if (ntChars[(int)seq[i]] == 0)
-	return FALSE;
-    }
-return TRUE;
 }
 
 boolean isAllDna(char *poly, int size)

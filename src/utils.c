@@ -1,7 +1,6 @@
 #include "utils.h"
 
 SEXP _STRSXP_collapse(SEXP x, SEXP sep) {
-  SEXP ans;
   int len = 0;
   char *collapsed, *dest;
   char c_sep = CHAR(STRING_ELT(sep, 0))[0];

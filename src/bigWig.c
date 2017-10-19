@@ -242,8 +242,9 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
   SEXP chromNames = getAttrib(r_ranges, R_NamesSymbol);
   int nchroms = length(r_ranges);
   Rboolean return_list = asLogical(r_return_list);
-  SEXP rangesList, rangesListEls, dataFrameList, dataFrameListEls, ans;
-  SEXP numericListEls;
+  SEXP rangesList, rangesListEls = NULL, dataFrameList,
+      dataFrameListEls = NULL, ans;
+  SEXP numericListEls = NULL;
   bool returnScore = asLogical(r_return_score);
   const char *var_names[] = { "score", "" };
   struct lm *lm = lmInit(0);
