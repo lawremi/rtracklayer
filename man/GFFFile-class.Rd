@@ -287,7 +287,6 @@ export.gff3(object, con, ...)
   ## from connection
   test_gff_con <- file(test_gff3)
   test <- import(test_gff_con, format = "gff")
-  close(test_gff_con)
 
   ## various arguments
   import(test_gff3, genome = "hg19")

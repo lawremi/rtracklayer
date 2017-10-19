@@ -173,7 +173,6 @@ import(con, format, text, ...)
   \dontrun{
   con <- file("my.gff3")
   export(track, con, "gff3")
-  close(con)
   }
   ## or as a string
   export(track, format = "gff3")
