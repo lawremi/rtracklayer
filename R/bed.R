@@ -301,7 +301,8 @@ setMethod("import", "BEDFile",
               bed <- DataFrame(read.table(con, colClasses = bedClasses,
                                           as.is = TRUE, na.strings = ".",
                                           comment.char = "",
-                                          sep = "\t"))
+                                          sep = "\t",
+                                          quote = "\""))
             } else {
               if (is.null(colnames))
                 colnames <- character()
