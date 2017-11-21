@@ -139,5 +139,6 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
 setMethod("liftOver", c("ANY", "ANY"),
           function(x, chain) {
     chain <- as(chain, "Chain")
+    x <- granges(x)
     callGeneric()
 })
