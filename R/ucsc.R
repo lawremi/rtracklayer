@@ -1490,7 +1490,8 @@ setMethod("ucscTracks", "UCSCSession",
             trackIds <- unlist(nodes)
             ##trackIds <- sapply(nodes, xmlValue)
             nodes <- getNodeSet(tracks, "//select/../a/text()")
-            names(trackIds) <- sub("^ ", "", sapply(nodes, xmlValue))
+            nms <- sapply(nodes, xmlValue)
+            names(trackIds) <- sub("^ ", "", nms[nms != "new"])
             new("ucscTracks", ids = trackIds, modes = trackModes)
           })
 
