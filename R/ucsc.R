@@ -510,7 +510,7 @@ ucscExport <- function(object)
                            hgsid = hgsid)
     hgsid <- get_hgsid(output)
   }
-  if (length(object@range) > 1) {
+  if (!spansGenome(object@range) && length(object@range) > 1L) {
     output <- .uploadTableBrowserRanges(object, hgsid)
     hgsid <- get_hgsid(output)
   }
@@ -1649,7 +1649,7 @@ setMethod("ucscForm", "UCSCTableQuery",
             range <- object@range
             table <- object@table
             form <- list()
-            if (length(range) == 1) {
+            if (!spansGenome(range) && length(range) == 1) {
               form <- c(form, ucscForm(range))
             }
             if (is.null(object@track) && !tracks) {
