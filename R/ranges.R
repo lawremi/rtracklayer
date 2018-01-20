@@ -107,8 +107,8 @@ GRangesForGenome <- function(genome, chrom = NULL, ranges = NULL, ...,
     seqinfo <- seqinfoForGenome(genome, match.arg(method))
   if (is.null(seqinfo))
     stop("Failed to obtain information for genome '", genome, "'")
-  if (!is.null(ranges) && !is(ranges, "Ranges"))
-    stop("'ranges' must be NULL or a Ranges object")
+  if (!is.null(ranges) && !is(ranges, "IntegerRanges"))
+    stop("'ranges' must be NULL or an IntegerRanges object")
   if (is.null(chrom))
     chrom <- seqnames(seqinfo)
   else {
@@ -203,8 +203,8 @@ normGenomeRange <- function(range, session, max.length = 1L) {
   ## - String identifying a genome
   ## - RangesList
   ## - GRanges, the preferred way, possibly from GRangesForUCSCGenome()
-  ## - We do not allow Ranges, since it does not make sense to have one range
-  ##   over many chromosomes
+  ## - We do not allow IntegerRanges, since it does not make sense to have
+  ##   one range over many chromosomes
   if (is.character(range)) {
     range <- singleGenome(range)
     genome(session) <- range

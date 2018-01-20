@@ -204,7 +204,7 @@ export.bedGraph(object, con, ...)
       column, accessible via the \code{strand} accessor; defaults to NA
       on export.
     }
-    \item{thickStart, thickEnd}{\code{Ranges} object in a
+    \item{thickStart, thickEnd}{\code{IntegerRanges} object in a
       column named \code{thick}; defaults to the ranges of the feature
       on export.
     }

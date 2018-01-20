@@ -28,11 +28,11 @@ SeqinfoForBSGenome(genome)
     A character vector of chromosome names, or \code{NULL}.
   }
   \item{ranges}{
-    A \code{\link[IRanges:Ranges-class]{Ranges}} object with the intervals.
+    A \code{\link[IRanges]{IntegerRanges}} object with the intervals.
   }
   \item{\dots}{
     Additional arguments to pass to
-    the \code{\link[GenomicRanges:GRanges]{GRanges}} constructor.
+    the \code{\link[GenomicRanges]{GRanges}} constructor.
   }
 }
 \details{

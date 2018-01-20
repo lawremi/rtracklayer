@@ -48,7 +48,7 @@
   \describe{
     \item{}{
       \code{ranges(x)}:
-      Get the \code{\link[IRanges:Ranges-class]{Ranges}} object holding
+      Get the \code{\link[IRanges]{IntegerRanges}} object holding
       the starts and ends of the "from" ranges. Each range is a
       contiguous block of positions aligned without gaps to the other
       sequence.
