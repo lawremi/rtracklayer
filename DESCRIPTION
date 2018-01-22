@@ -4,7 +4,7 @@ Version: 1.39.8
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
 Depends: R (>= 3.3), methods, GenomicRanges (>= 1.31.8)
 Imports: XML (>= 1.98-0), BiocGenerics (>= 0.25.1),
-         S4Vectors (>= 0.17.25), IRanges (>= 2.13.12), XVector (>= 0.19.7),
+         S4Vectors (>= 0.17.25), IRanges (>= 2.13.13), XVector (>= 0.19.7),
          GenomeInfoDb (>= 1.15.2),
          Biostrings (>= 2.47.6), zlibbioc, RCurl (>= 1.4-2),
          Rsamtools (>= 1.31.2), GenomicAlignments (>= 1.15.6), tools

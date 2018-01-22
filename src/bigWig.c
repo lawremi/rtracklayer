@@ -334,7 +334,7 @@ SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score,
   } else { 
     PROTECT(dataFrameList =
             new_SimpleList("SimpleSplitDataFrameList", dataFrameListEls));
-    PROTECT(rangesList = new_SimpleList("SimpleRangesList", rangesListEls));
+    PROTECT(rangesList = new_SimpleList("SimpleIntegerRangesList", rangesListEls));
     PROTECT(ans = allocVector(VECSXP, 2));
     SET_ELEMENT(ans, 0, rangesList);
     SET_ELEMENT(ans, 1, dataFrameList);
