@@ -55,7 +55,7 @@ setValidity("BigWigSelection",
               .validateColNames(object, "bigWig")
             })
 
-BigWigSelection <- function(ranges = RangesList(), colnames = "score") {
+BigWigSelection <- function(ranges=IRangesList(), colnames = "score") {
   if (!is.character(colnames) ||
       (length(colnames) && !identical(colnames, "score")))
     stop("'score' is the only valid column for BigWig")
