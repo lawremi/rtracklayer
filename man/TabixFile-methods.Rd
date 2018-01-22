@@ -44,7 +44,7 @@ exportToTabix(object, con, ...)
     the format. By default, this is taken from the file extension.
   }
   \item{text}{Ignored.}
-  \item{which}{A range data structure coercible to \code{RangesList},
+  \item{which}{A range data structure coercible to \code{IntegerRangesList},
     like a \code{GRanges}. Only the intervals in the file overlapping the
     given ranges are returned. The default is to use the range over the
     entire genome given by \code{genome}, if specified.

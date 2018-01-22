@@ -1,5 +1,5 @@
 ### =========================================================================
-### Genome-oriented methods for GRanges and RangesList objects
+### Genome-oriented methods for GRanges and IntegerRangesList objects
 ### -------------------------------------------------------------------------
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -54,7 +54,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
   if (!is.na(genome))
     genome(gd) <- genome
   if (!is.null(which)) {
-    if (is(which, "RangesList"))
+    if (is(which, "IntegerRangesList"))
       which <- as(which, "GRanges")
     gd <- subsetByOverlaps(gd, which)
   }
@@ -139,13 +139,13 @@ setMethod("score", "ANY", function(x) NULL)
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### chrom(): Returns chromosome name vector of length 'length(x)'.
 ###          Not to be confused with 'seqnames', which returns a List for
-###          RangesList.
+###          IntegerRangesList.
 ###          More or less a pre-GenomicRanges relic.
 ###
 
 setGeneric("chrom", function(x, ...) standardGeneric("chrom"))
 setMethod("chrom", "GRanges", function(x) seqnames(x))
-setMethod("chrom", "RangesList", function(x) {
+setMethod("chrom", "IntegerRangesList", function(x) {
   names(x)
 })
 
@@ -201,7 +201,7 @@ singleGenome <- function(x) {
 normGenomeRange <- function(range, session, max.length = 1L) {
   ## the user can specify a portion of the genome in several ways:
   ## - String identifying a genome
-  ## - RangesList
+  ## - IntegerRangesList
   ## - GRanges, the preferred way, possibly from GRangesForUCSCGenome()
   ## - We do not allow IntegerRanges, since it does not make sense to have
   ##   one range over many chromosomes
@@ -212,8 +212,8 @@ normGenomeRange <- function(range, session, max.length = 1L) {
   }
   if (is(range, "Seqinfo"))
     range <- as(range, "GRanges")
-  if (!is(range, "RangesList") && !is(range, "GenomicRanges"))
-    stop("'range' should be a genome string, RangesList, GRanges or Seqinfo")
+  if (!is(range, "IntegerRangesList") && !is(range, "GenomicRanges"))
+    stop("'range' should be a genome string, IntegerRangesList, GRanges or Seqinfo")
   genome <- genome(session)
   if (length(seqinfo(range)) == 0L) {
     ## hack: need to avoid calling seqlengths(session) here, so use 'foo'
@@ -228,7 +228,7 @@ normGenomeRange <- function(range, session, max.length = 1L) {
     seqinfo(range, new2old = match(seqlevels(si), seqlevels(range))) <-
       merge(si, seqinfo(range))
   }
-  if (is(range, "RangesList")) {
+  if (is(range, "IntegerRangesList")) {
     range <- GRangesForGenome(singleGenome(genome(range)), names(range),
                               unlist(range), seqinfo = seqinfo(session))
   } else if (is(range, "GenomicRanges")) {

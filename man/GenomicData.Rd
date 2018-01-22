@@ -13,12 +13,12 @@
 \title{Data on a Genome}
 
 \description{The \code{rtracklayer} package adds
-convenience methods on top of \code{GenomicRanges} and \code{RangesList}
+convenience methods on top of \code{GenomicRanges} and \code{IntegerRangesList}
 to manipulate data on genomic ranges.}
 
 \section{Accessors}{
   In the code snippets below,
-  \code{x} is a \code{GenomicRanges} or \code{RangesList} object.
+  \code{x} is a \code{GenomicRanges} or \code{IntegerRangesList} object.
 
   \describe{
     \item{}{

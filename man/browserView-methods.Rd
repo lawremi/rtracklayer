@@ -12,8 +12,8 @@
 }
 \arguments{
   \item{object}{The object from which to get the views.}
-  \item{range}{The \code{\link[GenomicRanges:GRanges-class]{GRanges}} or
-    \code{\link[IRanges:RangesList-class]{RangesList}} to
+  \item{range}{The \code{\link[GenomicRanges]{GRanges}} or
+    \code{\link[IRanges]{IntegerRangesList}} to
     display. If there are multiple elements, a view is created for each
     element and a \code{\linkS4class{BrowserViewList}} is
     returned.} 

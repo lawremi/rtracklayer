@@ -64,7 +64,7 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       circularity information is available.
     }
     \item{\code{range(x) <- value}}{ Sets \code{value}, usually a
-      \code{GRanges} object or \code{RangesList}, as the range
+      \code{GRanges} object or \code{IntegerRangesList}, as the range
       of session \code{x}. Note that
       this setting only lasts until a view is created or
       manipulated. This mechanism is useful, for example, when treating the UCSC

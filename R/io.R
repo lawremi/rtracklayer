@@ -190,7 +190,7 @@ setMethod("bestFileFormat", c("RleList", "ANY"), function(x, dest) {
   "bw" # e.g., coverage
 })
 
-setMethod("bestFileFormat", c("RangesList", "ANY"), function(x, dest) {
+setMethod("bestFileFormat", c("IntegerRangesList", "ANY"), function(x, dest) {
   "bed" # just ranges...
 })
 

@@ -21,8 +21,8 @@ browseGenome(object, ...)
     \code{\link[GenomicRanges]{GenomicRangesList}} object). }
   \item{browser}{ The name of the genome browser. }
   \item{range}{ A genome identifier or a
-    \code{\link[GenomicRanges:GRanges-class]{GRanges}} or
-  \code{\link[IRanges:RangesList-class]{RangesList}} to display in the
+    \code{\link[GenomicRanges]{GRanges}} or
+  \code{\link[IRanges]{IntegerRangesList}} to display in the
     initial view. }
   \item{view}{ Whether to open a view. }
   \item{trackParams}{ Named list of parameters to pass to

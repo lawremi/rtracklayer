@@ -15,8 +15,9 @@ blocks(x, ...)
 \arguments{
   \item{x}{The instance from which to obtain the block/exon
     information. Currently must be a \code{GenomicRanges}, with a metadata
-    column of name \dQuote{blocks} and of type \code{RangesList}. Such an
-    object is returned by \code{\link{import.bed}} and \code{\link{asBED}}.
+    column of name \dQuote{blocks} and of type \code{IntegerRangesList}.
+    Such an object is returned by \code{\link{import.bed}} and
+    \code{\link{asBED}}.
   }
   \item{...}{Additional arguments for methods}
 }

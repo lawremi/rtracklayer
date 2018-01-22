@@ -67,11 +67,11 @@ export.2bit(object, con, ...)
     (case insensitive).
   }
   \item{text}{Not supported.}
-  \item{which}{A range data structure coercible to \code{RangesList},
+  \item{which}{A range data structure coercible to \code{IntegerRangesList},
     like a \code{GRanges}, or a \code{TwoBitFile}. Only the intervals in
     the file overlapping the given ranges are returned. By default, the
     value is the \code{TwoBitFile} itself. Its \code{Seqinfo} object is
-    extracted and coerced to a \code{RangesList} that represents the
+    extracted and coerced to a \code{IntegerRangesList} that represents the
     entirety of the file.
   }
   \item{...}{Arguments to pass down to methods to other methods. For

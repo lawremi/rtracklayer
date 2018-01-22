@@ -646,7 +646,7 @@ setMethod("browserView", "UCSCSession",
           {
             form <- list()
             if (!missing(range)) {
-              if (is(range, "RangesList"))
+              if (is(range, "IntegerRangesList"))
                 range <- range[elementNROWS(range) > 0L]
               if (length(range) > 1) {
                 ranges <- range
@@ -1564,7 +1564,7 @@ ucscGenomes <- function(organism=FALSE) {
 
 setGeneric("ucscForm", function(object, ...) standardGeneric("ucscForm"))
 
-setMethod("ucscForm", "RangesList",
+setMethod("ucscForm", "IntegerRangesList",
           function(object)
           {
             form <- list()

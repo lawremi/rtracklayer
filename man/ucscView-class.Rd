@@ -39,8 +39,8 @@ Class \code{"\linkS4class{BrowserView}"}, directly.
       \code{\link[GenomicRanges:GRanges-class]{GRanges}} displayed by
       this view. } 
     \item{\code{\link{range}(object) <- value}}{ Sets the
-      \code{\link[GenomicRanges:GRanges-class]{GRanges}} or
-      \code{\link[IRanges:RangesList-class]{RangesList}} displayed by
+      \code{\link[GenomicRanges]{GRanges}} or
+      \code{\link[IRanges]{IntegerRangesList}} displayed by
       this view.  } 
     \item{\code{\link{trackNames}(object)}}{ Gets the names of the visible
       tracks in this view. }

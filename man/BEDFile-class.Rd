@@ -213,8 +213,9 @@ export.bedGraph(object, con, ...)
       \code{\link{col2rgb}}, in the \code{itemRgb} column; default is NA
       on export, which translates to black.
     }
-    \item{blockSizes, blockStarts, blockCounts}{\code{RangesList} object
-      in a column named \code{blocks}; defaults to empty upon BED15 export.
+    \item{blockSizes, blockStarts, blockCounts}{\code{IntegerRangesList}
+      object in a column named \code{blocks}; defaults to empty upon BED15
+      export.
     }
   }
 

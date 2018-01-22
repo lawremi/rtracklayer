@@ -226,7 +226,7 @@ setMethod("sortBySeqnameAndStart", "GenomicRanges", function(x) {
   x[order(as.factor(seqnames(x)), start(x)),]
 })
 
-setMethod("sortBySeqnameAndStart", "RangesList", function(x) {
+setMethod("sortBySeqnameAndStart", "IntegerRangesList", function(x) {
   x.flat <- unlist(x, use.names=FALSE)
   relist(x.flat[order(space(x), start(x.flat))], x)
 })

@@ -77,7 +77,7 @@ export.wig(object, con, ...)
     the result. If the \code{genome} argument is not \code{NA}, it must
     agree with \code{genome(seqinfo)}.
   }
-  \item{which}{A range data structure like \code{RangesList}
+  \item{which}{A range data structure like \code{IntegerRangesList}
     or \code{GRanges}. Only the intervals in the file overlapping the
     given ranges are returned. This is inefficient; use BigWig for
     efficient spatial queries.
@@ -155,7 +155,7 @@ export.wig(object, con, ...)
   ## various options
   import(test_wig, genome = "hg19")
   import(test_wig, trackLine = FALSE)
-  which <- as(test[3:4,], "RangesList")
+  which <- as(test[3:4,], "IntegerRangesList")
   import(test_wig, which = which)
 
 \dontrun{

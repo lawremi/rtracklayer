@@ -85,11 +85,11 @@ export.bw(object, con, ...)
   \item{selection}{A \code{\linkS4class{BigWigSelection}} object
     indicating the ranges to load.
   }
-  \item{which}{A range data structure coercible to \code{RangesList},
+  \item{which}{A range data structure coercible to \code{IntegerRangesList},
     like a \code{GRanges}, or a \code{BigWigFile}. Only the intervals in
     the file overlapping the given ranges are returned. By default, the
     value is the \code{BigWigFile} itself. Its \code{Seqinfo} object is
-    extracted and coerced to a \code{RangesList} that represents the
+    extracted and coerced to a \code{IntegerRangesList} that represents the
     entirety of the file.
   }
   \item{dataFormat}{Probably best left to \dQuote{auto}. Exists only

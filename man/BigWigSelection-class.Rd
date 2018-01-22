@@ -5,7 +5,7 @@
 % constructor
 \alias{BigWigSelection}
 
-\alias{coerce,RangesList,BigWigSelection-method}
+\alias{coerce,IntegerRangesList,BigWigSelection-method}
 \alias{coerce,GenomicRanges,BigWigSelection-method}
 
 \title{Selection of ranges and columns}
@@ -21,8 +21,8 @@
     \item{}{\code{BigWigSelection(ranges = GRanges(), colnames =
         "score")}: Constructs a \code{BigWigSelection} with the given
         \code{ranges} and \code{colnames}. \code{ranges} can be either
-        something coercible to a \code{\linkS4class{RangesList}}, a
-        \code{character} identifying a genome (see
+        something coercible to a \code{\linkS4class{IntegerRangesList}},
+        a \code{character} identifying a genome (see
         \code{\link{GenomicSelection}}), or a
         \code{\linkS4class{BigWigFile}}, in which case the ranges are
         derived from the bounds of its sequences.
@@ -34,8 +34,8 @@
   \describe{
     \item{}{\code{as(from, "BigWigSelection")}: Coerces \code{from} to a
       \code{BigWigSelection} object. Typically, \code{from} is a
-      \code{\link[GenomicRanges:GRanges-class]{GRanges}} or
-      a \code{\link[IRanges:RangesList-class]{RangesList}}, the ranges of
+      \code{\link[GenomicRanges]{GRanges}} or
+      a \code{\link[IRanges]{IntegerRangesList}}, the ranges of
       which become the ranges in the
       new \code{BigWigSelection}.
     }
@@ -45,7 +45,7 @@
 \author{ Michael Lawrence }
 
 \examples{
-  rl <- IRanges::RangesList(chr1 = IRanges::IRanges(c(1, 5), c(3, 6)))
+  rl <- IRangesList(chr1 = IRanges::IRanges(c(1, 5), c(3, 6)))
 
   BigWigSelection(rl)
   as(rl, "BigWigSelection") # same as above

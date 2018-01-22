@@ -64,17 +64,17 @@ BigWigSelection <- function(ranges = RangesList(), colnames = "score") {
   else {
     if (is(ranges, "BigWigFile"))
       ranges <- seqinfo(ranges)
-    new("BigWigSelection", ranges = as(ranges, "RangesList"),
+    new("BigWigSelection", ranges = as(ranges, "IntegerRangesList"),
         colnames = colnames)
   }
 }
 
-setAs("RangesList", "BigWigSelection", function(from) {
+setAs("IntegerRangesList", "BigWigSelection", function(from) {
   new("BigWigSelection", as(from, "RangedSelection"), colnames = "score")
 })
 
 setAs("GenomicRanges", "BigWigSelection", function(from) {
-  as(as(from, "RangesList"), "BigWigSelection")
+  as(as(from, "IntegerRangesList"), "BigWigSelection")
 })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

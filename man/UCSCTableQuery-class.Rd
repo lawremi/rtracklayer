@@ -66,8 +66,8 @@
       is executed, see below.
     }
     \item{range}{A genome identifier, a
-      \code{\link[GenomicRanges:GRanges-class]{GRanges}} or 
-      a \code{\link[IRanges:RangesList-class]{RangesList}} indicating
+      \code{\link[GenomicRanges]{GRanges}} or 
+      a \code{\link[IRanges]{IntegerRangesList}} indicating
       the portion of the table to retrieve, in genome coordinates.
       Simply specifying the genome string is the easiest way to download
       data for the entire genome, and \code{\link{GRangesForUCSCGenome}}
@@ -99,7 +99,7 @@
         \code{UCSCSession} given as \code{x} and the track name given by
         the single string \code{track}. \code{range} should be a genome
         string identifier, a \code{GRanges} instance or
-        \code{RangesList} instance, and it effectively defaults to
+        \code{IntegerRangesList} instance, and it effectively defaults to
         \code{genome(x)}. If the genome is missing, it is taken from the
         session. The table name is given by
         \code{table}, which may be a single string or
@@ -158,7 +158,7 @@
       genomic coordinates. Any missing information, such as the genome
       identifier, is filled in using \code{range(browserSession(x))}. It
       is also possible to set the genome identifier string or
-      a \code{RangesList}.
+      a \code{IntegerRangesList}.
     }
     \item{}{\code{names(x)}, \code{names(x) <- value}: Get or set the
       names of the features to retrieve. If \code{NULL}, this filter is
