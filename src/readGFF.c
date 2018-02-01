@@ -294,7 +294,7 @@ SEXP gff_colnames(SEXP GFF1)
  * Turn string pointed by 'val' into an int. The string has no terminating
  * null byte ('\0') and must have the following format:
  *     ^[[:space:]]*[+-]?[[:digit:]]+[[:space:]]*$
- * Return NA_INTEGER if the string is malformed or if it represents a integer
+ * Return NA_INTEGER if the string is malformed or if it represents an integer
  * value that cannot be represented by an int (int overflow).
  * TODO: Maybe implement this on top of strtol(). Would be much simpler but
  * would it be equivalent? Also would it be as fast? See how as_double() below
