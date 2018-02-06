@@ -11,9 +11,12 @@ htmlParse <- function(str)
 
 httpGet <- function(url, .form = list(), .parse = TRUE, ...) {
   if (length(.form) == 0)
-    out <- getURL(url, useragent = "rtracklayer", ...)
+      out <- getURL(url, useragent = "rtracklayer",
+                    verbose=getOption("rtracklayer.http.verbose", FALSE), ...)
   else out <- getForm(url, .params = .form,
-                      .opts = list(..., useragent = "rtracklayer"))
+                      .opts=list(..., useragent = "rtracklayer",
+                                 verbose=getOption("rtracklayer.http.verbose",
+                                                   FALSE)))
   if (.parse)
     htmlParse(out)
   else out
@@ -21,7 +24,9 @@ httpGet <- function(url, .form = list(), .parse = TRUE, ...) {
 
 httpPost <- function(url, .form = list(), .parse = TRUE, ...) {
   form <- postForm(url, .params = .form,
-                   .opts = list(..., useragent = "rtracklayer"))
+                   .opts=list(..., useragent = "rtracklayer",
+                              verbose=getOption("rtracklayer.http.verbose",
+                                                FALSE)))
   if (.parse)
     htmlParse(form)
   else form
