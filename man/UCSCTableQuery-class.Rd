@@ -94,7 +94,7 @@
 \section{Constructor}{
   \describe{
     \item{}{
-      \code{ucscTableQuery(x, track, range = genome(x), table = NULL,
+      \code{ucscTableQuery(x, track, range = seqinfo(x), table = NULL,
         names = NULL)}: Creates a \code{UCSCTableQuery} with the
         \code{UCSCSession} given as \code{x} and the track name given by
         the single string \code{track}. \code{range} should be a genome

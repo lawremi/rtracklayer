@@ -35,8 +35,8 @@ setMethod("initialize", "UCSCSession",
           })
 
 setMethod("seqlengths", "UCSCSession", function(x) {
-  query <- ucscTableQuery(x, range = GRanges(), table = "chromInfo")
-  chromInfo <- getTable(query)
+  query <- ucscTableQuery(x, range = GRanges(), table = "chromInfo", check=FALSE)
+  chromInfo <- getTable(query, check=FALSE)
   ans <- setNames(chromInfo$size, chromInfo$chrom)
   ans[sortSeqlevels(names(ans))]
 })
@@ -211,16 +211,18 @@ normArgTable <- function(name, query) {
     if (!isSingleString(name))
       stop("table name must be a single string or NULL")
     if (!name %in% tableNames(query))
-      stop("unknown table name '", name, "'")
+      stop("Table '", name, "' is unavailable")
   }
   name
 }
 
 setGeneric("tableName<-", function(x, ..., value)
            standardGeneric("tableName<-"))
-setReplaceMethod("tableName", "UCSCTableQuery", function(x, value)
+setReplaceMethod("tableName", "UCSCTableQuery", function(x, check=TRUE, value)
                  {
-                   x@table <- normArgTable(value, x)
+                   if (check)
+                       value <- normArgTable(value, x)
+                   x@table <- value
                    x
                  })
 
@@ -273,13 +275,15 @@ normTableQueryRange <- function(range, x) {
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
-          function(x, track = NULL, range = genome(x), table = NULL,
-                   names = NULL, intersectTrack = NULL)
+          function(x, track = NULL, range = seqinfo(x), table = NULL,
+                   names = NULL, intersectTrack = NULL, check = TRUE)
           {
             if (!is(names, "character_OR_NULL"))
               stop("'names' must be 'NULL' or a character vector")
             ## only inherit the genome from the session
-            range <- normTableQueryRange(range, x)
+            if (missing(range) || !check)
+                range <- as(range, "GRanges")
+            else range <- normTableQueryRange(range, x)
             query <- new("UCSCTableQuery", session = x, range = range,
                          NAMES = names)
             ## the following line must always happen to initialize the session
@@ -289,7 +293,7 @@ setMethod("ucscTableQuery", "UCSCSession",
               query@track <- normArgTrack(track, trackids)
               query@intersectTrack <- normArgTrack(intersectTrack, trackids)
             }
-            tableName(query) <- table
+            tableName(query, check=check) <- table
             query
           })
 
@@ -324,12 +328,16 @@ setMethod("trackNames", "UCSCTableQuery",
 setGeneric("tableNames", function(object, ...)
            standardGeneric("tableNames"))
 
+getTableNames <- function(object) {
+    doc <- ucscTableGet(object)
+    table_path <- "//select[@name = 'hgta_table']/option/@value"
+    unlist(getNodeSet(doc, table_path))
+}
+
 setMethod("tableNames", "UCSCTableQuery",
           function(object, trackOnly = FALSE)
           {
-            doc <- ucscTableGet(object)
-            table_path <- "//select[@name = 'hgta_table']/option/@value"
-            tables <- unlist(getNodeSet(doc, table_path))
+            tables <- getTableNames(object)
             outputType <- outputType(object)
             if (trackOnly) {
               trackOutputs <- c("wigData", "wigBed", "bed")
@@ -338,15 +346,22 @@ setMethod("tableNames", "UCSCTableQuery",
               else outputType <- trackOutputs
             }
             if (!is.null(outputType)) {
-              checkOutput <- function(table) {
-                object@table <- table # avoid accessor to skip check
-                outputs <- ucscTableOutputs(object)
-                any(outputType %in% outputs)
-              }
-              tables <- tables[sapply(tables, checkOutput)]
+              tables <- tables[sapply(tables, tableHasOutput, object=object)]
             }
             unname(tables)
           })
+
+tableHasOutput <- function(object, table) {
+    tableName(object, check=FALSE) <- table
+    any(outputType(object) %in% ucscTableOutputs(object))
+}
+
+firstTableName <- function(object) {
+    tables <- getTableNames(object)
+    for (table in tables)
+        if (tableHasOutput(object, table))
+            return(table)
+}
 
 setGeneric("ucscTableOutputs",
            function(object, ...)
@@ -608,13 +623,16 @@ setMethod("track", "UCSCTableQuery",
 setGeneric("getTable",
            function(object, ...) standardGeneric("getTable"))
 setMethod("getTable", "UCSCTableQuery",
-          function(object)
+          function(object, check = TRUE)
           {
-            if (!("primaryTable" %in% ucscTableOutputs(object)))
-              stop("tabular output format not available")
             outputType(object) <- "primaryTable"
-            if (is.null(tableName(object))) # must specify a table name
-              tableName(object) <- tableNames(object)[1]
+            if (is.null(tableName(object))) { # must specify a table name
+                tableName(object, check=FALSE) <- firstTableName(object)
+                if (is.null(tableName(object)))
+                    stop("No valid table found")
+            }
+            else if (check && !outputType(object) %in% ucscTableOutputs(object))
+                stop("tabular output format not available")
             output <- ucscExport(object)
             ## since '#' is not treated as a comment, we discard the
             ## error message, leaving only the header
