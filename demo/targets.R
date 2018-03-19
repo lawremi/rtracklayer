@@ -21,6 +21,7 @@ targetTrack <- makeGRangesFromDataFrame(targets,
 ### chunk number 4: rtl-ucsc-start
 ###################################################
 session <- browserSession()
+genome(session) <- "hg18"
 
 
 ###################################################
@@ -33,7 +34,7 @@ session$targets <- targetTrack
 ### chunk number 6: rtl-ucsc-view eval=FALSE
 ###################################################
 top <- targetTrack$target == targets$target[1]
-range <- ranges(targetTrack[top,]) * -10
+range <- targetTrack[top,] * -10
 view <- browserView(session, range,
                     hide = c("refGene", "mgcFullMrna", "intronEst"),
                     dense = "knownGene", squish = "cons44way")
