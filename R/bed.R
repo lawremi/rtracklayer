@@ -291,6 +291,17 @@ setMethod("import", "BEDFile",
               pushBack(line, con)
               colsInFile <- seq_len(length(strsplit(line, "\\s+")[[1]]))
               presentNames <- bedNames[colsInFile]
+              lacksNames <- is.null(names(extraCols)) ||
+                  any(names(extraCols) == "") ||
+                  any(is.na(names(extraCols)))
+              if (length(extraCols) > 0L && lacksNames)
+                  stop("'extraCols' must have valid names")
+              reservedNames <- c(names(bedClasses), "thick", "blocks")
+              conflictingNames <- intersect(reservedNames, names(extraCols))
+              if (length(conflictingNames) > 0L) {
+                  stop("'names(extraCols)' contains reserved name(s): ",
+                       paste0("'", conflictingNames, "'", collapse=", "))
+              }
               tail(presentNames, length(extraCols)) <- names(extraCols)
               bedNames <- presentNames
               presentClasses <- bedClasses[colsInFile]
