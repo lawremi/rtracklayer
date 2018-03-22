@@ -5,27 +5,41 @@
 \alias{class:BEDFile}
 \alias{class:BED15File}
 \alias{class:BEDGraphFile}
+\alias{class:NarrowPeakFile}
+\alias{class:BroadPeakFile}
 \alias{BEDFile-class}
 \alias{BED15File-class}
 \alias{BEDGraphFile-class}
 \alias{BEDPEFile-class}
+\alias{NarrowPeakFile-class}
+\alias{BroadPeakFile-class}
 
 %% Constructor:
 \alias{BEDFile}
 \alias{BED15File}
 \alias{BEDGraphFile}
 \alias{BEDPEFile}
+\alias{NarrowPeakFile}
+\alias{BroadPeakFile}
 
 %% Import:
 \alias{import,BEDFile,ANY,ANY-method}
 \alias{import,BED15File,ANY,ANY-method}
 \alias{import,BEDPEFile,ANY,ANY-method}
+\alias{import,NarrowPeakFile,ANY-method}
+\alias{import,BroadPeakFile,ANY-method}
+\alias{import,NarrowPeakFile,ANY,ANY-method}
+\alias{import,BroadPeakFile,ANY,ANY-method}
 \alias{import.bed}
 \alias{import.bed,ANY-method}
 \alias{import.bed15}
 \alias{import.bed15,ANY-method}
 \alias{import.bedGraph}
 \alias{import.bedGraph,ANY-method}
+\alias{import.NarrowPeak}
+\alias{import.NarrowPeak,ANY-method}
+\alias{import.BroadPeak}
+\alias{import.BroadPeak,ANY-method}
 
 %% Export:
 \alias{export,ANY,BEDFile,ANY-method}
@@ -79,8 +93,10 @@ export.bedGraph(object, con, ...)
     \code{export} and \code{import} functions, the format must be
     indicated another way. If \code{con} is a path, URL or connection,
     either the file extension or the \code{format} argument needs to be
-    one of \dQuote{bed}, \dQuote{bed15}, \dQuote{bedGraph} or
-    \dQuote{bedpe}. Compressed files (\dQuote{gz}, \dQuote{bz2} and
+    one of \dQuote{bed}, \dQuote{bed15}, \dQuote{bedGraph},
+    \dQuote{bedpe}, \dQuote{narrowPeak}, or
+    \dQuote{broadPeak}. Compressed
+    files (\dQuote{gz}, \dQuote{bz2} and
     \dQuote{xz}) are handled transparently.
   }
   \item{object}{The object to export, should be a \code{GRanges} or
@@ -95,7 +111,8 @@ export.bedGraph(object, con, ...)
     one.
   }
   \item{format}{If not missing, should be one of \dQuote{bed},
-    \dQuote{bed15}, \dQuote{bedGraph} or \dQuote{bedpe}.}
+    \dQuote{bed15}, \dQuote{bedGraph}, \dQuote{bedpe},
+  \dQuote{narrowPeak} or \dQuote{broadPeak}.}
   \item{text}{If \code{con} is
     missing, a character vector to use as the input}
   \item{trackLine}{For import, an imported track line will be stored
@@ -161,7 +178,7 @@ export.bedGraph(object, con, ...)
   For a \dQuote{bedpe} file, a \code{Pairs} object combining two
   \code{GRanges}. The \code{name} and \code{score} are carried over to
   the metadata columns.
-  
+
   Otherwise, a \code{GRanges} with the metadata columns described in the
   details.
 }
@@ -193,7 +210,7 @@ export.bedGraph(object, con, ...)
   \describe{
     \item{chrom, start, end}{the \code{ranges} component.}
     \item{name}{character vector (NA's allowed) in the \code{name}
-      column; defaults to NA on export. 
+      column; defaults to NA on export.
     }
     \item{score}{numeric vector in the \code{score}
       column, accessible via the \code{score} accessor. Defaults to 0
@@ -232,7 +249,10 @@ export.bedGraph(object, con, ...)
   the \code{extraCols} argument to indicate the expected names and
   classes of the special columns. We assume that the
   last \code{length(extraCols)} columns are special, and that the
-  preceding columns adhere to the BED format.
+  preceding columns adhere to the BED format. \dQuote{narrowPeak}
+  and \dQuote{broadPeak} types are handled explicitly by specifying
+  these types as the \code{format} argument, rather than by
+  using \code{extraCols}.
 }
 
 \section{BEDFile objects}{
@@ -257,13 +277,13 @@ export.bedGraph(object, con, ...)
 
   test <- import(test_bed)
   test
-  
+
   test_bed_file <- BEDFile(test_bed)
   import(test_bed_file)
-  
+
   test_bed_con <- file(test_bed)
   import(test_bed_con, format = "bed")
-  
+
   import(test_bed, trackLine = FALSE)
   import(test_bed, genome = "hg19")
   import(test_bed, colnames = c("name", "strand", "thick"))
@@ -273,22 +293,22 @@ export.bedGraph(object, con, ...)
 
   bed15_file <- file.path(test_path, "test.bed15")
   bed15 <- import(bed15_file)
-  
+
 \dontrun{
   test_bed_out <- file.path(tempdir(), "test.bed")
   export(test, test_bed_out)
-  
+
   test_bed_out_file <- BEDFile(test_bed_out)
   export(test, test_bed_out_file)
 
   export(test, test_bed_out, name = "Alternative name")
-  
+
   test_bed_gz <- paste(test_bed_out, ".gz", sep = "")
   export(test, test_bed_gz)
-  
+
   export(test, test_bed_out, index = TRUE)
   export(test, test_bed_out, index = TRUE, trackLine = FALSE)
-  
+
   bed_text <- export(test, format = "bed")
   test <- import(format = "bed", text = bed_text)
 
