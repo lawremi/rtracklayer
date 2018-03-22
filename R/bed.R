@@ -382,9 +382,9 @@ setMethod("colClasses", "BEDFile", function(x) {
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### narrowPeak support
 ###
-setGeneric("import.NarrowPeak", function(con, ...) standardGeneric("import.NarrowPeak"))
+setGeneric("import.narrowPeak", function(con, ...) standardGeneric("import.narrowPeak"))
 
-setMethod("import.NarrowPeak", "ANY", function(con, ...) {
+setMethod("import.narrowPeak", "ANY", function(con, ...) {
     import(con, format = "narrowPeak", ...)
 
 })
@@ -398,9 +398,9 @@ setMethod("import", "NarrowPeakFile", function(con, ...) {
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### broadPeak support
 ###
-setGeneric("import.BroadPeak", function(con, ...) standardGeneric("import.BroadPeak"))
+setGeneric("import.broadPeak", function(con, ...) standardGeneric("import.broadPeak"))
 
-setMethod("import.BroadPeak", "ANY", function(con, ...) {
+setMethod("import.broadPeak", "ANY", function(con, ...) {
     import(con, format = "broadPeak", ...)
 
 })
