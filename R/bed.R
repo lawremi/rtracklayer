@@ -26,9 +26,9 @@ BEDPEFile <- function(resource) {
     new("BEDPEFile", resource = resource)
 }
 
-setClass("narrowPeakFile", contains = "BEDFile")
-narrowPeakFile <- function(resource) {
-  new("narrowPeakFile", resource = resource)
+setClass("NarrowPeakFile", contains = "BEDFile")
+NarrowPeakFile <- function(resource) {
+  new("NarrowPeakFile", resource = resource)
 }
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -377,14 +377,14 @@ setMethod("colClasses", "BEDFile", function(x) {
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### narrowPeak support
 ###
-setGeneric("import.narrowPeak", function(con, ...) standardGeneric("import.narrowPeak"))
+setGeneric("import.NarrowPeak", function(con, ...) standardGeneric("import.NarrowPeak"))
 
-setMethod("import.narrowPeak", "ANY", function(con, ...) {
+setMethod("import.NarrowPeak", "ANY", function(con, ...) {
     import(con, format = "narrowPeak", ...)
 
 })
 
-setMethod("import", "narrowPeakFile", function(con, ...) {
+setMethod("import", "NarrowPeakFile", function(con, ...) {
     callNextMethod(con = con,
                    extraCols = c(signalValue = "numeric", pValue = "numeric", qValue = "numeric", peak = "integer"),
                    ... )
