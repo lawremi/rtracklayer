@@ -31,6 +31,11 @@ NarrowPeakFile <- function(resource) {
   new("NarrowPeakFile", resource = resource)
 }
 
+setClass("BroadPeakFile", contains = "BEDFile")
+BroadPeakFile <- function(resource) {
+  new("BroadPeakFile", resource = resource)
+}
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Export
 ###
@@ -387,6 +392,22 @@ setMethod("import.NarrowPeak", "ANY", function(con, ...) {
 setMethod("import", "NarrowPeakFile", function(con, ...) {
     callNextMethod(con = con,
                    extraCols = c(signalValue = "numeric", pValue = "numeric", qValue = "numeric", peak = "integer"),
+                   ... )
+})
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### broadPeak support
+###
+setGeneric("import.BroadPeak", function(con, ...) standardGeneric("import.BroadPeak"))
+
+setMethod("import.BroadPeak", "ANY", function(con, ...) {
+    import(con, format = "broadPeak", ...)
+
+})
+
+setMethod("import", "BroadPeakFile", function(con, ...) {
+    callNextMethod(con = con,
+                   extraCols = c(signalValue = "numeric", pValue = "numeric", qValue = "numeric"),
                    ... )
 })
 
