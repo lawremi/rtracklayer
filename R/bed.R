@@ -26,6 +26,16 @@ BEDPEFile <- function(resource) {
     new("BEDPEFile", resource = resource)
 }
 
+setClass("NarrowPeakFile", contains = "BEDFile")
+NarrowPeakFile <- function(resource) {
+  new("NarrowPeakFile", resource = resource)
+}
+
+setClass("BroadPeakFile", contains = "BEDFile")
+BroadPeakFile <- function(resource) {
+  new("BroadPeakFile", resource = resource)
+}
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Export
 ###
@@ -370,6 +380,38 @@ setMethod("colClasses", "BEDFile", function(x) {
           })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### narrowPeak support
+###
+setGeneric("import.narrowPeak", function(con, ...) standardGeneric("import.narrowPeak"))
+
+setMethod("import.narrowPeak", "ANY", function(con, ...) {
+    import(con, format = "narrowPeak", ...)
+
+})
+
+setMethod("import", "NarrowPeakFile", function(con, ...) {
+    callNextMethod(con = con,
+                   extraCols = c(signalValue = "numeric", pValue = "numeric", qValue = "numeric", peak = "integer"),
+                   ... )
+})
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### broadPeak support
+###
+setGeneric("import.broadPeak", function(con, ...) standardGeneric("import.broadPeak"))
+
+setMethod("import.broadPeak", "ANY", function(con, ...) {
+    import(con, format = "broadPeak", ...)
+
+})
+
+setMethod("import", "BroadPeakFile", function(con, ...) {
+    callNextMethod(con = con,
+                   extraCols = c(signalValue = "numeric", pValue = "numeric", qValue = "numeric"),
+                   ... )
+})
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### BED15 (Microarray) Support
 ###
 
@@ -452,7 +494,7 @@ setMethods("export",
 setClass("Bed15TrackLine",
          representation(expStep = "numeric", expScale = "numeric",
                         expNames = "character_OR_NULL"),
-         prototype(expStep = 0.5, expScale = 3.0), 
+         prototype(expStep = 0.5, expScale = 3.0),
          contains = "BasicTrackLine") # not sure which fields work
 
 setAs("Bed15TrackLine", "character",
