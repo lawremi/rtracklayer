@@ -947,7 +947,7 @@ setAs("BasicTrackLine", "character",
         if (length(colorByStrand)) {
           colors <- paste(colorByStrand[1,], colorByStrand[2,],
                           colorByStrand[3,], sep = ",", collapse = " ")
-          str <- paste(str, " colorByStrand=", colors, sep = "")
+          str <- paste(str, " colorByStrand=\"", colors, "\"", sep = "")
         }
         str
       })
