@@ -910,7 +910,8 @@ setAs("TrackLine", "character",
           str <- paste(str, " visibility=", vis, sep="")
         color <- from@color
         if (length(color))
-          str <- paste(str, " color=", paste(color, collapse=","), sep="")
+            str <- paste0(str, " color=",
+                          paste0("\"", color, "\"", collapse=","))
         priority <- from@priority
         if (length(priority))
           str <- paste(str, " priority=", priority, sep="")
