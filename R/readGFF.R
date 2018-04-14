@@ -433,8 +433,9 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
                              sequenceRegionsAsSeqinfo=FALSE,
                              speciesAsMetadata=FALSE)
 {
-    if (!isSingleStringOrNA(genome) && !is(genome, "Seqinfo"))
-        stop(wmsg("'genome' must be a single string or NA, or a Seqinfo"))
+    if (!(isSingleStringOrNA(genome) || is(genome, "Seqinfo")))
+        stop(wmsg("'genome' must be a single string or NA, ",
+                  "or a Seqinfo object"))
     if (!isTRUEorFALSE(sequenceRegionsAsSeqinfo))
         stop(wmsg("'sequenceRegionsAsSeqinfo' must be TRUE or FALSE"))
     if (!isTRUEorFALSE(speciesAsMetadata))
@@ -456,18 +457,48 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
                       columns=columns, tags=tags, filter=filter)
     }
 
-    ## Get 'ans_seqinfo' from pragmas.
+    ## Turn data frame into GRanges.
+    ## TODO: Maybe we should be able to pass the metadata to
+    ## makeGRangesFromDataFrame()?
+    if (is.null(colnames)) {
+        ans <- makeGRangesFromDataFrame(df, keep.extra.columns=TRUE,
+                                            seqnames.field="seqid")
+    } else {
+        ans <- makeGRangesFromDataFrame(df, seqnames.field="seqid")
+        mcols(ans) <- df[ , colnames, drop=FALSE]
+    }
+
+    ## Set seqinfo.
+    ans_seqinfo <- NULL
     pragmas <- attr(df, "pragmas")
     attrcol_fmt <- attr(df, "attrcol_fmt")
     if (sequenceRegionsAsSeqinfo && attrcol_fmt == 3L) {
+        ## Get 'ans_seqinfo' from pragmas.
         ans_seqinfo <- .parseSequenceRegionsAsSeqinfo(pragmas)
-    } else if (is.na(genome)) {
-        ans_seqinfo <- NULL
     } else if (is(genome, "Seqinfo")) {
         ans_seqinfo <- genome
-    } else {
+        if (!all(seqlevels(ans) %in% seqlevels(ans_seqinfo)))
+            stop(wmsg("the sequence names in the GTF or GFF file are in ",
+                      "disagreement with the Seqinfo object specified via ",
+                      "the 'genome' argument"))
+    } else if (isSingleString(genome)) {
         ans_seqinfo <- seqinfoForGenome(genome)
+        if (!all(seqlevels(ans) %in% seqlevels(ans_seqinfo))) {
+            warning(wmsg("cannot set the seqlengths or circularity flags on ",
+                         "the GRanges object to return because the sequence ",
+                         "names in the GTF or GFF file are in disagreement ",
+                         "with the sequence names implied by the genome ",
+                         "assembly (", genome, ") specified via the 'genome' ",
+                         "argument"))
+            ans_seqinfo <- NULL
+        }
     }
+    if (!is.null(ans_seqinfo)) {
+        seqlevels(ans) <- seqlevels(ans_seqinfo)
+        seqinfo(ans) <- ans_seqinfo
+    }
+    if (isSingleString(genome))
+        genome(ans) <- genome
 
     ## Get 'ans_metadata' from pragmas.
     if (speciesAsMetadata) {
@@ -476,19 +507,6 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
         ans_metadata <- list()
     }
 
-    ## Turn data frame into GRanges.
-    ## TODO: Maybe we should be able to pass the metadata to
-    ## makeGRangesFromDataFrame()?
-    if (is.null(colnames)) {
-        ans <- makeGRangesFromDataFrame(df, keep.extra.columns=TRUE,
-                                            seqinfo=ans_seqinfo,
-                                            seqnames.field="seqid")
-    } else {
-        ans <- makeGRangesFromDataFrame(df, seqinfo=ans_seqinfo,
-                                            seqnames.field="seqid")
-        mcols(ans) <- df[ , colnames, drop=FALSE]
-    }
-    genome(ans) <- genome
     metadata(ans) <- ans_metadata
     ans
 }
