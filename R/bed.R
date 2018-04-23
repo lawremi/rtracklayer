@@ -116,7 +116,8 @@ setMethod("export", c("GenomicRanges", "BEDFile"),
                 lastStart <- lastBlock(blockStarts)
                 if (any(df[[2]] + lastSize + lastStart != df[[3]]) ||
                     any(sub(",.*", "", blockStarts) != "0"))
-                  stop("blocks must span entire feature")
+                    stop("blocks must span entire feature,",
+                         " and be within its bounds")
                 blockCount <- elementNROWS(object$blocks)
                 if (!is.null(object$blockCount))
                   if (!identical(blockCount, as.integer(object$blockCount)))
