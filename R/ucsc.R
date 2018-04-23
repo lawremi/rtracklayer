@@ -218,8 +218,12 @@ normArgTable <- function(name, query) {
 
 setGeneric("tableName<-", function(x, ..., value)
            standardGeneric("tableName<-"))
-setReplaceMethod("tableName", "UCSCTableQuery", function(x, check=TRUE, value)
+### FIXME: we need '...' in the formals due to a bug in R 3.5, remove for 3.6
+setReplaceMethod("tableName", "UCSCTableQuery",
+                 function(x, check=TRUE, ..., value)
                  {
+                   if (!missing(...))
+                     warning("arguments in '...' ignored")
                    if (check)
                        value <- normArgTable(value, x)
                    x@table <- value
