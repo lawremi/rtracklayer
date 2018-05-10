@@ -691,5 +691,6 @@ setMethod("blocks", "GenomicRanges",
             seqinfo(gr) <- seqinfo(x)
             ans <- relist(gr, mcols(x)$blocks)
             mcols(ans) <- subset(mcols(x), select=-blocks)
+            names(ans) <- if (!is.null(names(x))) names(x) else x$name
             ans
           })
