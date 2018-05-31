@@ -482,11 +482,10 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
                       "disagreement with the Seqinfo object specified via ",
                       "the 'genome' argument"))
     } else if (isSingleString(genome)) {
-        ans_seqinfo <- seqinfoForGenome(genome)
-    }
-
-    if (!is.null(ans_seqinfo)) {
-        if (!all(seqlevels(ans) %in% seqlevels(ans_seqinfo))) {
+        ans_seqinfo <- seqinfoForGenome(genome)  # can return NULL
+        if (!is.null(ans_seqinfo) &&
+            !all(seqlevels(ans) %in% seqlevels(ans_seqinfo)))
+        {
             warning(wmsg("cannot set the seqlengths or circularity flags on ",
                          "the GRanges object to return because the sequence ",
                          "names in the GTF or GFF file are in disagreement ",
@@ -494,10 +493,11 @@ readGFFAsGRanges <- function(filepath, version=0, colnames=NULL, filter=NULL,
                          "assembly (", genome, ") specified via the 'genome' ",
                          "argument"))
             ans_seqinfo <- NULL
-        } else {
-            seqlevels(ans) <- seqlevels(ans_seqinfo)
-            seqinfo(ans) <- ans_seqinfo
         }
+    }
+    if (!is.null(ans_seqinfo)) {
+        seqlevels(ans) <- seqlevels(ans_seqinfo)
+        seqinfo(ans) <- ans_seqinfo
     }
     if (isSingleString(genome))
         genome(ans) <- genome
