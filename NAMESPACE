@@ -42,7 +42,8 @@ import(IRanges)
 import(GenomicRanges)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
-           DNAStringSet, DNA_BASES, DNA_ALPHABET, alphabetFrequency)
+           DNAStringSet, DNA_BASES, DNA_ALPHABET, alphabetFrequency,
+           reverseComplement)
 importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
 importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 

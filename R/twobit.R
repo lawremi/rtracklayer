@@ -132,5 +132,8 @@ setMethod("import", "TwoBitFile",
 
 setMethod("getSeq", "TwoBitFile",
           function(x, which = as(seqinfo(x), "GenomicRanges")) {
-            import(x, which = which)
+              ans <- import(x, which = which)
+              rc <- strand(which) == "-"
+              ans[rc] <- reverseComplement(ans[rc])
+              ans
           })

@@ -38,6 +38,14 @@ test_twoBit <- function() {
   test <- import(test_2bit_out, which = which)
   checkIdentical(unlist(test), correct_which)
 
+  ## TEST: getSeq() with negative strand which
+  rc_which <- which
+  strand(rc_which)[1L] <- "-"
+  test <- getSeq(TwoBitFile(test_2bit_out), which = rc_which)
+  rc_correct_which <- correct_which
+  rc_correct_which[1L] <- Biostrings::reverseComplement(rc_correct_which[1L])
+  checkIdentical(unlist(test), rc_correct_which)
+
   ## TEST: empty which
   which_range <- IRanges()
   correct_which <- Biostrings::DNAStringSet()
