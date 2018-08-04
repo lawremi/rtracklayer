@@ -63,9 +63,10 @@ setMethod("export", c("DNAStringSet", "TwoBitFile"),
               seqnames <- as.character(seq(length(object)))
             freq <- alphabetFrequency(object)
             unsupported.chars <- setdiff(DNA_ALPHABET, c(DNA_BASES, "N"))
-            if (any(rowSums(freq[,unsupported.chars,drop=FALSE]) > 0L)) {
+            if (any(uniqueLetters(object) %in% unsupported.chars)) {
               stop("One or more strings contain unsupported ambiguity ",
-                   "characters.\nStrings can contain only A, C, G, T or N.")
+                   "characters.\nStrings can contain only A, C, G, T or N.",
+                   "\nSee Biostrings::replaceAmbiguities().")
             }
             if (any(width(object) == 0L)) {
               stop("Empty strings are not yet supported")
