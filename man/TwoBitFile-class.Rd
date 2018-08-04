@@ -85,6 +85,14 @@ export.2bit(object, con, ...)
   For import, a \code{DNAStringSet}.
 }
 
+\note{
+  The 2bit format only suports A, C, G, T and N (via an internal
+  mask). To export sequences with additional IUPAC ambiguity codes,
+  first pass the object through
+  \code{\link[Biostrings]{replaceAmbiguities}} from the Biostrings
+  package.
+}
+
 \section{\code{TwoBitFile} objects}{
   A \code{TwoBitFile} object, an extension of
   \code{\linkS4class{RTLFile}} is a reference to a TwoBit file. To cast
