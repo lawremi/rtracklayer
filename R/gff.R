@@ -115,16 +115,16 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
               object <- sortBySeqnameAndStart(object)
 
             seqname <- seqnames(object)
-            if (is.null(object$ID))
-              object$ID <- names(object)
+            if (is.null(mcols(object)$ID))
+              mcols(object)$ID <- names(object)
             if (version == "3")
               seqname <- urlEncode(seqname, "a-zA-Z0-9.:^*$@!+_?|-")
-            if (!is.null(object$source) && missing(source))
-              source <- object$source
+            if (!is.null(mcols(object)$source) && missing(source))
+              source <- mcols(object)$source
             else source <- rep(source, length(object))
             if (version == "3")
               source <- urlEncode(source, "\t\n\r;=%&,", FALSE)
-            feature <- object$type
+            feature <- mcols(object)$type
             if (is.null(feature))
               feature <- rep("sequence_feature", length(object))
             score <- score(object)
@@ -139,16 +139,26 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
             if (is.null(strand))
                 strand <- rep(strand(NA_character_), length(object))
             strand[strand == "*"] <- NA_integer_
-            frame <- object$phase
-            if (is.null(frame))
+            frame <- mcols(object)$phase
+            if (is.null(frame)) {
               frame <- rep(NA_integer_, length(object))
+              if ("CDS" %in% feature)
+                warning(wmsg("The phase information is missing. ",
+                             "The written file will contain CDS with ",
+                             "no phase information."))
+            } else {
+              if (anyNA(frame[feature %in% "CDS"]))
+                warning(wmsg("The phase information is missing for some CDS. ",
+                             "The written file will contain some CDS with ",
+                             "no phase information."))
+            }
             
             table <- data.frame(seqname, source, feature, start(object),
                                 end(object), score, strand, frame)
 
             attrs <- NULL
             if (version == "1") {
-              attrs <- object$group
+              attrs <- mcols(object)$group
               if (is.null(attrs))
                 attrs <- as.vector(seqname)
             } else {
