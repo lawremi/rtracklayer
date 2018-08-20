@@ -42,6 +42,9 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
     if (strlen(linebuf) == LINEBUF_SIZE - 1) {
       error("line %d is too long", line);
     }
+    if (linebuf[0] == '#') {
+	continue;
+    }
     if (excluded) {
       eraseWhiteSpace(linebuf);
       if (!strlen(linebuf)) {
