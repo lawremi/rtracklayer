@@ -565,7 +565,10 @@ setMethod("import", "BEDPEFile",
               gr <- callNextMethod()
               df <- mcols(gr)
               mcols(gr) <- NULL
-              df$strand2[is.na(df$strand2)] <- "*"
+              if (is.null(df$strand2))
+                  df$strand2 <- "*"
+              else
+                  df$strand2[is.na(df$strand2)] <- "*"
               seqlevels(gr) <- union(seqlevels(gr), unique(df$chrom2))
               gr2 <- with(df, GRanges(chrom2, IRanges(start2+1L, end2),
                                       strand2, seqinfo=seqinfo(gr)))
