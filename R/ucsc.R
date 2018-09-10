@@ -1205,7 +1205,7 @@ setMethod("export.ucsc", c("ANY", "RTLFile"),
           {
             if (subformat == "auto" && !is(con, "UCSCFile"))
               subformat <- fileFormat(con)
-            export(object, UCSCFile(resource(con)), subformat, ...)
+            export(object, UCSCFile(resource(con)), subformat=subformat, ...)
           })
 
 setMethod("export.ucsc", c("ANY", "ANY"),
