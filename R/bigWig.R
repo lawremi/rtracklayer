@@ -215,7 +215,9 @@ setMethod("import", "BigWigFile",
             if (!missing(format))
               checkArgFormat(con, format)
             as <- match.arg(as)
-
+            if (is(which, "GenomicRanges") && as == "NumericList") {
+                orig_order <- order(seqnames(which))
+            }
             selection <- as(selection, "BigWigSelection")
             validObject(selection)
             si <- seqinfo(con)
@@ -232,18 +234,23 @@ setMethod("import", "BigWigFile",
             if (as != "NumericList") {
               which <- as(which, "NormalIRangesList")
             }
+            which <- GRanges(which)
             C_ans <- .Call(BWGFile_query, expandPath(path(con)),
-                           as.list(which),
+                           as.character(seqnames(which)), ranges(which),
                            identical(colnames(selection), "score"), 
                            as == "NumericList")
             if (as == "NumericList") {
               ans <- as(C_ans, "NumericList")
-              names(ans) <- rep(names(which), elementNROWS(which))
+              names(ans) <- names(which)
               metadata(ans) <- list(ranges = as(which, "GRanges"))
+              if (exists("orig_order")) {
+                  ans[orig_order] <- ans
+              }
               ans
             } else {
-              gr <- as(C_ans[[1L]], "GRanges")
-              mcols(gr) <- unlist(C_ans[[2L]], use.names=FALSE)
+              nhits <- C_ans[[3L]]
+              gr <- GRanges(rep(seqnames(which), nhits), C_ans[[1L]])
+              gr$score <- C_ans[[2L]]
               seqinfo(gr) <- si
               if (as == "RleList") {
                 coverage(gr, weight="score")

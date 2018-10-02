@@ -70,7 +70,7 @@ test_bw <- function() {
 
   ## TEST: export/import NumericList
   correct_cov_short <- correct_cov[correct_cov != 0L]
-  correct_int <- as(correct_cov_short, "NumericList")
+  correct_int <- unname(as(correct_cov_short, "NumericList"))
   which <- GRanges(names(correct_int), IRanges(1, elementNROWS(correct_int)))
   metadata(correct_int) <- list(ranges=which)
   export(correct_int, test_bw_out)

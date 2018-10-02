@@ -235,110 +235,82 @@ SEXP BWGFile_seqlengths(SEXP r_filename) {
 }
 
 /* --- .Call ENTRY POINT --- */
-SEXP BWGFile_query(SEXP r_filename, SEXP r_ranges, SEXP r_return_score, 
-                   SEXP r_return_list) {
+SEXP BWGFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
+		   SEXP r_return_score, SEXP r_return_list) {
   pushRHandlers();
   struct bbiFile * file = bigWigFileOpen((char *)CHAR(asChar(r_filename)));
-  SEXP chromNames = getAttrib(r_ranges, R_NamesSymbol);
-  int nchroms = length(r_ranges);
   Rboolean return_list = asLogical(r_return_list);
-  SEXP rangesList, rangesListEls = NULL, dataFrameList,
-      dataFrameListEls = NULL, ans;
+  SEXP ans, ans_start, ans_width, ans_score, ans_ranges, ans_nhits;
   SEXP numericListEls = NULL;
   bool returnScore = asLogical(r_return_score);
-  const char *var_names[] = { "score", "" };
   struct lm *lm = lmInit(0);
- 
+  
   struct bbiInterval *hits = NULL;
-  struct bbiInterval *qhits = NULL;
+
+  int n_ranges = get_IRanges_length(r_ranges);
 
   if (return_list) {
-    int n_ranges = 0;
-    for(int i = 0; i < nchroms; i++) {
-      SEXP localRanges = VECTOR_ELT(r_ranges, i);
-      n_ranges += get_IRanges_length(localRanges);
-    }
-    PROTECT(numericListEls = allocVector(VECSXP, n_ranges));
+      PROTECT(numericListEls = allocVector(VECSXP, n_ranges));
   } else {
-    PROTECT(rangesListEls = allocVector(VECSXP, nchroms));
-    setAttrib(rangesListEls, R_NamesSymbol, chromNames);
-    PROTECT(dataFrameListEls = allocVector(VECSXP, nchroms));
-    setAttrib(dataFrameListEls, R_NamesSymbol, chromNames);
+      PROTECT(ans_nhits = allocVector(INTSXP, n_ranges));
   }
+  
+  int *start = INTEGER(get_IRanges_start(r_ranges));
+  int *width = INTEGER(get_IRanges_width(r_ranges));
 
-  int elt_len = 0;
-  for (int i = 0; i < nchroms; i++) {
-    SEXP localRanges = VECTOR_ELT(r_ranges, i);
-    int nranges = get_IRanges_length(localRanges);
-    int *start = INTEGER(get_IRanges_start(localRanges));
-    int *width = INTEGER(get_IRanges_width(localRanges));
-    for (int j = 0; j < nranges; j++) {
+  for (int i = 0; i < n_ranges; i++) {
       struct bbiInterval *queryHits =
-        bigWigIntervalQuery(file, (char *)CHAR(STRING_ELT(chromNames, i)),
-                            start[j] - 1, start[j] - 1 + width[j], lm);
-      /* IntegerList */
+	  bigWigIntervalQuery(file, (char *)CHAR(STRING_ELT(r_seqnames, i)),
+			      start[i] - 1, start[i] - 1 + width[i], lm);
+      int nqhits = slCount(queryHits);
       if (return_list) {
-        qhits = queryHits;
-        int nqhits = slCount(queryHits);
-        SEXP ans_numeric;
-        PROTECT(ans_numeric = allocVector(REALSXP, width[j]));
-        memset(REAL(ans_numeric), 0, sizeof(double) * width[j]);
-        for (int k = 0; k < nqhits; k++, qhits = qhits->next) {
-          for (int l = qhits->start; l < qhits->end; l++)
-            REAL(ans_numeric)[(l - start[j] + 1)] = qhits->val;
-        }
-        SET_VECTOR_ELT(numericListEls, elt_len, ans_numeric);
-        elt_len++;
-        UNPROTECT(1);
-      }
-      slReverse(&queryHits);
-      hits = slCat(queryHits, hits);
-    } 
-
-    /* GRanges */
-    if (!return_list) {
-      int nhits = slCount(hits);
-      slReverse(&hits);
-      SEXP ans_start, ans_width, ans_score, ans_score_l;
-      PROTECT(ans_start = allocVector(INTSXP, nhits));
-      PROTECT(ans_width = allocVector(INTSXP, nhits));
-
-      if (returnScore) {
-        PROTECT(ans_score_l = mkNamed(VECSXP, var_names));
-        ans_score = allocVector(REALSXP, nhits);
-        SET_VECTOR_ELT(ans_score_l, 0, ans_score);
+	  struct bbiInterval *qhits = queryHits;
+	  SEXP ans_numeric;
+	  PROTECT(ans_numeric = allocVector(REALSXP, width[i]));
+	  memset(REAL(ans_numeric), 0, sizeof(double) * width[i]);
+	  for (int k = 0; k < nqhits; k++, qhits = qhits->next) {
+	      for (int l = qhits->start; l < qhits->end; l++)
+		  REAL(ans_numeric)[(l - start[i] + 1)] = qhits->val;
+	  }
+	  SET_VECTOR_ELT(numericListEls, i, ans_numeric);
+	  UNPROTECT(1);
       } else {
-        PROTECT(ans_score_l = mkNamed(VECSXP, var_names + 1));
+	  slReverse(&queryHits);
+	  hits = slCat(queryHits, hits);
+	  INTEGER(ans_nhits)[i] = nqhits;
       }
-
-      for (int j = 0; j < nhits; j++, hits = hits->next) {
-        INTEGER(ans_start)[j] = hits->start + 1;
-        INTEGER(ans_width)[j] = hits->end - hits->start;
-        if (returnScore)
-          REAL(ans_score)[j] = hits->val;
-      }
-      SET_VECTOR_ELT(rangesListEls, i,
-                     new_IRanges("IRanges", ans_start, ans_width, R_NilValue));
-      SET_VECTOR_ELT(dataFrameListEls, i,
-                     new_DataFrame("DataFrame", ans_score_l, R_NilValue,
-                                   ScalarInteger(nhits)));
-      UNPROTECT(3);
-    }
   }
 
   bbiFileClose(&file);
-
+  
   if (return_list) {
     ans = new_SimpleList("SimpleList", numericListEls);
     UNPROTECT(1);
-  } else { 
-    PROTECT(dataFrameList =
-            new_SimpleList("SimpleSplitDataFrameList", dataFrameListEls));
-    PROTECT(rangesList = new_SimpleList("SimpleIRangesList", rangesListEls));
-    PROTECT(ans = allocVector(VECSXP, 2));
-    SET_ELEMENT(ans, 0, rangesList);
-    SET_ELEMENT(ans, 1, dataFrameList);
-    UNPROTECT(5);
+  } else {
+    int n_hits = slCount(hits);
+    PROTECT(ans_start = allocVector(INTSXP, n_hits));
+    PROTECT(ans_width = allocVector(INTSXP, n_hits));
+    if (returnScore) {
+      PROTECT(ans_score = allocVector(REALSXP, n_hits));
+    } else ans_score = R_NilValue;
+
+    slReverse(&hits);
+    for (int i = 0; i < n_hits; i++, hits = hits->next) {
+      INTEGER(ans_start)[i] = hits->start + 1;
+      INTEGER(ans_width)[i] = hits->end - hits->start;
+      if (returnScore)
+	REAL(ans_score)[i] = hits->val;
+    }
+
+    PROTECT(ans_ranges = new_IRanges("IRanges", ans_start, ans_width,
+	R_NilValue));
+
+    ans = allocVector(VECSXP, 3);
+    SET_ELEMENT(ans, 0, ans_ranges);
+    SET_ELEMENT(ans, 1, ans_score);
+    SET_ELEMENT(ans, 2, ans_nhits);
+
+    UNPROTECT(4 + returnScore);
   }
 
   lmCleanup(&lm);
