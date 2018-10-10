@@ -3,7 +3,7 @@
 
 #include <R_ext/Connections.h>  /* for R_ReadConnection() */
 
-#include <ctype.h>   /* for isdigit() and isspace() */
+#include <ctype.h>   /* for isspace() */
 #include <stdlib.h>  /* for strtod() */
 #include <string.h>  /* for memcpy() and memcmp() */
 
@@ -290,63 +290,6 @@ SEXP gff_colnames(SEXP GFF1)
  * read_gff_pragmas(), scan_gff(), and load_gff()
  */
 
-/*
- * Turn string pointed by 'val' into an int. The string has no terminating
- * null byte ('\0') and must have the following format:
- *     ^[[:space:]]*[+-]?[[:digit:]]+[[:space:]]*$
- * Return NA_INTEGER if the string is malformed or if it represents an integer
- * value that cannot be represented by an int (int overflow).
- * TODO: Maybe implement this on top of strtol(). Would be much simpler but
- * would it be equivalent? Also would it be as fast? See how as_double() below
- * is implemented on top of strtod().
- */
-#define	LEADING_SPACE 0
-#define	NUMBER 1
-#define	TRAILING_SPACE 2
-static int as_int(const char *val, int val_len)
-{
-	int n, ndigit, sign, state, i;
-	char c;
-
-	n = ndigit = 0;
-	sign = 1;
-	state = LEADING_SPACE;
-	for (i = 0; i < val_len; i++) {
-		c = val[i];
-		if (isdigit(c)) {
-			if (state == TRAILING_SPACE)
-				return NA_INTEGER;  /* malformed string */
-			state = NUMBER;
-			ndigit++;
-			n = safe_int_mult(n, 10);
-			n = safe_int_add(n, c - '0');
-			if (n == NA_INTEGER)
-				return NA_INTEGER;  /* int overflow */
-			continue;
-		}
-		if (c == '+' || c == '-') {
-			if (state != LEADING_SPACE)
-				return NA_INTEGER;  /* malformed string */
-			state = NUMBER;
-			if (c == '-')
-				sign = -1;
-			continue;
-		}
-		if (!isspace(c))
-			return NA_INTEGER;  /* malformed string */
-		if (state == NUMBER) {
-			if (ndigit == 0)
-				return NA_INTEGER;  /* malformed string */
-			state = TRAILING_SPACE;
-		}
-	}
-	if (ndigit == 0)
-		return NA_INTEGER;  /* malformed string */
-	if (sign == -1)
-		n = -n;
-	return n;
-}
-
 static double as_double(const char *val, int val_len)
 {
 	double x;
@@ -479,8 +422,11 @@ static void load_double(const char *data, int data_len,
 	return;
 }
 
-static void load_data(const char *data, int data_len,
-		SEXP ans, int row_idx, int col_idx, const int *colmap0)
+static char errmsg_buf[256];
+
+static const char *load_data(const char *data, int data_len,
+		SEXP ans, int row_idx, int col_idx, const int *colmap0,
+		int lineno)
 {
 	SEXP ans_col;
 	int is_raw;
@@ -490,9 +436,23 @@ static void load_data(const char *data, int data_len,
 	is_raw = LOGICAL(GET_ATTR(ans, install("raw_data")))[0];
 	if (is_raw) {
 		load_string(data, data_len, ans_col, row_idx);
-		return;
+		return NULL;
 	}
 	col_type = col_types[col_idx];
+	if (col_idx == START_IDX || col_idx == END_IDX) {
+		reset_ovflow_flag();
+		load_int(data, data_len, ans_col, row_idx);
+		if (get_ovflow_flag()) {
+			snprintf(errmsg_buf, sizeof(errmsg_buf),
+				 "line %d contains values greater than 2^31-1 "
+				 "\n  (= .Machine$integer.max) in column 4 "
+				 "(start) and/or 5 (end).\n  Bioconductor "
+				 "does not support such GFF files at the "
+				 "moment. Sorry!", lineno);
+			return errmsg_buf;
+		}
+		return NULL;
+	}
 	switch (col_type) {
 	    case STRSXP:
 		if (data_len == 1) {
@@ -515,7 +475,7 @@ static void load_data(const char *data, int data_len,
 		load_double(data, data_len, ans_col, row_idx);
 	    break;
 	}
-	return;
+	return NULL;
 }
 
 static void load_tagval(const char *tag, int tag_len,
@@ -535,7 +495,6 @@ static void load_tagval(const char *tag, int tag_len,
 }
 
 #define	IOBUF_SIZE 65536
-static char errmsg_buf[200];
 
 /*
  * We use a heuristic to detect the format of the "attributes" col.
@@ -830,7 +789,7 @@ static const char *set_data_holders(Chars_holder *data_holders,
 		data_holders[col_idx].length = data_len;
 		col_idx++;
 		if (col_idx == GFF_NCOL)
-			break; 
+			break;
 		data = line + i;
 		data_len = 0;
 	}
@@ -951,9 +910,13 @@ static const char *parse_GFF_line(const char *line, int lineno,
 	{
 		data = data_holder->ptr;
 		data_len = data_holder->length;
-		if (ans != R_NilValue && colmap0[col_idx] != NA_INTEGER)
-			load_data(data, data_len,
-				  ans, *row_idx, col_idx, colmap0);
+		if (ans != R_NilValue && colmap0[col_idx] != NA_INTEGER) {
+			errmsg = load_data(data, data_len,
+					   ans, *row_idx, col_idx, colmap0,
+					   lineno);
+			if (errmsg != NULL)
+				return errmsg;
+		}
 		if (col_idx != ATTRIBUTES_IDX)
 			continue;
 		switch (*attrcol_fmt) {
@@ -1054,7 +1017,7 @@ static const char *parse_GFF_file(SEXP filexp, int *attrcol_fmt,
 		if (*nrows >= 0 && row_idx == *nrows)
 			return NULL;
 		c = buf[0];
-		if (c == '#') 
+		if (c == '#')
 			continue;
 		if (c == '\n' || (c == '\r' && buf[1] == '\n'))
 			continue;  /* skip empty line */
@@ -1148,7 +1111,7 @@ SEXP scan_gff(SEXP filexp, SEXP attrcol_fmt, SEXP tags,
  * Perform the 2nd pass of readGFF().
  * Args:
  *   filexp:      MUST be the same as passed to scan_gff().
- *   attrcol_fmt: 
+ *   attrcol_fmt:
  *   tags:        A character vector indicating which tags to load. Unlike for
  *                scan_gff() above, it cannot be NULL.
  *   filter:      MUST be the same as passed to scan_gff(). This time we
