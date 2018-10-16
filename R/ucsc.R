@@ -656,7 +656,7 @@ setMethod("getTable", "UCSCSession",
           })
 
 ## UCSC genome view
-setClass("UCSCView", representation(hgsid = "character"),
+setClass("UCSCView", representation(hgsid = "character", form = "list"),
          contains = "BrowserView")
 
 ## create a view for the given session, position and track visibility settings
@@ -664,8 +664,9 @@ setClass("UCSCView", representation(hgsid = "character"),
 ## assumed to name the tracks that should be in the view. otherwise, an
 ## attempt is made to coerce it to a UCSCTrackModes instance.
 setMethod("browserView", "UCSCSession",
-          function(object, range, track, imagewidth = 800, ...)
+          function(object, range, track, imagewidth = 800, browse = TRUE, ...)
           {
+            stopifnot(isTRUEorFALSE(browse))
             form <- list()
             if (!missing(range)) {
               if (is(range, "IntegerRangesList"))
@@ -704,13 +705,20 @@ setMethod("browserView", "UCSCSession",
             modes <- modes[modes != origModes]
             form <- c(form, ucscForm(modes), ucscForm(view))
             if (!missing(imagewidth))
-              form <- c(form, pix = imagewidth)
-            ## launch a web browser
-            ucscShow(object, "tracks", form)
+                form <- c(form, pix = imagewidth)
+            if (browse) {
+                ## launch a web browser
+                ucscShow(object, "tracks", form)
+            }
+            view@form <- form
             ## save this view
             object@views$instances <- c(object@views$instances, view)
             view
           })
+
+viewURL <- function(x) {
+    urlForm(ucscURL(browserSession(x), "tracks"), x@form)
+}
 
 # every view has a "mode" (hide, dense, pack, squish, full) for each track
 ### FIXME: probably should be merged with ucscTracks
