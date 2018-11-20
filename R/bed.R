@@ -153,7 +153,7 @@ setMethod("export", c("GenomicRanges", "BEDFile"),
                 strand <- rep(NA, length(object))
               }
               if (!is.null(strand) && is.null(score))
-                score <- 0
+                score <- rep(0, length(object))
               name <- object$name
               if (is.null(name))
                 name <- names(object)
