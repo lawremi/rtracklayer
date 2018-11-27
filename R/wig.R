@@ -99,7 +99,8 @@ setMethod("export", c("GenomicRanges", "WIGFile"),
               fixedSpan <- all(spans[1] == spans)
               if (!fixedSpan)
                 stop("The span must be uniform for Wiggle export. ",
-                     "Consider bedGraph or bigWig as alternatives.")
+                     "Consider exporting to bedGraph/bigWig, ",
+                     "or coerce data to a GPos object first.")
               fixedStep <- all(steps[1] == steps)
               if (dataFormat == "auto") {
                 dataFormat <- "variableStep"
