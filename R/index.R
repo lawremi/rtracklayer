@@ -31,15 +31,15 @@ setMethod("queryForResource", "RTLFile", function(x, which = NULL, ...) {
 })
 
 setMethod("queryForResource", "TabixFile",
-          function(x, which, header = TRUE, ...) {
+          function(manager, x, which, header = TRUE, ...) {
             tabixHeader <- headerTabix(x)
             si <- Seqinfo(tabixHeader$seqnames)
             if (is.null(which)) {
-              buffer <- connectionForResource(path(x), "r")
+              buffer <- connectionForResource(manager, path(x), "r")
               if (!header)
                 readLines(buffer, tabixHeader$skip)
             } else {
-              buffer <- manage(file())
+              buffer <- manage(manager, file())
               if (header) {
                 skippedLines <- readLines(path(x), tabixHeader$skip)
                 writeLines(skippedLines, buffer)
@@ -51,9 +51,9 @@ setMethod("queryForResource", "TabixFile",
             structure(buffer, usedWhich = TRUE, seqinfo = si)
           })
 
-queryForConnection <- function(x, which = NULL, ...) {
-  resource <- queryForResource(x, which = which, ...)
-  con <- connectionForResource(resource, open = "r")
+queryForConnection <- function(manager, x, which = NULL, ...) {
+  resource <- queryForResource(manager, x, which = which, ...)
+  con <- connectionForResource(manager, resource, open = "r")
   structure(con, usedWhich = attr(resource, "usedWhich"))
 }
 

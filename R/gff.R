@@ -442,7 +442,9 @@ setMethod("asGTF", "GRangesList",
 ###
 
 scanGFFDirectives <- function(con, tag = NULL) {
-  con <- connection(con, "r")
+  m <- manager()
+  con <- connection(m, con, "r")
+  on.exit(release(m, con))
   directives <- character()
   lines <- line <- readLines(con, n = 1)
   while(grepl("^#", line)) {
@@ -476,7 +478,9 @@ gffComment <- function(con, ...)
   cat("##", paste(...), "\n", sep = "", file = con, append = TRUE)
 
 .sniffGFFVersion <- function(con) {
-  con <- connectionForResource(con, "r")
+  m <- manager()
+  con <- connectionForResource(m, con, "r")
+  on.exit(release(m, con))
   version <- NULL
   lines <- line <- readLines(con, n = 1)
   while(grepl("^#", line)) {

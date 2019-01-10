@@ -1344,13 +1344,12 @@ setMethod("export", c("UCSCData", "UCSCFile"),
               trackLine <- object@trackLine
             }
             file <- con
-            con <- connection(con, if (append) "a" else "w")
-            on.exit(release(con))
+            m <- manager()
+            con <- connection(m, con, if (append) "a" else "w")
+            on.exit(release(m, con))
             cat(as(object@trackLine, "character"), "\n", file=con, sep = "")
-            do.call(export, c(list(as(object, "GRanges"), unmanage(con),
-                                   subformat),
+            do.call(export, c(list(as(object, "GRanges"), con, subformat),
                               args[!lineArgs], trackLine = trackLine))
-            release(con)
             if (index)
               indexTrack(FileForFormat(resource(file), subformat), skip = 1L)
             else invisible(file)

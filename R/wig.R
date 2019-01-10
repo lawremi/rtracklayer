@@ -39,8 +39,9 @@ setMethod("export", c("ANY", "WIGFile"),
           })
 
 .wigWriter <- function(chromData, con, dataFormat, append) {
-  con <- connection(con, if (append) "a" else "w")
-  on.exit(release(con))
+  m <- manager()
+  con <- connection(m, con, if (append) "a" else "w")
+  on.exit(release(m, con))
   cat(dataFormat, file = con)
   cat(" chrom=", as.character(seqnames(chromData)[1]), file = con, sep = "")
   data <- score(chromData)
@@ -153,7 +154,9 @@ setMethod("import", "WIGFile",
             if (!missing(format))
               checkArgFormat(con, format)
             file <- con
-            con <- connection(con, "r")
+            m <- manager()
+            con <- connection(m, con, "r")
+            on.exit(release(m, con))
             ## check for a track line
             line <- scanTrackLine(con)
             if (!is.null(line) && trackLine) {

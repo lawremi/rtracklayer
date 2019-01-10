@@ -11,20 +11,21 @@ setClass("CompressedFile", contains = c("RTLFile", "VIRTUAL"))
 setGeneric("decompress",
            function(con, ...) standardGeneric("decompress"))
 
-setMethod("decompress", "ANY", function(con, ...) con)
+setMethod("decompress", "ANY", function(manager, con, ...) con,
+          signature="con")
 
-setMethod("decompress", "CompressedFile", function(con, ...) {
+setMethod("decompress", "CompressedFile", function(manager, con, ...) {
   resource <- resource(con)
   if (is.character(resource))
-    manage(gzfile(resource)) # handles gzip, bzip2 and xz
+    manage(manager, gzfile(resource)) # handles gzip, bzip2 and xz
   else stop("Cannot decompress connection")
 })
 
 setMethod("decompress", "character",
-          function(con, ...) {
+          function(manager, con, ...) {
             file <- try(FileForFormat(con), silent = TRUE)
             if (!is(file, "try-error")) {
-              decompressed <- decompress(file)
+              decompressed <- decompress(manager, file)
               if (!identical(file, decompressed))
                 con <- decompressed
             }
@@ -64,18 +65,19 @@ GZFile <- function(resource) {
   new("GZFile", resource = resource)
 }
 
-setMethod("decompress", "GZFile", function(con) {
-  ungzip(resource(con))
+setMethod("decompress", "GZFile", function(manager, con) {
+  ungzip(manager, resource(con))
 })
 
-setGeneric("ungzip", function(x, ...) standardGeneric("ungzip"))
+setGeneric("ungzip", function(manager, x, ...) standardGeneric("ungzip"),
+           signature="x")
 
-setMethod("ungzip", "character", function(x) {
+setMethod("ungzip", "character", function(manager, x) {
   uri <- .parseURI(x)
   if (uri$scheme != "" && uri$scheme != "file")
     con <- gzcon(url(x, open="rb"), text=TRUE)
   else con <- gzfile(uri$path)
-  manage(con)
+  manage(manager, con)
 })
 
 setMethod("ungzip", "connection", function(x) {

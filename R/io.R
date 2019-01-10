@@ -18,10 +18,15 @@ setClass("RTLFileList",
          prototype = prototype(elementType = "RTLFile"),
          contains = "SimpleList")
 
+.ConnectionManager <- setRefClass("ConnectionManager",
+                                  fields = c(connections = "list"))
+
+manager <- function() .ConnectionManager()
+
 resource <- function(x) x@resource
 
-connection <- function(x, open = "") {
-  connectionForResource(resource(x), open = open)
+connection <- function(manager, x, open = "") {
+  connectionForResource(manager, resource(x), open = open)
 }
 
 resourceDescription <- function(x) {
@@ -194,13 +199,19 @@ setMethod("bestFileFormat", c("IntegerRangesList", "ANY"), function(x, dest) {
   "bed" # just ranges...
 })
 
-## Uses XML::parseURI, except first checks for Windows drive letter.
+## First checks for Windows drive letter.
 ## There are no known URI schemes that are only a single character.
+isURL <- function(uri) {
+    if (!isSingleString(uri))
+        return(FALSE)
+    windowsDriveLetter <- .Platform$OS.type == "windows" &&
+        grepl("^[A-Za-z]:[/\\]", uri)
+    grepl("^[A-Za-z]+:", uri) && !windowsDriveLetter
+}
+
+## Uses XML::parseURI, except custom check for whether it is a URL
 .parseURI <- function(uri) {
-  windowsDriveLetter <- .Platform$OS.type == "windows" &&
-      grepl("^[A-Za-z]:[/\\]", uri)
-  hasScheme <- grepl("^[A-Za-z]+:", uri) && !windowsDriveLetter
-  if (!hasScheme) {
+  if (!isURL(uri)) {
     parsed <- parseURI("")
     parsed$path <- uri
   } else {
@@ -260,8 +271,8 @@ checkArgFormat <- function(con, format) {
     stop("Cannot treat a '", class(con), "' as format '", format, "'")
 }
 
-connectionForResource <- function(x, open = "") {
-  resource <- decompress(x)
+connectionForResource <- function(manager, x, open = "") {
+  resource <- decompress(manager, x)
   if (is.character(resource)) {
     if (!nzchar(resource))
       stop("path cannot be an empty string")
@@ -272,39 +283,63 @@ connectionForResource <- function(x, open = "") {
   } else con <- resource
   if (!isOpen(con) && nzchar(open)) {
       open(con, open)
-      con <- manage(con)
+      con <- manage(manager, con)
   }
   con
 }
 
 ## Connection management (similar to memory management)
 
-manage <- function(con) {
-  if (!is.null(attr(con, "finalizerEnv")))
-    return(con)
-  env <- new.env()
-  finalizer <- function(obj) {
-    if (exists("con", parent.env(environment()), inherits=FALSE)) {
-      close(con)
-      rm(con, inherits = TRUE)
-      TRUE
-    } else FALSE
-  }
-  env$finalizer <- finalizer
-  reg.finalizer(env, finalizer)
-  attr(con, "finalizerEnv") <- env
-  rm(env)
-  con
+manage <- function(manager, con) {
+    manager$connections <- unique(c(manager$connections, list(con)))
+    attr(con, "manager") <- manager
+    con
 }
 
-unmanage <- function(con) {
-  attr(con, "finalizerEnv") <- NULL
-  con
+managed <- function(manager, con) {
+    con %in% manager$connections
 }
 
-release <- function(con) {
-  env <- attr(con, "finalizerEnv")
-  if (!is.null(env))
-    env$finalizer()
-  else FALSE
+unmanage <- function(manager, con) {
+    manager$connections <- setdiff(manager$connections, con)
+    attr(con, "manager") <- NULL
+    con
 }
+
+release <- function(manager, con) {
+    if (managed(manager, con)) {
+        unmanage(manager, con)
+        close(con)
+    }
+    con
+}
+
+## manage <- function(con) {
+##   if (!is.null(attr(con, "finalizerEnv")))
+##     return(con)
+##   env <- new.env()
+##   finalizer <- function(obj) {
+##     if (exists("con", parent.env(environment()), inherits=FALSE)) {
+##       close(con)
+##       rm(con, inherits = TRUE)
+##       TRUE
+##     } else FALSE
+##   }
+##   env$finalizer <- finalizer
+##   reg.finalizer(env, finalizer)
+##   attr(con, "finalizerEnv") <- env
+##   rm(env)
+##   con
+## }
+
+## unmanage <- function(con) {
+##   attr(con, "finalizerEnv") <- NULL
+##   con
+## }
+
+## release <- function(con) {
+##   env <- attr(con, "finalizerEnv")
+##   if (!is.null(env))
+##     env$finalizer()
+##   else FALSE
+## }

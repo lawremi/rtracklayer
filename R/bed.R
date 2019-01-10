@@ -179,8 +179,9 @@ setMethod("export", c("GenomicRanges", "BEDFile"),
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
             file <- con
-            con <- connection(con, if (append) "a" else "w")
-            on.exit(release(con), add=TRUE)
+            m <- manager()
+            con <- connection(m, con, if (append) "a" else "w")
+            on.exit(release(m, con), add=TRUE)
             write.table(df, con, sep = "\t", col.names = FALSE,
                         row.names = FALSE, quote = FALSE, na = ".")
             release(con)
@@ -225,7 +226,9 @@ setMethod("import.bed", "ANY",
           })
 
 scanTrackLine <- function(con) {
-  con <- connectionForResource(con, "r")
+  m <- manager()
+  con <- connectionForResource(m, con, "r")
+  on.exit(release(m, con))
   line <- "#"
   while(length(grep("^ *#", line))) # skip initial comments
     line <- readLines(con, 1, warn = FALSE)
@@ -245,7 +248,9 @@ setMethod("import", "BEDFile",
             if (!missing(format))
               checkArgFormat(con, format)
             file <- con
-            con <- queryForConnection(con, which)
+            m <- manager()
+            con <- queryForConnection(m, con, which)
+            on.exit(release(m, con))
             if (attr(con, "usedWhich"))
                 which <- NULL
             if (is(genome, "Seqinfo")) {
@@ -641,8 +646,9 @@ setMethod("export", c("Pairs", "BEDPEFile"),
             options(scipen = 100) # prevent use of scientific notation
             on.exit(options(scipen = scipen))
             file <- con
-            con <- connection(con, if (append) "a" else "w")
-            on.exit(release(con), add=TRUE)
+            m <- manager()
+            con <- connection(m, con, if (append) "a" else "w")
+            on.exit(release(m, con), add=TRUE)
             write.table(df, con, sep = "\t", col.names = FALSE,
                         row.names = FALSE, quote = FALSE, na = ".")
             release(con)

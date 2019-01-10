@@ -43,8 +43,8 @@ setMethod("import", "ChainFile", function(con, format, text, exclude = "_") {
   if (!missing(format))
     checkArgFormat(con, format)
   ### FIXME: use readLines() to read the file, parse lines in C
-  if (!is(connection(con), "file")) {
-    stop("chain import currently only handles local, uncompressed files")
+  if (!isSingleString(resource(con)) || isURL(resource(con))) {
+    stop("chain import currently only handles local, uncompressed file paths")
   }
   .Call("readChain", path.expand(path(con)), as.character(exclude),
         PACKAGE="rtracklayer")
