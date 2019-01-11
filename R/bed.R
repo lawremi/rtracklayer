@@ -181,10 +181,9 @@ setMethod("export", c("GenomicRanges", "BEDFile"),
             file <- con
             m <- manager()
             con <- connection(m, con, if (append) "a" else "w")
-            on.exit(release(m, con), add=TRUE)
             write.table(df, con, sep = "\t", col.names = FALSE,
                         row.names = FALSE, quote = FALSE, na = ".")
-            release(con)
+            release(m, con)
             if (index)
               invisible(indexTrack(file))
             else invisible(file)
@@ -651,7 +650,6 @@ setMethod("export", c("Pairs", "BEDPEFile"),
             on.exit(release(m, con), add=TRUE)
             write.table(df, con, sep = "\t", col.names = FALSE,
                         row.names = FALSE, quote = FALSE, na = ".")
-            release(con)
             invisible(file)
           })
 

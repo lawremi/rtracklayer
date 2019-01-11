@@ -262,7 +262,10 @@ setMethod("import", "GFFFile",
                 }
             }
 
-            sniffed <- .sniffGFFVersion(resource(con))
+            m <- manager()
+            sniff_con <- connection(m, con, "r")
+            on.exit(release(m, sniff_con))
+            sniffed <- .sniffGFFVersion(sniff_con)
             version <- gffFileVersion(con)
             if (!length(version)) {
               if (is.null(sniffed))
@@ -289,10 +292,10 @@ setMethod("import", "GFFFile",
 
             ## Temporarily disable use of Tabix Index.
             ## TODO: Restore use of Tabix Index!
-            #con <- queryForResource(con, which)
-            con <- queryForResource(con)
-
-            ans <- readGFFAsGRanges(con,
+            #con <- queryForResource(m, con, which)
+            resource <- queryForResource(m, con)
+            on.exit(release(m, resource), add=TRUE)
+            ans <- readGFFAsGRanges(resource,
                                     version=version,
                                     colnames=colnames,
                                     filter=list(type=feature.type),
@@ -300,7 +303,7 @@ setMethod("import", "GFFFile",
                                     sequenceRegionsAsSeqinfo=
                                         sequenceRegionsAsSeqinfo,
                                     speciesAsMetadata=TRUE)
-            if (!attr(con, "usedWhich") && !is.null(which))
+            if (!attr(resource, "usedWhich") && !is.null(which))
                 ans <- subsetByOverlaps(ans, which)
             ans
           })
@@ -478,9 +481,6 @@ gffComment <- function(con, ...)
   cat("##", paste(...), "\n", sep = "", file = con, append = TRUE)
 
 .sniffGFFVersion <- function(con) {
-  m <- manager()
-  con <- connectionForResource(m, con, "r")
-  on.exit(release(m, con))
   version <- NULL
   lines <- line <- readLines(con, n = 1)
   while(grepl("^#", line)) {

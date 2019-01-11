@@ -12,8 +12,9 @@ setMethod("import", "TabixFile",
             if (missing(format)) {
                   format <- file_ext(file_path_sans_ext(path(con)))
             }
-            buffer <- queryForResource(con, which, header = header)
-            on.exit(release(buffer))
+            m <- manager()
+            buffer <- queryForResource(m, con, which, header = header)
+            on.exit(release(m, buffer))
             file <- try(FileForFormat(buffer, format), silent = TRUE)
             if (is(file, "try-error")) {
               tabixHeader <- headerTabix(con)

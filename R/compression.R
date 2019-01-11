@@ -8,11 +8,10 @@
 
 setClass("CompressedFile", contains = c("RTLFile", "VIRTUAL"))
 
-setGeneric("decompress",
-           function(con, ...) standardGeneric("decompress"))
+setGeneric("decompress", function(con, ...) standardGeneric("decompress"),
+           signature="con")
 
-setMethod("decompress", "ANY", function(manager, con, ...) con,
-          signature="con")
+setMethod("decompress", "ANY", function(manager, con, ...) con)
 
 setMethod("decompress", "CompressedFile", function(manager, con, ...) {
   resource <- resource(con)

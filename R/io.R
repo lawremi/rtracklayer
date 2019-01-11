@@ -25,6 +25,11 @@ manager <- function() .ConnectionManager()
 
 resource <- function(x) x@resource
 
+`resource<-` <- function(x, value) {
+    x@resource <- value
+    x
+}
+
 connection <- function(manager, x, open = "") {
   connectionForResource(manager, resource(x), open = open)
 }

@@ -13,19 +13,22 @@
 ## flexibility.
 
 setGeneric("queryForResource",
-           function(x, which = NULL, ...) standardGeneric("queryForResource"))
+           function(manager, x, which = NULL, ...)
+               standardGeneric("queryForResource"),
+           signature="x")
 
 ## Attaches 'usedWhich' attribute, an optimization hint indicating
 ## that subsetting by 'which' has been performed and is no longer
 ## necessary. Probably premature.
 
-setMethod("queryForResource", "RTLFile", function(x, which = NULL, ...) {
+setMethod("queryForResource", "RTLFile", function(manager, x, which = NULL, ...)
+{
   r <- resource(x)
   ans <- structure(r, usedWhich = FALSE)
   if (!is.null(which) && is.character(r)) {
     x_tbi <- paste(r, "tbi", sep = ".")
     if (file.exists(x_tbi))
-      ans <- queryForResource(TabixFile(r), which = which, ...)
+      ans <- queryForResource(manager, TabixFile(r), which = which, ...)
   }
   ans
 })
