@@ -8,7 +8,8 @@
 
 setClass("CompressedFile", contains = c("RTLFile", "VIRTUAL"))
 
-setGeneric("decompress", function(con, ...) standardGeneric("decompress"),
+setGeneric("decompress",
+           function(manager, con, ...) standardGeneric("decompress"),
            signature="con")
 
 setMethod("decompress", "ANY", function(manager, con, ...) con)
