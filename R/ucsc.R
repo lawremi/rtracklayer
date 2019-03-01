@@ -644,9 +644,10 @@ setMethod("getTable", "UCSCTableQuery",
               output <- gsub("\\n.*", "", output)
             f <- file()
             writeLines(output, f)
-            header <- readChar(f, 1) ## strip off the '#' header prefix
             tab <- read.table(f, sep = "\t", header=TRUE, comment.char = "",
                               quote = "")
+            ## strip off the '#' => 'X.' header prefix
+            colnames(tab)[1L] <- substring(colnames(tab)[1L], 3L)
             close(f)
             tab
           })
