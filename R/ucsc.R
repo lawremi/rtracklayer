@@ -66,6 +66,12 @@ normArgTrackData <- function(value, session) {
   value
 }
 
+handleError <- function(response) {
+    msg <- getNodeSet(response, "//span[text()='Error']/../text()")
+    if (length(msg) == 2L)
+        stop(sub(".*? - ", "", xmlValue(msg[[2L]])))
+}
+
 setReplaceMethod("track", c("UCSCSession", "GenomicRangesList"),
           function(object, name = names(value),
                    format = c("auto", "bed", "wig", "gff1", "bed15",
@@ -83,7 +89,7 @@ setReplaceMethod("track", c("UCSCSession", "GenomicRangesList"),
                      {
                        form <- ucscForm(tracks, format, ...)
                        response <- ucscPost(object, "custom", form)
-### FIXME: need to check for error
+                       handleError(response)
                      })
             }
             object
