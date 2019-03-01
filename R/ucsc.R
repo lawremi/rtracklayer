@@ -66,6 +66,12 @@ normArgTrackData <- function(value, session) {
   value
 }
 
+handleError <- function(response) {
+    msg <- getNodeSet(response, "//span[text()='Error']/../text()")
+    if (length(msg) == 2L)
+        stop(sub(".*? - ", "", xmlValue(msg[[2L]])))
+}
+
 setReplaceMethod("track", c("UCSCSession", "GenomicRangesList"),
           function(object, name = names(value),
                    format = c("auto", "bed", "wig", "gff1", "bed15",
@@ -83,7 +89,7 @@ setReplaceMethod("track", c("UCSCSession", "GenomicRangesList"),
                      {
                        form <- ucscForm(tracks, format, ...)
                        response <- ucscPost(object, "custom", form)
-### FIXME: need to check for error
+                       handleError(response)
                      })
             }
             object
@@ -644,9 +650,10 @@ setMethod("getTable", "UCSCTableQuery",
               output <- gsub("\\n.*", "", output)
             f <- file()
             writeLines(output, f)
-            header <- readChar(f, 1) ## strip off the '#' header prefix
             tab <- read.table(f, sep = "\t", header=TRUE, comment.char = "",
                               quote = "")
+            ## strip off the '#' => 'X.' header prefix
+            colnames(tab)[1L] <- substring(colnames(tab)[1L], 3L)
             close(f)
             tab
           })
@@ -922,8 +929,7 @@ setAs("TrackLine", "character",
           str <- paste(str, " visibility=", vis, sep="")
         color <- from@color
         if (length(color))
-            str <- paste0(str, " color=",
-                          paste0("\"", color, "\"", collapse=","))
+            str <- paste0(str, " color=\"", paste0(color, collapse=","), "\"")
         priority <- from@priority
         if (length(priority))
           str <- paste(str, " priority=", priority, sep="")
