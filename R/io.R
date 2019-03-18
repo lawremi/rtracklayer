@@ -18,6 +18,10 @@ setClass("RTLFileList",
          prototype = prototype(elementType = "RTLFile"),
          contains = "SimpleList")
 
+RTLFileList <- function(files) {
+    new("RTLFileList", listData = files)
+}
+
 .ConnectionManager <- setRefClass("ConnectionManager",
                                   fields = c(connections = "list"))
 

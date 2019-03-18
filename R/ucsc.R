@@ -1243,11 +1243,13 @@ setMethod("export", c("GenomicRangesList", "UCSCFile"),
             ucsc <- unlist(lapply(object, is, "UCSCData"))
             lines <- unlist(lapply(object[ucsc], slot, "trackLine"))
             trackNames[ucsc] <- as.character(sapply(lines, slot, "name"))
+            tracks <- vector("list", length(object))
             for (i in seq_len(length(object))) {
-              export(object[[i]], con, name = trackNames[i],
-                     append = append, index = index, ...)
+              tracks[[i]] <- export(object[[i]], con, name = trackNames[i],
+                                    append = append, index = index, ...)
               append <- TRUE
             }
+            RTLFileList(tracks)
           })
 
 trackLineClass <- function(subformat)
