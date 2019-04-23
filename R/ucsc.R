@@ -307,6 +307,14 @@ setMethod("ucscTableQuery", "UCSCSession",
             query
           })
 
+setMethod("ucscTableQuery", "character",
+          function(x, ...) {
+              stopifnot(isSingleString(x))
+              session <- browserSession()
+              genome(session) <- x
+              ucscTableQuery(session, ...)
+          })
+
 ucscTableGet <- function(query, .parse = TRUE, tracks = FALSE, ...)
   ucscGet(browserSession(query), "tables",
           c(ucscForm(query, tracks = tracks), ...), .parse = .parse)

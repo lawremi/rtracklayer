@@ -34,6 +34,7 @@
 % Constructor:
 \alias{ucscTableQuery}
 \alias{ucscTableQuery,UCSCSession-method}
+\alias{ucscTableQuery,character-method}
 
 % Show:
 \alias{show,UCSCTableQuery-method}
@@ -96,7 +97,8 @@
     \item{}{
       \code{ucscTableQuery(x, track, range = seqinfo(x), table = NULL,
         names = NULL)}: Creates a \code{UCSCTableQuery} with the
-        \code{UCSCSession} given as \code{x} and the track name given by
+        \code{UCSCSession} or genome identifier given as \code{x} and
+        the track name given by
         the single string \code{track}. \code{range} should be a genome
         string identifier, a \code{GRanges} instance or
         \code{IntegerRangesList} instance, and it effectively defaults to
