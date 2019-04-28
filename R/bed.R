@@ -242,7 +242,8 @@ scanTrackLine <- function(con) {
 setMethod("import", "BEDFile",
           function(con, format, text, trackLine = TRUE,
                    genome = NA, colnames = NULL,
-                   which = NULL, seqinfo = NULL, extraCols = character())
+                   which = NULL, seqinfo = NULL, extraCols = character(),
+                   sep = "\t")
           {
             if (!missing(format))
               checkArgFormat(con, format)
@@ -327,8 +328,8 @@ setMethod("import", "BEDFile",
               bed <- DataFrame(read.table(con, colClasses = bedClasses,
                                           as.is = TRUE, na.strings = ".",
                                           comment.char = "",
-                                          sep = "\t",
-                                          quote = "\""))
+                                          sep = sep,
+                                          quote = ""))
             } else {
               if (is.null(colnames))
                 colnames <- character()

@@ -68,7 +68,8 @@
 \usage{
 \S4method{import}{BEDFile,ANY,ANY}(con, format, text, trackLine = TRUE,
                    genome = NA, colnames = NULL,
-                   which = NULL, seqinfo = NULL, extraCols = character())
+                   which = NULL, seqinfo = NULL, extraCols = character(),
+                   sep = "\t")
 import.bed(con, ...)
 import.bed15(con, ...)
 import.bedGraph(con,  ...)
@@ -155,6 +156,11 @@ export.bedGraph(object, con, ...)
     file. As BED does not encode column names, these are assumed to be
     the last columns in the file. This enables parsing of the various
     BEDX+Y formats.
+  }
+  \item{sep}{A character vector with a single character indicating the
+    field separator, like \code{read.table}. This defaults to
+    \code{"\t"}, as BEDtools requires, but BED files are also allowed to
+    be whitespace separated (\code{""}) according to the UCSC spec.
   }
   \item{append}{If \code{TRUE}, and \code{con} points to a file path,
     the data is appended to the file. Obviously, if \code{con} is a
