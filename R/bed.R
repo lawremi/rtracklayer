@@ -243,10 +243,11 @@ setMethod("import", "BEDFile",
           function(con, format, text, trackLine = TRUE,
                    genome = NA, colnames = NULL,
                    which = NULL, seqinfo = NULL, extraCols = character(),
-                   sep = "\t")
+                   sep = c("\t", ""))
           {
             if (!missing(format))
               checkArgFormat(con, format)
+            sep <- match.arg(sep)
             file <- con
             m <- manager()
             con <- queryForConnection(m, con, which)
@@ -305,7 +306,8 @@ setMethod("import", "BEDFile",
               `tail<-` <- function(x, n, value)
                 if (n != 0) c(head(x, -n), value) else x
               pushBack(line, con)
-              colsInFile <- seq_len(length(strsplit(line, "\\s+")[[1]]))
+              pattern <- if (sep == "") "\\s+" else "\\t"
+              colsInFile <- seq_len(length(strsplit(line, pattern)[[1L]]))
               presentNames <- bedNames[colsInFile]
               lacksNames <- is.null(names(extraCols)) ||
                   any(names(extraCols) == "") ||

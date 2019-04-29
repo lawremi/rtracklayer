@@ -69,7 +69,7 @@
 \S4method{import}{BEDFile,ANY,ANY}(con, format, text, trackLine = TRUE,
                    genome = NA, colnames = NULL,
                    which = NULL, seqinfo = NULL, extraCols = character(),
-                   sep = "\t")
+                   sep = c("\t", ""))
 import.bed(con, ...)
 import.bed15(con, ...)
 import.bedGraph(con,  ...)
