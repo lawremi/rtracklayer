@@ -1,6 +1,5 @@
 \name{browseGenome}
 \alias{browseGenome}
-\alias{GenomicRanges_OR_GenomicRangesList-class}
 \alias{browseGenome,GenomicRanges_OR_GenomicRangesList-method}
 \alias{browseGenome,missing-method}
 \title{ Browse a genome }

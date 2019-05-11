@@ -89,8 +89,9 @@ test_wig <- function() {
                                                      name = "test2"))
   export(correct_ucsc2, test_wig_out_file, append = TRUE)
   test <- import(test_wig_out_file)
-  correct_list <- GenomicRangesList(test = correct_ucsc,
-                                    test2 = correct_ucsc2)
+  correct_list <- GRangesList(test = correct_ucsc,
+                              test2 = correct_ucsc2,
+                              compress = FALSE)
   checkIdentical(correct_list, test)
 
   ## TEST: track line parameters

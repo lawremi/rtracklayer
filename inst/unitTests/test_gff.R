@@ -200,14 +200,14 @@ test_gff <- function() {
   test <- import(test_gff_bgz, which = which)
   checkIdentical(which_target, test)
 
-  ## TEST: GenomicRangesList
-  correct_grl <-
-    GenomicRangesList(new("UCSCData", keepSeqlevels(correct_gff3, "chr10",
-                                                    pruning.mode="coarse"),
-                          trackLine = new("BasicTrackLine", name = "chr10")),
-                      new("UCSCData", keepSeqlevels(correct_gff3, "chr12",
-                                                    pruning.mode="coarse"),
-                          trackLine = new("BasicTrackLine", name = "chr12")))
+  ## TEST: SimpleGRangesList
+  ucsc_data1 <- new("UCSCData", keepSeqlevels(correct_gff3, "chr10",
+                                              pruning.mode="coarse"),
+                    trackLine = new("BasicTrackLine", name = "chr10"))
+  ucsc_data2 <- new("UCSCData", keepSeqlevels(correct_gff3, "chr12",
+                                              pruning.mode="coarse"),
+                    trackLine = new("BasicTrackLine", name = "chr12"))
+  correct_grl <- GRangesList(ucsc_data1, ucsc_data2, compress=FALSE)
   mcols(correct_grl[[2]])$genome <- NULL
   names(correct_grl) <- seqlevels(correct_gff3)
   export(correct_grl, test_gff3_out)

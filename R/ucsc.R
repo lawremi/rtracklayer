@@ -72,7 +72,7 @@ handleError <- function(response) {
         stop(sub(".*? - ", "", xmlValue(msg[[2L]])))
 }
 
-setReplaceMethod("track", c("UCSCSession", "GenomicRangesList"),
+setReplaceMethod("track", c("UCSCSession", "SimpleGRangesList"),
           function(object, name = names(value),
                    format = c("auto", "bed", "wig", "gff1", "bed15",
                      "bedGraph"), ..., value)
@@ -1191,19 +1191,29 @@ setAs("GRanges", "UCSCData", function(from) {
   new("UCSCData", as(from, "GRanges"), trackLine = line)
 })
 
-setAs("UCSCData", "GRanges", function(from) {
-  gr <- new("GRanges")
-  for (what in slotNames(gr))
-    slot(gr, what) <- slot(from, what)
-  metadata(gr)$trackLine <- from@trackLine
-  gr
+## We want 'as(UCSCData, "GRanges", strict=FALSE)' to do the right thing (i.e.
+## be a no-op) but as() won't do that if a coerce,UCSCData,GRanges method
+## exists (this is a serious flaw in as() current design/implementation).
+## The workaround is to support the 'strict=FALSE' case at the level of
+## the coerce() method but setAs() doesn't let us do that so we use
+## setMethod("coerce", ...) to define the method.
+setMethod("coerce", c("UCSCData", "GRanges"),
+  function(from, to="GRanges", strict=TRUE) {
+  if (strict) {
+    gr <- new("GRanges")
+    for (what in slotNames(gr))
+      slot(gr, what) <- slot(from, what)
+    metadata(gr)$trackLine <- from@trackLine
+    gr
+  } else from
 })
 
 splitUCSCData <- function(x, f, drop=FALSE, ...) {
-  GenomicRangesList(
+  GRangesList(
     lapply(split(seq_along(x), f, drop=drop, ...),
-           function(i) x[i])
-    )
+           function(i) x[i]),
+    compress=FALSE
+  )
 }
 
 setMethod("split", "UCSCData", splitUCSCData)
@@ -1236,11 +1246,11 @@ setMethod("export.ucsc", c("ANY", "ANY"),
             export(object, con, "ucsc", ...)
           })
 
-.export_GenomicRangesList_RTLFile <- function(object, con, format, ...) {
+.export_SimpleGRangesList_RTLFile <- function(object, con, format, ...) {
   export(object, UCSCFile(resource(con)), subformat = fileFormat(con), ...)
 }
 
-setMethod("export", c("GenomicRangesList", "UCSCFile"),
+setMethod("export", c("GRangesList", "UCSCFile"),
           function(object, con, format, append = FALSE, index = FALSE, ...)
           {
             if (isTRUE(index) && length(object) > 1)
@@ -1285,7 +1295,7 @@ setMethod("export", c("ANY", "UCSCFile"),
             cl <- class(object)
             track <- try(as(object, "GRanges"), silent = TRUE)
             if (class(track) == "try-error") {
-              track <- try(as(object, "GenomicRangesList"), silent = TRUE)
+              track <- try(as(object, "SimpleGRangesList"), silent = TRUE)
               if (is(track, "try-error"))
                 stop("cannot export object of class '", cl, "': ", track)
             }
@@ -1451,7 +1461,7 @@ setMethod("import", "UCSCFile",
               names(tsets) <- trackNames
             if (drop && length(tsets) == 1)
               return(tsets[[1]])
-            GenomicRangesList(tsets)
+            GRangesList(tsets, compress=FALSE)
           })
 
 
@@ -1672,7 +1682,7 @@ setMethod("ucscForm", "FileUploadInfo",
               form <- c(form, db = genome)
             form
           })
-setMethod("ucscForm", "GenomicRangesList",
+setMethod("ucscForm", "SimpleGRangesList",
           function(object, format, ...)
           {
             lines <- export(object, format = "ucsc", subformat = format, ...)

@@ -31,7 +31,7 @@ setMethod("export", c("ANY", "WIGFile"),
             cl <- class(object)
             track <- try(as(object, "GRanges"), silent = TRUE)
             if (class(track) == "try-error") {
-              track <- try(as(object, "GenomicRangesList"), silent = TRUE)
+              track <- try(as(object, "SimpleGRangesList"), silent = TRUE)
               if (is(track, "try-error"))
                 stop("cannot export object of class '", cl, "': ", track)
             }
@@ -132,8 +132,8 @@ setMethod("export", c("UCSCData", "WIGFile"),
             invisible(con)
           })
 
-setMethod("export", c("GenomicRangesList", "WIGFile"),
-          .export_GenomicRangesList_RTLFile)
+setMethod("export", c("SimpleGRangesList", "WIGFile"),
+          .export_SimpleGRangesList_RTLFile)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import

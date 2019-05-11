@@ -69,7 +69,7 @@ setMethod("export", c("ANY", "GFFFile"),
             export(object, con, ...)
           })
 
-setMethod("export", c("GRangesList", "GFFFile"),
+setMethod("export", c("CompressedGRangesList", "GFFFile"),
           function(object, con, format, ...)
           {
             object <- asGFF(object)
@@ -210,8 +210,8 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
             invisible(NULL)
           })
 
-setMethod("export", c("GenomicRangesList", "GFFFile"),
-          .export_GenomicRangesList_RTLFile)
+setMethod("export", c("SimpleGRangesList", "GFFFile"),
+          .export_SimpleGRangesList_RTLFile)
 
 setGeneric("export.gff1",
            function(object, con, ...) standardGeneric("export.gff1"))

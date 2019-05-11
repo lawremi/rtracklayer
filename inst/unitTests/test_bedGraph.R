@@ -86,8 +86,9 @@ test_bedGraph <- function() {
                                                      name = "test2"))
   export(correct_ucsc2, test_bg_out_file, append = TRUE)
   test <- import(test_bg_out_file)
-  correct_list <- GenomicRangesList("bedGraph track" = correct_ucsc,
-                                    test2 = correct_ucsc2)
+  correct_list <- GRangesList("bedGraph track" = correct_ucsc,
+                              test2 = correct_ucsc2,
+                              compress = FALSE)
   checkIdentical(correct_list, test)
 
   ## TEST: track line parameters
@@ -100,7 +101,7 @@ test_bedGraph <- function() {
   test <- import(test_bg_out)
   checkIdentical(test, correct_gr)
   
-  ## TEST: GenomicRangesList
+  ## TEST: SimpleGRangesList
   export(correct_list, test_bg_out)
   test <- import(test_bg_out)
   checkIdentical(correct_list, test)

@@ -14,7 +14,8 @@ setReplaceMethod("track", c("TrackDb", "ANY"),
                  function(object, name = deparse(substitute(value)), ..., value)
                  {
                    track(object, name, ...) <-
-                     GenomicRangesList(as(value, "GRanges", strict = FALSE))
+                     GRangesList(as(value, "GRanges", strict = FALSE),
+                                 compress=FALSE)
                    object
                  })
 

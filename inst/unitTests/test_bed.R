@@ -132,8 +132,9 @@ test_bed <- function() {
                                                      name = "ItemRGBDemo2"))
   export(correct_ucsc2, test_bed_out_file, append = TRUE)
   test <- import(test_bed_out_file)
-  correct_list <- GenomicRangesList(ItemRGBDemo = correct_ucsc,
-                                    ItemRGBDemo2 = correct_ucsc2)
+  correct_list <- GRangesList(ItemRGBDemo = correct_ucsc,
+                              ItemRGBDemo2 = correct_ucsc2,
+                              compress=FALSE)
   checkIdentical(correct_list, test)
 
   export(correct_ucsc, test_bed_out, name = "ItemRGBDemo2")

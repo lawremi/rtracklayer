@@ -134,10 +134,7 @@ setGeneric("browseGenome",
            standardGeneric("browseGenome"))
 
 setMethod("browseGenome", "missing",
-          function(object, ...) browseGenome(GenomicRangesList(), ...))
-
-setClassUnion("GenomicRanges_OR_GenomicRangesList",
-              c("GenomicRanges", "GenomicRangesList"))
+          function(object, ...) browseGenome(GRangesList(compress=FALSE), ...))
 
 setMethod("browseGenome", "GenomicRanges_OR_GenomicRangesList",
           function(object, browser = "UCSC",
