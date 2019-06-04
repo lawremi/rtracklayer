@@ -136,6 +136,13 @@ setMethod("liftOver", c("GenomicRanges", "Chain"),
             setNames(split(lifted, f), names(x))
           })
 
+setMethod("liftOver", c("GRangesList", "Chain"),
+          function(x, chain)
+          {
+              lifted <- liftOver(unlist(x), chain)
+              IRanges:::regroupBySupergroup(lifted, PartitioningByEnd(x))
+          })
+
 setMethod("liftOver", c("ANY", "ANY"),
           function(x, chain) {
     chain <- as(chain, "Chain")
