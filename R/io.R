@@ -22,6 +22,10 @@ RTLFileList <- function(files) {
     new("RTLFileList", listData = files)
 }
 
+setMethod("showAsCell", "RTLFileList", function(object) {
+    showAsCell(vapply(object, path, character(1L)))
+})
+
 .ConnectionManager <- setRefClass("ConnectionManager",
                                   fields = c(connections = "list"))
 
@@ -45,9 +49,12 @@ resourceDescription <- function(x) {
   r
 }
 
-fileFormat <- function(x) {
-  tolower(sub("File$", "", class(x)))
-}
+setGeneric("fileFormat", function(x) NULL)
+
+setMethod("fileFormat", "character", function(x) fileFormat(FileForFormat(x)))
+
+setMethod("fileFormat", "RTLFile", function(x)
+    tolower(sub("File$", "", class(x))))
 
 setMethod("path", "RTLFile", function(object) {
   r <- resource(object)

@@ -97,7 +97,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               nrow, formatDescription,
               referenceSequence, "referenceSequence<-",
               asBED, asGFF,
-              split,
+              split, fileFormat,
               ## from IRanges
               start, end, "start<-", "end<-",
               score, "score<-",

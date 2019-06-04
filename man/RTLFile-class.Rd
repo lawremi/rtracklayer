@@ -12,6 +12,10 @@
 \alias{path}
 \alias{path,RTLFile-method}
 \alias{resource}
+\alias{fileFormat}
+\alias{fileFormat,RTLFile-method}
+\alias{fileFormat,CompressedFile-method}
+\alias{fileFormat,character-method}
 
 %% Show:
 \alias{show,RTLFile-method}
@@ -45,6 +49,11 @@
       \code{resource(x)}:
       Gets the low-level resource, either a character vector (a path or
       URL) or a connection.
+    }
+    \item{}{
+      \code{fileFormat(x)}: Gets a string identifying the file
+      format. Can also be called directly on a character file path, in
+      which case it uses a heuristic based on the file extension.
     }
   }
 }

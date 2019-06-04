@@ -1280,8 +1280,6 @@ trackLineClass <- function(subformat)
   else "BasicTrackLine"
 }
 
-setGeneric("fileFormat", function(x) standardGeneric("fileFormat"))
-
 setMethod("fileFormat", "TrackLine", function(x) "bed")
 setMethod("fileFormat", "GraphTrackLine", function(x) x@type)
 

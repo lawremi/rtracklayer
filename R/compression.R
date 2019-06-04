@@ -32,13 +32,16 @@ setMethod("decompress", "character",
             con
           })
 
+setMethod("fileFormat", "CompressedFile",
+          function(x) {
+              file_ext(file_path_sans_ext(resourceDescription(x)))
+          })
+
 ## should only happen internally (user would not give compression as format)
 setMethod("import", c("CompressedFile", "missing"),
           function(con, format, text, ...)
           {
-            desc <- resourceDescription(con)
-            con <- FileForFormat(resource(con),
-                                 file_ext(file_path_sans_ext(desc)))
+            con <- FileForFormat(resource(con), fileFormat(con))
             import(con, ...)
           })
 
