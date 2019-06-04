@@ -93,7 +93,7 @@ setMethod("export", c("GenomicRanges", "BEDFile"),
             } else {
               toCSV <- function(x) {
                 if (is(x, "IntegerList")) {
-                  x <- unlist(lapply(x, paste, collapse = ","), use.names=FALSE)
+                  x <- unstrsplit(CharacterList(x), ",")
                 } else if (!is.character(x) && !is.null(x))
                   stop("Could not convert block coordinates to CSV")
                 x
