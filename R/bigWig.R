@@ -241,7 +241,7 @@ setMethod("import", "BigWigFile",
                            as == "NumericList")
             if (as == "NumericList") {
               ans <- as(C_ans, "NumericList")
-              names(ans) <- names(which)
+              names(ans) <- seqnames(which)
               metadata(ans) <- list(ranges = as(which, "GRanges"))
               if (exists("orig_order")) {
                   ans[orig_order] <- ans
