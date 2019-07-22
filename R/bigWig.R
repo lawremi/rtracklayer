@@ -235,13 +235,14 @@ setMethod("import", "BigWigFile",
               which <- as(which, "NormalIRangesList")
             }
             which <- GRanges(which)
+            names(which) <- names(flatWhich)
             C_ans <- .Call(BWGFile_query, expandPath(path(con)),
                            as.character(seqnames(which)), ranges(which),
                            identical(colnames(selection), "score"), 
                            as == "NumericList")
             if (as == "NumericList") {
               ans <- as(C_ans, "NumericList")
-              names(ans) <- seqnames(which)
+              names(ans) <- names(which)
               metadata(ans) <- list(ranges = as(which, "GRanges"))
               if (exists("orig_order")) {
                   ans[orig_order] <- ans
