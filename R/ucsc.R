@@ -399,7 +399,7 @@ setClass("UCSCSchema",
                         tableName = "character",
                         rowCount = "integer",
                         formatDescription = "character"),
-         contains = "DataFrame")
+         contains = "DFrame")
 
 setMethod("genome", "UCSCSchema", function(x) {
   x@genome
