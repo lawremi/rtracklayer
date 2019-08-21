@@ -250,9 +250,9 @@ setMethod("import", "BigWigFile",
               ans
             } else {
               nhits <- C_ans[[3L]]
-              gr <- GRanges(rep(seqnames(which), nhits), C_ans[[1L]])
+              gr <- GRanges(rep(seqnames(which), nhits), C_ans[[1L]],
+                            seqinfo=si)
               gr$score <- C_ans[[2L]]
-              seqinfo(gr) <- si
               if (as == "RleList") {
                 coverage(gr, weight="score")
               } else {
