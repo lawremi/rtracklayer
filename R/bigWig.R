@@ -230,12 +230,12 @@ setMethod("import", "BigWigFile",
             flatWhich <- unlist(which, use.names = FALSE)
             if (is.null(flatWhich))
               flatWhich <- IRanges()
-            which <- split(flatWhich, factor(space(which), seqlevels(si)))
+            which_rl <- split(flatWhich, factor(space(which), seqlevels(si)))
             if (as != "NumericList") {
-              which <- as(which, "NormalIRangesList")
+                which_rl <- as(which, "NormalIRangesList")
             }
-            which <- GRanges(which)
-            names(which) <- names(flatWhich)
+            which <- GRanges(which_rl)
+            names(which) <- names(unlist(which_rl, use.names=FALSE))
             C_ans <- .Call(BWGFile_query, expandPath(path(con)),
                            as.character(seqnames(which)), ranges(which),
                            identical(colnames(selection), "score"), 
@@ -250,9 +250,9 @@ setMethod("import", "BigWigFile",
               ans
             } else {
               nhits <- C_ans[[3L]]
-              gr <- GRanges(rep(seqnames(which), nhits), C_ans[[1L]])
+              gr <- GRanges(rep(seqnames(which), nhits), C_ans[[1L]],
+                            seqinfo=si)
               gr$score <- C_ans[[2L]]
-              seqinfo(gr) <- si
               if (as == "RleList") {
                 coverage(gr, weight="score")
               } else {
