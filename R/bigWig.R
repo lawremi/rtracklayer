@@ -222,9 +222,10 @@ setMethod("import", "BigWigFile",
             validObject(selection)
             si <- seqinfo(con)
             which <- ranges(selection)
-            badSpaces <- setdiff(names(which), seqlevels(si))
+            badSpaces <- setdiff(names(which)[lengths(which) > 0L],
+                                 seqlevels(si))
             if (length(badSpaces) > 0L)
-              warning("'which' contains seqlevels not known to BigWig file: ",
+              warning("'which' contains seqnames not known to BigWig file: ",
                       paste(badSpaces, collapse = ", "))
             which <- which[names(which) %in% seqlevels(si)]
             flatWhich <- unlist(which, use.names = FALSE)
