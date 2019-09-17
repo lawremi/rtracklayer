@@ -243,11 +243,12 @@ setMethod("import", "BEDFile",
           function(con, format, text, trackLine = TRUE,
                    genome = NA, colnames = NULL,
                    which = NULL, seqinfo = NULL, extraCols = character(),
-                   sep = c("\t", ""))
+                   sep = c("\t", ""), na.strings=character(0L))
           {
             if (!missing(format))
               checkArgFormat(con, format)
             sep <- match.arg(sep)
+            stopifnot(is.character(na.strings), !anyNA(na.strings))
             file <- con
             m <- manager()
             con <- queryForConnection(m, con, which)
@@ -328,7 +329,8 @@ setMethod("import", "BEDFile",
               bedClasses <- ifelse(presentNames %in% colnames,
                                    presentClasses, "NULL")
               bed <- DataFrame(read.table(con, colClasses = bedClasses,
-                                          as.is = TRUE, na.strings = ".",
+                                          as.is = TRUE,
+                                          na.strings = c(".", na.strings),
                                           comment.char = "",
                                           sep = sep,
                                           quote = ""))

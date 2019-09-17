@@ -69,7 +69,7 @@
 \S4method{import}{BEDFile,ANY,ANY}(con, format, text, trackLine = TRUE,
                    genome = NA, colnames = NULL,
                    which = NULL, seqinfo = NULL, extraCols = character(),
-                   sep = c("\t", ""))
+                   sep = c("\t", ""), na.strings=character(0L))
 import.bed(con, ...)
 import.bed15(con, ...)
 import.bedGraph(con,  ...)
@@ -161,6 +161,9 @@ export.bedGraph(object, con, ...)
     field separator, like \code{read.table}. This defaults to
     \code{"\t"}, as BEDtools requires, but BED files are also allowed to
     be whitespace separated (\code{""}) according to the UCSC spec.
+  }
+  \item{na.strings}{Character vector with strings, appended to the
+    standard \code{"."}, that represent an \code{NA} value.
   }
   \item{append}{If \code{TRUE}, and \code{con} points to a file path,
     the data is appended to the file. Obviously, if \code{con} is a
