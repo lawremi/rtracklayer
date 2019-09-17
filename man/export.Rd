@@ -83,9 +83,8 @@ import(con, format, text, ...)
       represent multi-exon gene structures. It is somewhat limited by
       its lack of the attribute support of GFF. To circumvent this, many
       tools and organizations have extended BED with additional
-      columns. These are not officially valid BED files, and as such
-      rtracklayer does not yet support them (this will be addressed
-      soon). The rtracklayer package does support two official
+      columns. Use the \code{extraCols} argument on \code{import} to
+      read those columns into R. The rtracklayer package supports two official
       extensions of BED: Bed15 and bedGraph, and the unofficial BEDPE
       format, see below.  BED files can be indexed with the tabix utility
       for fast range-based queries via rtracklayer and Rsamtools.
