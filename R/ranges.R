@@ -34,7 +34,7 @@ GenomicData <- function(ranges, ..., strand = NULL, chrom = NULL, genome = NA,
   dots <- list(...)
   if (length(dots) == 1) {
     dots <- dots[[1L]]
-    if ((is(dots, "data.frame") || is(dots, "DataTable")) &&
+    if ((is(dots, "data.frame") || is(dots, "DataFrame")) &&
         !is.null(dots[["strand"]])) {
       strand <- dots[["strand"]]
       dots[["strand"]] <- NULL
