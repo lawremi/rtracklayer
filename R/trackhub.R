@@ -41,10 +41,11 @@ setMethod("genome", "TrackHub", function(x)    {
 setMethod("[[", "TrackHub", function (x, i, j, ...)    {
   if (!missing(j))
     warning("argument 'j' ignored")
+  TrackHubGenome(x, i, ...)
 })
 
 setMethod("$", "TrackHub", function (x, name)    {
-
+  TrackHubGenome(x, name)
 })
 
 setMethod("names", "TrackHub", function(x) genome(x))
@@ -73,3 +74,47 @@ TrackHub <- function(uri, create = FALSE)    {
 }
 
 setAs("character", "TrackHub", function(from) TrackHub(from))
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### TrackHubGenome class
+###
+
+setClass("TrackHubGenome",
+         representation(trackhub = "TrackHub",
+                        genome = "character"),
+         contains = "TrackDb")
+
+trackhub <- function(x, ...) x@trackhub
+trackDbFile <- function(x,y) file.path(uri(x), y)
+
+
+setMethod("genome", "TrackHubGenome", function(x) x@genome)
+
+setMethod("uri", "TrackHubGenome", function(x)
+          file.path(uri(trackhub(x)), genome(x)))
+
+setMethod("names", "TrackHubGenome", function(x)    {
+  #TODO
+  NULL
+})
+
+setMethod("length", "TrackHubGenome", function(x)    {
+  length(names(x))
+})
+
+setMethod("show", "TrackHubGenome", function(object)    {
+  cat(class(object), "track database\ngenome:", genome(object), "\ntrackhub:",
+      uri(trackhub(object)), "\n")
+  cat(S4Vectors:::labeledLine("names", names(object)))
+})
+
+TrackHubGenome <- function(trackhub, genome, create = FALSE)    {
+  if (!isTRUEorFALSE(create))
+    stop("'create' must be TRUE or FALSE")
+  trackhub <- as(trackhub, "TrackHub")
+  thg <- new("TrackHubGenome", trackhub = trackhub, genome = genome)
+  if (create)    {
+    #TODO
+  }
+  thg
+}
