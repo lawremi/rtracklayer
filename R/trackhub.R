@@ -27,15 +27,23 @@ getGenomesContent <- function(x)    {
     recordsList
 }
 
+isFileReference <- function(x)    {
+  tools::file_ext(x) == "txt"
+}
+
 hubFile <- function(x) file.path(uri(x), "hub.txt")
 genomesFile <- function(x, y) file.path(uri(x), y)
 
 setMethod("genome", "TrackHub", function(x)    {
   hubContent <- getHubContent(hubFile(x))
-  path <- genomesFile(x, hubContent["genomesFile"])
-  genomeRecordsList <- getGenomesContent(path)
-  genomes <- sapply(genomeRecordsList, function(x) x["genome"])
-  as.character(genomes)
+  genomesFileValue <- hubContent["genomesFile"]
+  if ((isFileReference(genomesFileValue) && !is.na(genomesFileValue)))    {
+    genomesFilePath <- genomesFile(x, genomesFileValue)
+    genomesRecordsList <- getGenomesContent(genomesFilePath)
+    genomes <- sapply(genomesRecordsList, function(x) x["genome"])
+    as.character(genomes)
+  }
+  else stop("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
 })
 
 setMethod("[[", "TrackHub", function (x, i, j, ...)    {
