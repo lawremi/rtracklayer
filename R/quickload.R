@@ -20,7 +20,7 @@ setMethod("genome", "Quickload", function(x) {
   as.character(structure(contents$dir, names = contents$title))
 })
 
-setMethod("names", "Quickload", genome)
+setMethod("names", "Quickload", function(x) genome(x))
 
 setMethod("length", "Quickload", function(x) length(names(x)))
 
