@@ -1,4 +1,4 @@
-test_trackhub <- function()    {
+test_trackhub <- function() {
     test_trackhub_path <- system.file("tests", "trackhub", package = "rtracklayer")
     th <- TrackHub(test_trackhub_path)
 
