@@ -51,14 +51,8 @@ setMethod("genome", "TrackHub", function(x) {
     else stop("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
 })
 
-setMethod("[[", "TrackHub", function (x, i, j, ...) {
-    if (!missing(j))
-        warning("argument 'j' ignored")
-    TrackHubGenome(x, i, ...)
-})
-
-setMethod("$", "TrackHub", function (x, name) {
-    TrackHubGenome(x, name)
+setMethod("getListElement", "TrackHub", function(x, i, exact = TRUE) {
+    TrackHubGenome(x, i)
 })
 
 setMethod("names", "TrackHub", function(x) genome(x))
