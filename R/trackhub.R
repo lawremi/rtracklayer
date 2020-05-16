@@ -6,10 +6,15 @@
 ### TrackHub class
 ###
 
+setGeneric("uri", function(x) standardGeneric("uri"))
+
 setClass("TrackHub", representation(uri = "character"),
          contains = "List")
 
-uri <- function(x, ...) x@uri
+setMethod("uri", "TrackHub", function(x) {
+    x@uri
+})
+
 
 getHubContent <- function(x) {
     content <- readLines(x, warn = FALSE)

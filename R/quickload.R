@@ -8,12 +8,14 @@
 
 setClass("Quickload", representation(uri = "character"))
 
-uri <- function(x, ...) x@uri
-
 Quickload_contents <- function(x) {
   read.table(contentsFile(x), sep = "\t", col.names = c("dir", "title"),
              colClasses = "character")
 }
+
+setMethod("uri", "Quickload", function(x) {
+    x@uri
+})
 
 setMethod("genome", "Quickload", function(x) {
   contents <- Quickload_contents(x)
