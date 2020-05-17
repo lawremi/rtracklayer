@@ -106,14 +106,46 @@ setClass("TrackHubGenome",
 trackhub <- function(x, ...) x@trackhub
 trackDbFile <- function(x,y) paste(uri(x), y, sep = "/")
 
+getTrackDbContent <- function(x) {
+    content <- readLines(x, warn = FALSE)
+    # TODO
+    # store content in right data structure
+}
+
+createTrackHubGenome <- function(x) {
+    if (genome(x) %in% genome(trackhub(x))) {
+        message("NOTE: Genome '", genome(x), "' already exists")
+        return ()
+    }
+    createResource(uri(x), dir = TRUE)
+    createResource(genomesFile(trackhub(x), genome(x)))
+    # TODO
+    # function to add reference of genome file to hub file
+    # method for creating genome record
+    # add genome record to genome file
+}
+
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
 
 setMethod("uri", "TrackHubGenome", function(x)
           paste(uri(trackhub(x)), genome(x), sep = "/"))
 
 setMethod("names", "TrackHubGenome", function(x) {
-    #TODO
-    NULL
+    genomesList <- genomesContentList(trackhub(x))
+    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    trackDbValue <- genomesList[[position]][["trackDb"]]
+    if (!isFieldEmpty(trackDbValue)) {
+        trackDbFilePath <- trackDbFile(trackhub(x), trackDbValue)
+        getTrackDbContent(trackDbFilePath)
+    }
+    else stop("genomes.txt: 'trackDb' does not contain valid reference to trackDb file")
+})
+
+setMethod("organism", "TrackHubGenome", function(object) {
+    genomesList <- genomesContentList(trackhub(object))
+    position <- which(sapply(genomesList, function(y) genome(object) %in% y))
+    organism <- genomesList[[position]][["organism"]]
+    as.character(organism)
 })
 
 setMethod("length", "TrackHubGenome", function(x) {
@@ -132,7 +164,7 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE) {
     trackhub <- as(trackhub, "TrackHub")
     thg <- new("TrackHubGenome", trackhub = trackhub, genome = genome)
     if (create) {
-        #TODO
+        createTrackHubGenome(thg)
     }
     thg
 }
