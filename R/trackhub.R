@@ -36,8 +36,8 @@ isFileReference <- function(x) {
     tools::file_ext(x) == "txt"
 }
 
-hubFile <- function(x) file.path(uri(x), "hub.txt")
-genomesFile <- function(x, y) file.path(uri(x), y)
+hubFile <- function(x) paste(uri(x), "hub.txt", sep = "/")
+genomesFile <- function(x, y) paste(uri(x), y, sep = "/")
 
 setMethod("genome", "TrackHub", function(x) {
     hubContent <- getHubContent(hubFile(x))
@@ -92,13 +92,13 @@ setClass("TrackHubGenome",
          contains = "TrackDb")
 
 trackhub <- function(x, ...) x@trackhub
-trackDbFile <- function(x,y) file.path(uri(x), y)
+trackDbFile <- function(x,y) paste(uri(x), y, sep = "/")
 
 
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
 
 setMethod("uri", "TrackHubGenome", function(x)
-          file.path(uri(trackhub(x)), genome(x)))
+          paste(uri(trackhub(x)), genome(x), sep = "/"))
 
 setMethod("names", "TrackHubGenome", function(x) {
     #TODO
