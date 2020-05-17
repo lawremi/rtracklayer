@@ -47,13 +47,15 @@ hubFile <- function(x) paste(uri(x), "hub.txt", sep = "/")
 genomesFile <- function(x, y) paste(uri(x), y, sep = "/")
 
 genomesContentList <- function(x) {
-    hubContent <- getHubContent(hubFile(x))
-    genomesFileValue <- hubContent["genomesFile"]
-    if (!isFieldEmpty(genomesFileValue)) {
-        genomesFilePath <- genomesFile(x, genomesFileValue)
-        genomesList <- getGenomesContent(genomesFilePath)
+    if (uriExists(hubFile(x))) {
+        hubContent <- getHubContent(hubFile(x))
+        genomesFileValue <- hubContent["genomesFile"]
+        if (!isFieldEmpty(genomesFileValue)) {
+            genomesFilePath <- genomesFile(x, genomesFileValue)
+            genomesList <- getGenomesContent(genomesFilePath)
+        }
+        else message("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
     }
-    else stop("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
 }
 
 setMethod("genome", "TrackHub", function(x) {
