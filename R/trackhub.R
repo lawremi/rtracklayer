@@ -15,7 +15,6 @@ setMethod("uri", "TrackHub", function(x) {
     x@uri
 })
 
-
 getHubContent <- function(x) {
     content <- readLines(x, warn = FALSE)
     rexp <- "^(\\w+)\\s?(.*)$"
@@ -106,7 +105,6 @@ setClass("TrackHubGenome",
 
 trackhub <- function(x, ...) x@trackhub
 trackDbFile <- function(x,y) paste(uri(x), y, sep = "/")
-
 
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
 
