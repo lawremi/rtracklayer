@@ -36,19 +36,30 @@ isFileReference <- function(x) {
     tools::file_ext(x) == "txt"
 }
 
+isFieldEmpty <- function(x) {
+    if ((isFileReference(x) && !is.na(x))) {
+        return(FALSE)
+    }
+    return(TRUE)
+}
+
 hubFile <- function(x) paste(uri(x), "hub.txt", sep = "/")
 genomesFile <- function(x, y) paste(uri(x), y, sep = "/")
 
-setMethod("genome", "TrackHub", function(x) {
+genomesContentList <- function(x) {
     hubContent <- getHubContent(hubFile(x))
     genomesFileValue <- hubContent["genomesFile"]
-    if ((isFileReference(genomesFileValue) && !is.na(genomesFileValue))) {
+    if (!isFieldEmpty(genomesFileValue)) {
         genomesFilePath <- genomesFile(x, genomesFileValue)
-        genomesRecordsList <- getGenomesContent(genomesFilePath)
-        genomes <- sapply(genomesRecordsList, function(x) x["genome"])
-        as.character(genomes)
+        genomesList <- getGenomesContent(genomesFilePath)
     }
     else stop("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
+}
+
+setMethod("genome", "TrackHub", function(x) {
+    genomesList <- genomesContentList(x)
+    genomes <- sapply(genomesList, function(x) x["genome"])
+    as.character(genomes)
 })
 
 setMethod("getListElement", "TrackHub", function(x, i, exact = TRUE) {
