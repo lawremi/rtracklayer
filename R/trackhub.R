@@ -42,8 +42,12 @@ isFieldEmpty <- function(x) {
     return(TRUE)
 }
 
-hubFile <- function(x) paste(uri(x), "hub.txt", sep = "/")
-genomesFile <- function(x, y) paste(uri(x), y, sep = "/")
+trimSlash <- function(x) {
+    sub("/$", "", x)
+}
+
+hubFile <- function(x) paste(trimSlash(uri(x)), "hub.txt", sep = "/")
+genomesFile <- function(x, y) paste(trimSlash(uri(x)), y, sep = "/")
 
 genomesContentList <- function(x) {
     if (uriExists(hubFile(x))) {
@@ -104,7 +108,7 @@ setClass("TrackHubGenome",
          contains = "TrackDb")
 
 trackhub <- function(x, ...) x@trackhub
-trackDbFile <- function(x,y) paste(uri(x), y, sep = "/")
+trackDbFile <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
 
 getTrackDbContent <- function(x) {
     content <- readLines(x, warn = FALSE)
@@ -128,7 +132,7 @@ createTrackHubGenome <- function(x) {
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
 
 setMethod("uri", "TrackHubGenome", function(x)
-          paste(uri(trackhub(x)), genome(x), sep = "/"))
+          paste(trimSlash(uri(trackhub(x))), genome(x), sep = "/"))
 
 setMethod("names", "TrackHubGenome", function(x) {
     genomesList <- genomesContentList(trackhub(x))
