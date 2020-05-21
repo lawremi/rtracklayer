@@ -13,6 +13,8 @@ Quickload_contents <- function(x) {
              colClasses = "character")
 }
 
+setGeneric("uri", function(x) standardGeneric("uri"))
+
 setMethod("uri", "Quickload", function(x) {
     x@uri
 })
