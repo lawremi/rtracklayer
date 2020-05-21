@@ -59,6 +59,12 @@ genomesContentList <- function(x) {
     }
 }
 
+getGenomesKey <- function(x, key) {
+    genomesList <- genomesContentList(trackhub(x))
+    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    genomesList[[position]][[key]]
+}
+
 setMethod("genome", "TrackHub", function(x) {
     genomesList <- genomesContentList(x)
     genomes <- sapply(genomesList, function(x) x["genome"])
@@ -134,9 +140,7 @@ setMethod("uri", "TrackHubGenome", function(x)
           paste(trimSlash(uri(trackhub(x))), genome(x), sep = "/"))
 
 setMethod("names", "TrackHubGenome", function(x) {
-    genomesList <- genomesContentList(trackhub(x))
-    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
-    trackDbValue <- genomesList[[position]][["trackDb"]]
+    trackDbValue <- getGenomesKey(x, "trackDb")
     if (!isFieldEmpty(trackDbValue)) {
         trackDbFilePath <- trackDbFile(trackhub(x), trackDbValue)
         getTrackDbContent(trackDbFilePath)
@@ -145,16 +149,12 @@ setMethod("names", "TrackHubGenome", function(x) {
 })
 
 setMethod("organism", "TrackHubGenome", function(object) {
-    genomesList <- genomesContentList(trackhub(object))
-    position <- which(sapply(genomesList, function(y) genome(object) %in% y))
-    organism <- genomesList[[position]][["organism"]]
+    organism <- getGenomesKey(object, "organism")
     as.character(organism)
 })
 
 setMethod("referenceSequence", "TrackHubGenome", function(x) {
-    genomesList <- genomesContentList(trackhub(x))
-    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
-    twoBitPathValue <- genomesList[[position]][["twoBitPath"]]
+    twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
         twoBitFilePath <- twobitFile(trackhub(x), twoBitPathValue)
         import(twoBitFilePath)
@@ -163,9 +163,7 @@ setMethod("referenceSequence", "TrackHubGenome", function(x) {
 })
 
 setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
-    genomesList <- genomesContentList(trackhub(x))
-    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
-    twoBitPathValue <- genomesList[[position]][["twoBitPath"]]
+    twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
         twoBitFilePath <- twobitFile(trackhub(x), twoBitPathValue)
         export.2bit(value, twoBitFilePath)
