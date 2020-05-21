@@ -6,8 +6,6 @@
 ### TrackHub class
 ###
 
-setGeneric("uri", function(x) standardGeneric("uri"))
-
 setClass("TrackHub", representation(uri = "character"),
          contains = "List")
 
@@ -32,11 +30,11 @@ getGenomesContent <- function(x) {
 }
 
 isFileReference <- function(x) {
-    tools::file_ext(x) == "txt"
+    tools::file_ext(x) == "txt" || tools::file_ext(x) == "2bit"
 }
 
 isFieldEmpty <- function(x) {
-    if ((isFileReference(x) && !is.na(x))) {
+    if ((isFileReference(x) && !is.na(x)) && !is.null(x)) {
         return(FALSE)
     }
     return(TRUE)
@@ -109,6 +107,7 @@ setClass("TrackHubGenome",
 
 trackhub <- function(x, ...) x@trackhub
 trackDbFile <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
+twobitFile <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
 
 getTrackDbContent <- function(x) {
     content <- readLines(x, warn = FALSE)
@@ -150,6 +149,29 @@ setMethod("organism", "TrackHubGenome", function(object) {
     position <- which(sapply(genomesList, function(y) genome(object) %in% y))
     organism <- genomesList[[position]][["organism"]]
     as.character(organism)
+})
+
+setMethod("referenceSequence", "TrackHubGenome", function(x) {
+    genomesList <- genomesContentList(trackhub(x))
+    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    twoBitPathValue <- genomesList[[position]][["twoBitPath"]]
+    if (!isFieldEmpty(twoBitPathValue)) {
+        twoBitFilePath <- twobitFile(trackhub(x), twoBitPathValue)
+        import(twoBitFilePath)
+    }
+    else message("genome.txt: 'twoBitPath' does not contain a reference to a file")
+})
+
+setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
+    genomesList <- genomesContentList(trackhub(x))
+    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    twoBitPathValue <- genomesList[[position]][["twoBitPath"]]
+    if (!isFieldEmpty(twoBitPathValue)) {
+        twoBitFilePath <- twobitFile(trackhub(x), twoBitPathValue)
+        export.2bit(value, twoBitFilePath)
+        x
+    }
+    else message("genome.txt: 'twoBitPath' does not contain a reference to a file")
 })
 
 setMethod("length", "TrackHubGenome", function(x) {
