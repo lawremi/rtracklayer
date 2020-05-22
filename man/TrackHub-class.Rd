@@ -130,11 +130,11 @@ genome(th)
 length(th)
 th$hg19
 th[["hg19"]]
-hub(x)
-email(x)
+hub(th)
+email(th)
 
 \dontrun{
-hub(x) <- "new_hub"
+hub(th) <- "new_hub"
 }
 }
 
