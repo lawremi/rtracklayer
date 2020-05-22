@@ -45,7 +45,8 @@
 
         If \code{create} is \code{TRUE}, and the genome does not already
         exist, the genome will be created, using \code{Genome}.
-        \code{Genome} takes names arguemnts of
+        \code{Genome} takes named arguemnts of all UCSC supported fields
+        for genome file(like \code{genome, trackDb, twoBitPath}, etc).
         Creation only works if the repository is local and
         writeable.
     }
