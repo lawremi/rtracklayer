@@ -15,6 +15,20 @@
 \alias{length,TrackHub-method}
 \alias{uri}
 
+%% Data Access:
+\alias{hub,TrackHub-method}
+\alias{hub<-,TrackHub-method}
+\alias{shortLabel,TrackHub-method}
+\alias{shortLabel<-,TrackHub-method}
+\alias{longLabel,TrackHub-method}
+\alias{longLabel<-,TrackHub-method}
+\alias{genomeFile,TrackHub-method}
+\alias{genomeFile<-,TrackHub-method}
+\alias{email,TrackHub-method}
+\alias{email<-,TrackHub-method}
+\alias{descriptionUrl,TrackHub-method}
+\alias{descriptionUrl<-,TrackHub-method}
+
 %% Coercion:
 \alias{coerce,character,TrackHub-method}
 
@@ -54,13 +68,55 @@
       the \code{\linkS4class{TrackHubGenome}} object for the genome named
       \code{genome}.
     }
-    \item{}{\code{length(x)}: number of genomes in the repository
+    \item{}{\code{length(x)}: number of genomes in the repository.
     }
     \item{}{\code{uri(x)}:
       Get the URI pointing to the TrackHub repository.
     }
     \item{}{\code{genome(x)}:
       Get the identifiers of the genomes present in the repository.
+    }
+  }
+}
+
+\section{Data Access}{
+  Note that all storing methods(like \code{hub()<-}) are only supported for local repositories, i.e., those with a file:// URI scheme.
+  \describe{
+    \item{}{
+      \code{hub(x)}: get the value of hub.
+    }
+    \item{}{
+      \code{hub(x) <- value}: store the \code{value} of hub for \code{x}.
+    }
+    \item{}{
+      \code{shortLabel(x)}: get the value of hub.
+    }
+    \item{}{
+      \code{shortLabel(x) <- value}: store the \code{value} of shortLabel for \code{x}.
+    }
+    \item{}{
+      \code{longLabel(x)}: get the value of hub.
+    }
+    \item{}{
+      \code{longLabel(x) <- value}: store the \code{value} of longLabel for \code{x}.
+    }
+    \item{}{
+      \code{genomeFile(x)}: get the value of hub.
+    }
+    \item{}{
+      \code{genomeFile(x) <- value}: store the \code{value} of genomesFile for \code{x}.
+    }
+    \item{}{
+      \code{email(x)}: get the value of hub.
+    }
+    \item{}{
+      \code{email(x) <- value}: store the \code{value} of email for \code{x}.
+    }
+    \item{}{
+      \code{descriptionUrl(x)}: get the value of hub.
+    }
+    \item{}{
+      \code{descriptionUrl(x) <- value}: store the \code{value} of descriptionUrl for \code{x}.
     }
   }
 }
@@ -74,6 +130,12 @@ genome(th)
 length(th)
 th$hg19
 th[["hg19"]]
+hub(x)
+email(x)
+
+\dontrun{
+hub(x) <- "new_hub"
+}
 }
 
 \keyword{methods}
