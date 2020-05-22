@@ -6,12 +6,21 @@
 ### TrackHub class
 ###
 
+setGeneric("hub", function(x) standardGeneric("hub"))
+setGeneric("hub<-", function(x, value) standardGeneric("hub<-"))
+setGeneric("shortLabel", function(x) standardGeneric("shortLabel"))
+setGeneric("shortLabel<-", function(x, value) standardGeneric("shortLabel<-"))
+setGeneric("longLabel", function(x) standardGeneric("longLabel"))
+setGeneric("longLabel<-", function(x, value) standardGeneric("longLabel<-"))
+setGeneric("genomeFile", function(x) standardGeneric("genomeFile"))
+setGeneric("genomeFile<-", function(x, value) standardGeneric("genomeFile<-"))
+setGeneric("email", function(x) standardGeneric("email"))
+setGeneric("email<-", function(x, value) standardGeneric("email<-"))
+setGeneric("descriptionUrl", function(x) standardGeneric("descriptionUrl"))
+setGeneric("descriptionUrl<-", function(x, value) standardGeneric("descriptionUrl<-"))
+
 setClass("TrackHub", representation(uri = "character"),
          contains = "List")
-
-setMethod("uri", "TrackHub", function(x) {
-    x@uri
-})
 
 getHubContent <- function(x) {
     content <- readLines(x, warn = FALSE)
@@ -64,6 +73,91 @@ getGenomesKey <- function(x, key) {
     position <- which(sapply(genomesList, function(y) genome(x) %in% y))
     genomesList[[position]][[key]]
 }
+
+setHubContent <- function(x, hubContent) {
+    cat("", file = hubFile(x))
+    sapply(names(hubContent), function(y) {
+        if (!is.null(hubContent[y]) && !is.na(hubContent[y]))
+            cat(y, " ", hubContent[y], "\n", append = TRUE, sep = "", file = hubFile(x))
+    })
+    cat("\n", append = TRUE, file = hubFile(x))
+}
+
+setMethod("uri", "TrackHub", function(x) {
+    x@uri
+})
+
+setMethod("hub", "TrackHub", function(x) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent[["hub"]]
+})
+
+setReplaceMethod("hub", "TrackHub", function(x, value){
+    hubContent <- getHubContent(hubFile(x))
+    hubContent["hub"] <- value
+    setHubContent(x, hubContent)
+    x
+})
+
+setMethod("shortLabel", "TrackHub", function(x) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent[["shortLabel"]]
+})
+
+setReplaceMethod("shortLabel", "TrackHub", function(x, value) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent["shortLabel"] <- value
+    setHubContent(x, hubContent)
+    x
+})
+
+setMethod("longLabel", "TrackHub", function(x) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent[["longLabel"]]
+})
+
+setReplaceMethod("longLabel", "TrackHub", function(x, value) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent["longLabel"] <- value
+    setHubContent(x, hubContent)
+    x
+})
+
+setMethod("genomeFile", "TrackHub", function(x) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent[["genomesFile"]]
+})
+
+setReplaceMethod("genomeFile", "TrackHub", function(x, value) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent["genomesFile"] <- value
+    setHubContent(x, hubContent)
+    x
+})
+
+setMethod("email", "TrackHub", function(x) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent[["email"]]
+})
+
+setReplaceMethod("email", "TrackHub", function(x, value) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent["email"] <- value
+    setHubContent(x, hubContent)
+    x
+})
+
+setMethod("descriptionUrl", "TrackHub", function(x) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent[["descriptionUrl"]]
+})
+
+setReplaceMethod("descriptionUrl", "TrackHub", function(x, value) {
+    hubContent <- getHubContent(hubFile(x))
+    hubContent["descriptionUrl"] <- value
+    setHubContent(x, hubContent)
+    x
+})
 
 setMethod("genome", "TrackHub", function(x) {
     genomesList <- genomesContentList(x)
