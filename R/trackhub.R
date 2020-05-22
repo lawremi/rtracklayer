@@ -74,6 +74,20 @@ getGenomesKey <- function(x, key) {
     genomesList[[position]][[key]]
 }
 
+Genome <- function(genome = "", trackDb = "", twoBitPath = "", groups = "",
+                   description = "", organism = "", defaultPos = "",
+                   orderKey = "", scientificName = "", htmlPath = "") {
+        c(as.list(environment()))
+}
+
+setHubContentList <- function(x, file) {
+    sapply(names(x), function(y) {
+        if(x[[y]] != "")
+            cat(y, " ", x[[y]], "\n", append = TRUE, sep = "", file = file)
+    })
+    cat("\n", append = TRUE, file = file)
+}
+
 setHubContent <- function(x, hubContent) {
     cat("", file = hubFile(x))
     sapply(names(hubContent), function(y) {
@@ -215,17 +229,16 @@ getTrackDbContent <- function(x) {
     # store content in right data structure
 }
 
-createTrackHubGenome <- function(x) {
-    if (genome(x) %in% genome(trackhub(x))) {
+createTrackHubGenome <- function(x, genomeRecord) {
+    hubContent <- getHubContent(hubFile(trackhub(x)))
+    genomesFilePath <- genomesFile(trackhub(x), hubContent["genomesFile"])
+    if (uriExists(genomesFilePath) && genome(x) %in% genome(trackhub(x))) {
         message("NOTE: Genome '", genome(x), "' already exists")
         return ()
     }
     createResource(uri(x), dir = TRUE)
-    createResource(genomesFile(trackhub(x), genome(x)))
-    # TODO
-    # function to add reference of genome file to hub file
-    # method for creating genome record
-    # add genome record to genome file
+    createResource(genomesFilePath)
+    setHubContentList(genomeRecord, genomesFilePath)
 }
 
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
@@ -276,13 +289,13 @@ setMethod("show", "TrackHubGenome", function(object) {
     cat(S4Vectors:::labeledLine("names", names(object)))
 })
 
-TrackHubGenome <- function(trackhub, genome, create = FALSE) {
+TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Genome()) {
     if (!isTRUEorFALSE(create))
         stop("'create' must be TRUE or FALSE")
     trackhub <- as(trackhub, "TrackHub")
     thg <- new("TrackHubGenome", trackhub = trackhub, genome = genome)
     if (create) {
-        createTrackHubGenome(thg)
+        createTrackHubGenome(thg, genomeRecord)
     }
     thg
 }
