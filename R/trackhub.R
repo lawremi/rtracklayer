@@ -39,7 +39,8 @@ getGenomesContent <- function(x) {
 }
 
 isFileReference <- function(x) {
-    tools::file_ext(x) == "txt" || tools::file_ext(x) == "2bit"
+    formats <- c("txt", "2bit", "html")
+    tools::file_ext(x) %in% formats
 }
 
 isFieldEmpty <- function(x) {
@@ -54,22 +55,35 @@ trimSlash <- function(x) {
 }
 
 hubFile <- function(x) paste(trimSlash(uri(x)), "hub.txt", sep = "/")
-genomesFile <- function(x, y) paste(trimSlash(uri(x)), y, sep = "/")
+combineURI <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
 
-genomesContentList <- function(x) {
+getGenomesContentList <- function(x) {
     if (uriExists(hubFile(x))) {
         hubContent <- getHubContent(hubFile(x))
         genomesFileValue <- hubContent["genomesFile"]
         if (!isFieldEmpty(genomesFileValue)) {
-            genomesFilePath <- genomesFile(x, genomesFileValue)
+            genomesFilePath <- combineURI(x, genomesFileValue)
             genomesList <- getGenomesContent(genomesFilePath)
         }
         else message("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
     }
 }
 
+setGenomesKey <- function(x, key, value) {
+    genomesList <- getGenomesContentList(trackhub(x))
+    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    genomesList[[position]][[key]] <- value
+    hubContent <- getHubContent(hubFile(trackhub(x)))
+    genomesFilePath <- combineURI(trackhub(x), hubContent["genomesFile"])
+    cat("", file = genomesFilePath)
+    sapply(genomesList, function(x) {
+        setGenomeContentList(x, genomesFilePath)
+    })
+    return(invisible(NULL))
+}
+
 getGenomesKey <- function(x, key) {
-    genomesList <- genomesContentList(trackhub(x))
+    genomesList <- getGenomesContentList(trackhub(x))
     position <- which(sapply(genomesList, function(y) genome(x) %in% y))
     genomesList[[position]][[key]]
 }
@@ -106,7 +120,7 @@ setMethod("hub", "TrackHub", function(x) {
     hubContent[["hub"]]
 })
 
-setReplaceMethod("hub", "TrackHub", function(x, value){
+setReplaceMethod("hub", "TrackHub", function(x, value) {
     hubContent <- getHubContent(hubFile(x))
     hubContent["hub"] <- value
     setHubContent(x, hubContent)
@@ -174,7 +188,7 @@ setReplaceMethod("descriptionUrl", "TrackHub", function(x, value) {
 })
 
 setMethod("genome", "TrackHub", function(x) {
-    genomesList <- genomesContentList(x)
+    genomesList <- getGenomesContentList(x)
     genomes <- sapply(genomesList, function(x) x["genome"])
     as.character(genomes)
 })
@@ -214,14 +228,14 @@ setAs("character", "TrackHub", function(from) TrackHub(from))
 ### TrackHubGenome class
 ###
 
+setGeneric("addGenomesField", function(x, key, value) standardGeneric("addGenomesField"))
+
 setClass("TrackHubGenome",
          representation(trackhub = "TrackHub",
                         genome = "character"),
          contains = "TrackDb")
 
-trackhub <- function(x, ...) x@trackhub
-trackDbFile <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
-twobitFile <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
+trackhub <- function(x) x@trackhub
 
 getTrackDbContent <- function(x) {
     content <- readLines(x, warn = FALSE)
@@ -231,7 +245,7 @@ getTrackDbContent <- function(x) {
 
 createTrackHubGenome <- function(x, genomeRecord) {
     hubContent <- getHubContent(hubFile(trackhub(x)))
-    genomesFilePath <- genomesFile(trackhub(x), hubContent["genomesFile"])
+    genomesFilePath <- combineURI(trackhub(x), hubContent["genomesFile"])
     if (uriExists(genomesFilePath) && genome(x) %in% genome(trackhub(x))) {
         message("NOTE: Genome '", genome(x), "' already exists")
         return ()
@@ -249,10 +263,18 @@ setMethod("uri", "TrackHubGenome", function(x)
 setMethod("names", "TrackHubGenome", function(x) {
     trackDbValue <- getGenomesKey(x, "trackDb")
     if (!isFieldEmpty(trackDbValue)) {
-        trackDbFilePath <- trackDbFile(trackhub(x), trackDbValue)
+        trackDbFilePath <- combineURI(trackhub(x), trackDbValue)
         getTrackDbContent(trackDbFilePath)
     }
     else stop("genomes.txt: 'trackDb' does not contain valid reference to trackDb file")
+})
+
+setMethod("addGenomesField", "TrackHubGenome", function(x, key, value) {
+    genomesFields <- c("twoBitPath", "groups", "htmlPath", "metaDb", "trackDb" , "metaTab")
+    if (key %in% genomesFields && !isFieldEmpty(value)) {
+        createResource(combineURI(trackhub(x), value))
+    }
+    setGenomesKey(x, key, value)
 })
 
 setMethod("organism", "TrackHubGenome", function(object) {
@@ -263,7 +285,7 @@ setMethod("organism", "TrackHubGenome", function(object) {
 setMethod("referenceSequence", "TrackHubGenome", function(x) {
     twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
-        twoBitFilePath <- twobitFile(trackhub(x), twoBitPathValue)
+        twoBitFilePath <- combineURI(trackhub(x), twoBitPathValue)
         import(twoBitFilePath)
     }
     else stop("genome.txt: 'twoBitPath' does not contain a reference to a file")
@@ -272,7 +294,7 @@ setMethod("referenceSequence", "TrackHubGenome", function(x) {
 setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
     twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
-        twoBitFilePath <- twobitFile(trackhub(x), twoBitPathValue)
+        twoBitFilePath <- combineURI(trackhub(x), twoBitPathValue)
         export.2bit(value, twoBitFilePath)
         x
     }
