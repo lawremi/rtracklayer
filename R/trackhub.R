@@ -80,7 +80,7 @@ Genome <- function(genome = "", trackDb = "", twoBitPath = "", groups = "",
         c(as.list(environment()))
 }
 
-setHubContentList <- function(x, file) {
+setGenomeContentList <- function(x, file) {
     sapply(names(x), function(y) {
         if(x[[y]] != "")
             cat(y, " ", x[[y]], "\n", append = TRUE, sep = "", file = file)
@@ -238,7 +238,7 @@ createTrackHubGenome <- function(x, genomeRecord) {
     }
     createResource(uri(x), dir = TRUE)
     createResource(genomesFilePath)
-    setHubContentList(genomeRecord, genomesFilePath)
+    setGenomeContentList(genomeRecord, genomesFilePath)
 }
 
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
