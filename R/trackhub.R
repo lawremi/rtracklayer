@@ -266,7 +266,7 @@ setMethod("referenceSequence", "TrackHubGenome", function(x) {
         twoBitFilePath <- twobitFile(trackhub(x), twoBitPathValue)
         import(twoBitFilePath)
     }
-    else message("genome.txt: 'twoBitPath' does not contain a reference to a file")
+    else stop("genome.txt: 'twoBitPath' does not contain a reference to a file")
 })
 
 setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
@@ -276,7 +276,7 @@ setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
         export.2bit(value, twoBitFilePath)
         x
     }
-    else message("genome.txt: 'twoBitPath' does not contain a reference to a file")
+    else stop("genome.txt: 'twoBitPath' does not contain a reference to a file")
 })
 
 setMethod("length", "TrackHubGenome", function(x) {
