@@ -238,9 +238,7 @@ setClass("TrackHubGenome",
 trackhub <- function(x) x@trackhub
 
 getTrackDbContent <- function(x) {
-    content <- readLines(x, warn = FALSE)
-    # TODO
-    # store content in right data structure
+    TrackContainer(x)
 }
 
 createTrackHubGenome <- function(x, genomeRecord) {
@@ -264,7 +262,9 @@ setMethod("names", "TrackHubGenome", function(x) {
     trackDbValue <- getGenomesKey(x, "trackDb")
     if (!isFieldEmpty(trackDbValue)) {
         trackDbFilePath <- combineURI(trackhub(x), trackDbValue)
-        getTrackDbContent(trackDbFilePath)
+        trackDbContent <- getTrackDbContent(trackDbFilePath)
+        tracks <- sapply(trackDbContent@trackList, function(x) x["track"])
+        as.character(tracks)
     }
     else stop("genomes.txt: 'trackDb' does not contain valid reference to trackDb file")
 })
