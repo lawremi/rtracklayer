@@ -43,7 +43,7 @@ import(GenomicRanges)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
            DNAStringSet, DNA_BASES, DNA_ALPHABET, alphabetFrequency,
-           reverseComplement)
+           reverseComplement, uniqueLetters)
 importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
 importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 
@@ -119,7 +119,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        BigWigSelection, GRangesForUCSCGenome, GRangesForBSGenome,
        summary, seqinfo, genome, "genome<-", Genome,
        uri, Quickload, quickload, QuickloadGenome,
-       organism, releaseDate, mcols, TrackHub, TrackHubGenome, wigToBigWig,
+       organism, releaseDate, mcols, TrackHub, trackhub, TrackHubGenome, wigToBigWig,
        SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path,
        FileForFormat, cleanupBigWigCache, viewURL)
 
