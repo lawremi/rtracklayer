@@ -1,4 +1,4 @@
-\name{QuickloadGenome-class}
+\name{TrackHubGenome-class}
 \docType{class}
 
 %% Classes:
