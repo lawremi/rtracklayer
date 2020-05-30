@@ -4,7 +4,7 @@ test_trackhub <- function() {
 
     correct_uri <- file.path("file://", test_trackhub_path)
     correct_genome <- "hg19"
-    correct_length <- as.integer(1)
+    correct_length <- 1L
     correct_hub <- "test_hub"
     correct_shortLabel <- "test_hub"
     correct_longLabel <- "test_hub"
@@ -74,4 +74,22 @@ test_trackhub <- function() {
     descriptionUrl(th) <- new_descriptionUrl
     checkIdentical(descriptionUrl(th), new_descriptionUrl)
     descriptionUrl(th) <- correct_descriptionUrl
+
+    ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ### TEST TrackHubGenome Class
+    ###
+
+    correct_genome_length <- 1L
+    correct_genome_organism <- "BigFoot"
+    correct_genome_names <- "wgEncodeUWDukeDnaseGM12878FdrPeaks"
+
+    # TEST: length
+    thg <- TrackHubGenome(th, "hg19")
+    checkIdentical(length(thg), correct_genome_length)
+
+    # TEST: organism
+    checkIdentical(organism(thg), correct_genome_organism)
+
+    # TEST: names
+    checkIdentical(names(thg), correct_genome_names)
 }
