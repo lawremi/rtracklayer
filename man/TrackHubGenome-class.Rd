@@ -74,11 +74,18 @@
       \code{organism(x)}: Get the organism portion of the genome name,
       e.g., \dQuote{H sapiens}.
     }
+
   }
 }
 
 \section{Data Access}{
   \describe{
+    \item{}{
+      \code{length(x)}: number of datasets
+    }
+    \item{}{
+      \code{names(x)}: names of the datasets
+    }
     \item{}{
       \code{referenceSequence(x)}: Get the reference sequence, as a
       \code{DNAStringSet}.
@@ -99,12 +106,16 @@ th <- TrackHub(file.path(tests_dir, "trackhub"))
 thg <- TrackHubGenome(th, "hg19")
 length(thg)
 organism(thg)
+names(thg)
 
 \dontrun{
 th <- TrackHub(file.path(tests_dir, "trackhub"), create = TRUE)
 genomeFile(th) <- "genomes.txt"
-hg38 <- Genome(genome = "hg38")
-thg <- TrackHubGenome(th, "hg38", create=TRUE, hg38)
+hg38 <- Genome(genome = "hg38", trackDb = "hg38/trackDb.txt")
+thg <- TrackHubGenome(th, "hg38", create = TRUE, hg38)
+addGenomesField(thg, "twoBitPath", "hg38/seq.2bit")
+seq <- import(file.path(tests_dir, "test.2bit"))
+referenceSequence(thg) <- seq
 }
 }
 
