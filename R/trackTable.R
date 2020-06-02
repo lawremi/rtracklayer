@@ -15,7 +15,7 @@ setGeneric("import.tabSeparated",
            standardGeneric("import.tabSeparated"),
            signature = "con")
 
-setMethod("import.tabSeparated", "characterORconnection",
+setMethod("import.tabSeparated", "character_OR_connection",
           function(con, genome = NA, seqnames = 1L, start = 2L, end = 3L, ...)
           {
             tab <- read.table(con, sep = "\t", ...)

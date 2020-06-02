@@ -11,7 +11,7 @@
 ### wraps a low-level representation of a file, currently either a
 ### path/URL or connection.
 
-setClass("RTLFile", representation(resource = "characterORconnection"),
+setClass("RTLFile", representation(resource = "character_OR_connection"),
          contains = "VIRTUAL")
 
 setClass("RTLFileList",

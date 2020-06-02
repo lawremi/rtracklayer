@@ -1,10 +1,10 @@
 \name{UCSCData-class}
 \docType{class}
 \alias{UCSCData-class}
-\alias{export.bed,UCSCData,characterORconnection-method}
+\alias{export.bed,UCSCData,character_OR_connection-method}
 \alias{export.bed15,UCSCData-method}
-\alias{export.gff,UCSCData,characterORconnection-method}
-\alias{export.ucsc,UCSCData,characterORconnection-method}
+\alias{export.gff,UCSCData,character_OR_connection-method}
+\alias{export.ucsc,UCSCData,character_OR_connection-method}
 \alias{initialize,UCSCData-method}
 \alias{show,UCSCData-method}
 \alias{coerce,GRanges,UCSCData-method}
