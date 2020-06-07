@@ -54,6 +54,12 @@ trimSlash <- function(x) {
     sub("/$", "", x)
 }
 
+stopIfNotLocal <- function(x) {
+    if (!uriIsWritable(x)) {
+        stop("Repository is read only; cannot write on remote repository")
+    }
+}
+
 hubFile <- function(x) paste(trimSlash(uri(x)), "hub.txt", sep = "/")
 combineURI <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
 
@@ -121,6 +127,7 @@ setMethod("hub", "TrackHub", function(x) {
 })
 
 setReplaceMethod("hub", "TrackHub", function(x, value) {
+    stopIfNotLocal(hubFile(x))
     hubContent <- getHubContent(hubFile(x))
     hubContent["hub"] <- value
     setHubContent(x, hubContent)
@@ -133,6 +140,7 @@ setMethod("shortLabel", "TrackHub", function(x) {
 })
 
 setReplaceMethod("shortLabel", "TrackHub", function(x, value) {
+    stopIfNotLocal(hubFile(x))
     hubContent <- getHubContent(hubFile(x))
     hubContent["shortLabel"] <- value
     setHubContent(x, hubContent)
@@ -145,6 +153,7 @@ setMethod("longLabel", "TrackHub", function(x) {
 })
 
 setReplaceMethod("longLabel", "TrackHub", function(x, value) {
+    stopIfNotLocal(hubFile(x))
     hubContent <- getHubContent(hubFile(x))
     hubContent["longLabel"] <- value
     setHubContent(x, hubContent)
@@ -157,6 +166,7 @@ setMethod("genomeFile", "TrackHub", function(x) {
 })
 
 setReplaceMethod("genomeFile", "TrackHub", function(x, value) {
+    stopIfNotLocal(hubFile(x))
     hubContent <- getHubContent(hubFile(x))
     hubContent["genomesFile"] <- value
     setHubContent(x, hubContent)
@@ -169,6 +179,7 @@ setMethod("email", "TrackHub", function(x) {
 })
 
 setReplaceMethod("email", "TrackHub", function(x, value) {
+    stopIfNotLocal(hubFile(x))
     hubContent <- getHubContent(hubFile(x))
     hubContent["email"] <- value
     setHubContent(x, hubContent)
@@ -181,6 +192,7 @@ setMethod("descriptionUrl", "TrackHub", function(x) {
 })
 
 setReplaceMethod("descriptionUrl", "TrackHub", function(x, value) {
+    stopIfNotLocal(hubFile(x))
     hubContent <- getHubContent(hubFile(x))
     hubContent["descriptionUrl"] <- value
     setHubContent(x, hubContent)
@@ -269,6 +281,10 @@ setMethod("names", "TrackHubGenome", function(x) {
     else stop("genomes.txt: 'trackDb' does not contain valid reference to trackDb file")
 })
 
+setMethod("trackNames", "TrackHubGenome", function(object) {
+    names(object)
+})
+
 setMethod("addGenomesField", "TrackHubGenome", function(x, key, value) {
     genomesFields <- c("twoBitPath", "groups", "htmlPath", "metaDb", "trackDb" , "metaTab")
     if (key %in% genomesFields && !isFieldEmpty(value)) {
@@ -292,6 +308,9 @@ setMethod("referenceSequence", "TrackHubGenome", function(x) {
 })
 
 setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
+    hubContent <- getHubContent(hubFile(trackhub(x)))
+    genomesFilePath <- combineURI(trackhub(x), hubContent["genomesFile"])
+    stopIfNotLocal(genomesFilePath)
     twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
         twoBitFilePath <- combineURI(trackhub(x), twoBitPathValue)
