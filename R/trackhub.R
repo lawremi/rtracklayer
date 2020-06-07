@@ -250,7 +250,7 @@ setClass("TrackHubGenome",
 trackhub <- function(x) x@trackhub
 
 getTrackDbContent <- function(x) {
-    TrackContainer(x)
+    # TrackContainer(x)
 }
 
 createTrackHubGenome <- function(x, genomeRecord) {
@@ -346,25 +346,53 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Geno
 ###
 
 setClass("TrackContainer",
-         representation(
-                        trackList = "list",
-                        childrenList = "list",
-                        parentLookUp = "list"
-                        ),
-         prototype = list(
-                          trackList = list(),
-                          childrenList = list(),
-                          parentLookUp = list()
-         )
+         representation("SimpleList"),
+         prototype(elementType = "Track_OR_TrackContainer")
 )
 
-getTabCountList <- function(contentdf) {
-    tabCountList <- vapply(contentdf$V1, function(x) {
-        tmp <- gregexpr("^(\\t)+", x)
-        tabCount <- attr(tmp[[1]], "match.length")
-    }, numeric(1), USE.NAMES = FALSE)
-    tabCountList
+TrackContainer <- function() {
+    new("TrackContainer")
 }
+
+setMethod("[[", "TrackContainer", function(x, i, ...) {
+    getListElement(x, i, ...)
+})
+
+setReplaceMethod("[[", "TrackContainer", function(x, i, ..., value) {
+    setListElement(x, i, value)
+})
+
+setClass("Track",
+         representation(
+                        track = "character",
+                        bigDataUrl = "character",
+                        children = "TrackContainer"
+                        )
+)
+
+setMethod("[", "Track", function(x, i, ...) {
+    x@children
+})
+
+setReplaceMethod("[", "Track", function(x, i, ..., value) {
+    x@children <- value
+})
+
+setMethod("[[", "Track", function(x, i, ...) {
+    if (i <= length(x@children))
+        getListElement(x@children, i, ...)
+})
+
+setReplaceMethod("[[", "Track", function(x, i, ..., value) {
+    x@children <- setListElement(x@children, i, value)
+    x
+})
+
+Track <- function(track, bigDataUrl) {
+    new("Track", track = track, bigDataUrl = bigDataUrl)
+}
+
+setClassUnion("Track_OR_TrackContainer", c("Track", "TrackContainer"))
 
 readAndSanitize <- function(filepath) {
     fileContent <- readLines(filepath, warn = F)
@@ -376,58 +404,10 @@ readAndSanitize <- function(filepath) {
     contentDf
 }
 
-parseFileAndAddTracks <- function(tabCountList, contentDf) {
-    trackList <- list()
-    childrenList <- list()
-    parentLookUp <- list()
-    tracksIndex <- grep("track", contentDf$V1)
-    tracksIndex <- vapply(tracksIndex, function(x) x-1, numeric(1))
-    totalLines <- length(contentDf$V1)
-    tracksIndex[[length(tracksIndex) + 1]] <- totalLines
-    totaltracks <- length(tracksIndex)
-    start <- 1L
-    end <- 2L
-    parentTrackName <- ""
-    trackListIndex <- 1L
-
-    while (start != totaltracks) {
-        previousLevel <- tabCountList[tracksIndex[end - 1]]
-        level <- tabCountList[tracksIndex[end]]
-        track <- setNames(
-            as.list(contentDf$V2[(tracksIndex[start]+1):tracksIndex[end]]),
-            contentDf$V1[(tracksIndex[start]+1):tracksIndex[end]]
-        )
-        if (level == -1L) {
-            trackList[[trackListIndex]] <- track
-            parentTrackName <- contentDf$V2[(tracksIndex[start]+1)]
-            trackListIndex <- trackListIndex + 1
-        }else{
-            if (level != previousLevel)
-                parentTrackName <- contentDf$V2[(tracksIndex[start-1]+1)]
-            parentLookUp[[length(parentLookUp) + 1]] <-
-                c(
-                  paste0(parentTrackName,"/",contentDf$V2[(tracksIndex[start]+1)])
-                )
-            if (is.null(childrenList[[parentTrackName]]))
-                childrenList[[parentTrackName]] <- list()
-            childrenIndex <- length(childrenList[[parentTrackName]]) + 1
-            childrenList[[parentTrackName]][[childrenIndex]] <- track
-        }
-        start <- start + 1
-        end <- end + 1
-    }
-    return(list(trackList, childrenList, parentLookUp))
-}
-
-TrackContainer <- function(filepath) {
-    contentDf <- readAndSanitize(filepath)
-    tabCountList <- getTabCountList(contentDf)
-    contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
-    container <- parseFileAndAddTracks(tabCountList, contentDf)
-    tc <- new("TrackContainer",
-              trackList = container[[1]],
-              childrenList = container[[2]],
-              parentLookUp = container[[3]]
-    )
-    tc
+getTabCountList <- function(contentdf) {
+    tabCountList <- vapply(contentdf$V1, function(x) {
+        tmp <- gregexpr("^(\\t)+", x)
+        tabCount <- attr(tmp[[1]], "match.length")
+    }, numeric(1), USE.NAMES = FALSE)
+    tabCountList
 }
