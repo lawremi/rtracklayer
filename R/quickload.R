@@ -16,7 +16,7 @@ Quickload_contents <- function(x) {
 setGeneric("uri", function(x) standardGeneric("uri"))
 
 setMethod("uri", "Quickload", function(x) {
-    x@uri
+  x@uri
 })
 
 setMethod("genome", "Quickload", function(x) {
@@ -117,6 +117,10 @@ setMethod("names", "QuickloadGenome", function(x) {
   x_mcols <- mcols(x)
   structure(sapply(as.character(x_mcols$name), URLdecode),
             names = as.character(x_mcols$title))
+})
+
+setMethod("trackNames", "QuickloadGenome", function(object) {
+  names(object)
 })
 
 setMethod("mcols", "QuickloadGenome", function(x) {
