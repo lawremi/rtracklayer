@@ -92,4 +92,23 @@ test_trackhub <- function() {
 
     # TEST: names
     checkIdentical(names(thg), correct_genome_names)
+
+    ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ### TEST TrackContainer Class
+    ###
+
+    correct_slot_type <- "Track_OR_TrackContainer"
+    correct_track <- Track(track = "tcell", bigDataUrl = "tcell/data.bigWig")
+
+    # TEST: slot type
+    tc <- TrackContainer()
+    slot_type <- slot(tc, "elementType")
+    checkIdentical(slot_type, correct_slot_type)
+
+    # TEST: wrong type slot error reporting
+    checkException(tc[[1]] <- 1)
+
+    # TEST: names()
+    tc[[1]] <- correct_track
+    checkIdentical(names(tc), correct_track@track)
 }
