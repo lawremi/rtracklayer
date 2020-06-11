@@ -250,7 +250,28 @@ setClass("TrackHubGenome",
 trackhub <- function(x) x@trackhub
 
 getTrackDbContent <- function(x) {
-    # TrackContainer(x)
+    Tracks <- TrackContainer()
+    contentDf <- readAndSanitize(x)
+    contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
+    tracksIndex <- grep("track", contentDf$V1)
+    totalTracks <- length(tracksIndex)
+    tracksIndex[[length(tracksIndex) + 1]] <- length(contentDf$V1) + 1 # to read last track from file
+    trackNo <- 1L
+    position <- 1L
+    # to speed up, reading track by track
+    while(trackNo <= totalTracks) {
+        startPosition <- tracksIndex[trackNo]
+        endPosition <- tracksIndex[trackNo + 1] - 1
+        # dynamically creating track object
+        track <- paste0(contentDf$V1[startPosition:endPosition],
+                        "= '", contentDf$V2[startPosition:endPosition], "'", collapse=",")
+        track <- paste0("Track(", track, ")")
+        track <- eval(parse(text = track))
+        Tracks[[position]] <- track
+        position <- position + 1
+        trackNo <- trackNo + 1
+    }
+    Tracks
 }
 
 createTrackHubGenome <- function(x, genomeRecord) {
@@ -275,7 +296,7 @@ setMethod("names", "TrackHubGenome", function(x) {
     if (!isFieldEmpty(trackDbValue)) {
         trackDbFilePath <- combineURI(trackhub(x), trackDbValue)
         trackDbContent <- getTrackDbContent(trackDbFilePath)
-        tracks <- sapply(trackDbContent@trackList, function(x) x["track"])
+        tracks <- sapply(trackDbContent, function(x) x@track)
         as.character(tracks)
     }
     else stop("genomes.txt: 'trackDb' does not contain valid reference to trackDb file")
@@ -354,60 +375,27 @@ TrackContainer <- function() {
     new("TrackContainer")
 }
 
-setMethod("[[", "TrackContainer", function(x, i, ...) {
-    getListElement(x, i, ...)
-})
-
-setReplaceMethod("[[", "TrackContainer", function(x, i, ..., value) {
-    setListElement(x, i, value)
-})
-
 setClass("Track",
          representation(
+                        # common trackDb settings
                         track = "character",
                         bigDataUrl = "character",
-                        children = "TrackContainer"
                         )
 )
 
-setMethod("[", "Track", function(x, i, ...) {
-    x@children
-})
-
-setReplaceMethod("[", "Track", function(x, i, ..., value) {
-    x@children <- value
-})
-
-setMethod("[[", "Track", function(x, i, ...) {
-    if (i <= length(x@children))
-        getListElement(x@children, i, ...)
-})
-
-setReplaceMethod("[[", "Track", function(x, i, ..., value) {
-    x@children <- setListElement(x@children, i, value)
-    x
-})
-
-Track <- function(track, bigDataUrl) {
-    new("Track", track = track, bigDataUrl = bigDataUrl)
+Track <- function(...) {
+    new("Track", ...)
 }
 
 setClassUnion("Track_OR_TrackContainer", c("Track", "TrackContainer"))
 
 readAndSanitize <- function(filepath) {
-    fileContent <- readLines(filepath, warn = F)
+    fileContent <- readLines(filepath, warn = FALSE)
+    fileContent <- gsub("^(\\t)*#(.)*", "", fileContent) # to avoid reading commented tracks
     fileContent <- gsub(",", ";", fileContent)
-    contentDf <- read.csv(text = sub(" ", ",", fileContent), header=F)
+    contentDf <- read.csv(text = sub(" ", ",", fileContent), header = FALSE)
     contentDf$V2 <- gsub(";", ",", contentDf$V2)
     nonEmptyContent <- vapply(contentDf$V2, function(x) x!="", logical(1))
     contentDf <- contentDf[nonEmptyContent,]
     contentDf
-}
-
-getTabCountList <- function(contentdf) {
-    tabCountList <- vapply(contentdf$V1, function(x) {
-        tmp <- gregexpr("^(\\t)+", x)
-        tabCount <- attr(tmp[[1]], "match.length")
-    }, numeric(1), USE.NAMES = FALSE)
-    tabCountList
 }
