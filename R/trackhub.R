@@ -241,6 +241,7 @@ setAs("character", "TrackHub", function(from) TrackHub(from))
 ###
 
 setGeneric("addGenomesField", function(x, key, value) standardGeneric("addGenomesField"))
+setGeneric("cols", function(x) standardGeneric("cols"))
 
 setClass("TrackHubGenome",
          representation(trackhub = "TrackHub",
@@ -291,15 +292,18 @@ setMethod("genome", "TrackHubGenome", function(x) x@genome)
 setMethod("uri", "TrackHubGenome", function(x)
           paste(trimSlash(uri(trackhub(x))), genome(x), sep = "/"))
 
-setMethod("names", "TrackHubGenome", function(x) {
+setMethod("cols", "TrackHubGenome", function(x) {
     trackDbValue <- getGenomesKey(x, "trackDb")
     if (!isFieldEmpty(trackDbValue)) {
         trackDbFilePath <- combineURI(trackhub(x), trackDbValue)
         trackDbContent <- getTrackDbContent(trackDbFilePath)
-        tracks <- sapply(trackDbContent, function(x) x@track)
-        as.character(tracks)
     }
     else stop("genomes.txt: 'trackDb' does not contain valid reference to trackDb file")
+})
+
+setMethod("names", "TrackHubGenome", function(x) {
+    trackDbContent <- cols(x)
+    names(trackDbContent)
 })
 
 setMethod("trackNames", "TrackHubGenome", function(object) {
@@ -351,6 +355,23 @@ setMethod("show", "TrackHubGenome", function(object) {
     cat(S4Vectors:::labeledLine("names", names(object)))
 })
 
+setMethod("track", "TrackHubGenome", function(object, name, ...) {
+    tracks <- cols(object)
+    track <- sapply(tracks, function(x) {
+        if(x@track == name)
+            x
+    })
+    track <- Filter(Negate(is.null), track)
+    if (length(track) == 1L) {
+        if (isEmpty(track[[1]]@bigDataUrl)) {
+            stop("Track '", name, "' does not contain any data file")
+        }
+        import(file.path(uri(object), track[[1]]@bigDataUrl))
+    }else{
+        stop("Track '", name, "' does not exist")
+    }
+})
+
 TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Genome()) {
     if (!isTRUEorFALSE(create))
         stop("'create' must be TRUE or FALSE")
@@ -371,6 +392,10 @@ setClass("TrackContainer",
          prototype(elementType = "Track_OR_TrackContainer")
 )
 
+setMethod("names", "TrackContainer", function(x) {
+    vapply(x, function(y) y@track, "character" ,USE.NAMES = FALSE)
+})
+
 TrackContainer <- function() {
     new("TrackContainer")
 }
@@ -379,7 +404,214 @@ setClass("Track",
          representation(
                         # common trackDb settings
                         track = "character",
+                        type = "character",
+                        shortLabel = "character",
+                        longLabel = "character",
                         bigDataUrl = "character",
+                        html = "character",
+                        visibility = "character",
+                        meta = "character",
+
+
+                        # common optional settings
+                        color = "character",
+                        priority = "character",
+                        altColor = "character",
+                        boxedCfg = "character",
+                        chromosomes = "character",
+                        darkerLabels = "character",
+                        dataVersion = "character",
+                        directUrl = "character",
+                        iframeUrl = "character",
+                        iframeOptions = "character",
+                        mouseOverField = "character",
+                        otherDb = "character",
+                        pennantIcon = "character",
+                        tableBrowser = "character",
+                        url = "character",
+                        urlLabel = "character",
+                        urls = "character",
+                        skipEmptyFields = "character",
+                        skipFields = "character",
+                        sepFields = "character",
+
+
+                        ##settings by track type
+
+                        # bam settings
+                        refUrl = "character",
+                        bigDataIndex = "character",
+                        bamColorMode = "character",
+                        bamGrayMode = "character",
+                        aliQualRange = "character",
+                        baseQualRange = "character",
+                        bamColorTag = "character",
+                        noColorTag = "character",
+                        bamSkipPrintQualScore = "character",
+                        indelDoubleInsert = "character",
+                        indelQueryInsert = "character",
+                        indelPolyA = "character",
+                        minAliQual = "character",
+                        pairEndsByName = "character",
+                        pairSearchRange = "character",
+                        showNames = "character",
+                        doWiggle = "character",
+                        maxWindowToDraw = "character",
+
+                        # bigBarChart settings
+                        barChartBars = "character",
+                        barChartColor = "character",
+                        barChartLabel = "character",
+                        barChartMaxSize = "character",
+                        barChartSizeWindows = "character",
+                        barChartMetric = "character",
+                        barChartUnit = "character",
+                        barChartMatrixUrl = "character",
+                        barChartSampleUrl = "character",
+                        maxLimit = "character",
+                        labelFields = "character",
+                        defaultLabelFields = "character",
+                        itemRgb = "character",
+                        colorByStrand = "character",
+                        denseCoverage = "character",
+                        labelOnFeature = "character",
+                        exonArrows = "character",
+                        exonNumbers = "character",
+                        scoreFilter = "character",
+                        scoreFilterLimits = "character",
+                        maxItems = "character",
+                        minGrayLevel = "character",
+                        noScoreFilter = "character",
+                        spectrum = "character",
+                        scoreMax = "character",
+                        scoreMin = "character",
+                        thickDrawItem = "character",
+                        searchIndex = "character",
+                        searchTrix = "character",
+                        labelSeparator = "character",
+                        # UNSUPPORTED fields
+                        # filter.<fieldName>
+                        # filterByRange.<fieldName>
+                        # filterLimits.<fieldName>
+                        # filterText.<fieldName>
+                        # filterType.<fieldName>
+                        # filterValues.<fieldName>
+                        # filterValuesDefault.<fieldName>
+                        # filterType.<fieldName>
+                        # filterLabel.<fieldName>
+                        bedNameLabel = "character",
+                        exonArrowsDense = "character",
+                        itemImagePath = "character",
+                        itemBigImagePath = "character",
+                        mergeSpannedItems = "character",
+                        linkIdInName = "character",
+                        nextExonText = "character",
+                        prevExonText = "character",
+                        scoreLabel = "character",
+                        showTopScorers = "character",
+
+                        # bigChain settings
+                        linkDataUrl = "character",
+
+                        # bigInteract settings
+                        interactDirectional = "character",
+                        interactUp = "character",
+                        interactMultiRegion = "character",
+                        maxHeightPixels = "character",
+                        speciesOrder = "character",
+                        frames = "character",
+                        summary = "character",
+
+                        # bigNarrowPeak settings
+                        # UNSUPPORTED fields
+                        #scoreFilter
+                        #pValueFilter
+                        #qValueFilter
+                        #signalFilter
+                        #<column>FilterLimits
+                        #<column>FilterByRange
+
+                        # bigPsl settings
+                        baseColorUseCds = "character",
+                        baseColorUseSequence = "character",
+                        baseColorDefault = "character",
+                        showDiffBasesAllScales = "character",
+
+                        # bigWig settings
+                        autoscale = "character",
+                        autoScale = "character",
+                        viewLimits = "character",
+                        viewLimitsMax = "character",
+                        alwaysZero = "character",
+                        graphTypeDefault = "character",
+                        maxWindowToQuery = "character",
+                        negateValues = "character",
+                        smoothingWindow = "character",
+                        transformFunc = "character",
+                        windowingFunction = "character",
+                        yLineMark = "character",
+                        yLineOnOff = "character",
+                        gridDefault = "character",
+
+
+                        # hic settings
+                        showSnpWidth = "character",
+                        otherSpecies = "character",
+
+
+                        # vcfTabix settings
+                        minQual = "character",
+                        minFreq = "character",
+                        hapClusterEnabled = "character",
+                        hapClusterColorBy = "character",
+                        hapClusterTreeAngle = "character",
+                        hapClusterHeight = "character",
+                        applyMinQual = "character",
+
+
+                        ##Grouping tracks into sets and hierarchies
+
+                        # Supertrack
+                        superTrack = "character",
+                        parent = "character",
+
+                        # Composite Tracks
+                        compositeTrack = "character",
+                        allButtonPair = "character",
+                        centerLabelsDense = "character",
+                        dragAndDrop = "character",
+
+                        # Subgroups
+                        subGroup1 = "character",
+                        subGroup2 = "character",
+                        subGroup3 = "character",
+                        subGroup4 = "character",
+                        subGroup5 = "character",
+                        subGroup6 = "character",
+                        subGroup7 = "character",
+                        subGroup8 = "character",
+                        subGroup9 = "character",
+                        subGroups = "character",
+                        dimensions = "character",
+                        filterComposite = "character",
+                        dimensionAchecked = "character",
+                        dimensionBchecked = "character",
+                        sortOrder = "character",
+
+                        # Subgroups Views
+                        view = "character",
+                        viewUi = "character",
+                        configurable = "character",
+
+                        # multiWig
+                        container = "character",
+                        aggregate = "character",
+                        showSubtrackColorOnUi = "character",
+
+                        # Miscellaneous Deprecated Settings
+                        metadata = "character",
+                        noInherit = "character",
+                        useScore = "character"
                         )
 )
 
