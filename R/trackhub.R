@@ -18,8 +18,9 @@ setGeneric("email", function(x) standardGeneric("email"))
 setGeneric("email<-", function(x, value) standardGeneric("email<-"))
 setGeneric("descriptionUrl", function(x) standardGeneric("descriptionUrl"))
 setGeneric("descriptionUrl<-", function(x, value) standardGeneric("descriptionUrl<-"))
+setGeneric("writeTrackHub", function(x, value) standardGeneric("writeTrackHub"))
 
-setClass("TrackHub", representation(uri = "character"),
+setClass("TrackHub", representation(uri = "character", hubContent = "character"),
          contains = "List")
 
 getHubContent <- function(x) {
@@ -65,8 +66,7 @@ combineURI <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
 
 getGenomesContentList <- function(x) {
     if (uriExists(hubFile(x))) {
-        hubContent <- getHubContent(hubFile(x))
-        genomesFileValue <- hubContent["genomesFile"]
+        genomesFileValue <- x@hubContent[["genomesFile"]]
         if (!isFieldEmpty(genomesFileValue)) {
             genomesFilePath <- combineURI(x, genomesFileValue)
             genomesList <- getGenomesContent(genomesFilePath)
@@ -76,11 +76,11 @@ getGenomesContentList <- function(x) {
 }
 
 setGenomesKey <- function(x, key, value) {
-    genomesList <- getGenomesContentList(trackhub(x))
+    trackhub <- trackhub(x)
+    genomesList <- getGenomesContentList(trackhub)
     position <- which(sapply(genomesList, function(y) genome(x) %in% y))
     genomesList[[position]][[key]] <- value
-    hubContent <- getHubContent(hubFile(trackhub(x)))
-    genomesFilePath <- combineURI(trackhub(x), hubContent["genomesFile"])
+    genomesFilePath <- combineURI(trackhub(x), trackhub@hubContent[["genomesFile"]])
     cat("", file = genomesFilePath)
     sapply(genomesList, function(x) {
         setGenomeContentList(x, genomesFilePath)
@@ -122,80 +122,62 @@ setMethod("uri", "TrackHub", function(x) {
 })
 
 setMethod("hub", "TrackHub", function(x) {
-    hubContent <- getHubContent(hubFile(x))
-    hubContent[["hub"]]
+    x@hubContent[["hub"]]
 })
 
 setReplaceMethod("hub", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    hubContent <- getHubContent(hubFile(x))
-    hubContent["hub"] <- value
-    setHubContent(x, hubContent)
+    x@hubContent[["hub"]] <- value
     x
 })
 
 setMethod("shortLabel", "TrackHub", function(x) {
-    hubContent <- getHubContent(hubFile(x))
-    hubContent[["shortLabel"]]
+    x@hubContent[["shortLabel"]]
 })
 
 setReplaceMethod("shortLabel", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    hubContent <- getHubContent(hubFile(x))
-    hubContent["shortLabel"] <- value
-    setHubContent(x, hubContent)
+    x@hubContent[["shortLabel"]] <- value
     x
 })
 
 setMethod("longLabel", "TrackHub", function(x) {
-    hubContent <- getHubContent(hubFile(x))
-    hubContent[["longLabel"]]
+    x@hubContent[["longLabel"]]
 })
 
 setReplaceMethod("longLabel", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    hubContent <- getHubContent(hubFile(x))
-    hubContent["longLabel"] <- value
-    setHubContent(x, hubContent)
+    x@hubContent[["longLabel"]] <- value
     x
 })
 
 setMethod("genomeFile", "TrackHub", function(x) {
-    hubContent <- getHubContent(hubFile(x))
-    hubContent[["genomesFile"]]
+    x@hubContent[["genomesFile"]]
 })
 
 setReplaceMethod("genomeFile", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    hubContent <- getHubContent(hubFile(x))
-    hubContent["genomesFile"] <- value
-    setHubContent(x, hubContent)
+    x@hubContent[["genomesFile"]] <- value
     x
 })
 
 setMethod("email", "TrackHub", function(x) {
-    hubContent <- getHubContent(hubFile(x))
-    hubContent[["email"]]
+    x@hubContent[["email"]]
 })
 
 setReplaceMethod("email", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    hubContent <- getHubContent(hubFile(x))
-    hubContent["email"] <- value
-    setHubContent(x, hubContent)
+    x@hubContent[["email"]] <- value
     x
 })
 
 setMethod("descriptionUrl", "TrackHub", function(x) {
-    hubContent <- getHubContent(hubFile(x))
-    hubContent[["descriptionUrl"]]
+    x@hubContent[["descriptionUrl"]]
 })
 
 setReplaceMethod("descriptionUrl", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    hubContent <- getHubContent(hubFile(x))
-    hubContent["descriptionUrl"] <- value
-    setHubContent(x, hubContent)
+    x@hubContent[["descriptionUrl"]] <- value
     x
 })
 
@@ -218,6 +200,10 @@ setMethod("show", "TrackHub", function(object) {
     cat(S4Vectors:::labeledLine("genomes", genome(object)))
 })
 
+setMethod("writeTrackHub", "TrackHub", function(x) {
+    setHubContent(x, x@hubContent)
+})
+
 TrackHub <- function(uri, create = FALSE) {
     if (!isTRUEorFALSE(create))
         stop("'create' must be TRUE or FALSE")
@@ -228,9 +214,12 @@ TrackHub <- function(uri, create = FALSE) {
         } ## must create this before calling normURI (requires existence)
         else createResource(uri, dir = TRUE)
     }
-    th <- new("TrackHub", uri = normURI(uri))
-    if (create)
+    th <- new("TrackHub")
+    th@uri <- normURI(uri)
+    if (create) {
         createResource(hubFile(th))
+    }
+    else th@hubContent <- getHubContent(hubFile(th))
     th
 }
 
@@ -276,9 +265,9 @@ getTrackDbContent <- function(x) {
 }
 
 createTrackHubGenome <- function(x, genomeRecord) {
-    hubContent <- getHubContent(hubFile(trackhub(x)))
-    genomesFilePath <- combineURI(trackhub(x), hubContent["genomesFile"])
-    if (uriExists(genomesFilePath) && genome(x) %in% genome(trackhub(x))) {
+    trackhub <- trackhub(x)
+    genomesFilePath <- combineURI(trackhub, trackhub@hubContent[["genomesFile"]])
+    if (uriExists(genomesFilePath) && genome(x) %in% genome(trackhub)) {
         message("NOTE: Genome '", genome(x), "' already exists")
         return ()
     }
@@ -333,8 +322,8 @@ setMethod("referenceSequence", "TrackHubGenome", function(x) {
 })
 
 setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
-    hubContent <- getHubContent(hubFile(trackhub(x)))
-    genomesFilePath <- combineURI(trackhub(x), hubContent["genomesFile"])
+    trackhub <- trackhub(x)
+    genomesFilePath <- combineURI(trackhub, trackhub@hubContent[["genomesFile"]])
     stopIfNotLocal(genomesFilePath)
     twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
