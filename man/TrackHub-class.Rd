@@ -14,6 +14,7 @@
 \alias{genome,TrackHub-method}
 \alias{length,TrackHub-method}
 \alias{uri}
+\alias{writeTrackHub}
 
 %% Data Access:
 \alias{hub,TrackHub-method}
@@ -76,6 +77,9 @@
     \item{}{\code{genome(x)}:
       Get the identifiers of the genomes present in the repository.
     }
+    \item{}{\code{writeTrackHub(x)}:
+      Write hub content from memory representation to the hub file.
+    }
   }
 }
 
@@ -135,6 +139,7 @@ email(th)
 
 \dontrun{
 hub(th) <- "new_hub"
+writeTrackHub(th)
 }
 }
 
