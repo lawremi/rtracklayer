@@ -276,6 +276,33 @@ createTrackHubGenome <- function(x, genomeRecord) {
     setGenomeContentList(genomeRecord, genomesFilePath)
 }
 
+copyResourceToTrackHub <- function(object, uri) {
+    parsed_uri <- .parseURI(uri)
+    if (parsed_uri$scheme == "")
+        uri <- paste0("file://", uri)
+    filename <- basename(uri)
+    object_uri <- .parseURI(uri(object))
+    if (uriIsLocal(object_uri)) {
+        dest_file <- file.path(object_uri$path, filename)
+        if (paste(uri(object), filename, sep = "/") != uri)
+            ### FIXME: URLdecode() here because of R bug
+            download.file(URLdecode(uri), dest_file)
+    }
+    else stop("TrackHub is not local; cannot copy track")
+    filename
+}
+
+.exportToTrackHub <- function(object, name,
+                              format = bestFileFormat(value, object),
+                              index = TRUE, ..., value)
+{
+    filename <- paste(name, format, sep = ".")
+    path <- paste(uri(object), filename, sep = "/")
+    file <- export(value, path, format = format, index = index, ...)
+    track(object, name, index = FALSE) <- file
+    object
+}
+
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
 
 setMethod("uri", "TrackHubGenome", function(x)
@@ -360,6 +387,78 @@ setMethod("track", "TrackHubGenome", function(object, name, ...) {
         stop("Track '", name, "' does not exist")
     }
 })
+
+setReplaceMethod("track",signature(object = "TrackHubGenome", value = "ANY"),
+                 .exportToTrackHub)
+
+setReplaceMethod("track",
+                 signature(object = "TrackHubGenome", value = "RsamtoolsFile"),
+                 function(object, name, ..., value)
+                 {
+                     if (missing(name))
+                         name <- basename(path(value))
+                     track(object, name) <- URLencode(path(value))
+                     copyResourceToQuickload(object, URLencode(index(value)))
+                     object
+                 })
+
+setReplaceMethod("track",
+                 signature(object = "TrackHubGenome", value = "RTLFile"),
+                 function(object, name, ..., value)
+                 {
+                     if (missing(name))
+                         name <- basename(path(value))
+                     track(object, name) <- URLencode(path(value))
+                     object
+                 })
+
+setReplaceMethod("track",
+                 signature(object = "TrackHubGenome", value = "character"),
+                 function(object, name = basename(object), ..., value)
+                 {
+                     filename <- copyResourceToTrackHub(object, value)
+                     tracks <- cols(object)
+                     track <- sapply(tracks, function(x) {
+                                if (x@track == name)
+                                    x
+                     })
+                     track <- Filter(Negate(is.null), track)
+                     trackDbValue <- getGenomesKey(object, "trackDb")
+                     trackDbFilePath <- combineURI(trackhub(object), trackDbValue)
+                     bigDataUrlValue <-  sub(uri(trackhub(object)), "", uri(object))
+                     bigDataUrlValue <- sub("^/", "", bigDataUrlValue)
+                     bigDataUrlValue <- paste(bigDataUrlValue, filename, sep = "/")
+                     content <- readLines(trackDbFilePath, warn = FALSE)
+                     if (length(track) == 1L) {# exising track
+                         tracksIndex <- grep("\\btrack\\b", content)
+                         totalLines <- length(content)
+                         tracksIndex[length(tracksIndex) + 1 ] <- totalLines + 1
+                         currentTrack <- grep(paste0("\\b", name, "\\b"), content)
+                         currentTrackPosition <- grep(paste0("\\b", currentTrack, "\\b"), tracksIndex)
+                         currentTrackStart <- tracksIndex[currentTrackPosition]
+                         currentTrackEnd <- tracksIndex[currentTrackPosition + 1]
+                         bigDataUrlPosition <- grep("bigDataUrl", content[currentTrackStart:currentTrackEnd])
+                         if (length(bigDataUrlPosition) != 0) {# non grouping track
+                             content[currentTrackStart:currentTrackEnd] <-
+                             sub("bigDataUrl\\s\\S+", paste0("bigDataUrl ", bigDataUrlValue),
+                                 content[currentTrackStart:currentTrackEnd])
+                             fd <- file(trackDbFilePath, open = "wt")
+                             writeLines(content[1:currentTrackStart - 1], fd)
+                             writeLines(content[currentTrackStart:currentTrackEnd - 1], fd)
+                             if (currentTrackEnd < totalLines) {
+                                writeLines(content[currentTrackEnd:totalLines], fd)
+                             }
+                             close(fd)
+                         }
+                         else stop("Cannot add track's data file for grouping track")
+                     }else{# new track
+                         fd <- file(trackDbFilePath, open = "wt")
+                         writeLines(content, fd)
+                         writeLines(paste0("\ntrack ", name, "\nbigDataUrl ", bigDataUrlValue, "\n"), fd)
+                         close(fd)
+                     }
+                     object
+                 })
 
 TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Genome()) {
     if (!isTRUEorFALSE(create))
