@@ -125,7 +125,7 @@ export.bw(object, con, ...)
 
 \section{\code{BigWigFile} objects}{
   A \code{BigWigFile} object, an extension of
-  \code{\linkS4class{RTLFile}} is a reference to a BigWig file. To cast
+  \code{\link[BiocIO]{BiocFile}} is a reference to a BigWig file. To cast
   a path, URL or connection to a \code{BigWigFile}, pass it to the
   \code{BigWigFile} constructor.
 

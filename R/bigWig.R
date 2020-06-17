@@ -6,7 +6,7 @@
 ### Classes
 ###
 
-setClass("BigWigFile", contains = "RTLFile")
+setClass("BigWigFile", contains = "BiocFile")
 setClass("BWFile", contains = "BigWigFile")
 
 BigWigFile <- function(path) {
@@ -21,7 +21,7 @@ setMethod("seqinfo", "BigWigFile", function(x) {
   Seqinfo(names(seqlengths), seqlengths) # no circularity information
 })
 
-setClass("BigWigFileList", contains = "RTLFileList",
+setClass("BigWigFileList", contains = "BiocFileList",
     prototype = prototype(elementType = "BigWigFile"))
 
 BigWigFileList <- function(path)

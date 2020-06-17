@@ -5,7 +5,7 @@
 ### At this point, this is internal, in support of the tabix stuff
 ###
 
-setClass("TabSeparatedFile", contains = "RTLFile")
+setClass("TabSeparatedFile", contains = "BiocFile")
 TabSeparatedFile <- function(resource) {
   new("TabSeparatedFile", resource = resource)
 }

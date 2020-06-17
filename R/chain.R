@@ -20,7 +20,7 @@ setClass("Chain",
          prototype = prototype(elementType = "ChainBlock"),
          contains = "SimpleList")
 
-setClass("ChainFile", contains = "RTLFile")
+setClass("ChainFile", contains = "BiocFile")
 
 ChainFile <- function(path) {
   if (!isSingleString(path))

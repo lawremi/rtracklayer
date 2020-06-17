@@ -7,7 +7,7 @@
 ### TwoBitFile class
 ###
 
-setClass("TwoBitFile", contains = "RTLFile")
+setClass("TwoBitFile", contains = "BiocFile")
 setClass("2BitFile", contains = "TwoBitFile")
 
 twoBitPath <- function(path) {

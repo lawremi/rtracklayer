@@ -40,6 +40,7 @@ import(XVector)
 import(GenomeInfoDb)
 import(IRanges)
 import(GenomicRanges)
+import(BiocIO)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
            DNAStringSet, DNA_BASES, DNA_ALPHABET, alphabetFrequency,

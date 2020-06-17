@@ -6,7 +6,7 @@
 ### Classes
 ###
 
-setClass("WIGFile", contains = "RTLFile")
+setClass("WIGFile", contains = "BiocFile")
 
 WIGFile <- function(resource) {
   new("WIGFile", resource = resource)
@@ -133,7 +133,7 @@ setMethod("export", c("UCSCData", "WIGFile"),
           })
 
 setMethod("export", c("SimpleGRangesList", "WIGFile"),
-          .export_SimpleGRangesList_RTLFile)
+          .export_SimpleGRangesList_BiocFile)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import

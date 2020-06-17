@@ -265,7 +265,7 @@ setReplaceMethod("track",
                  })
 
 setReplaceMethod("track",
-                 signature(object = "QuickloadGenome", value = "RTLFile"),
+                 signature(object = "QuickloadGenome", value = "BiocFile"),
                  function(object, name, metadata = character(), ..., value)
                  {
                    if (missing(name))
