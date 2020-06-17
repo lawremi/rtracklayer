@@ -239,11 +239,66 @@ setClass("TrackHubGenome",
 
 trackhub <- function(x) x@trackhub
 
+transformLogicalFields <- function(track) {
+    logicalFields <- c(
+    "boxedCfg", "darkerLabels", "skipEmptyFields", "indelDoubleInsert", "indelQueryInsert",
+    "indelPolyA", "showNames", "doWiggle", "itemRgb", "labelOnFeature", "exonArrows", "exonNumbers",
+    "noScoreFilter", "spectrum", "thickDrawItem", "exonArrowsDense", "mergeSpannedItems", "linkIdInName",
+    "showDiffBasesAllScales", "alwaysZero", "negateValues", "yLineOnOff", "gridDefault", "compositeTrack",
+    "allButtonPair", "centerLabelsDense", "hideEmptySubtracks", "viewUi", "configurable", "showSubtrackColorOnUi",
+    "noInherit", "hapClusterEnabled", "applyMinQual")
+    i <- 1L
+    totalFields <- length(logicalFields)
+    while(i <= totalFields) {
+        track <- sub(paste0(logicalFields[i] ,"= '(on|On)'"), paste0(logicalFields[i], "=TRUE"), track)
+        track <- sub(paste0(logicalFields[i] ,"= '(off|Off)'"), paste0(logicalFields[i], "=FALSE"), track)
+        track <- sub(paste0(logicalFields[i] ,"= '(true)'"), paste0(logicalFields[i], "=TRUE"), track)
+        track <- sub(paste0(logicalFields[i] ,"= '(false)'"), paste0(logicalFields[i], "=FALSE"), track)
+        i <- i + 1
+    }
+    track
+}
+
+transformIntegerFields <- function(track) {
+    integerFields <- c("maxWindowToDraw", "denseCoverage", "maxItems", "scoreMax", "scoreMin", "maxWindowToQuery",
+                       "showSnpWidth", "useScore")
+    i <- 1L
+    totalFields <- length(integerFields)
+    while(i <= totalFields) {
+        value <- regmatches(track, regexec(paste0(integerFields[i], "= '[0-9]*"), track))
+        value <- sub(paste0(integerFields[i], "= '"), "as.integer(", value)
+        track <- sub(paste0(integerFields[i], "= '[0-9]+'"), paste0(integerFields[i], "=", value, ")"), track)
+        i <- i + 1
+    }
+    track
+}
+
+transformNumericFields <- function(track) {
+    numericFields <- c("priority")
+
+    i <- 1L
+    totalFields <- length(numericFields)
+    while(i <= totalFields) {
+        value <- regmatches(track, regexec(paste0(numericFields[i], "= '[0-9]*"), track))
+        value <- sub(paste0(numericFields[i], "= '"), "as.numeric(", value)
+        track <- sub(paste0(numericFields[i], "= '[0-9]+'"), paste0(numericFields[i], "=", value, ")"), track)
+        i <- i + 1
+    }
+    track
+}
+
+transformTracksFields <- function(track) {
+    track <- transformLogicalFields(track)
+    track <- transformIntegerFields(track)
+    track <- transformNumericFields(track)
+    track
+}
+
 getTrackDbContent <- function(x) {
     Tracks <- TrackContainer()
     contentDf <- readAndSanitize(x)
     contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
-    tracksIndex <- grep("track", contentDf$V1)
+    tracksIndex <- grep("\\btrack\\b", contentDf$V1)
     totalTracks <- length(tracksIndex)
     tracksIndex[[length(tracksIndex) + 1]] <- length(contentDf$V1) + 1 # to read last track from file
     trackNo <- 1L
@@ -256,6 +311,7 @@ getTrackDbContent <- function(x) {
         track <- paste0(contentDf$V1[startPosition:endPosition],
                         "= '", contentDf$V2[startPosition:endPosition], "'", collapse=",")
         track <- paste0("Track(", track, ")")
+        track <- transformTracksFields(track)
         track <- eval(parse(text = track))
         Tracks[[position]] <- track
         position <- position + 1
@@ -503,11 +559,11 @@ setClass("Track",
 
                         # common optional settings
                         color = "character",
-                        priority = "character",
+                        priority = "numeric",
                         altColor = "character",
-                        boxedCfg = "character",
+                        boxedCfg = "logical",
                         chromosomes = "character",
-                        darkerLabels = "character",
+                        darkerLabels = "logical",
                         dataVersion = "character",
                         directUrl = "character",
                         iframeUrl = "character",
@@ -519,7 +575,7 @@ setClass("Track",
                         url = "character",
                         urlLabel = "character",
                         urls = "character",
-                        skipEmptyFields = "character",
+                        skipEmptyFields = "logical",
                         skipFields = "character",
                         sepFields = "character",
 
@@ -536,15 +592,15 @@ setClass("Track",
                         bamColorTag = "character",
                         noColorTag = "character",
                         bamSkipPrintQualScore = "character",
-                        indelDoubleInsert = "character",
-                        indelQueryInsert = "character",
-                        indelPolyA = "character",
+                        indelDoubleInsert = "logical",
+                        indelQueryInsert = "logical",
+                        indelPolyA = "logical",
                         minAliQual = "character",
                         pairEndsByName = "character",
                         pairSearchRange = "character",
-                        showNames = "character",
-                        doWiggle = "character",
-                        maxWindowToDraw = "character",
+                        showNames = "logical",
+                        doWiggle = "logical",
+                        maxWindowToDraw = "integer",
 
                         # bigBarChart settings
                         barChartBars = "character",
@@ -559,21 +615,21 @@ setClass("Track",
                         maxLimit = "character",
                         labelFields = "character",
                         defaultLabelFields = "character",
-                        itemRgb = "character",
+                        itemRgb = "logical",
                         colorByStrand = "character",
-                        denseCoverage = "character",
-                        labelOnFeature = "character",
-                        exonArrows = "character",
-                        exonNumbers = "character",
+                        denseCoverage = "integer",
+                        labelOnFeature = "logical",
+                        exonArrows = "logical",
+                        exonNumbers = "logical",
                         scoreFilter = "character",
                         scoreFilterLimits = "character",
-                        maxItems = "character",
+                        maxItems = "integer",
                         minGrayLevel = "character",
-                        noScoreFilter = "character",
-                        spectrum = "character",
-                        scoreMax = "character",
-                        scoreMin = "character",
-                        thickDrawItem = "character",
+                        noScoreFilter = "logical",
+                        spectrum = "logical",
+                        scoreMax = "integer",
+                        scoreMin = "integer",
+                        thickDrawItem = "logical",
                         searchIndex = "character",
                         searchTrix = "character",
                         labelSeparator = "character",
@@ -588,11 +644,11 @@ setClass("Track",
                         # filterType.<fieldName>
                         # filterLabel.<fieldName>
                         bedNameLabel = "character",
-                        exonArrowsDense = "character",
+                        exonArrowsDense = "logical",
                         itemImagePath = "character",
                         itemBigImagePath = "character",
-                        mergeSpannedItems = "character",
-                        linkIdInName = "character",
+                        mergeSpannedItems = "logical",
+                        linkIdInName = "logical",
                         nextExonText = "character",
                         prevExonText = "character",
                         scoreLabel = "character",
@@ -623,27 +679,27 @@ setClass("Track",
                         baseColorUseCds = "character",
                         baseColorUseSequence = "character",
                         baseColorDefault = "character",
-                        showDiffBasesAllScales = "character",
+                        showDiffBasesAllScales = "logical",
 
                         # bigWig settings
                         autoscale = "character",
                         autoScale = "character",
                         viewLimits = "character",
                         viewLimitsMax = "character",
-                        alwaysZero = "character",
+                        alwaysZero = "logical",
                         graphTypeDefault = "character",
-                        maxWindowToQuery = "character",
-                        negateValues = "character",
+                        maxWindowToQuery = "integer",
+                        negateValues = "logical",
                         smoothingWindow = "character",
                         transformFunc = "character",
                         windowingFunction = "character",
                         yLineMark = "character",
-                        yLineOnOff = "character",
-                        gridDefault = "character",
+                        yLineOnOff = "logical",
+                        gridDefault = "logical",
 
 
                         # hic settings
-                        showSnpWidth = "character",
+                        showSnpWidth = "integer",
                         otherSpecies = "character",
 
 
@@ -664,10 +720,15 @@ setClass("Track",
                         parent = "character",
 
                         # Composite Tracks
-                        compositeTrack = "character",
-                        allButtonPair = "character",
-                        centerLabelsDense = "character",
+                        compositeTrack = "logical",
+                        allButtonPair = "logical",
+                        centerLabelsDense = "logical",
                         dragAndDrop = "character",
+                        hideEmptySubtracks = "logical",
+                        hideEmptySubtracksMultiBedUrl = "character",
+                        hideEmptySubtracksSourcesUrl = "character",
+                        hideEmptySubtracksLabel = "character",
+
 
                         # Subgroups
                         subGroup1 = "character",
@@ -688,18 +749,18 @@ setClass("Track",
 
                         # Subgroups Views
                         view = "character",
-                        viewUi = "character",
-                        configurable = "character",
+                        viewUi = "logical",
+                        configurable = "logical",
 
                         # multiWig
                         container = "character",
                         aggregate = "character",
-                        showSubtrackColorOnUi = "character",
+                        showSubtrackColorOnUi = "logical",
 
                         # Miscellaneous Deprecated Settings
                         metadata = "character",
-                        noInherit = "character",
-                        useScore = "character"
+                        noInherit = "logical",
+                        useScore = "integer"
                         )
 )
 
