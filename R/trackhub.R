@@ -454,7 +454,7 @@ setReplaceMethod("track",
                      if (missing(name))
                          name <- basename(path(value))
                      track(object, name) <- URLencode(path(value))
-                     copyResourceToQuickload(object, URLencode(index(value)))
+                     copyResourceToTrackHub(object, URLencode(index(value)))
                      object
                  })
 
