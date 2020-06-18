@@ -91,6 +91,8 @@ setGenomesKey <- function(x, key, value) {
 getGenomesKey <- function(x, key) {
     genomesList <- getGenomesContentList(trackhub(x))
     position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    if (isEmpty(position))
+        stop("Genome : '",genome(x), "' not found")
     genomesList[[position]][[key]]
 }
 
@@ -328,7 +330,8 @@ createTrackHubGenome <- function(x, genomeRecord) {
         return ()
     }
     createResource(uri(x), dir = TRUE)
-    createResource(genomesFilePath)
+    if (!uriExists(genomesFilePath))
+        createResource(genomesFilePath)
     setGenomeContentList(genomeRecord, genomesFilePath)
 }
 
