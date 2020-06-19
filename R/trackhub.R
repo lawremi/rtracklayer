@@ -62,13 +62,13 @@ stopIfNotLocal <- function(x) {
 }
 
 hubFile <- function(x) paste(trimSlash(uri(x)), "hub.txt", sep = "/")
-combineURI <- function(x,y) paste(trimSlash(uri(x)), y, sep = "/")
+combineURI <- function(x,y) paste(trimSlash(x), y, sep = "/")
 
 getGenomesContentList <- function(x) {
     if (uriExists(hubFile(x))) {
         genomesFileValue <- x@hubContent[["genomesFile"]]
         if (!isFieldEmpty(genomesFileValue)) {
-            genomesFilePath <- combineURI(x, genomesFileValue)
+            genomesFilePath <- combineURI(uri(x), genomesFileValue)
             genomesList <- getGenomesContent(genomesFilePath)
         }
         else message("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
@@ -80,7 +80,7 @@ setGenomesKey <- function(x, key, value) {
     genomesList <- getGenomesContentList(trackhub)
     position <- which(sapply(genomesList, function(y) genome(x) %in% y))
     genomesList[[position]][[key]] <- value
-    genomesFilePath <- combineURI(trackhub(x), trackhub@hubContent[["genomesFile"]])
+    genomesFilePath <- combineURI(uri(trackhub(x)), trackhub@hubContent[["genomesFile"]])
     cat("", file = genomesFilePath)
     sapply(genomesList, function(x) {
         setGenomeContentList(x, genomesFilePath)
@@ -324,7 +324,7 @@ getTrackDbContent <- function(x) {
 
 createTrackHubGenome <- function(x, genomeRecord) {
     trackhub <- trackhub(x)
-    genomesFilePath <- combineURI(trackhub, trackhub@hubContent[["genomesFile"]])
+    genomesFilePath <- combineURI(uri(trackhub), trackhub@hubContent[["genomesFile"]])
     if (uriExists(genomesFilePath) && genome(x) %in% genome(trackhub)) {
         message("NOTE: Genome '", genome(x), "' already exists")
         return ()
@@ -370,7 +370,7 @@ setMethod("uri", "TrackHubGenome", function(x)
 setMethod("cols", "TrackHubGenome", function(x) {
     trackDbValue <- getGenomesKey(x, "trackDb")
     if (!isFieldEmpty(trackDbValue)) {
-        trackDbFilePath <- combineURI(trackhub(x), trackDbValue)
+        trackDbFilePath <- combineURI(uri(trackhub(x)), trackDbValue)
         trackDbContent <- getTrackDbContent(trackDbFilePath)
     }
     else stop("genomes.txt: 'trackDb' does not contain valid reference to trackDb file")
@@ -388,7 +388,7 @@ setMethod("trackNames", "TrackHubGenome", function(object) {
 setMethod("addGenomesField", "TrackHubGenome", function(x, key, value) {
     genomesFields <- c("twoBitPath", "groups", "htmlPath", "metaDb", "trackDb" , "metaTab")
     if (key %in% genomesFields && !isFieldEmpty(value)) {
-        createResource(combineURI(trackhub(x), value))
+        createResource(combineURI(uri(trackhub(x)), value))
     }
     setGenomesKey(x, key, value)
 })
@@ -401,7 +401,7 @@ setMethod("organism", "TrackHubGenome", function(object) {
 setMethod("referenceSequence", "TrackHubGenome", function(x) {
     twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
-        twoBitFilePath <- combineURI(trackhub(x), twoBitPathValue)
+        twoBitFilePath <- combineURI(uri(trackhub(x)), twoBitPathValue)
         import(twoBitFilePath)
     }
     else stop("genome.txt: 'twoBitPath' does not contain a reference to a file")
@@ -409,11 +409,11 @@ setMethod("referenceSequence", "TrackHubGenome", function(x) {
 
 setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
     trackhub <- trackhub(x)
-    genomesFilePath <- combineURI(trackhub, trackhub@hubContent[["genomesFile"]])
+    genomesFilePath <- combineURI(uri(trackhub), trackhub@hubContent[["genomesFile"]])
     stopIfNotLocal(genomesFilePath)
     twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
-        twoBitFilePath <- combineURI(trackhub(x), twoBitPathValue)
+        twoBitFilePath <- combineURI(uri(trackhub(x)), twoBitPathValue)
         export.2bit(value, twoBitFilePath)
         x
     }
@@ -483,7 +483,7 @@ setReplaceMethod("track",
                      })
                      track <- Filter(Negate(is.null), track)
                      trackDbValue <- getGenomesKey(object, "trackDb")
-                     trackDbFilePath <- combineURI(trackhub(object), trackDbValue)
+                     trackDbFilePath <- combineURI(uri(trackhub(object)), trackDbValue)
                      bigDataUrlValue <-  sub(uri(trackhub(object)), "", uri(object))
                      bigDataUrlValue <- sub("^/", "", bigDataUrlValue)
                      bigDataUrlValue <- paste(bigDataUrlValue, filename, sep = "/")
