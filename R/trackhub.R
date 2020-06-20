@@ -31,14 +31,6 @@ getHubContent <- function(x) {
     contentVec
 }
 
-getGenomesContent <- function(x) {
-    content <- readLines(x, warn = FALSE)
-    content_df <- read.csv(text = sub(" ", ",", content), header = FALSE)
-    recordsList <- split(setNames(as.list(content_df$V2), content_df$V1),
-                         cumsum(content_df$V1 == "genome"))
-    recordsList
-}
-
 isFileReference <- function(x) {
     formats <- c("txt", "2bit", "html")
     tools::file_ext(x) %in% formats
@@ -69,7 +61,10 @@ getGenomesContentList <- function(x) {
         genomesFileValue <- x@hubContent["genomesFile"]
         if (!isFieldEmpty(genomesFileValue)) {
             genomesFilePath <- combineURI(uri(x), unname(genomesFileValue))
-            genomesList <- getGenomesContent(genomesFilePath)
+            content <- readLines(genomesFilePath, warn = FALSE)
+            content_df <- read.csv(text = sub(" ", ",", content), header = FALSE)
+            genomesList <- split(setNames(as.list(content_df$V2), content_df$V1),
+                         cumsum(content_df$V1 == "genome"))
         }
         else message("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
     }
