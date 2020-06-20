@@ -66,9 +66,9 @@ combineURI <- function(x,y) paste(trimSlash(x), y, sep = "/")
 
 getGenomesContentList <- function(x) {
     if (uriExists(hubFile(x))) {
-        genomesFileValue <- x@hubContent[["genomesFile"]]
+        genomesFileValue <- x@hubContent["genomesFile"]
         if (!isFieldEmpty(genomesFileValue)) {
-            genomesFilePath <- combineURI(uri(x), genomesFileValue)
+            genomesFilePath <- combineURI(uri(x), unname(genomesFileValue))
             genomesList <- getGenomesContent(genomesFilePath)
         }
         else message("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
@@ -124,7 +124,7 @@ setMethod("uri", "TrackHub", function(x) {
 })
 
 setMethod("hub", "TrackHub", function(x) {
-    x@hubContent[["hub"]]
+    unname(x@hubContent["hub"])
 })
 
 setReplaceMethod("hub", "TrackHub", function(x, value) {
@@ -134,7 +134,7 @@ setReplaceMethod("hub", "TrackHub", function(x, value) {
 })
 
 setMethod("shortLabel", "TrackHub", function(x) {
-    x@hubContent[["shortLabel"]]
+    unname(x@hubContent["shortLabel"])
 })
 
 setReplaceMethod("shortLabel", "TrackHub", function(x, value) {
@@ -144,7 +144,7 @@ setReplaceMethod("shortLabel", "TrackHub", function(x, value) {
 })
 
 setMethod("longLabel", "TrackHub", function(x) {
-    x@hubContent[["longLabel"]]
+    unname(x@hubContent["longLabel"])
 })
 
 setReplaceMethod("longLabel", "TrackHub", function(x, value) {
@@ -154,7 +154,7 @@ setReplaceMethod("longLabel", "TrackHub", function(x, value) {
 })
 
 setMethod("genomeFile", "TrackHub", function(x) {
-    x@hubContent[["genomesFile"]]
+    unname(x@hubContent["genomesFile"])
 })
 
 setReplaceMethod("genomeFile", "TrackHub", function(x, value) {
@@ -164,7 +164,7 @@ setReplaceMethod("genomeFile", "TrackHub", function(x, value) {
 })
 
 setMethod("email", "TrackHub", function(x) {
-    x@hubContent[["email"]]
+    unname(x@hubContent["email"])
 })
 
 setReplaceMethod("email", "TrackHub", function(x, value) {
@@ -174,7 +174,7 @@ setReplaceMethod("email", "TrackHub", function(x, value) {
 })
 
 setMethod("descriptionUrl", "TrackHub", function(x) {
-    x@hubContent[["descriptionUrl"]]
+    unname(x@hubContent["descriptionUrl"])
 })
 
 setReplaceMethod("descriptionUrl", "TrackHub", function(x, value) {
