@@ -23,6 +23,14 @@ setGeneric("writeTrackHub", function(x, value) standardGeneric("writeTrackHub"))
 setClass("TrackHub", representation(uri = "character", hubContent = "character"),
          contains = "List")
 
+hubFile <- function(x) paste(trimSlash(uri(x)), "hub.txt", sep = "/")
+
+stopIfNotLocal <- function(x) {
+    if (!uriIsWritable(x)) {
+        stop("Repository is read only; cannot write on remote repository")
+    }
+}
+
 getHubContent <- function(x) {
     content <- readLines(x, warn = FALSE)
     rexp <- "^(\\w+)\\s?(.*)$"
@@ -31,30 +39,14 @@ getHubContent <- function(x) {
     contentVec
 }
 
-isFileReference <- function(x) {
-    formats <- c("txt", "2bit", "html")
-    tools::file_ext(x) %in% formats
+setHubContent <- function(x, hubContent) {
+    cat("", file = hubFile(x))
+    sapply(names(hubContent), function(y) {
+        if (!is.null(hubContent[y]) && !is.na(hubContent[y]))
+            cat(y, " ", hubContent[y], "\n", append = TRUE, sep = "", file = hubFile(x))
+    })
+    cat("\n", append = TRUE, file = hubFile(x))
 }
-
-isFieldEmpty <- function(x) {
-    if ((isFileReference(x) && !is.na(x)) && !is.null(x)) {
-        return(FALSE)
-    }
-    return(TRUE)
-}
-
-trimSlash <- function(x) {
-    sub("/$", "", x)
-}
-
-stopIfNotLocal <- function(x) {
-    if (!uriIsWritable(x)) {
-        stop("Repository is read only; cannot write on remote repository")
-    }
-}
-
-hubFile <- function(x) paste(trimSlash(uri(x)), "hub.txt", sep = "/")
-combineURI <- function(x,y) paste(trimSlash(x), y, sep = "/")
 
 getGenomesContentList <- function(x) {
     if (uriExists(hubFile(x))) {
@@ -70,33 +62,6 @@ getGenomesContentList <- function(x) {
     }
 }
 
-setGenomesKey <- function(x, key, value) {
-    trackhub <- trackhub(x)
-    genomesList <- getGenomesContentList(trackhub)
-    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
-    genomesList[[position]][[key]] <- value
-    genomesFilePath <- combineURI(uri(trackhub(x)), trackhub@hubContent[["genomesFile"]])
-    cat("", file = genomesFilePath)
-    sapply(genomesList, function(x) {
-        setGenomeContentList(x, genomesFilePath)
-    })
-    return(invisible(NULL))
-}
-
-getGenomesKey <- function(x, key) {
-    genomesList <- getGenomesContentList(trackhub(x))
-    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
-    if (isEmpty(position))
-        stop("Genome : '",genome(x), "' not found")
-    genomesList[[position]][[key]]
-}
-
-Genome <- function(genome = "", trackDb = "", twoBitPath = "", groups = "",
-                   description = "", organism = "", defaultPos = "",
-                   orderKey = "", scientificName = "", htmlPath = "") {
-        c(as.list(environment()))
-}
-
 setGenomeContentList <- function(x, file) {
     sapply(names(x), function(y) {
         if(x[[y]] != "")
@@ -105,13 +70,10 @@ setGenomeContentList <- function(x, file) {
     cat("\n", append = TRUE, file = file)
 }
 
-setHubContent <- function(x, hubContent) {
-    cat("", file = hubFile(x))
-    sapply(names(hubContent), function(y) {
-        if (!is.null(hubContent[y]) && !is.na(hubContent[y]))
-            cat(y, " ", hubContent[y], "\n", append = TRUE, sep = "", file = hubFile(x))
-    })
-    cat("\n", append = TRUE, file = hubFile(x))
+Genome <- function(genome = "", trackDb = "", twoBitPath = "", groups = "",
+                   description = "", organism = "", defaultPos = "",
+                   orderKey = "", scientificName = "", htmlPath = "") {
+        c(as.list(environment()))
 }
 
 setMethod("uri", "TrackHub", function(x) {
@@ -192,13 +154,13 @@ setMethod("names", "TrackHub", function(x) genome(x))
 
 setMethod("length", "TrackHub", function(x) length(names(x)))
 
+setMethod("writeTrackHub", "TrackHub", function(x) {
+    setHubContent(x, x@hubContent)
+})
+
 setMethod("show", "TrackHub", function(object) {
     cat(class(object), "repository\nuri:", uri(object), "\n")
     cat(S4Vectors:::labeledLine("genomes", genome(object)))
-})
-
-setMethod("writeTrackHub", "TrackHub", function(x) {
-    setHubContent(x, x@hubContent)
 })
 
 TrackHub <- function(uri, create = FALSE) {
@@ -235,6 +197,27 @@ setClass("TrackHubGenome",
          contains = "TrackDb")
 
 trackhub <- function(x) x@trackhub
+
+setGenomesKey <- function(x, key, value) {
+    trackhub <- trackhub(x)
+    genomesList <- getGenomesContentList(trackhub)
+    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    genomesList[[position]][[key]] <- value
+    genomesFilePath <- combineURI(uri(trackhub(x)), trackhub@hubContent[["genomesFile"]])
+    cat("", file = genomesFilePath)
+    sapply(genomesList, function(x) {
+        setGenomeContentList(x, genomesFilePath)
+    })
+    return(invisible(NULL))
+}
+
+getGenomesKey <- function(x, key) {
+    genomesList <- getGenomesContentList(trackhub(x))
+    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    if (isEmpty(position))
+        stop("Genome : '",genome(x), "' not found")
+    genomesList[[position]][[key]]
+}
 
 transformLogicalFields <- function(track) {
     logicalFields <- c(
@@ -291,6 +274,17 @@ transformTracksFields <- function(track) {
     track
 }
 
+readAndSanitize <- function(filepath) {
+    fileContent <- readLines(filepath, warn = FALSE)
+    fileContent <- gsub("^(\\t)*#(.)*", "", fileContent) # to avoid reading commented tracks
+    fileContent <- gsub(",", ";", fileContent)
+    contentDf <- read.csv(text = sub(" ", ",", fileContent), header = FALSE)
+    contentDf$V2 <- gsub(";", ",", contentDf$V2)
+    nonEmptyContent <- vapply(contentDf$V2, function(x) x!="", logical(1))
+    contentDf <- contentDf[nonEmptyContent,]
+    contentDf
+}
+
 getTrackDbContent <- function(x) {
     Tracks <- TrackContainer()
     contentDf <- readAndSanitize(x)
@@ -328,33 +322,6 @@ createTrackHubGenome <- function(x, genomeRecord) {
     if (!uriExists(genomesFilePath))
         createResource(genomesFilePath)
     setGenomeContentList(genomeRecord, genomesFilePath)
-}
-
-copyResourceToTrackHub <- function(object, uri) {
-    parsed_uri <- .parseURI(uri)
-    if (parsed_uri$scheme == "")
-        uri <- paste0("file://", uri)
-    filename <- basename(uri)
-    object_uri <- .parseURI(uri(object))
-    if (uriIsLocal(object_uri)) {
-        dest_file <- file.path(object_uri$path, filename)
-        if (paste(uri(object), filename, sep = "/") != uri)
-            ### FIXME: URLdecode() here because of R bug
-            download.file(URLdecode(uri), dest_file)
-    }
-    else stop("TrackHub is not local; cannot copy track")
-    filename
-}
-
-.exportToTrackHub <- function(object, name,
-                              format = bestFileFormat(value, object),
-                              index = TRUE, ..., value)
-{
-    filename <- paste(name, format, sep = ".")
-    path <- paste(uri(object), filename, sep = "/")
-    file <- export(value, path, format = format, index = index, ...)
-    track(object, name, index = FALSE) <- file
-    object
 }
 
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
@@ -425,6 +392,21 @@ setMethod("show", "TrackHubGenome", function(object) {
     cat(S4Vectors:::labeledLine("names", names(object)))
 })
 
+TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Genome()) {
+    if (!isTRUEorFALSE(create))
+        stop("'create' must be TRUE or FALSE")
+    trackhub <- as(trackhub, "TrackHub")
+    thg <- new("TrackHubGenome", trackhub = trackhub, genome = genome)
+    if (create) {
+        createTrackHubGenome(thg, genomeRecord)
+    }
+    thg
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Import of tracks from Track Hub
+###
+
 setMethod("track", "TrackHubGenome", function(object, name, ...) {
     tracks <- cols(object)
     track <- sapply(tracks, function(x) {
@@ -441,6 +423,37 @@ setMethod("track", "TrackHubGenome", function(object, name, ...) {
         stop("Track '", name, "' does not exist")
     }
 })
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export of tracks to Track Hub
+###
+
+copyResourceToTrackHub <- function(object, uri) {
+    parsed_uri <- .parseURI(uri)
+    if (parsed_uri$scheme == "")
+        uri <- paste0("file://", uri)
+    filename <- basename(uri)
+    object_uri <- .parseURI(uri(object))
+    if (uriIsLocal(object_uri)) {
+        dest_file <- file.path(object_uri$path, filename)
+        if (paste(uri(object), filename, sep = "/") != uri)
+            ### FIXME: URLdecode() here because of R bug
+            download.file(URLdecode(uri), dest_file)
+    }
+    else stop("TrackHub is not local; cannot copy track")
+    filename
+}
+
+.exportToTrackHub <- function(object, name,
+                              format = bestFileFormat(value, object),
+                              index = TRUE, ..., value)
+{
+    filename <- paste(name, format, sep = ".")
+    path <- paste(uri(object), filename, sep = "/")
+    file <- export(value, path, format = format, index = index, ...)
+    track(object, name, index = FALSE) <- file
+    object
+}
 
 setReplaceMethod("track",signature(object = "TrackHubGenome", value = "ANY"),
                  .exportToTrackHub)
@@ -513,17 +526,6 @@ setReplaceMethod("track",
                      }
                      object
                  })
-
-TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Genome()) {
-    if (!isTRUEorFALSE(create))
-        stop("'create' must be TRUE or FALSE")
-    trackhub <- as(trackhub, "TrackHub")
-    thg <- new("TrackHubGenome", trackhub = trackhub, genome = genome)
-    if (create) {
-        createTrackHubGenome(thg, genomeRecord)
-    }
-    thg
-}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### TrackContainer class
@@ -768,13 +770,24 @@ Track <- function(...) {
 
 setClassUnion("Track_OR_TrackContainer", c("Track", "TrackContainer"))
 
-readAndSanitize <- function(filepath) {
-    fileContent <- readLines(filepath, warn = FALSE)
-    fileContent <- gsub("^(\\t)*#(.)*", "", fileContent) # to avoid reading commented tracks
-    fileContent <- gsub(",", ";", fileContent)
-    contentDf <- read.csv(text = sub(" ", ",", fileContent), header = FALSE)
-    contentDf$V2 <- gsub(";", ",", contentDf$V2)
-    nonEmptyContent <- vapply(contentDf$V2, function(x) x!="", logical(1))
-    contentDf <- contentDf[nonEmptyContent,]
-    contentDf
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Utilities
+###
+
+combineURI <- function(x,y) paste(trimSlash(x), y, sep = "/")
+
+isFileReference <- function(x) {
+    formats <- c("txt", "2bit", "html")
+    tools::file_ext(x) %in% formats
+}
+
+isFieldEmpty <- function(x) {
+    if ((isFileReference(x) && !is.na(x)) && !is.null(x)) {
+        return(FALSE)
+    }
+    return(TRUE)
+}
+
+trimSlash <- function(x) {
+    sub("/$", "", x)
 }
