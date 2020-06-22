@@ -193,7 +193,9 @@ setGeneric("cols", function(x) standardGeneric("cols"))
 
 setClass("TrackHubGenome",
          representation(trackhub = "TrackHub",
-                        genome = "character"),
+                        genome = "character",
+                        tracks = "TrackContainer",
+                        levels = "integer"),
          contains = "TrackDb")
 
 trackhub <- function(x) x@trackhub
@@ -281,6 +283,12 @@ createTrack <- function(trackString) {
     track
 }
 
+getTabCountList <- function(contentdf) {
+    matches <- gregexpr("^(\\t)+", contentdf)
+    tabCountList <- vapply(matches, attr, integer(1L), "match.length")
+    tabCountList
+}
+
 readAndSanitize <- function(filepath) {
     fileContent <- readLines(filepath, warn = FALSE)
     fileContent <- gsub("^(\\t)*#(.)*", "", fileContent) # to avoid reading commented tracks
@@ -292,13 +300,16 @@ readAndSanitize <- function(filepath) {
     contentDf
 }
 
-getTrackDbContent <- function(x) {
+getTrackDbContent <- function(x, trackDbFilePath) {
     Tracks <- TrackContainer()
-    contentDf <- readAndSanitize(x)
-    contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
+    contentDf <- readAndSanitize(trackDbFilePath)
     tracksIndex <- grep("\\btrack\\b", contentDf$V1)
+    levels <- getTabCountList(contentDf$V1)
+    levels <- levels[tracksIndex]
+    levels <- as.integer(gsub(-1, 0, levels))
     totalTracks <- length(tracksIndex)
     tracksIndex[[length(tracksIndex) + 1]] <- length(contentDf$V1) + 1 # to read last track from file
+    contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
     trackNo <- 1L
     position <- 1L
     # to speed up, reading track by track
@@ -313,7 +324,9 @@ getTrackDbContent <- function(x) {
         position <- position + 1
         trackNo <- trackNo + 1
     }
-    Tracks
+    x@tracks <- Tracks
+    x@levels <- levels
+    x
 }
 
 createTrackHubGenome <- function(x, genomeRecord) {
@@ -335,17 +348,11 @@ setMethod("uri", "TrackHubGenome", function(x)
           paste(trimSlash(uri(trackhub(x))), genome(x), sep = "/"))
 
 setMethod("cols", "TrackHubGenome", function(x) {
-    trackDbValue <- getGenomesKey(x, "trackDb")
-    if (!isFieldEmpty(trackDbValue)) {
-        trackDbFilePath <- combineURI(uri(trackhub(x)), trackDbValue)
-        trackDbContent <- getTrackDbContent(trackDbFilePath)
-    }
-    else stop("genomes.txt: 'trackDb' does not contain valid reference to trackDb file")
+    x@tracks
 })
 
 setMethod("names", "TrackHubGenome", function(x) {
-    trackDbContent <- cols(x)
-    names(trackDbContent)
+    as.character(names(cols(x)))
 })
 
 setMethod("trackNames", "TrackHubGenome", function(object) {
@@ -401,9 +408,20 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Geno
     if (!isTRUEorFALSE(create))
         stop("'create' must be TRUE or FALSE")
     trackhub <- as(trackhub, "TrackHub")
-    thg <- new("TrackHubGenome", trackhub = trackhub, genome = genome)
+    thg <- new("TrackHubGenome")
+    thg@trackhub <- trackhub
+    thg@genome <- genome
     if (create) {
         createTrackHubGenome(thg, genomeRecord)
+    }
+    trackDbValue <- getGenomesKey(thg, "trackDb")
+    if (!isFieldEmpty(trackDbValue)) {
+        trackDbFilePath <- combineURI(uri(trackhub(thg)), trackDbValue)
+        if (!uriExists(trackDbFilePath)) {
+            createResource(trackDbFilePath)
+        }else if (file.size(parseURI(trackDbFilePath)$path) != 1) {
+            thg <- getTrackDbContent(thg, trackDbFilePath)
+        }
     }
     thg
 }
@@ -413,8 +431,7 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Geno
 ###
 
 setMethod("track", "TrackHubGenome", function(object, name, ...) {
-    tracks <- cols(object)
-    track <- sapply(tracks, function(x) {
+    track <- sapply(object@tracks, function(x) {
         if(x@track == name)
             x
     })
@@ -423,7 +440,7 @@ setMethod("track", "TrackHubGenome", function(object, name, ...) {
         if (isEmpty(track[[1]]@bigDataUrl)) {
             stop("Track '", name, "' does not contain any data file")
         }
-        import(file.path(uri(object), track[[1]]@bigDataUrl))
+        import(paste0(uri(trackhub(object)), "/", track[[1]]@bigDataUrl))
     }else{
         stop("Track '", name, "' does not exist")
     }
@@ -489,46 +506,44 @@ setReplaceMethod("track",
                  function(object, name = basename(object), ..., value)
                  {
                      filename <- copyResourceToTrackHub(object, value)
-                     tracks <- cols(object)
-                     track <- sapply(tracks, function(x) {
+                     track <- sapply(object@tracks, function(x) {
                                 if (x@track == name)
-                                    x
+                                    return(TRUE)
+                                return(FALSE)
                      })
-                     track <- Filter(Negate(is.null), track)
                      trackDbValue <- getGenomesKey(object, "trackDb")
                      trackDbFilePath <- combineURI(uri(trackhub(object)), trackDbValue)
                      bigDataUrlValue <-  sub(uri(trackhub(object)), "", uri(object))
                      bigDataUrlValue <- sub("^/", "", bigDataUrlValue)
                      bigDataUrlValue <- paste(bigDataUrlValue, filename, sep = "/")
-                     content <- readLines(trackDbFilePath, warn = FALSE)
-                     if (length(track) == 1L) {# exising track
-                         tracksIndex <- grep("\\btrack\\b", content)
-                         totalLines <- length(content)
-                         tracksIndex[length(tracksIndex) + 1 ] <- totalLines + 1
-                         currentTrack <- grep(paste0("\\b", name, "\\b"), content)
-                         currentTrackPosition <- grep(paste0("\\b", currentTrack, "\\b"), tracksIndex)
-                         currentTrackStart <- tracksIndex[currentTrackPosition]
-                         currentTrackEnd <- tracksIndex[currentTrackPosition + 1]
-                         bigDataUrlPosition <- grep("bigDataUrl", content[currentTrackStart:currentTrackEnd])
-                         if (length(bigDataUrlPosition) != 0) {# non grouping track
-                             content[currentTrackStart:currentTrackEnd] <-
-                             sub("bigDataUrl\\s\\S+", paste0("bigDataUrl ", bigDataUrlValue),
-                                 content[currentTrackStart:currentTrackEnd])
-                             fd <- file(trackDbFilePath, open = "wt")
-                             writeLines(content[1:currentTrackStart - 1], fd)
-                             writeLines(content[currentTrackStart:currentTrackEnd - 1], fd)
-                             if (currentTrackEnd < totalLines) {
-                                writeLines(content[currentTrackEnd:totalLines], fd)
-                             }
-                             close(fd)
-                         }
-                         else stop("Cannot add track's data file for grouping track")
-                     }else{# new track
-                         fd <- file(trackDbFilePath, open = "wt")
-                         writeLines(content, fd)
-                         writeLines(paste0("\ntrack ", name, "\nbigDataUrl ", bigDataUrlValue, "\n"), fd)
-                         close(fd)
+                     trackPosition <- which(track)
+                     trackString <-paste0("track='", name, "', bigDataUrl='", bigDataUrlValue, "'")
+                     track <- createTrack(trackString)
+                     if (isEmpty(trackPosition)) {
+                         trackPosition <- length(object@tracks) + 1
+                         object@tracks[[trackPosition]] <- track
+                     }else {
+                         object@tracks[[trackPosition]] <- track
                      }
+                     tabStrings <- sapply(object@levels, function(x) {
+                         paste(replicate(x, "\t"), collapse = "")
+                     })
+                     slots <- slotNames(Track())
+                     i <- 1L
+                     tracks <- sapply(object@tracks, function(x) {
+                         track <- sapply(slots, function(y) {
+                             slotValue <- slot(x,y)
+                             if (!isEmpty(slotValue)) {
+                                 paste0(tabStrings[i], y, " ", slotValue)
+                             }
+                             else NULL
+                         })
+                         track[length(track) + 1] <- ""
+                         i <<- i + 1
+                         track
+                     })
+                     tracks <- as.character(Filter(Negate(is.null), tracks))
+                     writeLines(tracks, trackDbFilePath)
                      object
                  })
 
