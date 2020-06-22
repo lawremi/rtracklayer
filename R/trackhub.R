@@ -274,6 +274,13 @@ transformTracksFields <- function(track) {
     track
 }
 
+createTrack <- function(trackString) {
+    track <- paste0("Track(", trackString, ")")
+    track <- transformTracksFields(track)
+    track <- eval(parse(text = track))
+    track
+}
+
 readAndSanitize <- function(filepath) {
     fileContent <- readLines(filepath, warn = FALSE)
     fileContent <- gsub("^(\\t)*#(.)*", "", fileContent) # to avoid reading commented tracks
@@ -301,9 +308,7 @@ getTrackDbContent <- function(x) {
         # dynamically creating track object
         track <- paste0(contentDf$V1[startPosition:endPosition],
                         "= '", contentDf$V2[startPosition:endPosition], "'", collapse=",")
-        track <- paste0("Track(", track, ")")
-        track <- transformTracksFields(track)
-        track <- eval(parse(text = track))
+        track <- createTrack(track)
         Tracks[[position]] <- track
         position <- position + 1
         trackNo <- trackNo + 1
