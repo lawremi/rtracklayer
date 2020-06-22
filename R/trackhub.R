@@ -189,7 +189,7 @@ setAs("character", "TrackHub", function(from) TrackHub(from))
 ###
 
 setGeneric("addGenomesField", function(x, key, value) standardGeneric("addGenomesField"))
-setGeneric("cols", function(x) standardGeneric("cols"))
+setGeneric("getTracks", function(x) standardGeneric("getTracks"))
 
 setClass("TrackHubGenome",
          representation(trackhub = "TrackHub",
@@ -347,12 +347,12 @@ setMethod("genome", "TrackHubGenome", function(x) x@genome)
 setMethod("uri", "TrackHubGenome", function(x)
           paste(trimSlash(uri(trackhub(x))), genome(x), sep = "/"))
 
-setMethod("cols", "TrackHubGenome", function(x) {
+setMethod("getTracks", "TrackHubGenome", function(x) {
     x@tracks
 })
 
 setMethod("names", "TrackHubGenome", function(x) {
-    as.character(names(cols(x)))
+    as.character(names(getTracks(x)))
 })
 
 setMethod("trackNames", "TrackHubGenome", function(object) {
