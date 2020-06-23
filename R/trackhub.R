@@ -86,7 +86,7 @@ setMethod("hub", "TrackHub", function(x) {
 
 setReplaceMethod("hub", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    x@hubContent[["hub"]] <- value
+    x@hubContent["hub"] <- value
     x
 })
 
@@ -96,7 +96,7 @@ setMethod("shortLabel", "TrackHub", function(x) {
 
 setReplaceMethod("shortLabel", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    x@hubContent[["shortLabel"]] <- value
+    x@hubContent["shortLabel"] <- value
     x
 })
 
@@ -106,7 +106,7 @@ setMethod("longLabel", "TrackHub", function(x) {
 
 setReplaceMethod("longLabel", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    x@hubContent[["longLabel"]] <- value
+    x@hubContent["longLabel"] <- value
     x
 })
 
@@ -116,7 +116,7 @@ setMethod("genomeFile", "TrackHub", function(x) {
 
 setReplaceMethod("genomeFile", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    x@hubContent[["genomesFile"]] <- value
+    x@hubContent["genomesFile"] <- value
     x
 })
 
@@ -126,7 +126,7 @@ setMethod("email", "TrackHub", function(x) {
 
 setReplaceMethod("email", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    x@hubContent[["email"]] <- value
+    x@hubContent["email"] <- value
     x
 })
 
@@ -136,7 +136,7 @@ setMethod("descriptionUrl", "TrackHub", function(x) {
 
 setReplaceMethod("descriptionUrl", "TrackHub", function(x, value) {
     stopIfNotLocal(hubFile(x))
-    x@hubContent[["descriptionUrl"]] <- value
+    x@hubContent["descriptionUrl"] <- value
     x
 })
 
@@ -205,7 +205,7 @@ setGenomesKey <- function(x, key, value) {
     genomesList <- getGenomesContentList(trackhub)
     position <- which(sapply(genomesList, function(y) genome(x) %in% y))
     genomesList[[position]][[key]] <- value
-    genomesFilePath <- combineURI(uri(trackhub(x)), trackhub@hubContent[["genomesFile"]])
+    genomesFilePath <- combineURI(uri(trackhub(x)), trackhub@hubContent["genomesFile"])
     cat("", file = genomesFilePath)
     sapply(genomesList, function(x) {
         setGenomeContentList(x, genomesFilePath)
@@ -308,7 +308,7 @@ getTrackDbContent <- function(x, trackDbFilePath) {
     levels <- levels[tracksIndex]
     levels <- as.integer(gsub(-1, 0, levels))
     totalTracks <- length(tracksIndex)
-    tracksIndex[[length(tracksIndex) + 1]] <- length(contentDf$V1) + 1 # to read last track from file
+    tracksIndex[length(tracksIndex) + 1] <- length(contentDf$V1) + 1 # to read last track from file
     contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
     trackNo <- 1L
     position <- 1L
@@ -331,7 +331,7 @@ getTrackDbContent <- function(x, trackDbFilePath) {
 
 createTrackHubGenome <- function(x, genomeRecord) {
     trackhub <- trackhub(x)
-    genomesFilePath <- combineURI(uri(trackhub), trackhub@hubContent[["genomesFile"]])
+    genomesFilePath <- combineURI(uri(trackhub), trackhub@hubContent["genomesFile"])
     if (uriExists(genomesFilePath) && genome(x) %in% genome(trackhub)) {
         message("NOTE: Genome '", genome(x), "' already exists")
         return ()
@@ -383,7 +383,7 @@ setMethod("referenceSequence", "TrackHubGenome", function(x) {
 
 setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
     trackhub <- trackhub(x)
-    genomesFilePath <- combineURI(uri(trackhub), trackhub@hubContent[["genomesFile"]])
+    genomesFilePath <- combineURI(uri(trackhub), trackhub@hubContent["genomesFile"])
     stopIfNotLocal(genomesFilePath)
     twoBitPathValue <- getGenomesKey(x, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
