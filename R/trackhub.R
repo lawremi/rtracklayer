@@ -393,6 +393,33 @@ setMethod("length", "TrackHubGenome", function(x) {
     length(names(x))
 })
 
+setMethod("writeTrackHub", "TrackHubGenome", function(x) {
+    trackDbValue <- getGenomesKey(x, "trackDb")
+    trackDbFilePath <- combineURI(uri(trackhub(x)), trackDbValue)
+    stopIfNotLocal(trackDbFilePath)
+    tabStrings <- sapply(x@levels, function(y) {
+        paste(replicate(y, "\t"), collapse = "")
+    })
+    slots <- slotNames(Track())
+    i <- 1L
+    tracks <- sapply(x@tracks, function(y) {
+        track <- sapply(slots, function(slotName) {
+            slotValue <- slot(y, slotName)
+            if (!isEmpty(slotValue)) {
+                paste0(tabStrings[i], slotName, " ", slotValue)
+            }
+            else NULL
+        })
+        track[length(track) + 1] <- ""
+        i <<- i + 1
+        track
+    })
+    tracks <- as.character(Filter(Negate(is.null), tracks))
+    tracks <- gsub("TRUE", "on", tracks)
+    tracks <- gsub("FALSE", "off", tracks)
+    writeLines(tracks, trackDbFilePath)
+})
+
 setMethod("show", "TrackHubGenome", function(object) {
     cat(class(object), "track database\ngenome:", genome(object), "\ntrackhub:",
         uri(trackhub(object)), "\n")
@@ -520,25 +547,6 @@ setReplaceMethod("track",
                      }else {
                          object@tracks[[trackPosition]] <- track
                      }
-                     tabStrings <- sapply(object@levels, function(x) {
-                         paste(replicate(x, "\t"), collapse = "")
-                     })
-                     slots <- slotNames(Track())
-                     i <- 1L
-                     tracks <- sapply(object@tracks, function(x) {
-                         track <- sapply(slots, function(y) {
-                             slotValue <- slot(x,y)
-                             if (!isEmpty(slotValue)) {
-                                 paste0(tabStrings[i], y, " ", slotValue)
-                             }
-                             else NULL
-                         })
-                         track[length(track) + 1] <- ""
-                         i <<- i + 1
-                         track
-                     })
-                     tracks <- as.character(Filter(Negate(is.null), tracks))
-                     writeLines(tracks, trackDbFilePath)
                      object
                  })
 
