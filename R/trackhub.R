@@ -462,8 +462,12 @@ setMethod("track", "TrackHubGenome", function(object, name, ...) {
         if (isEmpty(track[[1]]@bigDataUrl)) {
             stop("Track '", name, "' does not contain any data file")
         }
-        import(paste0(uri(trackhub(object)), "/", track[[1]]@bigDataUrl))
-    }else{
+        if (uriIsWritable(track[[1]]@bigDataUrl)) {
+            import(paste0(parseURI(uri(trackhub(object)))$path, "/", track[[1]]@bigDataUrl))
+        }else {
+            import(track[[1]]@bigDataUrl)
+        }
+    }else {
         stop("Track '", name, "' does not exist")
     }
 })
