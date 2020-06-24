@@ -18,7 +18,7 @@ setGeneric("email", function(x) standardGeneric("email"))
 setGeneric("email<-", function(x, value) standardGeneric("email<-"))
 setGeneric("descriptionUrl", function(x) standardGeneric("descriptionUrl"))
 setGeneric("descriptionUrl<-", function(x, value) standardGeneric("descriptionUrl<-"))
-setGeneric("writeTrackHub", function(x, value) standardGeneric("writeTrackHub"))
+setGeneric("writeTrackHub", function(x) standardGeneric("writeTrackHub"))
 
 setClass("TrackHub", representation(uri = "character", hubContent = "character"),
          contains = "List")
