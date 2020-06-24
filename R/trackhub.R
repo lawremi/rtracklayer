@@ -85,7 +85,6 @@ setMethod("hub", "TrackHub", function(x) {
 })
 
 setReplaceMethod("hub", "TrackHub", function(x, value) {
-    stopIfNotLocal(hubFile(x))
     x@hubContent["hub"] <- value
     x
 })
@@ -95,7 +94,6 @@ setMethod("shortLabel", "TrackHub", function(x) {
 })
 
 setReplaceMethod("shortLabel", "TrackHub", function(x, value) {
-    stopIfNotLocal(hubFile(x))
     x@hubContent["shortLabel"] <- value
     x
 })
@@ -105,7 +103,6 @@ setMethod("longLabel", "TrackHub", function(x) {
 })
 
 setReplaceMethod("longLabel", "TrackHub", function(x, value) {
-    stopIfNotLocal(hubFile(x))
     x@hubContent["longLabel"] <- value
     x
 })
@@ -115,7 +112,6 @@ setMethod("genomeFile", "TrackHub", function(x) {
 })
 
 setReplaceMethod("genomeFile", "TrackHub", function(x, value) {
-    stopIfNotLocal(hubFile(x))
     x@hubContent["genomesFile"] <- value
     x
 })
@@ -125,7 +121,6 @@ setMethod("email", "TrackHub", function(x) {
 })
 
 setReplaceMethod("email", "TrackHub", function(x, value) {
-    stopIfNotLocal(hubFile(x))
     x@hubContent["email"] <- value
     x
 })
@@ -135,7 +130,6 @@ setMethod("descriptionUrl", "TrackHub", function(x) {
 })
 
 setReplaceMethod("descriptionUrl", "TrackHub", function(x, value) {
-    stopIfNotLocal(hubFile(x))
     x@hubContent["descriptionUrl"] <- value
     x
 })
@@ -155,6 +149,7 @@ setMethod("names", "TrackHub", function(x) genome(x))
 setMethod("length", "TrackHub", function(x) length(names(x)))
 
 setMethod("writeTrackHub", "TrackHub", function(x) {
+    stopIfNotLocal(hubFile(x))
     setHubContent(x, x@hubContent)
 })
 
