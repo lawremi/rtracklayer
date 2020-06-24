@@ -68,10 +68,10 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSchema, Quickload, QuickloadGenome)
 
 ## File classes
-exportClasses(RTLFile, CompressedFile, GFFFile, UCSCFile, BEDFile, WIGFile,
+exportClasses(GFFFile, UCSCFile, BEDFile, WIGFile,
               ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,
               BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, 
-              TwoBitFile, RTLFileList, BEDPEFile)
+              TwoBitFile, BEDPEFile)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
