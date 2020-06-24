@@ -4,13 +4,6 @@
 
 manager <- function() .ConnectionManager()
 
-resource <- function(x) x@resource
-
-`resource<-` <- function(x, value) {
-    x@resource <- value
-    x
-}
-
 connection <- function(manager, x, open = "") {
   connectionForResource(manager, resource(x), open = open)
 }
@@ -22,78 +15,23 @@ resourceDescription <- function(x) {
   r
 }
 
-FileForFormat <- function(path, format = file_ext(path)) {
-  if (!(isSingleString(path) || is(path, "connection")))
-    stop("'path' must be a single string or a connection object")
-  if (!isSingleString(format))
-    stop("'format' must be a single string")
-  if (format == "")
-    stop("Cannot detect format (no extension found in file name)")
-  fileClassName <- paste0(format, "File")
-  signatureClasses <- function(fun, pos) {
-    matrix(unlist(findMethods(fun)@signatures), 3)[pos,]
-  }
-  fileClassNames <- unique(c(signatureClasses(export, 2),
-                             signatureClasses(import, 1)))
-  fileClassNames <- fileClassNames[grepl("File$", fileClassNames)]
-  fileSubClassNames <- unlist(lapply(fileClassNames, function(x) {
-    names(getClassDef(x)@subclasses)
-  }), use.names = FALSE)
-  fileClassNames <- c(fileClassNames, fileSubClassNames) 
-  fileClassIndex <- match(tolower(fileClassName),
-                          tolower(fileClassNames))
-  if (is.na(fileClassIndex))
-    stop("Format '", format, "' unsupported")
-  fileClassName <- fileClassNames[fileClassIndex]
-  fileClass <- getClass(fileClassName)
-  pkg <- packageSlot(fileClass)
-  if (is.null(pkg) || identical(pkg, ".GlobalEnv"))
-    ns <- topenv()
-  else ns <- getNamespace(pkg[1])
-  constructorName <- fileClassName
-  if(!exists(constructorName, ns)) {
-    parentClassNames <- names(getClass(constructorName)@contains)
-    constructorName <- names(which(sapply(parentClassNames, exists, ns)))[1]
-    if (is.na(constructorName))
-      stop("No constructor found for ", fileClassName)
-  }
-  get(constructorName, ns)(path)
-}
-
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
 ###
 
-setGeneric("bestFileFormat",
-           function(x, dest, ...) standardGeneric("bestFileFormat"))
-
-setMethod("bestFileFormat", c("GenomicRanges", "ANY"),
-          function(x, dest) {
-            ## have numbers on a single strand, use BigWig
-            if (is.numeric(score(x)) && length(unique(strand(x))) == 1L)
-              "bw"
-            else "bed"
-          })
-
-setMethod("bestFileFormat", c("GRangesList", "ANY"), function(x, dest) {
-  "bed" # need hierarchical structure
-})
-
-setMethod("bestFileFormat", c("RleList", "ANY"), function(x, dest) {
-  "bw" # e.g., coverage
-})
-
-setMethod("bestFileFormat", c("RangesList", "ANY"), function(x, dest) {
-  "bed" # just ranges...
-})
-
-## Uses XML::parseURI, except first checks for Windows drive letter.
+## First checks for Windows drive letter.
 ## There are no known URI schemes that are only a single character.
+isURL <- function(uri) {
+    if (!isSingleString(uri))
+        return(FALSE)
+    windowsDriveLetter <- .Platform$OS.type == "windows" &&
+        grepl("^[A-Za-z]:[/\\]", uri)
+    grepl("^[A-Za-z]+:", uri) && !windowsDriveLetter
+}
+
+## Uses XML::parseURI, except custom check for whether it is a URL
 .parseURI <- function(uri) {
-  windowsDriveLetter <- .Platform$OS.type == "windows" &&
-      grepl("^[A-Za-z]:[/\\]", uri)
-  hasScheme <- grepl("^[A-Za-z]+:", uri) && !windowsDriveLetter
-  if (!hasScheme) {
+  if (!isURL(uri)) {
     parsed <- parseURI("")
     parsed$path <- uri
   } else {
@@ -172,33 +110,26 @@ connectionForResource <- function(manager, x, open = "") {
 
 ## Connection management (similar to memory management)
 
-manage <- function(con) {
-  if (!is.null(attr(con, "finalizerEnv")))
-    return(con)
-  env <- new.env()
-  finalizer <- function(obj) {
-    if (exists("con", parent.env(environment()), inherits=FALSE)) {
-      close(con)
-      rm(con, inherits = TRUE)
-      TRUE
-    } else FALSE
-  }
-  env$finalizer <- finalizer
-  reg.finalizer(env, finalizer)
-  attr(con, "finalizerEnv") <- env
-  rm(env)
-  con
+manage <- function(manager, con) {
+    manager$connections <- unique(c(manager$connections, list(con)))
+    attr(con, "manager") <- manager
+    con
 }
 
-unmanage <- function(con) {
-  attr(con, "finalizerEnv") <- NULL
-  con
+managed <- function(manager, con) {
+    con %in% manager$connections
 }
 
-release <- function(con) {
-  env <- attr(con, "finalizerEnv")
-  if (!is.null(env))
-    env$finalizer()
-  else FALSE
+unmanage <- function(manager, con) {
+    manager$connections <- setdiff(manager$connections, con)
+    attr(con, "manager") <- NULL
+    con
 }
 
+release <- function(manager, con) {
+    if (managed(manager, con)) {
+        unmanage(manager, con)
+        close(con)
+    }
+    con
+}
