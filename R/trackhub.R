@@ -216,65 +216,63 @@ getGenomesKey <- function(x, key) {
     genomesList[[position]][[key]]
 }
 
-transformLogicalFields <- function(track) {
-    logicalFields <- c(
-    "boxedCfg", "darkerLabels", "skipEmptyFields", "indelDoubleInsert", "indelQueryInsert",
-    "indelPolyA", "showNames", "doWiggle", "itemRgb", "labelOnFeature", "exonArrows", "exonNumbers",
-    "noScoreFilter", "spectrum", "thickDrawItem", "exonArrowsDense", "mergeSpannedItems", "linkIdInName",
-    "showDiffBasesAllScales", "alwaysZero", "negateValues", "yLineOnOff", "gridDefault", "compositeTrack",
-    "allButtonPair", "centerLabelsDense", "hideEmptySubtracks", "viewUi", "configurable", "showSubtrackColorOnUi",
-    "noInherit", "hapClusterEnabled", "applyMinQual")
-    i <- 1L
-    totalFields <- length(logicalFields)
-    while(i <= totalFields) {
-        track <- sub(paste0(logicalFields[i] ,"= '(on|On)'"), paste0(logicalFields[i], "=TRUE"), track)
-        track <- sub(paste0(logicalFields[i] ,"= '(off|Off)'"), paste0(logicalFields[i], "=FALSE"), track)
-        track <- sub(paste0(logicalFields[i] ,"= '(true)'"), paste0(logicalFields[i], "=TRUE"), track)
-        track <- sub(paste0(logicalFields[i] ,"= '(false)'"), paste0(logicalFields[i], "=FALSE"), track)
-        i <- i + 1
-    }
-    track
-}
-
-transformIntegerFields <- function(track) {
-    integerFields <- c("maxWindowToDraw", "denseCoverage", "maxItems", "scoreMax", "scoreMin", "maxWindowToQuery",
-                       "showSnpWidth", "useScore")
-    i <- 1L
-    totalFields <- length(integerFields)
-    while(i <= totalFields) {
-        value <- regmatches(track, regexec(paste0(integerFields[i], "= '[0-9]*"), track))
-        value <- sub(paste0(integerFields[i], "= '"), "as.integer(", value)
-        track <- sub(paste0(integerFields[i], "= '[0-9]+'"), paste0(integerFields[i], "=", value, ")"), track)
-        i <- i + 1
-    }
-    track
-}
-
-transformNumericFields <- function(track) {
-    numericFields <- c("priority")
-
-    i <- 1L
-    totalFields <- length(numericFields)
-    while(i <= totalFields) {
-        value <- regmatches(track, regexec(paste0(numericFields[i], "= '[0-9]*"), track))
-        value <- sub(paste0(numericFields[i], "= '"), "as.numeric(", value)
-        track <- sub(paste0(numericFields[i], "= '[0-9]+'"), paste0(numericFields[i], "=", value, ")"), track)
-        i <- i + 1
-    }
-    track
-}
-
-transformTracksFields <- function(track) {
-    track <- transformLogicalFields(track)
-    track <- transformIntegerFields(track)
-    track <- transformNumericFields(track)
-    track
-}
-
-createTrack <- function(trackString) {
-    track <- paste0("Track(", trackString, ")")
-    track <- transformTracksFields(track)
-    track <- eval(parse(text = track))
+createTrack <- function(trackDf) {
+    fieldToType <- list(
+        track = "character", type = "character", shortLabel = "character", longLabel = "character",
+        bigDataUrl = "character", html = "character", visibility = "character", meta = "character",
+        color = "character", priority = "numeric", altColor = "character", boxedCfg = "logical",
+        chromosomes = "character", darkerLabels = "logical", dataVersion = "character",
+        directUrl = "character", iframeUrl = "character", iframeOptions = "character",
+        mouseOverField = "character", otherDb = "character", pennantIcon = "character",
+        tableBrowser = "character", url = "character", urlLabel = "character", urls = "character",
+        skipEmptyFields = "logical", skipFields = "character", sepFields = "character",
+        refUrl = "character", bigDataIndex = "character", bamColorMode = "character",
+        bamGrayMode = "character", aliQualRange = "character", baseQualRange = "character",
+        bamColorTag = "character", noColorTag = "character", bamSkipPrintQualScore = "character",
+        indelDoubleInsert = "logical", indelQueryInsert = "logical", indelPolyA = "logical",
+        minAliQual = "character", pairEndsByName = "character", pairSearchRange = "character",
+        showNames = "logical", doWiggle = "logical", maxWindowToDraw = "integer",
+        barChartBars = "character", barChartColor = "character", barChartLabel = "character",
+        barChartMaxSize = "character", barChartSizeWindows = "character", barChartMetric = "character",
+        barChartUnit = "character", barChartMatrixUrl = "character", barChartSampleUrl = "character",
+        maxLimit = "character", labelFields = "character", defaultLabelFields = "character",
+        itemRgb = "logical", colorByStrand = "character", denseCoverage = "integer",
+        labelOnFeature = "logical", exonArrows = "logical", exonNumbers = "logical",
+        scoreFilter = "character", scoreFilterLimits = "character", maxItems = "integer",
+        minGrayLevel = "character", noScoreFilter = "logical", spectrum = "logical",
+        scoreMax = "integer", scoreMin = "integer", thickDrawItem = "logical", searchIndex = "character",
+        searchTrix = "character", labelSeparator = "character", bedNameLabel = "character",
+        exonArrowsDense = "logical", itemImagePath = "character", itemBigImagePath = "character",
+        mergeSpannedItems = "logical", linkIdInName = "logical", nextExonText = "character",
+        prevExonText = "character", scoreLabel = "character", showTopScorers = "character",
+        linkDataUrl = "character", interactDirectional = "character", interactUp = "character",
+        interactMultiRegion = "character", maxHeightPixels = "character", speciesOrder = "character",
+        frames = "character", summary = "character", baseColorUseCds = "character",
+        baseColorUseSequence = "character", baseColorDefault = "character",
+        showDiffBasesAllScales = "logical", autoscale = "character", autoScale = "character",
+        viewLimits = "character", viewLimitsMax = "character", alwaysZero = "logical",
+        graphTypeDefault = "character", maxWindowToQuery = "integer", negateValues = "logical",
+        smoothingWindow = "character", transformFunc = "character", windowingFunction = "character",
+        yLineMark = "character", yLineOnOff = "logical", gridDefault = "logical",
+        showSnpWidth = "integer", otherSpecies = "character", minQual = "character", minFreq = "character",
+        hapClusterEnabled = "character", hapClusterColorBy = "character", hapClusterTreeAngle = "character",
+        hapClusterHeight = "character", applyMinQual = "character", superTrack = "character",
+        parent = "character", compositeTrack = "logical", allButtonPair = "logical",
+        centerLabelsDense = "logical", dragAndDrop = "character",
+        hideEmptySubtracks = "logical", hideEmptySubtracksMultiBedUrl = "character",
+        hideEmptySubtracksSourcesUrl = "character", hideEmptySubtracksLabel = "character",
+        subGroup1 = "character", subGroup2 = "character", subGroup3 = "character", subGroup4 = "character",
+        subGroup5 = "character", subGroup6 = "character", subGroup7 = "character", subGroup8 = "character",
+        subGroup9 = "character", subGroups = "character", dimensions = "character",
+        filterComposite = "character", dimensionAchecked = "character", dimensionBchecked = "character",
+        sortOrder = "character", view = "character", viewUi = "logical", configurable = "logical",
+        container = "character", aggregate = "character", showSubtrackColorOnUi = "logical",
+        metadata = "character", noInherit = "logical", useScore = "integer")
+    trackDf$value <- gsub("[Oo]n", "TRUE", trackDf$value)
+    trackDf$value <- gsub("[Oo]ff", "FALSE", trackDf$value)
+    args <- Map(as, trackDf$value, fieldToType[trackDf$field])
+    names(args) <- trackDf$field
+    track <- do.call(Track, args)
     track
 }
 
@@ -311,10 +309,10 @@ getTrackDbContent <- function(x, trackDbFilePath) {
     while(trackNo <= totalTracks) {
         startPosition <- tracksIndex[trackNo]
         endPosition <- tracksIndex[trackNo + 1] - 1
-        # dynamically creating track object
-        track <- paste0(contentDf$V1[startPosition:endPosition],
-                        "= '", contentDf$V2[startPosition:endPosition], "'", collapse=",")
-        track <- createTrack(track)
+        trackDf <- setNames(data.frame(contentDf$V1[startPosition:endPosition],
+                                     contentDf$V2[startPosition:endPosition]),
+                          c("field", "value"))
+        track <- createTrack(trackDf)
         Tracks[[position]] <- track
         position <- position + 1
         trackNo <- trackNo + 1
@@ -543,8 +541,10 @@ setReplaceMethod("track",
                      bigDataUrlValue <- sub("^/", "", bigDataUrlValue)
                      bigDataUrlValue <- paste(bigDataUrlValue, filename, sep = "/")
                      trackPosition <- which(track)
-                     trackString <-paste0("track='", name, "', bigDataUrl='", bigDataUrlValue, "'")
-                     track <- createTrack(trackString)
+                     trackDf <- setNames(data.frame(c("track", "bigDataUrl"),
+                                                    c(name, bigDataUrlValue)),
+                                         c("field", "value"))
+                     track <- createTrack(trackDf)
                      if (isEmpty(trackPosition)) {
                          trackPosition <- length(object@tracks) + 1
                          object@tracks[[trackPosition]] <- track
