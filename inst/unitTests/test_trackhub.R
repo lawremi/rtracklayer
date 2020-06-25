@@ -30,8 +30,8 @@ test_trackhub <- function() {
     # TEST: longLabel
     checkIdentical(longLabel(th), correct_longLabel)
 
-    # TEST: genomeFile
-    checkIdentical(genomeFile(th), correct_genomesFile)
+    # TEST: genomesFile
+    checkIdentical(genomesFile(th), correct_genomesFile)
 
     # TEST: email
     checkIdentical(email(th), correct_email)
@@ -57,11 +57,11 @@ test_trackhub <- function() {
     checkIdentical(longLabel(th), new_longLabel)
     longLabel(th) <- correct_longLabel
 
-    # TEST: genomeFile<-
-    new_genomeFile <- "newfile.txt"
-    genomeFile(th) <- new_genomeFile
-    checkIdentical(genomeFile(th), new_genomeFile)
-    genomeFile(th) <- correct_genomesFile
+    # TEST: genomesFile<-
+    new_genomesFile <- "newfile.txt"
+    genomesFile(th) <- new_genomesFile
+    checkIdentical(genomesFile(th), new_genomesFile)
+    genomesFile(th) <- correct_genomesFile
 
     # TEST: email<-
     new_email <- "new@domail.com"
