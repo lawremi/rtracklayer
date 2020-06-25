@@ -1,10 +1,9 @@
 test_trackhub <- function() {
     test_trackhub_path <- system.file("tests", "trackhub", package = "rtracklayer")
-    th <- TrackHub(test_trackhub_path)
 
-    correct_uri <- file.path("file://", test_trackhub_path)
-    correct_genome <- "hg19"
-    correct_length <- 1L
+    correct_trackhub_uri <- file.path("file://", test_trackhub_path)
+    correct_trackhub_genome <- "hg19"
+    correct_trackhub_length <- 1L
     correct_hub <- "test_hub"
     correct_shortLabel <- "test_hub"
     correct_longLabel <- "test_hub"
@@ -12,14 +11,20 @@ test_trackhub <- function() {
     correct_email <- "user@domain.com"
     correct_descriptionUrl <- "http://www.somedomain.com/articles/h19"
 
+    ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    ### TEST TrackHub Class
+    ###
+
+    th <- TrackHub(test_trackhub_path)
+
     ## TEST: uri
-    checkIdentical(uri(th), correct_uri)
+    checkIdentical(uri(th), correct_trackhub_uri)
 
     ## TEST: genome
-    checkIdentical(genome(th), correct_genome)
+    checkIdentical(genome(th), correct_trackhub_genome)
 
     ## TEST: length
-    checkIdentical(length(th), correct_length)
+    checkIdentical(length(th), correct_trackhub_length)
 
     # TEST: hub
     checkIdentical(hub(th), correct_hub)
@@ -79,19 +84,31 @@ test_trackhub <- function() {
     ### TEST TrackHubGenome Class
     ###
 
-    correct_genome_length <- 1L
-    correct_genome_organism <- "BigFoot"
-    correct_genome_names <- "wgEncodeUWDukeDnaseGM12878FdrPeaks"
+    correct_trackhubgenome_uri <- paste0(correct_trackhub_uri, "/hg19")
+    correct_trackhubgenome_genome_name <- "hg19"
+    correct_trackhubgenome_length <- 1L
+    correct_trackhubgenome_organism <- "BigFoot"
+    correct_trackhubgenome_names <- "wgEncodeUWDukeDnaseGM12878FdrPeaks"
+
+    thg <- TrackHubGenome(th, "hg19")
+
+    # TEST: uri
+    checkIdentical(uri(thg), correct_trackhubgenome_uri)
+
+    # TEST: genome
+    checkIdentical(genome(thg), correct_trackhubgenome_genome_name)
 
     # TEST: length
-    thg <- TrackHubGenome(th, "hg19")
-    checkIdentical(length(thg), correct_genome_length)
+    checkIdentical(length(thg), correct_trackhubgenome_length)
 
     # TEST: organism
-    checkIdentical(organism(thg), correct_genome_organism)
+    checkIdentical(organism(thg), correct_trackhubgenome_organism)
 
     # TEST: names
-    checkIdentical(names(thg), correct_genome_names)
+    checkIdentical(names(thg), correct_trackhubgenome_names)
+
+    # TEST: trackNames
+    checkIdentical(trackNames(thg), correct_trackhubgenome_names)
 
     ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ### TEST TrackContainer Class
