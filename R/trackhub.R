@@ -210,7 +210,7 @@ setAs("character", "TrackHub", function(from) TrackHub(from))
 ### TrackHubGenome class
 ###
 
-setGeneric("addGenomesField", function(x, key, value) standardGeneric("addGenomesField"))
+setGeneric("setGenomesField", function(x, key, value) standardGeneric("setGenomesField"))
 setGeneric("getTracks", function(x) standardGeneric("getTracks"))
 
 setClass("TrackHubGenome",
@@ -379,7 +379,7 @@ setMethod("trackNames", "TrackHubGenome", function(object) {
     names(object)
 })
 
-setMethod("addGenomesField", "TrackHubGenome", function(x, key, value) {
+setMethod("setGenomesField", "TrackHubGenome", function(x, key, value) {
     genomesFields <- c("twoBitPath", "groups", "htmlPath", "metaDb", "trackDb" , "metaTab")
     if (key %in% genomesFields && !isFieldEmpty(value)) {
         createResource(combineURI(uri(trackhub(x)), value))

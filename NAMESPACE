@@ -101,7 +101,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               split, fileFormat,
               hub, "hub<-", shortLabel, "shortLabel<-", longLabel, "longLabel<-",
               genomesFile, "genomesFile<-", email, "email<-", descriptionUrl,
-              "descriptionUrl<-", addGenomesField, getTracks , writeTrackHub,
+              "descriptionUrl<-", setGenomesField, getTracks , writeTrackHub,
               ## from IRanges
               start, end, "start<-", "end<-",
               score, "score<-",
