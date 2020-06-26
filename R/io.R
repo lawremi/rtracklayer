@@ -1,4 +1,18 @@
 
+resource <- function(x) {
+    .Deprecated("resource", msg = "Use BiocIO::resource()")
+    BiocIO::resource(x)
+}
+
+path <- function(object) {
+    .Deprecated("path", msg = "Use BiocIO::path")
+    BiocIO::path(object)
+}
+
+FileForFormat <- function(path, format = file_ext(path)) {
+    .Deprecated("FileForFormat", msg = "Use BiocIO::FileForFormat")
+}
+
 .ConnectionManager <- setRefClass("ConnectionManager",
                                   fields = c(connections = "list"))
 
