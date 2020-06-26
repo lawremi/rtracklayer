@@ -9,13 +9,22 @@
 \alias{TrackHubGenome}
 
 %% Accessors:
+\alias{uri,TrackHubGenome-method}
 \alias{genome,TrackHubGenome-method}
 \alias{length,TrackHubGenome-method}
 \alias{names,TrackHubGenome-method}
+\alias{getTracks,TrackHubGenome-method}
 \alias{trackhub}
-\alias{uri,TrackHubGenome-method}
+\alias{organism,TrackHubGenome-method}
+\alias{setGenomesField,TrackHubGenome-method}
+\alias{writeTrackHub,TrackHubGenome-method}
 
 %% Data Access:
+\alias{track,TrackHubGenome-method}
+\alias{track<-,TrackHubGenome,ANY-method}
+\alias{track<-,TrackHubGenome,RTLFile-method}
+\alias{track<-,TrackHubGenome,RsamtoolsFile-method}
+\alias{track<-,TrackHubGenome,character-method}
 \alias{referenceSequence,TrackHubGenome-method}
 \alias{referenceSequence<-,TrackHubGenome-method}
 
@@ -59,10 +68,6 @@
 
   \describe{
     \item{}{
-      \code{trackhub(x)}: Get the TracckHub object that contains this
-      genome.
-    }
-    \item{}{
       \code{uri(x)}: Get the uri pointing to the genome directory in the
       TrackHub repository.
     }
@@ -71,20 +76,55 @@
       \dQuote{hg19}.
     }
     \item{}{
-      \code{organism(x)}: Get the organism portion of the genome name,
+      \code{length(x)}: number of datasets
+    }
+    \item{}{
+      \code{names(x), trackNames(x)}: names of the datasets
+    }
+    \item{}{
+      \code{getTracks(x)}: Get the \code{List} of \code{Track} from the datasets
+    }
+    \item{}{
+      \code{trackhub(x)}: Get the TrackHub object that contains this
+      genome.
+    }
+    \item{}{
+      \code{organism(x)}: Get the organism name for this genome,
       e.g., \dQuote{H sapiens}.
     }
-
+    \item{}{
+      \code{setGenomesField(x, field, value)}: Write the \code{field} and \code{value} for \code{x} Genomes file.
+    }
+    \item{}{\code{writeTrackHub(x)}:
+      Write datasets from memory representation to the trackDb file for \code{x} genome.
+    }
   }
 }
 
 \section{Data Access}{
   \describe{
     \item{}{
-      \code{length(x)}: number of datasets
+      \code{track(x, name), x$name}: get the track called \code{name}
     }
     \item{}{
-      \code{names(x)}: names of the datasets
+      \code{track(x, name, format = bestFileFormat(value)) <-
+        value, x$name <- value}: store the track \code{value} under
+        \code{name}. Note that track storing is only supported
+        for local repositories, i.e., those with a \code{file://} URI
+        scheme.
+
+        Currently, supported \code{value} types include a
+        \code{GenomicRanges}, \code{GRangesList}, or a file resource
+        (copied to the repository).  The file resource may be
+        represented as a path, URL, \code{\linkS4class{RTLFile}} or
+        \code{\link[Rsamtools:RsamtoolsFile-class]{RsamtoolsFile}}. If
+        not a file name, \code{value} is written in \code{format}. For
+        generic interval data, this means a BigWig file (if there is a
+        numeric \dQuote{score} column) or a BED file otherwise. An
+        \code{RleList} (e.g., coverage) is output as BigWig. For
+        \code{UCSCData} values, the format is chosen according to the
+        type of track line. For \code{RsamtoolsFile} objects, the file
+        and its index are copied.
     }
     \item{}{
       \code{referenceSequence(x)}: Get the reference sequence, as a
@@ -114,9 +154,10 @@ genomeFile(th) <- "genomes.txt"
 writeTrackHub(th)
 hg38 <- Genome(genome = "hg38", trackDb = "hg38/trackDb.txt")
 thg <- TrackHubGenome(th, "hg38", create = TRUE, hg38)
-addGenomesField(thg, "twoBitPath", "hg38/seq.2bit")
+setGenomesField(thg, "twoBitPath", "hg38/seq.2bit")
 seq <- import(file.path(tests_dir, "test.2bit"))
 referenceSequence(thg) <- seq
+track(thg, "PeaksData") <- paste0(tests_dir, "/test.bigWig")
 }
 }
 
