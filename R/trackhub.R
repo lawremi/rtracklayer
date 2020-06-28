@@ -20,14 +20,22 @@ setGeneric("descriptionUrl", function(x) standardGeneric("descriptionUrl"))
 setGeneric("descriptionUrl<-", function(x, value) standardGeneric("descriptionUrl<-"))
 setGeneric("writeTrackHub", function(x) standardGeneric("writeTrackHub"))
 
-setClass("TrackHub", representation(
-                                    uri = "character",
-                                    hub = "character",
-                                    shortLabel = "character",
-                                    longLabel = "character",
-                                    genomesFile = "character",
-                                    email = "character",
-                                    descriptionUrl = "character"),
+setClass("TrackHub",
+         representation(
+                        uri = "character",
+                        hub = "character",
+                        shortLabel = "character",
+                        longLabel = "character",
+                        genomesFile = "character",
+                        email = "character",
+                        descriptionUrl = "character"),
+         prototype(
+                   hub = NA_character_,
+                   shortLabel = NA_character_,
+                   longLabel = NA_character_,
+                   genomesFile = NA_character_,
+                   email = NA_character_,
+                   descriptionUrl = NA_character_),
          contains = "List")
 
 hubFile <- function(x) paste(trimSlash(uri(x)), "hub.txt", sep = "/")
