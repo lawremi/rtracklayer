@@ -220,6 +220,8 @@ setAs("character", "TrackHub", function(from) TrackHub(from))
 
 setGeneric("setGenomesField", function(x, key, value) standardGeneric("setGenomesField"))
 setGeneric("getTracks", function(x) standardGeneric("getTracks"))
+setGeneric("trackField", function(x, name, key) standardGeneric("trackField"))
+setGeneric("trackField<-", function(x, name, key, value) standardGeneric("trackField<-"))
 
 setClass("TrackHubGenome",
          representation(trackhub = "TrackHub",
@@ -393,6 +395,31 @@ setMethod("setGenomesField", "TrackHubGenome", function(x, key, value) {
         createResource(combineURI(uri(trackhub(x)), value))
     }
     setGenomesKey(x, key, value)
+})
+
+setMethod("trackField", "TrackHubGenome", function(x, name, key) {
+    trackPosition <- which(sapply(x@tracks, function(x) {
+        if(x@track == name)
+            return(TRUE)
+        return(FALSE)
+    }))
+    if (!isEmpty(trackPosition)) {
+        as.character(slot(x@tracks[[trackPosition]], key))
+    }
+    else stop("Track '", name, "' does not exist")
+})
+
+setReplaceMethod("trackField", "TrackHubGenome", function(x, name, key, value) {
+    trackPosition <- which(sapply(x@tracks, function(x) {
+        if(x@track == name)
+            return(TRUE)
+        return(FALSE)
+    }))
+    if (!isEmpty(trackPosition)) {
+        slot(x@tracks[[trackPosition]], key) <- value
+        x
+    }
+    else stop("Track '", name, "' does not exist")
 })
 
 setMethod("organism", "TrackHubGenome", function(object) {
