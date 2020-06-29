@@ -89,6 +89,8 @@ test_trackhub <- function() {
     correct_trackhubgenome_length <- 1L
     correct_trackhubgenome_organism <- "BigFoot"
     correct_trackhubgenome_names <- "wgEncodeUWDukeDnaseGM12878FdrPeaks"
+    correct_trackDb <- "hg19/trackDb.txt"
+    correct_bigDataUrl <- "wgEncodeUWDukeDnaseGM12878.fdr01peaks.hg19.bb"
 
     thg <- TrackHubGenome(th, "hg19")
 
@@ -109,6 +111,12 @@ test_trackhub <- function() {
 
     # TEST: trackNames
     checkIdentical(trackNames(thg), correct_trackhubgenome_names)
+
+    # TEST: genomeField
+    checkIdentical(genomeField(thg, "trackDb"), correct_trackDb)
+
+    # TEST: trackField
+    checkIdentical(trackField(thg, "wgEncodeUWDukeDnaseGM12878FdrPeaks", "bigDataUrl"), correct_bigDataUrl)
 
     ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ### TEST TrackContainer Class
