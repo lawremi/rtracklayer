@@ -16,7 +16,10 @@
 \alias{getTracks,TrackHubGenome-method}
 \alias{trackhub}
 \alias{organism,TrackHubGenome-method}
-\alias{setGenomesField,TrackHubGenome-method}
+\alias{genomeField,TrackHubGenome-method}
+\alias{genomeField<-,TrackHubGenome-method}
+\alias{trackField,TrackHubGenome-method}
+\alias{trackField<-,TrackHubGenome-method}
 \alias{writeTrackHub,TrackHubGenome-method}
 
 %% Data Access:
@@ -93,10 +96,19 @@
       e.g., \dQuote{H sapiens}.
     }
     \item{}{
-      \code{setGenomesField(x, field, value)}: Write the \code{field} and \code{value} for \code{x} Genomes file.
+      \code{genomeField(x, field)}: Get the \code{value} for \code{x} genome.
+    }
+    \item{}{
+      \code{genomeField(x, field) <- value}: Store the \code{field} and \code{value} for \code{x} genome.
+    }
+    \item{}{
+      \code{trackField(x, name, field)}: Get the \code{value} of \code{field} for \code{name} track.
+    }
+    \item{}{
+      \code{trackField(x, name, field) <- value}: Store the \code{field} and \code{value} for \code{name} track.
     }
     \item{}{\code{writeTrackHub(x)}:
-      Write datasets from memory representation to the trackDb file for \code{x} genome.
+      Write datasets and genome from memory representation to the trackDb and genome file for \code{x} genome.
     }
   }
 }
@@ -154,10 +166,12 @@ genomeFile(th) <- "genomes.txt"
 writeTrackHub(th)
 hg38 <- Genome(genome = "hg38", trackDb = "hg38/trackDb.txt")
 thg <- TrackHubGenome(th, "hg38", create = TRUE, hg38)
-setGenomesField(thg, "twoBitPath", "hg38/seq.2bit")
+genomeField(thg, "twoBitPath") <- "hg38/seq.2bit"
+writeTrackHub(thg)
 seq <- import(file.path(tests_dir, "test.2bit"))
 referenceSequence(thg) <- seq
 track(thg, "PeaksData") <- paste0(tests_dir, "/test.bigWig")
+trackField(thg, "wgEncodeUWDukeDnaseGM12878FdrPeaks", "bigDataUrl") <- "hg38/wgEncodeCshlShortRnaSeq.bigWig"
 }
 }
 
