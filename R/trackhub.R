@@ -3,6 +3,45 @@
 ### -------------------------------------------------------------------------
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Genome class
+###
+
+setClass("Genome",
+         representation(
+                        genome = "character",
+                        trackDb = "character",
+                        metaDb = "character",
+                        metaTab = "character",
+                        twoBitPath = "character",
+                        groups = "character",
+                        description = "character",
+                        organism = "character",
+                        defaultPos = "character",
+                        orderKey = "character",
+                        htmlPath = "character"
+         )
+)
+
+Genome <- function(...) {
+        new("Genome", ...)
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### GenomeContainer class
+###
+
+setClass("GenomeContainer",
+         representation("SimpleList"),
+         prototype(elementType = "Genome")
+)
+
+GenomeContainer <- function() {
+    new("GenomeContainer")
+}
+
+genomeContainer <<- GenomeContainer()
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### TrackHub class
 ###
 
@@ -77,32 +116,60 @@ setHubContent <- function(x) {
         cat("descriptionUrl ", x@descriptionUrl, "\n", append = TRUE, sep = "", file = file)
 }
 
-getGenomesContentList <- function(x) {
+getGenomesContent <- function(x) {
     if (uriExists(hubFile(x))) {
         genomesFileValue <- x@genomesFile
         if (!isFieldEmpty(genomesFileValue)) {
             genomesFilePath <- combineURI(uri(x), unname(genomesFileValue))
             content <- readLines(genomesFilePath, warn = FALSE)
             content_df <- read.csv(text = sub(" ", ",", content), header = FALSE)
-            genomesList <- split(setNames(as.list(content_df$V2), content_df$V1),
-                         cumsum(content_df$V1 == "genome"))
+            genomesIndex <- grep("\\bgenome\\b", content_df$V1)
+            totalGenomes <- length(genomesIndex)
+            genomesIndex[length(genomesIndex) + 1] <- length(content_df$V1) + 1
+            genomeNo <- 1L
+            Genomes <- GenomeContainer()
+            while(genomeNo <= totalGenomes) {
+                startPosition <- genomesIndex[genomeNo]
+                endPosition <- genomesIndex[genomeNo + 1] - 1
+                genome <- setNames(data.frame(content_df$V1[startPosition:endPosition],
+                                    content_df$V2[startPosition:endPosition]),
+                         c("field", "value"))
+                genome <- setNames(as.list(genome$value), genome$field)
+                genome <- do.call(Genome, genome)
+                Genomes[[genomeNo]] <- genome
+                genomeNo <- genomeNo + 1
+            }
+            Genomes
         }
         else message("hub.txt: 'genomesFile' does not contain valid reference to genomes file")
     }
 }
 
-setGenomeContentList <- function(x, file) {
-    sapply(names(x), function(y) {
-        if(x[[y]] != "")
-            cat(y, " ", x[[y]], "\n", append = TRUE, sep = "", file = file)
+setGenomesContent <- function(x, genomeContainer) {
+    genomesFilePath <- combineURI(uri(x), x@genomesFile)
+    slots <- slotNames(Genome())
+    i <- 1L
+    genomesFields <- c("twoBitPath", "groups", "htmlPath", "metaDb", "trackDb" , "metaTab")
+    genomes <- sapply(genomeContainer, function(y) {
+        genome <- sapply(slots, function(slotName) {
+            slotValue <- slot(y, slotName)
+            if (!isEmpty(slotValue)) {
+                if (slotName %in% genomesFields) {
+                    filePath <- combineURI(uri(x), slotValue)
+                    if (!uriExists(filePath)) {
+                        createResource(filePath)
+                    }
+                }
+                paste0(slotName, " ", slotValue)
+            }
+            else NULL
+        })
+        genome[length(genome) + 1] <- ""
+        i <<- i + 1
+        genome
     })
-    cat("\n", append = TRUE, file = file)
-}
-
-Genome <- function(genome = "", trackDb = "", twoBitPath = "", groups = "",
-                   description = "", organism = "", defaultPos = "",
-                   orderKey = "", scientificName = "", htmlPath = "") {
-        c(as.list(environment()))
+    genomes <- as.character(Filter(Negate(is.null), genomes))
+    writeLines(genomes, genomesFilePath)
 }
 
 setMethod("uri", "TrackHub", function(x) {
@@ -164,8 +231,7 @@ setReplaceMethod("descriptionUrl", "TrackHub", function(x, value) {
 })
 
 setMethod("genome", "TrackHub", function(x) {
-    genomesList <- getGenomesContentList(x)
-    genomes <- sapply(genomesList, function(x) x["genome"])
+    genomes <- sapply(genomeContainer, function(x) x@genome)
     as.character(genomes)
 })
 
@@ -206,9 +272,13 @@ TrackHub <- function(uri, create = FALSE) {
     th <- new("TrackHub")
     th@uri <- normURI(uri)
     if (create) {
+        genomeContainer <<- GenomeContainer()
         createResource(hubFile(th))
     }
-    else th <- getHubContent(th)
+    else{
+        th <- getHubContent(th)
+        genomeContainer <<- getGenomesContent(th)
+    }
     th
 }
 
@@ -218,10 +288,11 @@ setAs("character", "TrackHub", function(from) TrackHub(from))
 ### TrackHubGenome class
 ###
 
-setGeneric("setGenomesField", function(x, key, value) standardGeneric("setGenomesField"))
 setGeneric("getTracks", function(x) standardGeneric("getTracks"))
 setGeneric("trackField", function(x, name, key) standardGeneric("trackField"))
 setGeneric("trackField<-", function(x, name, key, value) standardGeneric("trackField<-"))
+setGeneric("genomeField", function(x, key) standardGeneric("genomeField"))
+setGeneric("genomeField<-", function(x, key, value) standardGeneric("genomeField<-"))
 
 setClass("TrackHubGenome",
          representation(trackhub = "TrackHub",
@@ -232,25 +303,20 @@ setClass("TrackHubGenome",
 
 trackhub <- function(x) x@trackhub
 
-setGenomesKey <- function(x, key, value) {
-    trackhub <- trackhub(x)
-    genomesList <- getGenomesContentList(trackhub)
-    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
-    genomesList[[position]][[key]] <- value
-    genomesFilePath <- combineURI(uri(trackhub(x)), trackhub@genomesFile)
-    cat("", file = genomesFilePath)
-    sapply(genomesList, function(x) {
-        setGenomeContentList(x, genomesFilePath)
-    })
-    return(invisible(NULL))
-}
-
 getGenomesKey <- function(x, key) {
-    genomesList <- getGenomesContentList(trackhub(x))
-    position <- which(sapply(genomesList, function(y) genome(x) %in% y))
+    position <- which(sapply(genomeContainer, function(y) genome(x) == y@genome))
     if (isEmpty(position))
         stop("Genome : '",genome(x), "' not found")
-    genomesList[[position]][[key]]
+    slot(genomeContainer[[position]], key)
+}
+
+setGenomesKey <- function(x, key, value) {
+    position <- which(sapply(genomeContainer, function(y) genome(x) == y@genome))
+    if (isEmpty(position))
+        stop("Genome : '",genome(x), "' not found")
+    slot(genomeContainer[[position]], key) <- value
+    genomeContainer <<- genomeContainer
+    x
 }
 
 createTrack <- function(trackDf) {
@@ -369,7 +435,8 @@ createTrackHubGenome <- function(x, genomeRecord) {
     createResource(uri(x), dir = TRUE)
     if (!uriExists(genomesFilePath))
         createResource(genomesFilePath)
-    setGenomeContentList(genomeRecord, genomesFilePath)
+    genomeContainer[[length(genomeContainer) + 1]] <<- genomeRecord
+    setGenomesContent(trackhub(x), genomeContainer)
 }
 
 setMethod("genome", "TrackHubGenome", function(x) x@genome)
@@ -389,12 +456,16 @@ setMethod("trackNames", "TrackHubGenome", function(object) {
     names(object)
 })
 
-setMethod("setGenomesField", "TrackHubGenome", function(x, key, value) {
-    genomesFields <- c("twoBitPath", "groups", "htmlPath", "metaDb", "trackDb" , "metaTab")
-    if (key %in% genomesFields && !isFieldEmpty(value)) {
-        createResource(combineURI(uri(trackhub(x)), value))
-    }
+setMethod("genomeField", "TrackHubGenome", function(x, key) {
+    getGenomesKey(x, key)
+})
+
+setReplaceMethod("genomeField", "TrackHubGenome", function(x, key, value) {
     setGenomesKey(x, key, value)
+    if (key == "genome") {
+        x@genome <- value
+    }
+    x
 })
 
 setMethod("trackField", "TrackHubGenome", function(x, name, key) {
@@ -454,6 +525,7 @@ setMethod("length", "TrackHubGenome", function(x) {
 })
 
 setMethod("writeTrackHub", "TrackHubGenome", function(x) {
+    setGenomesContent(trackhub(x), genomeContainer)
     trackDbValue <- getGenomesKey(x, "trackDb")
     trackDbFilePath <- combineURI(uri(trackhub(x)), trackDbValue)
     stopIfNotLocal(trackDbFilePath)
@@ -490,10 +562,14 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Geno
     if (!isTRUEorFALSE(create))
         stop("'create' must be TRUE or FALSE")
     trackhub <- as(trackhub, "TrackHub")
+    genomeRecord <- as(genomeRecord, "Genome")
     thg <- new("TrackHubGenome")
     thg@trackhub <- trackhub
     thg@genome <- genome
     if (create) {
+        genomeContainer <<- GenomeContainer()
+    }
+    if (!identical(genomeRecord, Genome())) {
         createTrackHubGenome(thg, genomeRecord)
     }
     trackDbValue <- getGenomesKey(thg, "trackDb")
