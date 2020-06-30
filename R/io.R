@@ -1,4 +1,43 @@
 
+setClass("RTLFile", representation(resource = "character_OR_connection"),
+         contains = "VIRTUAL")
+
+setMethod("initialize", "RTLFile", function(.Object, ...) {
+    .Deprecated("BiocFile", msg = "This class is extending the deprecated RTLFile class from rtracklayer. Use BiocFile from BiocIO in place of RTLFile.")
+    callNextMethod()
+})
+
+setClass("CompressedFile", contains = c("RTLFile", "VIRTUAL"))
+
+setMethod("initialize", "CompressedFile", function(.Object, ...) {
+    .Deprecated("CompressedFile", msg = "This class is extending the deprecated CompressedFile class from rtracklayer. Use CompressedFile from BiocIO in place of CompressedFile from rtracklayer.")
+    callNextMethod()
+})
+
+setClass("RTLFileList",
+         prototype = prototype(elementType = "RTLFile"),
+         contains = "SimpleList")
+
+RTLFileList <- function(files) {
+    new("RTLFileList", listData = files)
+}
+
+setMethod("showAsCell", "RTLFileList", function(object) {
+    showAsCell(vapply(object, path, character(1L)))
+})
+
+setMethod("fileFormat", "RTLFile", function(x)
+    tolower(sub("File$", "", class(x))))
+
+setMethod("show", "RTLFile", function(object) {
+  r <- resource(object)
+  if (!isSingleString(r))
+    r <- summary(r)$description
+  cat(class(object), "object\nresource:", r, "\n")
+})
+
+setMethod("as.character", "RTLFile", function(x) path(x))
+
 resource <- function(x) {
     .Deprecated("resource", msg = "Use BiocIO::resource()")
     BiocIO::resource(x)
@@ -11,6 +50,7 @@ path <- function(object) {
 
 FileForFormat <- function(path, format = file_ext(path)) {
     .Deprecated("FileForFormat", msg = "Use BiocIO::FileForFormat")
+    BiocIO::FileForFormat(path, format)
 }
 
 .ConnectionManager <- setRefClass("ConnectionManager",
