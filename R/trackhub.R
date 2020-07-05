@@ -660,8 +660,8 @@ createTrack <- function(trackDf) {
         sortOrder = "character", view = "character", viewUi = "logical", configurable = "logical",
         container = "character", aggregate = "character", showSubtrackColorOnUi = "logical",
         metadata = "character", noInherit = "logical", useScore = "integer")
-    trackDf$value <- gsub("[Oo]n", "TRUE", trackDf$value)
-    trackDf$value <- gsub("[Oo]ff", "FALSE", trackDf$value)
+    trackDf$value <- gsub("\\b[Oo]n\\b", "TRUE", trackDf$value)
+    trackDf$value <- gsub("\\b[Oo]ff\\b", "FALSE", trackDf$value)
     args <- Map(as, trackDf$value, fieldToType[trackDf$field])
     names(args) <- trackDf$field
     track <- do.call(Track, args)
