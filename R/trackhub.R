@@ -619,22 +619,18 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE, genomeRecord = Geno
 ###
 
 setMethod("track", "TrackHubGenome", function(object, name, ...) {
-    track <- sapply(object@tracks, function(x) {
-        if(x@track == name)
-            x
-    })
-    track <- Filter(Negate(is.null), track)
-    if (length(track) == 1L) {
-        if (isEmpty(track[[1]]@bigDataUrl)) {
-            stop("Track '", name, "' does not contain any data file")
-        }
-        if (uriIsWritable(track[[1]]@bigDataUrl)) {
-            import(paste0(parseURI(uri(trackhub(object)))$path, "/", track[[1]]@bigDataUrl))
-        }else {
-            import(track[[1]]@bigDataUrl)
-        }
+    names <- names(object@tracks)
+    track <- object@tracks[names == name]
+    if (length(track) == 0L) stop("Track '", name, "' does not exist")
+    else if (length(track) > 1L) stop("Multiple tracks match ", name)
+
+    if (isEmpty(track[[1L]]@bigDataUrl)) {
+        stop("Track '", name, "' does not contain any data file")
+    }
+    else if (uriIsLocal(parseURI(track[[1L]]@bigDataUrl))) {
+        import(paste0(parseURI(uri(trackhub(object)))$path, "/", track[[1L]]@bigDataUrl))
     }else {
-        stop("Track '", name, "' does not exist")
+        import(track[[1L]]@bigDataUrl)
     }
 })
 
@@ -647,9 +643,13 @@ copyResourceToTrackHub <- function(object, uri) {
     if (parsed_uri$scheme == "")
         uri <- paste0("file://", uri)
     filename <- basename(uri)
-    object_uri <- .parseURI(uri(object))
+    object_uri <- .parseURI(uri(trackhub(object)))
     if (uriIsLocal(object_uri)) {
-        dest_file <- file.path(object_uri$path, filename)
+        trackDbValue <- getGenomesKey(object, "trackDb")
+        trackDbValue <- sub(basename(trackDbValue), "", trackDbValue)
+        trackDbValue <- sub("/$", "", trackDbValue)
+        dest_file <- paste(object_uri$path, trackDbValue, filename, sep = "/")
+        dest_file <- sub("^/", "", dest_file)
         if (paste(uri(object), filename, sep = "/") != uri)
             ### FIXME: URLdecode() here because of R bug
             download.file(URLdecode(uri), dest_file)
@@ -698,17 +698,13 @@ setReplaceMethod("track",
                  function(object, name = basename(object), ..., value)
                  {
                      filename <- copyResourceToTrackHub(object, value)
-                     track <- sapply(object@tracks, function(x) {
-                                if (x@track == name)
-                                    return(TRUE)
-                                return(FALSE)
-                     })
                      trackDbValue <- getGenomesKey(object, "trackDb")
-                     trackDbFilePath <- combineURI(uri(trackhub(object)), trackDbValue)
-                     bigDataUrlValue <-  sub(uri(trackhub(object)), "", uri(object))
+                     trackDbValue <- sub(basename(trackDbValue), "", trackDbValue)
+                     trackDbValue <- sub("/$", "", trackDbValue)
+                     bigDataUrlValue <- paste(trackDbValue, filename, sep = "/")
                      bigDataUrlValue <- sub("^/", "", bigDataUrlValue)
-                     bigDataUrlValue <- paste(bigDataUrlValue, filename, sep = "/")
-                     trackPosition <- which(track)
+                     names <- names(object@tracks)
+                     trackPosition <- which(names == name)
                      trackDf <- setNames(data.frame(c("track", "bigDataUrl"),
                                                     c(name, bigDataUrlValue)),
                                          c("field", "value"))
