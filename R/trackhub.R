@@ -440,7 +440,10 @@ readAndSanitize <- function(filepath) {
 }
 
 getTrackDbContent <- function(x, trackDbFilePath) {
-    Tracks <- TrackContainer()
+    if (file.size(parseURI(trackDbFilePath)$path) == 1L) {
+        x@tracks <- TrackContainer()
+        return(x)
+    }
     contentDf <- readAndSanitize(trackDbFilePath)
     tracksIndex <- grep("\\btrack\\b", contentDf$V1)
     levels <- getTabCountList(contentDf$V1)
@@ -449,21 +452,16 @@ getTrackDbContent <- function(x, trackDbFilePath) {
     totalTracks <- length(tracksIndex)
     tracksIndex[length(tracksIndex) + 1] <- length(contentDf$V1) + 1 # to read last track from file
     contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
-    trackNo <- 1L
-    position <- 1L
     # to speed up, reading track by track
-    while(trackNo <= totalTracks) {
-        startPosition <- tracksIndex[trackNo]
-        endPosition <- tracksIndex[trackNo + 1] - 1
+    tracks <- lapply(c(1:totalTracks), function(x) {
+        startPosition <- tracksIndex[x]
+        endPosition <- tracksIndex[x + 1] - 1
         trackDf <- setNames(data.frame(contentDf$V1[startPosition:endPosition],
                                      contentDf$V2[startPosition:endPosition]),
                           c("field", "value"))
         track <- createTrack(trackDf)
-        Tracks[[position]] <- track
-        position <- position + 1
-        trackNo <- trackNo + 1
-    }
-    x@tracks <- Tracks
+    })
+    x@tracks <- TrackContainer(tracks)
     x@levels <- levels
     x
 }
@@ -724,15 +722,20 @@ setReplaceMethod("track",
 
 setClass("TrackContainer",
          representation("SimpleList"),
-         prototype(elementType = "Track_OR_TrackContainer")
+         prototype(elementType = "Track")
 )
 
 setMethod("names", "TrackContainer", function(x) {
     vapply(x, function(y) y@track, "character" ,USE.NAMES = FALSE)
 })
 
-TrackContainer <- function() {
-    new("TrackContainer")
+TrackContainer <- function(...) {
+    args <- list(...)
+    if (length(args) == 1 && is.list(args[[1L]]))
+        args <- args[[1L]]
+    if (!all(vapply(args, is, logical(1L), "Track")))
+        stop("all elements in '...' must be Track objects")
+    S4Vectors:::new_SimpleList_from_list("TrackContainer", args)
 }
 
 setClass("Track",
@@ -958,8 +961,6 @@ setClass("Track",
 Track <- function(...) {
     new("Track", ...)
 }
-
-setClassUnion("Track_OR_TrackContainer", c("Track", "TrackContainer"))
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
