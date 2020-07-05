@@ -3,6 +3,252 @@
 ### -------------------------------------------------------------------------
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### TrackContainer class
+###
+
+setClass("TrackContainer",
+         representation("SimpleList"),
+         prototype(elementType = "Track")
+)
+
+setMethod("names", "TrackContainer", function(x) {
+    vapply(x, function(y) y@track, character(1L) ,USE.NAMES = FALSE)
+})
+
+TrackContainer <- function(...) {
+    args <- list(...)
+    if (length(args) == 1 && is.list(args[[1L]]))
+        args <- args[[1L]]
+    if (!all(vapply(args, is, logical(1L), "Track")))
+        stop("all elements in '...' must be Track objects")
+    S4Vectors:::new_SimpleList_from_list("TrackContainer", args)
+}
+
+setClass("Track",
+         representation(
+                        # common trackDb settings
+                        track = "character",
+                        type = "character",
+                        shortLabel = "character",
+                        longLabel = "character",
+                        bigDataUrl = "character",
+                        html = "character",
+                        visibility = "character",
+                        meta = "character",
+
+
+                        # common optional settings
+                        color = "character",
+                        priority = "numeric",
+                        altColor = "character",
+                        boxedCfg = "logical",
+                        chromosomes = "character",
+                        darkerLabels = "logical",
+                        dataVersion = "character",
+                        directUrl = "character",
+                        iframeUrl = "character",
+                        iframeOptions = "character",
+                        mouseOverField = "character",
+                        otherDb = "character",
+                        pennantIcon = "character",
+                        tableBrowser = "character",
+                        url = "character",
+                        urlLabel = "character",
+                        urls = "character",
+                        skipEmptyFields = "logical",
+                        skipFields = "character",
+                        sepFields = "character",
+
+
+                        ##settings by track type
+
+                        # bam settings
+                        refUrl = "character",
+                        bigDataIndex = "character",
+                        bamColorMode = "character",
+                        bamGrayMode = "character",
+                        aliQualRange = "character",
+                        baseQualRange = "character",
+                        bamColorTag = "character",
+                        noColorTag = "character",
+                        bamSkipPrintQualScore = "character",
+                        indelDoubleInsert = "logical",
+                        indelQueryInsert = "logical",
+                        indelPolyA = "logical",
+                        minAliQual = "character",
+                        pairEndsByName = "character",
+                        pairSearchRange = "character",
+                        showNames = "logical",
+                        doWiggle = "logical",
+                        maxWindowToDraw = "integer",
+
+                        # bigBarChart settings
+                        barChartBars = "character",
+                        barChartColor = "character",
+                        barChartLabel = "character",
+                        barChartMaxSize = "character",
+                        barChartSizeWindows = "character",
+                        barChartMetric = "character",
+                        barChartUnit = "character",
+                        barChartMatrixUrl = "character",
+                        barChartSampleUrl = "character",
+                        maxLimit = "character",
+                        labelFields = "character",
+                        defaultLabelFields = "character",
+                        itemRgb = "logical",
+                        colorByStrand = "character",
+                        denseCoverage = "integer",
+                        labelOnFeature = "logical",
+                        exonArrows = "logical",
+                        exonNumbers = "logical",
+                        scoreFilter = "character",
+                        scoreFilterLimits = "character",
+                        maxItems = "integer",
+                        minGrayLevel = "character",
+                        noScoreFilter = "logical",
+                        spectrum = "logical",
+                        scoreMax = "integer",
+                        scoreMin = "integer",
+                        thickDrawItem = "logical",
+                        searchIndex = "character",
+                        searchTrix = "character",
+                        labelSeparator = "character",
+                        # UNSUPPORTED fields
+                        # filter.<fieldName>
+                        # filterByRange.<fieldName>
+                        # filterLimits.<fieldName>
+                        # filterText.<fieldName>
+                        # filterType.<fieldName>
+                        # filterValues.<fieldName>
+                        # filterValuesDefault.<fieldName>
+                        # filterType.<fieldName>
+                        # filterLabel.<fieldName>
+                        bedNameLabel = "character",
+                        exonArrowsDense = "logical",
+                        itemImagePath = "character",
+                        itemBigImagePath = "character",
+                        mergeSpannedItems = "logical",
+                        linkIdInName = "logical",
+                        nextExonText = "character",
+                        prevExonText = "character",
+                        scoreLabel = "character",
+                        showTopScorers = "character",
+
+                        # bigChain settings
+                        linkDataUrl = "character",
+
+                        # bigInteract settings
+                        interactDirectional = "character",
+                        interactUp = "character",
+                        interactMultiRegion = "character",
+                        maxHeightPixels = "character",
+                        speciesOrder = "character",
+                        frames = "character",
+                        summary = "character",
+
+                        # bigNarrowPeak settings
+                        # UNSUPPORTED fields
+                        #scoreFilter
+                        #pValueFilter
+                        #qValueFilter
+                        #signalFilter
+                        #<column>FilterLimits
+                        #<column>FilterByRange
+
+                        # bigPsl settings
+                        baseColorUseCds = "character",
+                        baseColorUseSequence = "character",
+                        baseColorDefault = "character",
+                        showDiffBasesAllScales = "logical",
+
+                        # bigWig settings
+                        autoscale = "character",
+                        autoScale = "character",
+                        viewLimits = "character",
+                        viewLimitsMax = "character",
+                        alwaysZero = "logical",
+                        graphTypeDefault = "character",
+                        maxWindowToQuery = "integer",
+                        negateValues = "logical",
+                        smoothingWindow = "character",
+                        transformFunc = "character",
+                        windowingFunction = "character",
+                        yLineMark = "character",
+                        yLineOnOff = "logical",
+                        gridDefault = "logical",
+
+
+                        # hic settings
+                        showSnpWidth = "integer",
+                        otherSpecies = "character",
+
+
+                        # vcfTabix settings
+                        minQual = "character",
+                        minFreq = "character",
+                        hapClusterEnabled = "character",
+                        hapClusterColorBy = "character",
+                        hapClusterTreeAngle = "character",
+                        hapClusterHeight = "character",
+                        applyMinQual = "character",
+
+
+                        ##Grouping tracks into sets and hierarchies
+
+                        # Supertrack
+                        superTrack = "character",
+                        parent = "character",
+
+                        # Composite Tracks
+                        compositeTrack = "logical",
+                        allButtonPair = "logical",
+                        centerLabelsDense = "logical",
+                        dragAndDrop = "character",
+                        hideEmptySubtracks = "logical",
+                        hideEmptySubtracksMultiBedUrl = "character",
+                        hideEmptySubtracksSourcesUrl = "character",
+                        hideEmptySubtracksLabel = "character",
+
+
+                        # Subgroups
+                        subGroup1 = "character",
+                        subGroup2 = "character",
+                        subGroup3 = "character",
+                        subGroup4 = "character",
+                        subGroup5 = "character",
+                        subGroup6 = "character",
+                        subGroup7 = "character",
+                        subGroup8 = "character",
+                        subGroup9 = "character",
+                        subGroups = "character",
+                        dimensions = "character",
+                        filterComposite = "character",
+                        dimensionAchecked = "character",
+                        dimensionBchecked = "character",
+                        sortOrder = "character",
+
+                        # Subgroups Views
+                        view = "character",
+                        viewUi = "logical",
+                        configurable = "logical",
+
+                        # multiWig
+                        container = "character",
+                        aggregate = "character",
+                        showSubtrackColorOnUi = "logical",
+
+                        # Miscellaneous Deprecated Settings
+                        metadata = "character",
+                        noInherit = "logical",
+                        useScore = "integer"
+                        )
+)
+
+Track <- function(...) {
+    new("Track", ...)
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Genome class
 ###
 
@@ -434,7 +680,7 @@ readAndSanitize <- function(filepath) {
     fileContent <- gsub(",", ";", fileContent)
     contentDf <- read.csv(text = sub(" ", ",", fileContent), header = FALSE)
     contentDf$V2 <- gsub(";", ",", contentDf$V2)
-    nonEmptyContent <- vapply(contentDf$V2, function(x) x!="", logical(1))
+    nonEmptyContent <- vapply(contentDf$V2, function(x) x!="", logical(1L))
     contentDf <- contentDf[nonEmptyContent,]
     contentDf
 }
@@ -715,252 +961,6 @@ setReplaceMethod("track",
                      }
                      object
                  })
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### TrackContainer class
-###
-
-setClass("TrackContainer",
-         representation("SimpleList"),
-         prototype(elementType = "Track")
-)
-
-setMethod("names", "TrackContainer", function(x) {
-    vapply(x, function(y) y@track, "character" ,USE.NAMES = FALSE)
-})
-
-TrackContainer <- function(...) {
-    args <- list(...)
-    if (length(args) == 1 && is.list(args[[1L]]))
-        args <- args[[1L]]
-    if (!all(vapply(args, is, logical(1L), "Track")))
-        stop("all elements in '...' must be Track objects")
-    S4Vectors:::new_SimpleList_from_list("TrackContainer", args)
-}
-
-setClass("Track",
-         representation(
-                        # common trackDb settings
-                        track = "character",
-                        type = "character",
-                        shortLabel = "character",
-                        longLabel = "character",
-                        bigDataUrl = "character",
-                        html = "character",
-                        visibility = "character",
-                        meta = "character",
-
-
-                        # common optional settings
-                        color = "character",
-                        priority = "numeric",
-                        altColor = "character",
-                        boxedCfg = "logical",
-                        chromosomes = "character",
-                        darkerLabels = "logical",
-                        dataVersion = "character",
-                        directUrl = "character",
-                        iframeUrl = "character",
-                        iframeOptions = "character",
-                        mouseOverField = "character",
-                        otherDb = "character",
-                        pennantIcon = "character",
-                        tableBrowser = "character",
-                        url = "character",
-                        urlLabel = "character",
-                        urls = "character",
-                        skipEmptyFields = "logical",
-                        skipFields = "character",
-                        sepFields = "character",
-
-
-                        ##settings by track type
-
-                        # bam settings
-                        refUrl = "character",
-                        bigDataIndex = "character",
-                        bamColorMode = "character",
-                        bamGrayMode = "character",
-                        aliQualRange = "character",
-                        baseQualRange = "character",
-                        bamColorTag = "character",
-                        noColorTag = "character",
-                        bamSkipPrintQualScore = "character",
-                        indelDoubleInsert = "logical",
-                        indelQueryInsert = "logical",
-                        indelPolyA = "logical",
-                        minAliQual = "character",
-                        pairEndsByName = "character",
-                        pairSearchRange = "character",
-                        showNames = "logical",
-                        doWiggle = "logical",
-                        maxWindowToDraw = "integer",
-
-                        # bigBarChart settings
-                        barChartBars = "character",
-                        barChartColor = "character",
-                        barChartLabel = "character",
-                        barChartMaxSize = "character",
-                        barChartSizeWindows = "character",
-                        barChartMetric = "character",
-                        barChartUnit = "character",
-                        barChartMatrixUrl = "character",
-                        barChartSampleUrl = "character",
-                        maxLimit = "character",
-                        labelFields = "character",
-                        defaultLabelFields = "character",
-                        itemRgb = "logical",
-                        colorByStrand = "character",
-                        denseCoverage = "integer",
-                        labelOnFeature = "logical",
-                        exonArrows = "logical",
-                        exonNumbers = "logical",
-                        scoreFilter = "character",
-                        scoreFilterLimits = "character",
-                        maxItems = "integer",
-                        minGrayLevel = "character",
-                        noScoreFilter = "logical",
-                        spectrum = "logical",
-                        scoreMax = "integer",
-                        scoreMin = "integer",
-                        thickDrawItem = "logical",
-                        searchIndex = "character",
-                        searchTrix = "character",
-                        labelSeparator = "character",
-                        # UNSUPPORTED fields
-                        # filter.<fieldName>
-                        # filterByRange.<fieldName>
-                        # filterLimits.<fieldName>
-                        # filterText.<fieldName>
-                        # filterType.<fieldName>
-                        # filterValues.<fieldName>
-                        # filterValuesDefault.<fieldName>
-                        # filterType.<fieldName>
-                        # filterLabel.<fieldName>
-                        bedNameLabel = "character",
-                        exonArrowsDense = "logical",
-                        itemImagePath = "character",
-                        itemBigImagePath = "character",
-                        mergeSpannedItems = "logical",
-                        linkIdInName = "logical",
-                        nextExonText = "character",
-                        prevExonText = "character",
-                        scoreLabel = "character",
-                        showTopScorers = "character",
-
-                        # bigChain settings
-                        linkDataUrl = "character",
-
-                        # bigInteract settings
-                        interactDirectional = "character",
-                        interactUp = "character",
-                        interactMultiRegion = "character",
-                        maxHeightPixels = "character",
-                        speciesOrder = "character",
-                        frames = "character",
-                        summary = "character",
-
-                        # bigNarrowPeak settings
-                        # UNSUPPORTED fields
-                        #scoreFilter
-                        #pValueFilter
-                        #qValueFilter
-                        #signalFilter
-                        #<column>FilterLimits
-                        #<column>FilterByRange
-
-                        # bigPsl settings
-                        baseColorUseCds = "character",
-                        baseColorUseSequence = "character",
-                        baseColorDefault = "character",
-                        showDiffBasesAllScales = "logical",
-
-                        # bigWig settings
-                        autoscale = "character",
-                        autoScale = "character",
-                        viewLimits = "character",
-                        viewLimitsMax = "character",
-                        alwaysZero = "logical",
-                        graphTypeDefault = "character",
-                        maxWindowToQuery = "integer",
-                        negateValues = "logical",
-                        smoothingWindow = "character",
-                        transformFunc = "character",
-                        windowingFunction = "character",
-                        yLineMark = "character",
-                        yLineOnOff = "logical",
-                        gridDefault = "logical",
-
-
-                        # hic settings
-                        showSnpWidth = "integer",
-                        otherSpecies = "character",
-
-
-                        # vcfTabix settings
-                        minQual = "character",
-                        minFreq = "character",
-                        hapClusterEnabled = "character",
-                        hapClusterColorBy = "character",
-                        hapClusterTreeAngle = "character",
-                        hapClusterHeight = "character",
-                        applyMinQual = "character",
-
-
-                        ##Grouping tracks into sets and hierarchies
-
-                        # Supertrack
-                        superTrack = "character",
-                        parent = "character",
-
-                        # Composite Tracks
-                        compositeTrack = "logical",
-                        allButtonPair = "logical",
-                        centerLabelsDense = "logical",
-                        dragAndDrop = "character",
-                        hideEmptySubtracks = "logical",
-                        hideEmptySubtracksMultiBedUrl = "character",
-                        hideEmptySubtracksSourcesUrl = "character",
-                        hideEmptySubtracksLabel = "character",
-
-
-                        # Subgroups
-                        subGroup1 = "character",
-                        subGroup2 = "character",
-                        subGroup3 = "character",
-                        subGroup4 = "character",
-                        subGroup5 = "character",
-                        subGroup6 = "character",
-                        subGroup7 = "character",
-                        subGroup8 = "character",
-                        subGroup9 = "character",
-                        subGroups = "character",
-                        dimensions = "character",
-                        filterComposite = "character",
-                        dimensionAchecked = "character",
-                        dimensionBchecked = "character",
-                        sortOrder = "character",
-
-                        # Subgroups Views
-                        view = "character",
-                        viewUi = "logical",
-                        configurable = "logical",
-
-                        # multiWig
-                        container = "character",
-                        aggregate = "character",
-                        showSubtrackColorOnUi = "logical",
-
-                        # Miscellaneous Deprecated Settings
-                        metadata = "character",
-                        noInherit = "logical",
-                        useScore = "integer"
-                        )
-)
-
-Track <- function(...) {
-    new("Track", ...)
-}
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
