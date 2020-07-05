@@ -79,13 +79,13 @@
       \dQuote{hg19}.
     }
     \item{}{
-      \code{length(x)}: number of datasets
+      \code{length(x)}: number of tracks
     }
     \item{}{
-      \code{names(x), trackNames(x)}: names of the datasets
+      \code{names(x), trackNames(x)}: names of the tracks
     }
     \item{}{
-      \code{getTracks(x)}: Get the \code{List} of \code{Track} from the datasets
+      \code{getTracks(x)}: Get the \code{List} of \code{Track} from the tracks
     }
     \item{}{
       \code{trackhub(x)}: Get the TrackHub object that contains this
@@ -108,7 +108,7 @@
       \code{trackField(x, name, field) <- value}: Store the \code{field} and \code{value} for \code{name} track.
     }
     \item{}{\code{writeTrackHub(x)}:
-      Write datasets and genome from memory representation to the trackDb and genome file for \code{x} genome.
+      Write tracks and genome from memory representation to the trackDb and genome file for \code{x} genome.
     }
   }
 }
@@ -172,6 +172,7 @@ seq <- import(file.path(tests_dir, "test.2bit"))
 referenceSequence(thg) <- seq
 track(thg, "PeaksData") <- paste0(tests_dir, "/test.bigWig")
 trackField(thg, "wgEncodeUWDukeDnaseGM12878FdrPeaks", "bigDataUrl") <- "hg38/wgEncodeCshlShortRnaSeq.bigWig"
+writeTrackHub(thg)
 }
 }
 
