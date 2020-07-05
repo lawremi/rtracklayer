@@ -122,7 +122,7 @@ test_trackhub <- function() {
     ### TEST TrackContainer Class
     ###
 
-    correct_slot_type <- "Track_OR_TrackContainer"
+    correct_slot_type <- "Track"
     correct_track <- Track(track = "tcell", bigDataUrl = "tcell/data.bigWig")
 
     # TEST: slot type
