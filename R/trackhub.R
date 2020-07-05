@@ -509,28 +509,19 @@ setReplaceMethod("genomeField", "TrackHubGenome", function(x, key, value) {
 })
 
 setMethod("trackField", "TrackHubGenome", function(x, name, key) {
-    trackPosition <- which(sapply(x@tracks, function(x) {
-        if(x@track == name)
-            return(TRUE)
-        return(FALSE)
-    }))
-    if (!isEmpty(trackPosition)) {
-        as.character(slot(x@tracks[[trackPosition]], key))
-    }
-    else stop("Track '", name, "' does not exist")
+    names <- names(x@tracks)
+    track <- x@tracks[names == name]
+    if (length(track) == 0L) stop("Track '", name, "' does not exist")
+    else if (length(track) > 1L) stop("Multiple tracks match ", name)
+    slot(track[[1L]], key)
 })
 
 setReplaceMethod("trackField", "TrackHubGenome", function(x, name, key, value) {
-    trackPosition <- which(sapply(x@tracks, function(x) {
-        if(x@track == name)
-            return(TRUE)
-        return(FALSE)
-    }))
-    if (!isEmpty(trackPosition)) {
-        slot(x@tracks[[trackPosition]], key) <- value
-        x
-    }
-    else stop("Track '", name, "' does not exist")
+    names <- names(x@tracks)
+    track <- x@tracks[names == name]
+    slot(track[[1L]], key) <- value
+    x@tracks[names == name] <- track
+    x
 })
 
 setMethod("organism", "TrackHubGenome", function(object) {
@@ -565,32 +556,32 @@ setMethod("length", "TrackHubGenome", function(x) {
 })
 
 setMethod("writeTrackHub", "TrackHubGenome", function(x) {
+    stopIfNotLocal(hubFile(trackhub(x)))
     genomes <- genomesState()
     setGenomesContent(trackhub(x), genomes)
     trackDbValue <- getGenomesKey(x, "trackDb")
     trackDbFilePath <- combineURI(uri(trackhub(x)), trackDbValue)
-    stopIfNotLocal(trackDbFilePath)
-    tabStrings <- sapply(x@levels, function(y) {
-        paste(replicate(y, "\t"), collapse = "")
-    })
-    slots <- slotNames(Track())
-    i <- 1L
-    tracks <- sapply(x@tracks, function(y) {
-        track <- sapply(slots, function(slotName) {
-            slotValue <- slot(y, slotName)
-            if (!isEmpty(slotValue)) {
-                paste0(tabStrings[i], slotName, " ", slotValue)
-            }
-            else NULL
-        })
-        track[length(track) + 1] <- ""
-        i <<- i + 1
-        track
-    })
-    tracks <- as.character(Filter(Negate(is.null), tracks))
-    tracks <- gsub("TRUE", "on", tracks)
-    tracks <- gsub("FALSE", "off", tracks)
-    writeLines(tracks, trackDbFilePath)
+    if (file.size(parseURI(trackDbFilePath)$path) != 1L) {
+        tabStrings <- vapply(x@levels, function(y) {
+            paste(rep("\t", y), collapse = "")
+        },character(1L))
+        slots <- slotNames(Track())
+        tracks <- vapply(seq_len(length(x@tracks)), function(i) {
+            track <- vapply(slots, function(slotName) {
+                slotValue <- slot(x@tracks[[i]], slotName)
+                if (!isEmpty(slotValue)) {
+                    trackline <- paste0(tabStrings[i], slotName, " ", slotValue)
+                    if (slotName == "track") trackline <- paste0("\n", trackline)
+                    trackline
+                }
+                else ""
+            }, character(1L))
+        }, character(155L))
+        tracks <- tracks[tracks != ""]
+        tracks <- gsub("\\bTRUE\\b", "on", tracks)
+        tracks <- gsub("\\bFALSE\\b", "off", tracks)
+        writeLines(tracks, trackDbFilePath)
+    }
 })
 
 setMethod("show", "TrackHubGenome", function(object) {
