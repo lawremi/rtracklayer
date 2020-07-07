@@ -70,13 +70,13 @@ export.ucsc(object, con, ...)
   }
   \item{subformat}{The file format to use for the actual features,
     between the track lines. Must be a text-based format that is
-    compatible with track lines (most are). If an \code{\link[BiocIO]{BiocFile}}
-    subclass other than \code{UCSCFile} is passed as \code{con} to
-    \code{import.ucsc} or \code{export.ucsc}, the subformat is assumed
-    to be the corresponding format of \code{con}. Otherwise it defaults
-    to \dQuote{auto}.  The following describes the logic of the
-    \dQuote{auto} mode. For import, the subformat is taken as
-    the \code{type} field in the track line. If none, the file
+    compatible with track lines (most are). If an
+    \code{\link[BiocIO:BiocFile-class]{BiocFile}} subclass other than
+    \code{UCSCFile} is passed as \code{con} to \code{import.ucsc} or
+    \code{export.ucsc}, the subformat is assumed to be the corresponding format
+    of \code{con}. Otherwise it defaults to \dQuote{auto}.  The following
+    describes the logic of the \dQuote{auto} mode. For import, the subformat is
+    taken as the \code{type} field in the track line. If none, the file
     extension is consulted.  For export, if \code{object} is a
     \code{UCSCData}, the subformat is taken as the \code{type}
     in its track line, if present. Otherwise, the subformat is chosen
@@ -149,7 +149,8 @@ export.ucsc(object, con, ...)
 }
 
 \section{UCSCFile objects}{
-  The \code{UCSCFile} class extends \code{\link[BiocIO]{BiocFile}} and is a
+  The \code{UCSCFile} class extends
+  \code{\link[BiocIO:BiocFile-class]{BiocFile}} and is a
   formal represention of a resource in the UCSC format.
   To cast a path, URL or connection to a \code{UCSCFile}, pass it to
   the \code{UCSCFile} constructor.

@@ -265,7 +265,7 @@ export.bedGraph(object, con, ...)
 }
 
 \section{BEDFile objects}{
-  The \code{BEDFile} class extends \code{\link[BiocIO]{BiocFile}} and is a
+  The \code{BEDFile} class extends \code{\link[BiocIO:BiocFile-class]{BiocFile}} and is a
   formal represention of a resource in the BED format.
   To cast a path, URL or connection to a \code{BEDFile}, pass it to
   the \code{BEDFile} constructor. Classes and constructors also exist

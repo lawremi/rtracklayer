@@ -125,8 +125,8 @@ export.wig(object, con, ...)
 }
 
 \section{WIGFile objects}{
-  The \code{WIGFile} class extends \code{\link[BiocIO]{BiocFile}} and is a
-  formal represention of a resource in the WIG format.
+  The \code{WIGFile} class extends \code{\link[BiocIO:BiocFile-class]{BiocFile}}
+  and is a formal represention of a resource in the WIG format.
   To cast a path, URL or connection to a \code{WIGFile}, pass it to
   the \code{WIGFile} constructor.
 }

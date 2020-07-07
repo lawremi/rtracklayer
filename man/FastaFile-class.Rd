@@ -64,8 +64,9 @@
 }
 
 \section{FastaFile objects}{
-  The \code{FastaFile} class extends \code{\link[BiocIO]{BiocFile}} and is a
-  formal represention of a resource in the Fasta format.
+  The \code{FastaFile} class extends
+  \code{\link[BiocIO:BiocFile-class]{BiocFile}} and is
+  a formal represention of a resource in the Fasta format.
   To cast a path, URL or connection to a \code{FastaFile}, pass it to
   the \code{FastaFile} constructor.
 }
