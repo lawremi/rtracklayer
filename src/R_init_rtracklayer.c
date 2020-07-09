@@ -1,6 +1,7 @@
 #include "rtracklayer.h"
 #include "readGFF.h"
 #include "bigWig.h"
+#include "bigBed.h"
 #include "twoBit.h"
 #include "utils.h"
 
@@ -24,6 +25,8 @@ static const R_CallMethodDef callMethods[] = {
   CALLMETHOD_DEF(BWGFile_fromWIG, 4),
   CALLMETHOD_DEF(R_udcCleanup, 1),
   CALLMETHOD_DEF(R_setUserUdcDir, 1),
+  /* bigBed.c */
+  CALLMETHOD_DEF(BBDFile_seqlengths, 1),
   /* twobit.c */
   CALLMETHOD_DEF(DNAString_to_twoBit, 3),
   CALLMETHOD_DEF(TwoBits_write, 2),
