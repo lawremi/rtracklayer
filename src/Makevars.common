@@ -3,7 +3,8 @@ PKG_OBJECTS = \
   readGFF.o bigWig.o chain_io.o twoBit.o handlers.o utils.o
   
 UCSC_OBJECTS = \
-  bPlusTree.o bbiRead.o bbiWrite.o bwgCreate.o bwgQuery.o \
+  memgfx.o aliType.o binRange.o htmlColor.o sqlList.o tokenizer.o asParse.o \
+  basicBed.o bigBed.o bPlusTree.o bbiRead.o bbiWrite.o bwgCreate.o bwgQuery.o \
   cirTree.o common.o dnaseq.o dnautil.o errAbort.o hash.o linefile.o localmem.o\
   sqlNum.o zlibFace.o dystring.o hmmstats.o obscure.o pipeline.o \
   rangeTree.o rbTree.o memalloc.o dlist.o udc.o net.o bits.o twoBit.o \
