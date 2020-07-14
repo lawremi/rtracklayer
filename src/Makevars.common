@@ -1,6 +1,6 @@
 PKG_OBJECTS = \
   S4Vectors_stubs.o IRanges_stubs.o XVector_stubs.o R_init_rtracklayer.o \
-  readGFF.o bigWig.o bigBed.o chain_io.o twoBit.o handlers.o utils.o
+  readGFF.o bbiHelper.o bigWig.o bigBed.o chain_io.o twoBit.o handlers.o utils.o
   
 UCSC_OBJECTS = \
   memgfx.o aliType.o binRange.o htmlColor.o sqlList.o tokenizer.o asParse.o \
