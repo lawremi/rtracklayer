@@ -1161,6 +1161,9 @@ setMethod("show", "UCSCData",
           })
 
 chooseGraphType <- function(from) {
+    if (is(from, "GPos")) {
+        return(if (is(from, "StitchedGPos")) "bedGraph" else "wig")
+    }
   r <- ranges(from)
   type <- "bedGraph"
   ## decide whether compression is a good idea
