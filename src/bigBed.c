@@ -46,10 +46,10 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
                           start[i] - 1, start[i] - 1 + width[i], 0, lm);
     if (!hits) {
       hits = queryHits;
-      tail = hits;
+      tail = slLastEl(hits);
     } else {
       tail->next = queryHits;
-      tail = tail->next;
+      tail = slLastEl(tail);
     }
     INTEGER(n_qhits)[i] = slCount(queryHits);
   }
