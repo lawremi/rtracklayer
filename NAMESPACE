@@ -64,7 +64,7 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
               Bed15TrackLine, UCSCTrackModes, BigWigSelection,
-              UCSCSchema, Quickload, QuickloadGenome)
+              BigBedSelection, UCSCSchema, Quickload, QuickloadGenome)
 
 ## File classes
 exportClasses(RTLFile, CompressedFile, GFFFile, UCSCFile, BEDFile, WIGFile,
@@ -113,7 +113,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        score, "score<-", as.data.frame, space,
        ucscGenomes,
        readGFFPragmas, sniffGFFVersion, GFFcolnames, readGFF, readGFFAsGRanges,
-       BigWigSelection, GRangesForUCSCGenome, GRangesForBSGenome,
+       BigWigSelection, BigBedSelection, GRangesForUCSCGenome, GRangesForBSGenome,
        summary, seqinfo, genome, "genome<-",
        uri, Quickload, quickload, QuickloadGenome,
        organism, releaseDate, mcols, wigToBigWig,
