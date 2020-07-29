@@ -49,8 +49,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
 
   SEXP ans, n_qhits, ranges, chromStart, chromWidth, name, score,
     strand = R_NilValue, thickStart, thickWidth, itemRgb, blocks,
-    expCount, expIds, expScores, label, extraFields, lengthIndex,
-    extraNames;
+    extraFields, lengthIndex, extraNames;
 
   n_qhits = PROTECT(allocVector(INTSXP, n_ranges));
   struct bigBedInterval *hits = NULL, *tail = NULL;
