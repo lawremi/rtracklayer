@@ -48,8 +48,8 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   int *width = INTEGER(get_IRanges_width(r_ranges));
 
   SEXP ans, n_qhits, ranges, chromStart, chromWidth, name, score,
-    strand = R_NilValue, thickStart, thickEnd, itemRgb, blockCount, blockSizes,
-    blockStarts, expCount, expIds, expScores, label, extraFields, lengthIndex,
+    strand = R_NilValue, thickStart, thickWidth, itemRgb, blocks,
+    expCount, expIds, expScores, label, extraFields, lengthIndex,
     extraNames;
 
   n_qhits = PROTECT(allocVector(INTSXP, n_ranges));
@@ -100,8 +100,8 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   }
   if (isPresent(definedFieldCount, i_thick)) {
     thickStart = PROTECT(allocVector(INTSXP, n_hits));
-    thickEnd = PROTECT(allocVector(INTSXP, n_hits));
-    presentFieldCount += 2;
+    thickWidth = PROTECT(allocVector(INTSXP, n_hits));
+    ++presentFieldCount;
     unprotectCount += 2;
   }
   if (isPresent(definedFieldCount, i_itemRgb)) {
@@ -110,11 +110,9 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     ++unprotectCount;
   }
   if (isPresent(definedFieldCount, i_blocks)) {
-      blockCount = PROTECT(allocVector(INTSXP, n_hits));
-      blockSizes = PROTECT(allocVector(INTSXP, n_hits));
-      blockStarts = PROTECT(allocVector(INTSXP, n_hits));
-      presentFieldCount += 3;
-      unprotectCount += 3;
+      blocks = PROTECT(allocVector(VECSXP, n_hits));
+      ++presentFieldCount;
+      ++unprotectCount;
   }
 
   SEXPTYPE *typeId;
@@ -170,17 +168,22 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
       SET_STRING_ELT(strand, i, mkChar(bed->strand));
     }
     if (isPresent(definedFieldCount, i_thick)) {
+      INTEGER(thickWidth)[i] = bed->thickEnd - bed->thickStart + 1;
       INTEGER(thickStart)[i] = bed->thickStart;
-      INTEGER(thickEnd)[i] = bed->thickEnd;
     }
     if (isPresent(definedFieldCount, i_itemRgb)) {
       snprintf(rgbBuf, 8, "#%x", bed->itemRgb);
       SET_STRING_ELT(itemRgb, i, mkChar(rgbBuf));
     }
     if (isPresent(definedFieldCount, i_blocks)) {
-      INTEGER(blockCount)[i] = bed->blockCount;
-      INTEGER(blockSizes)[i] = bed->blockSizes;
-      INTEGER(blockStarts)[i] = bed->chromStarts;
+      SEXP bstart = PROTECT(allocVector(INTSXP, bed->blockCount));
+      SEXP bwidth = PROTECT(allocVector(INTSXP, bed->blockCount));
+      for (int j = 0; j< bed->blockCount; ++j) {
+        INTEGER(bwidth)[j] = bed->blockSizes[j];
+        INTEGER(bstart)[j] = bed->chromStarts[j];
+      }
+      SET_VECTOR_ELT(blocks, i, new_IRanges("IRanges", bstart, bwidth, R_NilValue));
+      UNPROTECT(2);
     }
     bedFree(&bed);
 
@@ -218,16 +221,14 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     SET_VECTOR_ELT(ans, index++, score);
   }
   if (isPresent(definedFieldCount, i_thick)) {
-    SET_VECTOR_ELT(ans, index++, thickStart);
-    SET_VECTOR_ELT(ans, index++, thickEnd);
+    SET_VECTOR_ELT(ans, index++, new_IRanges("IRanges", thickStart,
+                                             thickWidth, R_NilValue));
   }
   if (isPresent(definedFieldCount, i_itemRgb)) {
     SET_VECTOR_ELT(ans, index++, itemRgb);
   }
   if (isPresent(definedFieldCount, i_blocks)) {
-    SET_VECTOR_ELT(ans, index++, blockCount);
-    SET_VECTOR_ELT(ans, index++, blockSizes);
-    SET_VECTOR_ELT(ans, index++, blockStarts);
+    SET_VECTOR_ELT(ans, index++, blocks);
   }
   UNPROTECT(7 + unprotectCount);
   lmCleanup(&lm);
