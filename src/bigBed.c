@@ -95,6 +95,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     lengthIndex = PROTECT(allocVector(INTSXP, extraFieldCount));
     memset(INTEGER(lengthIndex), 0, sizeof(int) * extraFieldCount);
   }
+  asObjectFree(&as);
 
   chromStart = PROTECT(allocVector(INTSXP, n_hits));
   chromWidth = PROTECT(allocVector(INTSXP, n_hits));
