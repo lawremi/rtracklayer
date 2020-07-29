@@ -105,7 +105,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   blockSizes = PROTECT(allocVector(INTSXP, n_hits));
   blockStarts = PROTECT(allocVector(INTSXP, n_hits));
 
-  char startBuf[16], endBuf[16], *row[fieldCount], rgbBuf[13];
+  char startBuf[16], endBuf[16], *row[fieldCount], rgbBuf[8];
   for (int i = 0, k = 0; i < n_hits; ++i, hits = hits->next) {
     if (INTEGER(n_qhits)[k] == i && k < n_ranges)
       ++k;
@@ -120,8 +120,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     SET_STRING_ELT(strand, i, mkChar(bed->strand));
     INTEGER(thickStart)[i] = bed->thickStart;
     INTEGER(thickEnd)[i] = bed->thickEnd;
-    snprintf(rgbBuf, 11, "%u,%u,%u", ((bed->itemRgb & 0xff0000) >> 16),
-             ((bed->itemRgb & 0xff00) >> 8), (bed->itemRgb & 0xff));
+    snprintf(rgbBuf, 8, "#%x", bed->itemRgb);
     SET_STRING_ELT(itemRgb, i, mkChar(rgbBuf));
     INTEGER(blockCount)[i] = bed->blockCount;
     INTEGER(blockSizes)[i] = bed->blockSizes;
