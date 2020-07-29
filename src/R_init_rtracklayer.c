@@ -26,6 +26,7 @@ static const R_CallMethodDef callMethods[] = {
   CALLMETHOD_DEF(R_udcCleanup, 1),
   CALLMETHOD_DEF(R_setUserUdcDir, 1),
   /* bigBed.c */
+  CALLMETHOD_DEF(BBDFile_fieldnames, 1),
   CALLMETHOD_DEF(BBDFile_seqlengths, 1),
   CALLMETHOD_DEF(BBDFile_query, 5),
   /* twobit.c */
