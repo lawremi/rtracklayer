@@ -115,21 +115,25 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   }
 
   SEXPTYPE *typeId;
-  /* storing extra field type and extra names */
+  /* if extra fields are present, identify the type information and allocate memory */
   if (extraFieldCount > 0) {
+    int k = 0, i = 0;
+    enum asTypes fieldType;
+    struct asColumn *asCol = as->columnList;
     extraFields = PROTECT(allocVector(VECSXP, extraFieldCount));
     typeId = (SEXPTYPE*)R_alloc(extraFieldCount, sizeof(SEXPTYPE));
-    struct asColumn *asCol = as->columnList;
-    enum asTypes fieldType;
-    for (int j = 0, k = 0; j < fieldCount; ++j) {
+    for (int j = 0; j < fieldCount; ++j) {
       fieldType = asCol->lowType->type;
       if (j >= definedFieldCount) {
-        if (fieldType >= 0 && fieldType <= 1)
+        if (asTypesIsFloating(fieldType) || fieldType == t_int ||
+            fieldType == t_short || fieldType == t_byte || fieldType == t_off) {
           typeId[k] = REALSXP;
-        else if (fieldType >= 3 && fieldType <= 9)
+        } else if (asTypesIsUnsigned(fieldType)) {
           typeId[k] = INTSXP;
-        else if ((fieldType == 2) || (fieldType >= 10 && fieldType <= 15))
+        } else if (fieldType == t_char || fieldType == t_string ||
+                   fieldType == t_lstring) {
           typeId[k] = STRSXP;
+        }
         SEXP temp = PROTECT(allocVector(typeId[k], n_hits));
         SET_VECTOR_ELT(extraFields, k, temp);
         ++k;
