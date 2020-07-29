@@ -11,6 +11,9 @@
 #include "bbiHelper.h"
 #include "handlers.h"
 
+/* helper functions */
+int getDefinedFieldCount(struct asObject *as);
+
 /* --- .Call ENTRY POINT --- */
 SEXP BBDFile_seqlengths(SEXP r_filename)
 {
@@ -55,16 +58,16 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   }
 
   /* need these before closing file */
-  int fieldCount = file->fieldCount;
-  int definedFieldCount = file->definedFieldCount;
-  int extraFieldCount = fieldCount - definedFieldCount;
-  int n_hits = slCount(hits);
-  SEXPTYPE *typeId;
   char *asText = bigBedAutoSqlText(file);
   struct asObject *as = asParseText(asText);
   freeMem(asText);
+  int fieldCount = file->fieldCount;
+  int definedFieldCount = getDefinedFieldCount(as);
+  int extraFieldCount = fieldCount - definedFieldCount;
+  int n_hits = slCount(hits);
   bigBedFileClose(&file);
 
+  SEXPTYPE *typeId;
   extraFields = PROTECT(allocVector(VECSXP, extraFieldCount));
   extraNames = PROTECT(allocVector(STRSXP, extraFieldCount));
 
@@ -167,4 +170,21 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   lmCleanup(&lm);
   popRHandlers();
   return ans;
+}
+
+int getDefinedFieldCount(struct asObject *as) {
+  int definedFieldCount = 0;
+  struct asColumn *asCol = as->columnList;
+  char *asText = bedAsDef(12, 12);
+  struct asObject *bedAs = asParseText(asText);
+  freeMem(asText);
+  struct asColumn *bedCol = bedAs->columnList;
+  while (asCol) {
+    if (strncmp(asCol->name, bedCol->name, sizeof(asCol->name)) == 0)
+      ++definedFieldCount;
+    bedCol = bedCol->next;
+    asCol = asCol->next;
+  }
+  asObjectFree(&bedAs);
+  return definedFieldCount;
 }
