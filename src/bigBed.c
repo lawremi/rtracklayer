@@ -12,20 +12,22 @@
 #include "handlers.h"
 
 /* --- .Call ENTRY POINT --- */
-SEXP BBDFile_seqlengths(SEXP r_filename) {
+SEXP BBDFile_seqlengths(SEXP r_filename)
+{
   pushRHandlers();
-  SEXP seqlengths;
-  struct bbiFile * file = bigBedFileOpen((char *)CHAR(asChar(r_filename)));
-  PROTECT(seqlengths = bbiSeqLengths(file));
+  struct bbiFile *file = bigBedFileOpen((char *)CHAR(asChar(r_filename)));
+  SEXP seqlengths = PROTECT(bbiSeqLengths(file));
   bigBedFileClose(&file);
   popRHandlers();
   UNPROTECT(1);
   return seqlengths;
 }
 
-SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges) {
+/* --- .Call ENTRY POINT --- */
+SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
+{
   pushRHandlers();
-  struct bbiFile * file = bigBedFileOpen((char *)CHAR(asChar(r_filename)));
+  struct bbiFile *file = bigBedFileOpen((char *)CHAR(asChar(r_filename)));
   struct lm *lm = lmInit(0);
   int n_ranges = get_IRanges_length(r_ranges);
   int *start = INTEGER(get_IRanges_start(r_ranges));
@@ -35,13 +37,13 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges) {
     thickStart, thickEnd, itemRgb, blockCount, blockSizes, blockStarts,
     expCount, expIds, expScores, label, extraFields, lengthIndex, extraNames;
 
-  PROTECT(n_qhits = allocVector(INTSXP, n_ranges));
+  n_qhits = PROTECT(allocVector(INTSXP, n_ranges));
   struct bigBedInterval *hits = NULL, *tail = NULL;
-  // querying records in range
-  for (int i = 0; i < n_ranges; i++) {
+  /* querying records in range */
+  for (int i = 0; i < n_ranges; ++i) {
     struct bigBedInterval *queryHits =
       bigBedIntervalQuery(file, (char *)CHAR(STRING_ELT(r_seqnames, i)),
-      start[i] - 1, start[i] - 1 + width[i], 0, lm);
+                          start[i] - 1, start[i] - 1 + width[i], 0, lm);
     if (!hits) {
       hits = queryHits;
       tail = hits;
@@ -51,6 +53,8 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges) {
     }
     INTEGER(n_qhits)[i] = slCount(queryHits);
   }
+
+  /* need these before closing file */
   int fieldCount = file->fieldCount;
   int definedFieldCount = file->definedFieldCount;
   int extraFieldCount = fieldCount - definedFieldCount;
@@ -61,15 +65,15 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges) {
   freeMem(asText);
   bigBedFileClose(&file);
 
-  PROTECT(extraFields = allocVector(VECSXP, extraFieldCount));
-  PROTECT(extraNames = allocVector(STRSXP, extraFieldCount));
+  extraFields = PROTECT(allocVector(VECSXP, extraFieldCount));
+  extraNames = PROTECT(allocVector(STRSXP, extraFieldCount));
 
-  // storing extra field type and extra names
+  /* storing extra field type and extra names */
   if (extraFieldCount > 0) {
     typeId = (SEXPTYPE*)R_alloc(extraFieldCount, sizeof(SEXPTYPE));
     struct asColumn *asCol = as->columnList;
     enum asTypes fieldType;
-    for (int j = 0, k = 0; j < fieldCount; j++) {
+    for (int j = 0, k = 0; j < fieldCount; ++j) {
       fieldType = asCol->lowType->type;
       if (j >= definedFieldCount) {
         SET_STRING_ELT(extraNames, k, mkChar(asCol->name));
@@ -79,37 +83,36 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges) {
           typeId[k] = INTSXP;
         else if ((fieldType == 2) || (fieldType >= 10 && fieldType <= 15))
           typeId[k] = STRSXP;
-        SEXP temp;
-        PROTECT(temp = allocVector(typeId[k], n_hits));
+        SEXP temp = PROTECT(allocVector(typeId[k], n_hits));
         SET_VECTOR_ELT(extraFields, k, temp);
-        k++;
+        ++k;
       }
       asCol = asCol->next;
     }
-    PROTECT(lengthIndex = allocVector(INTSXP, extraFieldCount));
+    lengthIndex = PROTECT(allocVector(INTSXP, extraFieldCount));
     memset(INTEGER(lengthIndex), 0, sizeof(int) * extraFieldCount);
   }
 
-  PROTECT(chromStart = allocVector(INTSXP, n_hits));
-  PROTECT(chromWidth = allocVector(INTSXP, n_hits));
-  PROTECT(name = allocVector(STRSXP, n_hits));
-  PROTECT(score = allocVector(INTSXP, n_hits));
-  PROTECT(strand = allocVector(STRSXP, n_hits));
-  PROTECT(thickStart = allocVector(INTSXP, n_hits));
-  PROTECT(thickEnd = allocVector(INTSXP, n_hits));
-  PROTECT(itemRgb = allocVector(STRSXP, n_hits));
-  PROTECT(blockCount = allocVector(INTSXP, n_hits));
-  PROTECT(blockSizes = allocVector(INTSXP, n_hits));
-  PROTECT(blockStarts = allocVector(INTSXP, n_hits));
+  chromStart = PROTECT(allocVector(INTSXP, n_hits));
+  chromWidth = PROTECT(allocVector(INTSXP, n_hits));
+  name = PROTECT(allocVector(STRSXP, n_hits));
+  score = PROTECT(allocVector(INTSXP, n_hits));
+  strand = PROTECT(allocVector(STRSXP, n_hits));
+  thickStart = PROTECT(allocVector(INTSXP, n_hits));
+  thickEnd = PROTECT(allocVector(INTSXP, n_hits));
+  itemRgb = PROTECT(allocVector(STRSXP, n_hits));
+  blockCount = PROTECT(allocVector(INTSXP, n_hits));
+  blockSizes = PROTECT(allocVector(INTSXP, n_hits));
+  blockStarts = PROTECT(allocVector(INTSXP, n_hits));
 
   char startBuf[16], endBuf[16], *row[fieldCount], rgbBuf[13];
-  for (int i = 0, k = 0; i < n_hits; i++, hits = hits->next) {
+  for (int i = 0, k = 0; i < n_hits; ++i, hits = hits->next) {
     if (INTEGER(n_qhits)[k] == i && k < n_ranges)
-      k++;
+      ++k;
     bigBedIntervalToRow(hits, (char *)CHAR(STRING_ELT(r_seqnames, k)),
-      startBuf, endBuf, row, fieldCount);
+                        startBuf, endBuf, row, fieldCount);
     struct bed *bed = bedLoadN(row, definedFieldCount);
-    // storing default fields
+    /* storing default fields */
     INTEGER(chromStart)[i] = bed->chromStart;
     INTEGER(chromWidth)[i] = bed->chromEnd - bed->chromStart + 1;
     SET_STRING_ELT(name, i, mkChar(bed->name));
@@ -118,15 +121,15 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges) {
     INTEGER(thickStart)[i] = bed->thickStart;
     INTEGER(thickEnd)[i] = bed->thickEnd;
     snprintf(rgbBuf, 11, "%u,%u,%u", ((bed->itemRgb & 0xff0000) >> 16),
-      ((bed->itemRgb & 0xff00) >> 8), (bed->itemRgb & 0xff));
+             ((bed->itemRgb & 0xff00) >> 8), (bed->itemRgb & 0xff));
     SET_STRING_ELT(itemRgb, i, mkChar(rgbBuf));
     INTEGER(blockCount)[i] = bed->blockCount;
     INTEGER(blockSizes)[i] = bed->blockSizes;
     INTEGER(blockStarts)[i] = bed->chromStarts;
     bedFree(&bed);
 
-    // if extra fields are present store extra fields
-    for (int j = definedFieldCount, efIndex = 0 ; j < fieldCount; j++, efIndex++) {
+    /* if extra fields are present store extra fields */
+    for (int j = definedFieldCount, efIndex = 0 ; j < fieldCount; ++j, ++efIndex) {
       switch(typeId[efIndex]) {
         case REALSXP:
           REAL(VECTOR_ELT(extraFields, efIndex))[i] = sqlSigned(row[j]);
@@ -144,8 +147,8 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges) {
     }
   }
 
-  PROTECT(ranges = new_IRanges("IRanges", chromStart, chromWidth, R_NilValue));
-  PROTECT(ans = allocVector(VECSXP, 13));
+  ranges = PROTECT(new_IRanges("IRanges", chromStart, chromWidth, R_NilValue));
+  ans = PROTECT(allocVector(VECSXP, 13));
 
   SET_VECTOR_ELT(ans, 0, ranges);
   SET_VECTOR_ELT(ans, 1, name);
