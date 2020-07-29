@@ -11,8 +11,19 @@
 #include "bbiHelper.h"
 #include "handlers.h"
 
+enum IFields
+{
+  i_name    = 3,  /* Index value of name field    */
+  i_score   = 4,  /* Index value of score field   */
+  i_strand  = 5,  /* Index value of strand field  */
+  i_thick   = 7,  /* Index value of thick field   */
+  i_itemRgb = 8,  /* Index value of itemRgb field */
+  i_blocks  = 11, /* Index value of blocks field  */
+};
+
 /* helper functions */
 int getDefinedFieldCount(struct asObject *as);
+bool isPresent(int definedFieldCount, int index);
 
 /* --- .Call ENTRY POINT --- */
 SEXP BBDFile_seqlengths(SEXP r_filename)
@@ -36,9 +47,10 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   int *start = INTEGER(get_IRanges_start(r_ranges));
   int *width = INTEGER(get_IRanges_width(r_ranges));
 
-  SEXP ans, n_qhits, ranges, chromStart, chromWidth, name, score, strand,
-    thickStart, thickEnd, itemRgb, blockCount, blockSizes, blockStarts,
-    expCount, expIds, expScores, label, extraFields, lengthIndex, extraNames;
+  SEXP ans, n_qhits, ranges, chromStart, chromWidth, name, score,
+    strand = R_NilValue, thickStart, thickEnd, itemRgb, blockCount, blockSizes,
+    blockStarts, expCount, expIds, expScores, label, extraFields, lengthIndex,
+    extraNames;
 
   n_qhits = PROTECT(allocVector(INTSXP, n_ranges));
   struct bigBedInterval *hits = NULL, *tail = NULL;
@@ -67,6 +79,44 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   int n_hits = slCount(hits);
   bigBedFileClose(&file);
 
+  int presentFieldCount = 0, unprotectCount = 0;
+  /* mandatory default field */
+  chromStart = PROTECT(allocVector(INTSXP, n_hits));
+  chromWidth = PROTECT(allocVector(INTSXP, n_hits));
+  /* if any of the default field is present allocate memory for it */
+  if (isPresent(definedFieldCount, i_name)) {
+    name = PROTECT(allocVector(STRSXP, n_hits));
+    ++presentFieldCount;
+    ++unprotectCount;
+  }
+  if (isPresent(definedFieldCount, i_score)) {
+    score = PROTECT(allocVector(INTSXP, n_hits));
+    ++presentFieldCount;
+    ++unprotectCount;
+  }
+  if (isPresent(definedFieldCount, i_strand)) {
+    strand = PROTECT(allocVector(STRSXP, n_hits));
+    ++unprotectCount;
+  }
+  if (isPresent(definedFieldCount, i_thick)) {
+    thickStart = PROTECT(allocVector(INTSXP, n_hits));
+    thickEnd = PROTECT(allocVector(INTSXP, n_hits));
+    presentFieldCount += 2;
+    unprotectCount += 2;
+  }
+  if (isPresent(definedFieldCount, i_itemRgb)) {
+    itemRgb = PROTECT(allocVector(STRSXP, n_hits));
+    ++presentFieldCount;
+    ++unprotectCount;
+  }
+  if (isPresent(definedFieldCount, i_blocks)) {
+      blockCount = PROTECT(allocVector(INTSXP, n_hits));
+      blockSizes = PROTECT(allocVector(INTSXP, n_hits));
+      blockStarts = PROTECT(allocVector(INTSXP, n_hits));
+      presentFieldCount += 3;
+      unprotectCount += 3;
+  }
+
   SEXPTYPE *typeId;
   extraFields = PROTECT(allocVector(VECSXP, extraFieldCount));
   extraNames = PROTECT(allocVector(STRSXP, extraFieldCount));
@@ -89,25 +139,15 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
         SEXP temp = PROTECT(allocVector(typeId[k], n_hits));
         SET_VECTOR_ELT(extraFields, k, temp);
         ++k;
+        ++unprotectCount;
       }
       asCol = asCol->next;
     }
     lengthIndex = PROTECT(allocVector(INTSXP, extraFieldCount));
     memset(INTEGER(lengthIndex), 0, sizeof(int) * extraFieldCount);
+    ++unprotectCount;
   }
   asObjectFree(&as);
-
-  chromStart = PROTECT(allocVector(INTSXP, n_hits));
-  chromWidth = PROTECT(allocVector(INTSXP, n_hits));
-  name = PROTECT(allocVector(STRSXP, n_hits));
-  score = PROTECT(allocVector(INTSXP, n_hits));
-  strand = PROTECT(allocVector(STRSXP, n_hits));
-  thickStart = PROTECT(allocVector(INTSXP, n_hits));
-  thickEnd = PROTECT(allocVector(INTSXP, n_hits));
-  itemRgb = PROTECT(allocVector(STRSXP, n_hits));
-  blockCount = PROTECT(allocVector(INTSXP, n_hits));
-  blockSizes = PROTECT(allocVector(INTSXP, n_hits));
-  blockStarts = PROTECT(allocVector(INTSXP, n_hits));
 
   char startBuf[16], endBuf[16], *row[fieldCount], rgbBuf[8];
   for (int i = 0, k = 0; i < n_hits; ++i, hits = hits->next) {
@@ -116,19 +156,32 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     bigBedIntervalToRow(hits, (char *)CHAR(STRING_ELT(r_seqnames, k)),
                         startBuf, endBuf, row, fieldCount);
     struct bed *bed = bedLoadN(row, definedFieldCount);
-    /* storing default fields */
+    /* mandatory default field */
     INTEGER(chromStart)[i] = bed->chromStart;
     INTEGER(chromWidth)[i] = bed->chromEnd - bed->chromStart + 1;
-    SET_STRING_ELT(name, i, mkChar(bed->name));
-    INTEGER(score)[i] = bed->score;
-    SET_STRING_ELT(strand, i, mkChar(bed->strand));
-    INTEGER(thickStart)[i] = bed->thickStart;
-    INTEGER(thickEnd)[i] = bed->thickEnd;
-    snprintf(rgbBuf, 8, "#%x", bed->itemRgb);
-    SET_STRING_ELT(itemRgb, i, mkChar(rgbBuf));
-    INTEGER(blockCount)[i] = bed->blockCount;
-    INTEGER(blockSizes)[i] = bed->blockSizes;
-    INTEGER(blockStarts)[i] = bed->chromStarts;
+    /* if any of the default field is present, store its values */
+    if (isPresent(definedFieldCount, i_name)) {
+      SET_STRING_ELT(name, i, mkChar(bed->name));
+    }
+    if (isPresent(definedFieldCount, i_score)) {
+      INTEGER(score)[i] = bed->score;
+    }
+    if (isPresent(definedFieldCount, i_strand)) {
+      SET_STRING_ELT(strand, i, mkChar(bed->strand));
+    }
+    if (isPresent(definedFieldCount, i_thick)) {
+      INTEGER(thickStart)[i] = bed->thickStart;
+      INTEGER(thickEnd)[i] = bed->thickEnd;
+    }
+    if (isPresent(definedFieldCount, i_itemRgb)) {
+      snprintf(rgbBuf, 8, "#%x", bed->itemRgb);
+      SET_STRING_ELT(itemRgb, i, mkChar(rgbBuf));
+    }
+    if (isPresent(definedFieldCount, i_blocks)) {
+      INTEGER(blockCount)[i] = bed->blockCount;
+      INTEGER(blockSizes)[i] = bed->blockSizes;
+      INTEGER(blockStarts)[i] = bed->chromStarts;
+    }
     bedFree(&bed);
 
     /* if extra fields are present store extra fields */
@@ -151,23 +204,32 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   }
 
   ranges = PROTECT(new_IRanges("IRanges", chromStart, chromWidth, R_NilValue));
-  ans = PROTECT(allocVector(VECSXP, 13));
-
-  SET_VECTOR_ELT(ans, 0, ranges);
-  SET_VECTOR_ELT(ans, 1, name);
-  SET_VECTOR_ELT(ans, 2, score);
-  SET_VECTOR_ELT(ans, 3, strand);
-  SET_VECTOR_ELT(ans, 4, thickStart);
-  SET_VECTOR_ELT(ans, 5, thickEnd);
-  SET_VECTOR_ELT(ans, 6, itemRgb);
-  SET_VECTOR_ELT(ans, 7, blockCount);
-  SET_VECTOR_ELT(ans, 8, blockSizes);
-  SET_VECTOR_ELT(ans, 9, blockStarts);
-  SET_VECTOR_ELT(ans, 10, extraFields);
-  SET_VECTOR_ELT(ans, 11, extraNames);
-  SET_VECTOR_ELT(ans, 12, n_qhits);
-
-  extraFieldCount > 0 ? UNPROTECT(17 + extraFieldCount) : UNPROTECT(16);
+  ans = PROTECT(allocVector(VECSXP, presentFieldCount + 5));
+  int index = 0;
+  SET_VECTOR_ELT(ans, index++, n_qhits);
+  SET_VECTOR_ELT(ans, index++, extraFields);
+  SET_VECTOR_ELT(ans, index++, extraNames);
+  SET_VECTOR_ELT(ans, index++, ranges);
+  SET_VECTOR_ELT(ans, index++, strand);
+  if (isPresent(definedFieldCount, i_name)) {
+    SET_VECTOR_ELT(ans, index++, name);
+  }
+  if (isPresent(definedFieldCount, i_score)) {
+    SET_VECTOR_ELT(ans, index++, score);
+  }
+  if (isPresent(definedFieldCount, i_thick)) {
+    SET_VECTOR_ELT(ans, index++, thickStart);
+    SET_VECTOR_ELT(ans, index++, thickEnd);
+  }
+  if (isPresent(definedFieldCount, i_itemRgb)) {
+    SET_VECTOR_ELT(ans, index++, itemRgb);
+  }
+  if (isPresent(definedFieldCount, i_blocks)) {
+    SET_VECTOR_ELT(ans, index++, blockCount);
+    SET_VECTOR_ELT(ans, index++, blockSizes);
+    SET_VECTOR_ELT(ans, index++, blockStarts);
+  }
+  UNPROTECT(7 + unprotectCount);
   lmCleanup(&lm);
   popRHandlers();
   return ans;
@@ -188,4 +250,8 @@ int getDefinedFieldCount(struct asObject *as) {
   }
   asObjectFree(&bedAs);
   return definedFieldCount;
+}
+
+bool isPresent(int definedFieldCount, int index) {
+  return (definedFieldCount - index >= 0) ? TRUE : FALSE;
 }
