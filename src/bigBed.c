@@ -49,7 +49,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
 
   SEXP ans, n_qhits, ranges, chromStart, chromWidth, name, score,
     strand = R_NilValue, thickStart, thickWidth, itemRgb, blocks,
-    extraFields, lengthIndex, extraNames;
+    extraFields = R_NilValue, lengthIndex;
 
   n_qhits = PROTECT(allocVector(INTSXP, n_ranges));
   struct bigBedInterval *hits = NULL, *tail = NULL;
@@ -115,18 +115,15 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   }
 
   SEXPTYPE *typeId;
-  extraFields = PROTECT(allocVector(VECSXP, extraFieldCount));
-  extraNames = PROTECT(allocVector(STRSXP, extraFieldCount));
-
   /* storing extra field type and extra names */
   if (extraFieldCount > 0) {
+    extraFields = PROTECT(allocVector(VECSXP, extraFieldCount));
     typeId = (SEXPTYPE*)R_alloc(extraFieldCount, sizeof(SEXPTYPE));
     struct asColumn *asCol = as->columnList;
     enum asTypes fieldType;
     for (int j = 0, k = 0; j < fieldCount; ++j) {
       fieldType = asCol->lowType->type;
       if (j >= definedFieldCount) {
-        SET_STRING_ELT(extraNames, k, mkChar(asCol->name));
         if (fieldType >= 0 && fieldType <= 1)
           typeId[k] = REALSXP;
         else if (fieldType >= 3 && fieldType <= 9)
@@ -142,7 +139,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     }
     lengthIndex = PROTECT(allocVector(INTSXP, extraFieldCount));
     memset(INTEGER(lengthIndex), 0, sizeof(int) * extraFieldCount);
-    ++unprotectCount;
+    unprotectCount += 2;
   }
   asObjectFree(&as);
 
@@ -206,11 +203,10 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   }
 
   ranges = PROTECT(new_IRanges("IRanges", chromStart, chromWidth, R_NilValue));
-  ans = PROTECT(allocVector(VECSXP, presentFieldCount + 5));
+  ans = PROTECT(allocVector(VECSXP, presentFieldCount + 4));
   int index = 0;
   SET_VECTOR_ELT(ans, index++, n_qhits);
   SET_VECTOR_ELT(ans, index++, extraFields);
-  SET_VECTOR_ELT(ans, index++, extraNames);
   SET_VECTOR_ELT(ans, index++, ranges);
   SET_VECTOR_ELT(ans, index++, strand);
   if (isPresent(definedFieldCount, i_name)) {
@@ -229,7 +225,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   if (isPresent(definedFieldCount, i_blocks)) {
     SET_VECTOR_ELT(ans, index++, blocks);
   }
-  UNPROTECT(7 + unprotectCount);
+  UNPROTECT(5 + unprotectCount);
   lmCleanup(&lm);
   popRHandlers();
   return ans;
