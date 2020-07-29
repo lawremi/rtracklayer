@@ -147,10 +147,13 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   }
   asObjectFree(&as);
 
+  int count = 0, k = 0;
   char startBuf[16], endBuf[16], *row[fieldCount], rgbBuf[8];
-  for (int i = 0, k = 0; i < n_hits; ++i, hits = hits->next) {
-    if (INTEGER(n_qhits)[k] == i && k < n_ranges)
+  for (int i = 0; i < n_hits; ++i, hits = hits->next, ++count) {
+    if (INTEGER(n_qhits)[k] == count && k < n_ranges) {
       ++k;
+      count = 0;
+    }
     bigBedIntervalToRow(hits, (char *)CHAR(STRING_ELT(r_seqnames, k)),
                         startBuf, endBuf, row, fieldCount);
     struct bed *bed = bedLoadN(row, definedFieldCount);
