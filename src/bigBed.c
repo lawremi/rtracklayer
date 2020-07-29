@@ -24,6 +24,7 @@ enum IFields
 /* helper functions */
 int getDefinedFieldCount(struct asObject *as);
 bool isPresent(int definedFieldCount, int index);
+bool isSelected(SEXP r_selectedindex, int position);
 
 /* --- .Call ENTRY POINT --- */
 SEXP BBDFile_seqlengths(SEXP r_filename)
@@ -38,7 +39,8 @@ SEXP BBDFile_seqlengths(SEXP r_filename)
 }
 
 /* --- .Call ENTRY POINT --- */
-SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
+SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
+                   SEXP r_defaultindex, SEXP r_extraindex)
 {
   pushRHandlers();
   struct bbiFile *file = bigBedFileOpen((char *)CHAR(asChar(r_filename)));
@@ -82,13 +84,13 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   /* mandatory default field */
   chromStart = PROTECT(allocVector(INTSXP, n_hits));
   chromWidth = PROTECT(allocVector(INTSXP, n_hits));
-  /* if any of the default field is present allocate memory for it */
-  if (isPresent(definedFieldCount, i_name)) {
+  /* if any of the default field is present and selected, allocate memory for it */
+  if (isPresent(definedFieldCount, i_name) && isSelected(r_defaultindex, 1)) {
     name = PROTECT(allocVector(STRSXP, n_hits));
     ++presentFieldCount;
     ++unprotectCount;
   }
-  if (isPresent(definedFieldCount, i_score)) {
+  if (isPresent(definedFieldCount, i_score) && isSelected(r_defaultindex, 2)) {
     score = PROTECT(allocVector(INTSXP, n_hits));
     ++presentFieldCount;
     ++unprotectCount;
@@ -97,25 +99,26 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     strand = PROTECT(allocVector(STRSXP, n_hits));
     ++unprotectCount;
   }
-  if (isPresent(definedFieldCount, i_thick)) {
+  if (isPresent(definedFieldCount, i_thick) && isSelected(r_defaultindex, 3)) {
     thickStart = PROTECT(allocVector(INTSXP, n_hits));
     thickWidth = PROTECT(allocVector(INTSXP, n_hits));
     ++presentFieldCount;
     unprotectCount += 2;
   }
-  if (isPresent(definedFieldCount, i_itemRgb)) {
+  if (isPresent(definedFieldCount, i_itemRgb) && isSelected(r_defaultindex, 4)) {
     itemRgb = PROTECT(allocVector(STRSXP, n_hits));
     ++presentFieldCount;
     ++unprotectCount;
   }
-  if (isPresent(definedFieldCount, i_blocks)) {
+  if (isPresent(definedFieldCount, i_blocks) && isSelected(r_defaultindex, 5)) {
       blocks = PROTECT(allocVector(VECSXP, n_hits));
       ++presentFieldCount;
       ++unprotectCount;
   }
 
   SEXPTYPE *typeId;
-  /* if extra fields are present, identify the type information and allocate memory */
+  /* if extra fields are present and selected
+   * identify the type information and allocate memory */
   if (extraFieldCount > 0) {
     int k = 0, i = 0;
     enum asTypes fieldType;
@@ -134,10 +137,12 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
                    fieldType == t_lstring) {
           typeId[k] = STRSXP;
         }
-        SEXP temp = PROTECT(allocVector(typeId[k], n_hits));
-        SET_VECTOR_ELT(extraFields, k, temp);
-        ++k;
-        ++unprotectCount;
+        if (isSelected(r_extraindex, (j - definedFieldCount + 1))) {
+          SEXP temp = PROTECT(allocVector(typeId[k], n_hits));
+          SET_VECTOR_ELT(extraFields, k, temp);
+          ++unprotectCount;
+          ++k;
+        }
       }
       asCol = asCol->next;
     }
@@ -160,25 +165,25 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     /* mandatory default field */
     INTEGER(chromStart)[i] = bed->chromStart;
     INTEGER(chromWidth)[i] = bed->chromEnd - bed->chromStart + 1;
-    /* if any of the default field is present, store its values */
-    if (isPresent(definedFieldCount, i_name)) {
+    /* if any of the default field is present and selected, store its value */
+    if (isPresent(definedFieldCount, i_name) && isSelected(r_defaultindex, 1)) {
       SET_STRING_ELT(name, i, mkChar(bed->name));
     }
-    if (isPresent(definedFieldCount, i_score)) {
+    if (isPresent(definedFieldCount, i_score) && isSelected(r_defaultindex, 2)) {
       INTEGER(score)[i] = bed->score;
     }
     if (isPresent(definedFieldCount, i_strand)) {
       SET_STRING_ELT(strand, i, mkChar(bed->strand));
     }
-    if (isPresent(definedFieldCount, i_thick)) {
+    if (isPresent(definedFieldCount, i_thick) && isSelected(r_defaultindex, 3)) {
       INTEGER(thickWidth)[i] = bed->thickEnd - bed->thickStart + 1;
       INTEGER(thickStart)[i] = bed->thickStart;
     }
-    if (isPresent(definedFieldCount, i_itemRgb)) {
+    if (isPresent(definedFieldCount, i_itemRgb) && isSelected(r_defaultindex, 4)) {
       snprintf(rgbBuf, 8, "#%x", bed->itemRgb);
       SET_STRING_ELT(itemRgb, i, mkChar(rgbBuf));
     }
-    if (isPresent(definedFieldCount, i_blocks)) {
+    if (isPresent(definedFieldCount, i_blocks) && isSelected(r_defaultindex, 5)) {
       SEXP bstart = PROTECT(allocVector(INTSXP, bed->blockCount));
       SEXP bwidth = PROTECT(allocVector(INTSXP, bed->blockCount));
       for (int j = 0; j< bed->blockCount; ++j) {
@@ -190,21 +195,24 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
     }
     bedFree(&bed);
 
-    /* if extra fields are present store extra fields */
-    for (int j = definedFieldCount, efIndex = 0 ; j < fieldCount; ++j, ++efIndex) {
-      switch(typeId[efIndex]) {
-        case REALSXP:
-          REAL(VECTOR_ELT(extraFields, efIndex))[i] = sqlSigned(row[j]);
-          break;
-        case INTSXP:
-          INTEGER(VECTOR_ELT(extraFields, efIndex))[i] = sqlUnsigned(row[j]);
-          break;
-        case STRSXP: {
-          int index = INTEGER(lengthIndex)[efIndex];
-          SET_STRING_ELT(VECTOR_ELT(extraFields, efIndex), index, mkChar(row[j]));
-          INTEGER(lengthIndex)[efIndex] = index + 1;
-          break;
+    /* if extra fields are present and selected store their values */
+    for (int j = definedFieldCount, efIndex = 0 ; j < fieldCount; ++j) {
+      if (isSelected(r_extraindex, (j - definedFieldCount + 1))) {
+        switch(typeId[efIndex]) {
+          case REALSXP:
+            REAL(VECTOR_ELT(extraFields, efIndex))[i] = sqlSigned(row[j]);
+            break;
+          case INTSXP:
+            INTEGER(VECTOR_ELT(extraFields, efIndex))[i] = sqlUnsigned(row[j]);
+            break;
+          case STRSXP: {
+            int index = INTEGER(lengthIndex)[efIndex];
+            SET_STRING_ELT(VECTOR_ELT(extraFields, efIndex), index, mkChar(row[j]));
+            INTEGER(lengthIndex)[efIndex] = index + 1;
+            break;
+          }
         }
+        ++efIndex;
       }
     }
   }
@@ -216,20 +224,20 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges)
   SET_VECTOR_ELT(ans, index++, extraFields);
   SET_VECTOR_ELT(ans, index++, ranges);
   SET_VECTOR_ELT(ans, index++, strand);
-  if (isPresent(definedFieldCount, i_name)) {
+  if (isPresent(definedFieldCount, i_name) && isSelected(r_defaultindex, 1)) {
     SET_VECTOR_ELT(ans, index++, name);
   }
-  if (isPresent(definedFieldCount, i_score)) {
+  if (isPresent(definedFieldCount, i_score) && isSelected(r_defaultindex, 2)) {
     SET_VECTOR_ELT(ans, index++, score);
   }
-  if (isPresent(definedFieldCount, i_thick)) {
+  if (isPresent(definedFieldCount, i_thick) && isSelected(r_defaultindex, 3)) {
     SET_VECTOR_ELT(ans, index++, new_IRanges("IRanges", thickStart,
                                              thickWidth, R_NilValue));
   }
-  if (isPresent(definedFieldCount, i_itemRgb)) {
+  if (isPresent(definedFieldCount, i_itemRgb) && isSelected(r_defaultindex, 4)) {
     SET_VECTOR_ELT(ans, index++, itemRgb);
   }
-  if (isPresent(definedFieldCount, i_blocks)) {
+  if (isPresent(definedFieldCount, i_blocks) && isSelected(r_defaultindex, 5)) {
     SET_VECTOR_ELT(ans, index++, blocks);
   }
   UNPROTECT(5 + unprotectCount);
@@ -257,4 +265,14 @@ int getDefinedFieldCount(struct asObject *as) {
 
 bool isPresent(int definedFieldCount, int index) {
   return (definedFieldCount - index >= 0) ? TRUE : FALSE;
+}
+
+bool isSelected(SEXP r_selectedindex, int position) {
+  if (length(r_selectedindex) == 0)
+    return TRUE;
+  for (int i = 0; i < length(r_selectedindex); ++i) {
+    if(INTEGER(r_selectedindex)[i] == position)
+      return TRUE;
+  }
+  return FALSE;
 }
