@@ -6,6 +6,7 @@
 /* The .Call entry points */
 
 SEXP BBDFile_seqlengths(SEXP r_filename);
+SEXP BBDFile_fieldnames(SEXP r_filename);
 SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
                    SEXP r_defaultindex, SEXP r_extraindex);
 
