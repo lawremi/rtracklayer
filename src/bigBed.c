@@ -254,6 +254,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
         ++efIndex;
       }
     }
+    freeMem(row[3]);
   }
 
   ranges = PROTECT(new_IRanges("IRanges", chromStart, chromWidth, R_NilValue));
