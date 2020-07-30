@@ -100,6 +100,11 @@ setMethod("import", "BigBedFile",
             gr <- GRanges(rep(seqnames(which), nhits), C_ans[[3L]], seqinfo=si)
             if (!is.null(C_ans[[4L]]))
               strand(gr) <- gsub(".", "*", C_ans[[4L]])
+            blocksPosition <- which(defaultNames %in% c("blocks"))
+            if (length(blocksPosition)) {
+              blocksPosition <- 4 + blocksPosition
+              C_ans[[blocksPosition]] <- IRangesList(C_ans[[blocksPosition]])
+            }
             val <- c()
             if (length(defaultFieldIndexes) && defaultFieldIndexes[1] != 0)
               val <- c(Filter(Negate(is.null), C_ans[5L:length(C_ans)]))
