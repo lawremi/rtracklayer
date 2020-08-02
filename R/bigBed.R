@@ -37,6 +37,14 @@ BigBedSelection <- function(ranges=IRangesList(), colnames = .defaultColNames) {
   }
 }
 
+setAs("IntegerRangesList", "BigBedSelection", function(from) {
+  new("BigBedSelection", as(from, "RangedSelection"), colnames = .defaultColNames)
+})
+
+setAs("GenomicRanges", "BigBedSelection", function(from) {
+  as(as(from, "IntegerRangesList"), "BigBedSelection")
+})
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import
 ###
