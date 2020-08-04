@@ -167,14 +167,17 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
     for (int j = 0; j < fieldCount; ++j) {
       fieldType = asCol->lowType->type;
       if (j >= definedFieldCount) {
-        if (asTypesIsFloating(fieldType) || fieldType == t_int ||
-            fieldType == t_short || fieldType == t_byte || fieldType == t_off) {
+        if (asTypesIsFloating(fieldType) || fieldType == t_uint ||
+            fieldType == t_off) {
           typeId[k] = REALSXP;
-        } else if (asTypesIsUnsigned(fieldType)) {
+        } else if (fieldType == t_int || fieldType == t_short ||
+                   fieldType == t_ushort || fieldType == t_byte) {
           typeId[k] = INTSXP;
         } else if (fieldType == t_char || fieldType == t_string ||
                    fieldType == t_lstring) {
           typeId[k] = STRSXP;
+        } else if (fieldType == t_ubyte) {
+          typeId[k] = RAWSXP;
         }
         if (isSelected(r_extraindex, (j - definedFieldCount + 1))) {
           SEXP temp = PROTECT(allocVector(typeId[k], n_hits));
@@ -239,10 +242,10 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
       if (isSelected(r_extraindex, (j - definedFieldCount + 1))) {
         switch(typeId[efIndex]) {
           case REALSXP:
-            REAL(VECTOR_ELT(extraFields, efIndex))[i] = sqlSigned(row[j]);
+            REAL(VECTOR_ELT(extraFields, efIndex))[i] = sqlDouble(row[j]);
             break;
           case INTSXP:
-            INTEGER(VECTOR_ELT(extraFields, efIndex))[i] = sqlUnsigned(row[j]);
+            INTEGER(VECTOR_ELT(extraFields, efIndex))[i] = sqlSigned(row[j]);
             break;
           case STRSXP: {
             int index = INTEGER(lengthIndex)[efIndex];
@@ -250,6 +253,9 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
             INTEGER(lengthIndex)[efIndex] = index + 1;
             break;
           }
+          case RAWSXP:
+            RAW(extraFields)[i] = sqlUnsigned(row[j]);
+            break;
         }
         ++efIndex;
       }
