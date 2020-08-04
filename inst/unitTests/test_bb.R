@@ -11,7 +11,7 @@ test_bb <- function() {
   name <- rep(".", 10)
   score <- seq.int(70L, 700L, length = 10)
   signalValue <- seq(10, 100, length = 10)
-  peak <- rep(-1, 10)
+  peak <- rep(-1L, 10)
   correct_fixed <- GRanges(space, ir, name = name, score = score,
                            signalValue = signalValue , peak = peak)
   si <- SeqinfoForBSGenome("hg19")
