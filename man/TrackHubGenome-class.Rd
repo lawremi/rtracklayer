@@ -16,8 +16,6 @@
 \alias{getTracks,TrackHubGenome-method}
 \alias{trackhub}
 \alias{organism,TrackHubGenome-method}
-\alias{genomeField,TrackHubGenome-method}
-\alias{genomeField<-,TrackHubGenome-method}
 \alias{trackField,TrackHubGenome-method}
 \alias{trackField<-,TrackHubGenome-method}
 \alias{writeTrackHub,TrackHubGenome-method}
@@ -45,8 +43,7 @@
 \section{Constructor}{
   \describe{
     \item{}{
-      \code{TrackHubGenome(trackhub, genome, create = FALSE,
-        genomeRecord = Genome()}: Constructs a
+      \code{TrackHubGenome(trackhub, genome, create = FALSE}: Constructs a
         new \code{TrackHubGenome} object, representing \code{genome} in
         the repository \code{trackhub} (a URI string or a
         \code{\linkS4class{TrackHub}} object).
@@ -55,10 +52,8 @@
         genome (potentially) in \code{trackhub} or an installed
         \code{BSgenome} package.
 
-        If \code{create} is \code{TRUE}, and the genome does not already
-        exist, the genome will be created, using \code{Genome}.
-        \code{Genome} takes named arguemnts of all UCSC supported fields
-        for genome file(like \code{genome, trackDb, twoBitPath}, etc).
+        If \code{create} is \code{TRUE}, and the trackDb file does not
+        already exist, it will be created.
         Creation only works if the repository is local and
         writeable.
     }
@@ -66,8 +61,7 @@
 }
 
 \section{Accessor Methods}{
-  In the code snippets below, \code{x} and \code{object} represent a
-  \code{TrackHubGenome} object.
+  In the code snippets below, \code{x} represent a \code{TrackHubGenome} object.
 
   \describe{
     \item{}{
@@ -96,19 +90,13 @@
       e.g., \dQuote{H sapiens}.
     }
     \item{}{
-      \code{genomeField(x, field)}: Get the \code{value} for \code{x} genome.
-    }
-    \item{}{
-      \code{genomeField(x, field) <- value}: Store the \code{field} and \code{value} for \code{x} genome.
-    }
-    \item{}{
       \code{trackField(x, name, field)}: Get the \code{value} of \code{field} for \code{name} track.
     }
     \item{}{
       \code{trackField(x, name, field) <- value}: Store the \code{field} and \code{value} for \code{name} track.
     }
     \item{}{\code{writeTrackHub(x)}:
-      Write tracks and genome from memory representation to the trackDb and genome file for \code{x} genome.
+      Write tracks from memory representation to the trackDb file.
     }
   }
 }
@@ -162,16 +150,16 @@ names(thg)
 
 \dontrun{
 th <- TrackHub(file.path(tests_dir, "trackhub"), create = TRUE)
-genomeFile(th) <- "genomes.txt"
+genomesFile(th) <- "genomes.txt"
+addGenome(th) <- Genome(genome = "hg38", trackDb = "hg38/trackDb.txt")
+genomeField(th, "hg38", "twoBitPath") <- "hg38/seq.2bit"
 writeTrackHub(th)
-hg38 <- Genome(genome = "hg38", trackDb = "hg38/trackDb.txt")
-thg <- TrackHubGenome(th, "hg38", create = TRUE, hg38)
-genomeField(thg, "twoBitPath") <- "hg38/seq.2bit"
-writeTrackHub(thg)
+thg <- TrackHubGenome(th, "hg38", create = TRUE)
 seq <- import(file.path(tests_dir, "test.2bit"))
 referenceSequence(thg) <- seq
 track(thg, "PeaksData") <- paste0(tests_dir, "/test.bigWig")
 trackField(thg, "wgEncodeUWDukeDnaseGM12878FdrPeaks", "bigDataUrl") <- "hg38/wgEncodeCshlShortRnaSeq.bigWig"
+trackField(thg, "wgEncodeUWDukeDnaseGM12878FdrPeaks", "color") <- "8,104,172"
 writeTrackHub(thg)
 }
 }

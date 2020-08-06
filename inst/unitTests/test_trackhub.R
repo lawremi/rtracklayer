@@ -10,6 +10,7 @@ test_trackhub <- function() {
     correct_genomesFile <- "genomes.txt"
     correct_email <- "user@domain.com"
     correct_descriptionUrl <- "http://www.somedomain.com/articles/h19"
+    correct_trackDb <- "hg19/trackDb.txt"
 
     ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ### TEST TrackHub Class
@@ -80,6 +81,9 @@ test_trackhub <- function() {
     checkIdentical(descriptionUrl(th), new_descriptionUrl)
     descriptionUrl(th) <- correct_descriptionUrl
 
+    # TEST: genomeField
+    checkIdentical(genomeField(th, "hg19", "trackDb"), correct_trackDb)
+
     ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ### TEST TrackHubGenome Class
     ###
@@ -89,7 +93,6 @@ test_trackhub <- function() {
     correct_trackhubgenome_length <- 1L
     correct_trackhubgenome_organism <- "BigFoot"
     correct_trackhubgenome_names <- "wgEncodeUWDukeDnaseGM12878FdrPeaks"
-    correct_trackDb <- "hg19/trackDb.txt"
     correct_bigDataUrl <- "wgEncodeUWDukeDnaseGM12878.fdr01peaks.hg19.bb"
 
     thg <- TrackHubGenome(th, "hg19")
@@ -111,9 +114,6 @@ test_trackhub <- function() {
 
     # TEST: trackNames
     checkIdentical(trackNames(thg), correct_trackhubgenome_names)
-
-    # TEST: genomeField
-    checkIdentical(genomeField(thg, "trackDb"), correct_trackDb)
 
     # TEST: trackField
     checkIdentical(trackField(thg, "wgEncodeUWDukeDnaseGM12878FdrPeaks", "bigDataUrl"), correct_bigDataUrl)
