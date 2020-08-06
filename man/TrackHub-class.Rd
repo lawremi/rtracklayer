@@ -29,6 +29,10 @@
 \alias{email<-,TrackHub-method}
 \alias{descriptionUrl,TrackHub-method}
 \alias{descriptionUrl<-,TrackHub-method}
+\alias{genomeField,TrackHub-method}
+\alias{genomeField<-,TrackHub-method}
+\alias{getGenome,TrackHub-method}
+\alias{addGenome<-,TrackHub-method}
 
 %% Coercion:
 \alias{coerce,character,TrackHub-method}
@@ -78,7 +82,9 @@
       Get the identifiers of the genomes present in the repository.
     }
     \item{}{\code{writeTrackHub(x)}:
-      Write hub content from memory representation to the hub file.
+      Write hub content and genomes from memory representation to the hub file and genomes file.
+      It also create resources if they are missing like genomes file and genome directory for
+      newly add genome.
     }
   }
 }
@@ -121,6 +127,20 @@
     }
     \item{}{
       \code{descriptionUrl(x) <- value}: store the \code{value} of descriptionUrl for \code{x}.
+    }
+    \item{}{
+      \code{genomeField(x, name, field)}: Get the \code{value} of \code{field} for \code{name} genome.
+    }
+    \item{}{
+      \code{genomeField(x, name, field) <- value}: Set or Update the \code{field} and \code{value} for \code{name} genome.
+    }
+    \item{}{
+      \code{getGenome(x, name)}: Get the \code{Genome} object for \code{name} genome.
+    }
+    \item{}{
+      \code{addGenome(x) <- value}: Add \code{value} (Genome object) to existing genomes list.
+      \code{Genome} takes named arguemnts of all UCSC supported fields for genome
+      file(like \code{genome, trackDb, twoBitPath}, etc).
     }
   }
 }
