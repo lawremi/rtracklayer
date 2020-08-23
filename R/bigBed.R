@@ -122,3 +122,142 @@ setMethod("import", "BigBedFile",
             gr@elementMetadata <- elementMetadata
             gr
            })
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Export
+###
+
+setGeneric("export.bb", function(object, con, ...) standardGeneric("export.bb"))
+
+setMethod("export.bb", "ANY",
+          function(object, con, ...)
+          {
+            export(object, con, "BigBed", ...)
+          })
+
+setMethod("export", c("ANY", "BigBedFile"),
+          function(object, con, format, ...)
+          {
+            object <- as(object, "GRanges")
+            callGeneric()
+          })
+
+setMethod("export", c("GenomicRanges", "BigBedFile"),
+          function(object, con, format, compress = TRUE, extraIndexes = "")
+          {
+            if (!missing(format))
+              checkArgFormat(con, format)
+            con <- path.expand(path(con))
+            object <- sortBySeqnameAndStart(object)
+            seqlengths <- seqlengths(object)
+            isValidObject(object)
+            if (!is.character(extraIndexes))
+              stop("The extraIndexes must be character")
+            if (any(is.na(seqlengths)))
+              stop("Unable to determine seqlengths; either specify ",
+                   "'seqlengths' or specify a genome on 'object' that ",
+                   "is known to BSgenome or UCSC")
+            if (!isTRUEorFALSE(compress))
+              stop("'compress' must be TRUE or FALSE")
+            seqlengths <- seqlengths(object)
+            bedString <- bedString(object)
+            autoSqlString <- autoSqlString(object)
+            extraIndexes <- gsub("[\n\t ]", "", extraIndexes, perl = TRUE)
+            invisible(BigBedFile(.Call(BBDFile_write, seqlengths, bedString, autoSqlString,
+                                       extraIndexes, compress, con)))
+          })
+
+isValidObject <- function(x) {
+  elementMetadata <- elementMetadata(x)
+  name <- elementMetadata$name
+  score <- elementMetadata$score
+  itemRgb <- elementMetadata$itemRgb
+  thick <- elementMetadata$thick
+  blocks <- elementMetadata$blocks
+  if (!is.null(name) && (!is.character(name) || any(is.na(name))))
+    stop("The name must be character, without any NA's")
+  if (isValidScore(score))
+    stop("The score must be numeric, without any NA's")
+  if (!is.null(itemRgb) && (!is.character(itemRgb) || any(is.na(itemRgb))))
+    stop("The itemRgb must be character, without any NA's")
+  if (!is.null(thick) && !is(thick, "IRanges"))
+    stop("The thick must be IRanges")
+  if (!is.null(blocks) && !is(blocks, "IRangesList"))
+    stop("The blocks must be IRangesList")
+}
+
+bedString <- function(x) {
+  elementMetadata <- elementMetadata(x)
+  name <- elementMetadata$name
+  elementMetadata$name <- NULL
+  score <- elementMetadata$score
+  elementMetadata$score <- NULL
+  strand <- as.character(strand(x))
+  strand <- gsub("*", ".", strand, fixed = TRUE)
+  thick <- elementMetadata$thick
+  thickStart <- NULL
+  thickEnd <- NULL
+  if (!is.null(thick)) {
+    thickStart <- start(ranges(thick))
+    thickEnd <- end(ranges(thick))
+    elementMetadata$thick <- NULL
+  }
+  itemRgb <- elementMetadata$itemRgb
+  elementMetadata$itemRgb <- NULL
+  blocks <- elementMetadata$blocks
+  blockCount  <- NULL
+  blockSizes  <- NULL
+  blockStarts <- NULL
+  if (!is.null(blocks)) {
+    length <- length(blocks)
+    blockCount <- lapply(1:length, function(x) length(blocks[[x]]))
+    blockSizes <- lapply(width(blocks), function(x) paste(x, collapse=","))
+    blockStarts <- lapply(start(blocks), function(x) paste(x, collapse=","))
+    elementMetadata$blocks <- NULL
+  }
+  columnCount <- nrow(elementMetadata)
+  rows <- lapply(1:columnCount, function(y) {
+    paste(as.matrix(elementMetadata[y,]), collapse = " ")
+  })
+  paste(as.character(seqnames(x)), start(ranges(x)), end(ranges(x)), name, score,
+                     strand, thickStart, thickEnd, itemRgb, blockCount, blockSizes,
+                     blockStarts, unlist(rows), collapse = "\n")
+}
+
+autoSqlString <- function(x) {
+  asString <- c('table bed "Browser Extensible Data" (\n',
+                'string chrom; "Reference sequence chromosome or scaffold"\n',
+                'uint chromStart; "Start position in chromosome"\n',
+                'uint chromEnd; "End position in chromosome"\n')
+
+  names <- c("name", "itemRgb", "score", "thick", "blocks", "double", "integer", "character", "raw")
+  values <- c('string name; "Name of item."\n',
+              'uint reserved; "Used as itemRgb as of 2004-11-22"\n',
+              'uint score; "Score (0-1000)"\nchar[1] strand; "+ or - for strand"\n',
+              paste0('uint thickStart; "Start of where display should be thick (start codon)"\n',
+                     'uint thickEnd; "End of where display should be thick (stop codon)"\n'),
+              paste0('int blockCount; "Number of blocks"\n',
+                     'int[blockCount] blockSizes; "Comma separated list of block sizes"\n',
+                     'int[blockCount] chromStarts; "Start positions relative to chromStart"\n'),
+              "double ", "int ", "string ", "uint ")
+  mapping <- setNames(values, names)
+  metadata <- elementMetadata(x)
+  names <- names(metadata)
+  defaultFields <- colnames(BigBedSelection())
+  fieldsString <- lapply(names, function(y) {
+    if (y %in% defaultFields)
+      mapping[y]
+    else {
+      typeString <- mapping[storage.mode(metadata[[y]])]
+      paste(typeString, y, '; ""\n')
+    }
+  })
+  asString <- c(asString, fieldsString, ')')
+  paste(asString, collapse = "")
+}
+
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### Utilities
+###
+
+cleanupBigBedCache <- cleanupBigWigCache
