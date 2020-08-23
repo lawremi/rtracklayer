@@ -60,4 +60,11 @@ test_bb <- function() {
                  selection = BigBedSelection(which, colnames =colnames))
   correct_which <- correct_subset[, colnames]
   checkIdentical(test, correct_which)
+
+  # TEST: export
+  test_bb_out <- file.path(tempdir(), "test_out.bb")
+  export(correct_fixed, test_bb_out)
+  on.exit(unlink(test_bb_out))
+  test <- import(test_bb_out)
+  checkIdentical(test, correct_fixed)
 }
