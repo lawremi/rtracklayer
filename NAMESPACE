@@ -103,7 +103,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               hub, "hub<-", shortLabel, "shortLabel<-", longLabel, "longLabel<-",
               genomesFile, "genomesFile<-", email, "email<-", descriptionUrl,
               "descriptionUrl<-", genomeField, "genomeField<-", getTracks , writeTrackHub,
-              trackField, "trackField<-", getGenome, "addGenome<-",
+              trackField, "trackField<-", GenomeInfo, "GenomeInfo<-",
               ## from IRanges
               start, end, "start<-", "end<-",
               score, "score<-",
