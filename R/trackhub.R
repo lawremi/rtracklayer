@@ -298,6 +298,11 @@ setMethod("names", "GenomeContainer", function(x) {
     vapply(x, function(y) y@genome, character(1L), USE.NAMES = FALSE)
 })
 
+setMethod("getListElement", "GenomeContainer", function(x, i, exact = TRUE) {
+    genome <- x[names(x) == i]
+    if(length(genome) == 1L) unlist(genome)[[1L]]
+})
+
 GenomeContainer <- function(...) {
     args <- list(...)
     if (length(args) == 1 && is.list(args[[1L]]))
@@ -442,24 +447,20 @@ setGenomesContent <- function(x, genomeContainer) {
     writeLines(genomes, genomesFilePath)
 }
 
-getGenomesKey <- function(x, name, key) {
-    genomes <- x@genomeContainer
-    names <- names(genomes)
-    genome <- genomes[names == name]
-    if (length(genome) == 0L) stop("Genome '", name, "' does not exist")
+getGenome <- function(x, name) {
+    genome <- x@genomeContainer[[name]]
+    if (length(genome) == 1L) genome
+    else if (length(genome) == 0L) stop("Genome '", name, "' does not exist")
     else if (length(genome) > 1L) stop("Multiple genomes match ", name)
-    slot(genome[[1L]], key)
 }
 
-setGenomesKey <- function(x, name, key, value) {
-    genomes <- x@genomeContainer
-    names <- names(genomes)
-    genome <- genomes[names == name]
-    if (length(genome) == 0L) stop("Genome '", name, "' does not exist")
+setGenome <- function(x, name, value) {
+    as(value, "Genome")
+    genome <- x@genomeContainer[[name]]
+    if (length(genome) == 1L) genome <- value
+    else if (length(genome) == 0L) stop("Genome '", name, "' does not exist")
     else if (length(genome) > 1L) stop("Multiple genomes match ", name)
-    slot(genome[[1L]], key) <- value
-    genomes[names == name] <- genome
-    x@genomeContainer <- genomes
+    x@genomeContainer[[name]] <- genome
     x
 }
 
@@ -536,21 +537,21 @@ setMethod("length", "TrackHub", function(x) length(names(x)))
 
 setMethod("GenomeInfo", "TrackHub", function(x, name) {
     names <- names(x@genomeContainer)
-    genome <- x@genomeContainer[names == name]
+    genome <- x@genomeContainer[[name]]
     if (length(genome) == 0L) stop("Genome '", name, "' does not exist")
-    else genome[[1L]]
+    else genome
 })
 
 setReplaceMethod("GenomeInfo", "TrackHub", function(x, value) {
     value <- as(value, "Genome")
     name <- value@genome
     names <- names(x@genomeContainer)
-    genome <- x@genomeContainer[names == name]
+    genome <- x@genomeContainer[[name]]
     if (length(genome) == 1L) stop("NOTE: Genome '", name, "' already exists")
     else if (length(genome) > 1L) stop("Multiple genomes match ", name)
     else {
         if (!identical(value, Genome())) {
-            if (length(x@genomeContainer) == 0) genomes <- value
+            if (length(x@genomeContainer) == 0L) genomes <- value
             else genomes <- c(unlist(x@genomeContainer), value)
             x@genomeContainer <- GenomeContainer(genomes)
         }
@@ -559,11 +560,14 @@ setReplaceMethod("GenomeInfo", "TrackHub", function(x, value) {
 })
 
 setMethod("genomeField", "TrackHub", function(x, name, key) {
-    getGenomesKey(x, name, key)
+    Genome <- getGenome(x, name)
+    slot(Genome, key)
 })
 
 setReplaceMethod("genomeField", "TrackHub", function(x, name, key, value) {
-    setGenomesKey(x, name, key, value)
+    Genome <- getGenome(x, name)
+    slot(Genome, key) <- value
+    setGenome(x, name, Genome)
 })
 
 setMethod("writeTrackHub", "TrackHub", function(x) {
@@ -767,13 +771,14 @@ setReplaceMethod("trackField", "TrackHubGenome", function(x, name, key, value) {
 })
 
 setMethod("organism", "TrackHubGenome", function(object) {
-    organism <- getGenomesKey(trackhub(object), genome(object), "organism")
-    as.character(organism)
+    Genome <- getGenome(trackhub(object), genome(object))
+    slot(Genome, "organism")
 })
 
 setMethod("referenceSequence", "TrackHubGenome", function(x) {
     trackhub <- trackhub(x)
-    twoBitPathValue <- getGenomesKey(trackhub, genome(x), "twoBitPath")
+    Genome <- getGenome(trackhub, genome(x))
+    twoBitPathValue <- slot(Genome, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
         twoBitFilePath <- combineURI(uri(trackhub), twoBitPathValue)
         import(twoBitFilePath)
@@ -785,7 +790,8 @@ setReplaceMethod("referenceSequence", "TrackHubGenome", function(x, value) {
     trackhub <- trackhub(x)
     genomesFilePath <- combineURI(uri(trackhub), trackhub@genomesFile)
     stopIfNotLocal(genomesFilePath)
-    twoBitPathValue <- getGenomesKey(trackhub, genome(x), "twoBitPath")
+    Genome <- getGenome(trackhub, genome(x))
+    twoBitPathValue <- slot(Genome, "twoBitPath")
     if (!isFieldEmpty(twoBitPathValue)) {
         twoBitFilePath <- combineURI(uri(trackhub(x)), twoBitPathValue)
         export.2bit(value, twoBitFilePath)
@@ -801,7 +807,8 @@ setMethod("length", "TrackHubGenome", function(x) {
 setMethod("writeTrackHub", "TrackHubGenome", function(x) {
     trackhub <- trackhub(x)
     stopIfNotLocal(hubFile(trackhub))
-    trackDbValue <- getGenomesKey(trackhub, genome(x), "trackDb")
+    Genome <- getGenome(trackhub, genome(x))
+    trackDbValue <- slot(Genome, "trackDb")
     trackDbFilePath <- combineURI(uri(trackhub), trackDbValue)
     if (file.size(parseURI(trackDbFilePath)$path) != 1L || length(x@tracks)) {
         tabStrings <- vapply(x@levels, function(y) {
@@ -840,7 +847,8 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE) {
     thg <- new("TrackHubGenome")
     thg@trackhub <- trackhub
     thg@genome <- genome
-    trackDbValue <- getGenomesKey(trackhub(thg), genome, "trackDb")
+    Genome <- getGenome(trackhub(thg), genome)
+    trackDbValue <- slot(Genome, "trackDb")
     if (!isFieldEmpty(trackDbValue)) {
         trackDbFilePath <- combineURI(uri(trackhub(thg)), trackDbValue)
         absolutePath <- parseURI(trackDbFilePath)$path
@@ -885,7 +893,8 @@ copyResourceToTrackHub <- function(object, uri) {
     trackhub <- trackhub(object)
     object_uri <- .parseURI(uri(trackhub))
     if (uriIsLocal(object_uri)) {
-        trackDbValue <- getGenomesKey(trackhub, genome(object), "trackDb")
+        Genome <- getGenome(trackhub, genome(object))
+        trackDbValue <- slot(Genome, "trackDb")
         trackDbValue <- sub(basename(trackDbValue), "", trackDbValue)
         trackDbValue <- sub("/$", "", trackDbValue)
         dest_file <- paste(object_uri$path, trackDbValue, filename, sep = "/")
@@ -938,7 +947,8 @@ setReplaceMethod("track",
                  function(object, name = basename(object), ..., value)
                  {
                      filename <- copyResourceToTrackHub(object, value)
-                     trackDbValue <- getGenomesKey(trackhub(object), genome(object), "trackDb")
+                     Genome <- getGenome(trackhub(object), genome(object))
+                     trackDbValue <- slot(Genome, "trackDb")
                      trackDbValue <- sub(basename(trackDbValue), "", trackDbValue)
                      trackDbValue <- sub("/$", "", trackDbValue)
                      bigDataUrlValue <- paste(trackDbValue, filename, sep = "/")
