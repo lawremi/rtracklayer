@@ -80,11 +80,6 @@ setMethod("export", c("GenomicRanges", "WIGFile"),
             doBlock <- function(chromData) {
               if (length(chromData) == 0L)
                   return()
-              if (is(chromData, "GPos")) {
-                  ans <- writer(chromData, con, "fixedStep", append)
-                  append <<- TRUE
-                  return(ans)
-              }
               if (is.unsorted(start(chromData)))
                 chromData <- chromData[order(start(chromData)),]
               starts <- start(chromData)
@@ -93,11 +88,13 @@ setMethod("export", c("GenomicRanges", "WIGFile"),
                 stop("Features cannot overlap. ",
                      "Note that WIG does not distinguish between strands - ",
                      "try exporting two tracks, one for each strand.")
-              spans <- ends - starts + 1
               if (length(starts) == 1)
                 steps <- 0
               else steps <- diff(starts)
-              fixedSpan <- all(spans[1] == spans)
+              fixedSpan <- is(object, "GPos") || {
+                  spans <- ends - starts + 1L
+                  all(spans[1L] == spans)
+              }
               if (!fixedSpan)
                 stop("The span must be uniform for Wiggle export. ",
                      "Consider exporting to bedGraph/bigWig, ",
