@@ -150,7 +150,7 @@ setMethod("export", c("GenomicRanges", "BigBedFile"),
             con <- path.expand(path(con))
             object <- sortBySeqnameAndStart(object)
             seqlengths <- seqlengths(object)
-            isValidObject(object)
+            stopIfNotValidForExport(object)
             if (!is.character(extraIndexes))
               stop("The extraIndexes must be character")
             if (any(is.na(seqlengths)))
@@ -167,7 +167,7 @@ setMethod("export", c("GenomicRanges", "BigBedFile"),
                                        extraIndexes, compress, con)))
           })
 
-isValidObject <- function(x) {
+stopIfNotValidForExport <- function(x) {
   elementMetadata <- elementMetadata(x)
   name <- elementMetadata$name
   score <- elementMetadata$score
