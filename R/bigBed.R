@@ -107,7 +107,7 @@ setMethod("import", "BigBedFile",
             nhits <- C_ans[[1L]]
             gr <- GRanges(rep(seqnames(which), nhits), C_ans[[3L]], seqinfo=si)
             if (!is.null(C_ans[[4L]]))
-              strand(gr) <- gsub(".", "*", C_ans[[4L]])
+              strand(gr) <- gsub(".", "*", C_ans[[4L]], fixed = TRUE)
             blocksPosition <- which(defaultNames %in% c("blocks"))
             if (length(blocksPosition)) {
               blocksPosition <- 4 + blocksPosition
