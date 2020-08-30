@@ -202,7 +202,8 @@ bedString <- function(x) {
     thickEnd <- end(ranges(thick))
     elementMetadata$thick <- NULL
   }
-  itemRgb <- elementMetadata$itemRgb
+  itemRgb <- col2rgb(elementMetadata$itemRgb)
+  itemRgb <- lapply(seq_len(ncol(itemRgb)), function(i) paste(itemRgb[,i], collapse=","))
   elementMetadata$itemRgb <- NULL
   blocks <- elementMetadata$blocks
   blockCount  <- NULL
