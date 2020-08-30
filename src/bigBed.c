@@ -205,7 +205,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
       INTEGER(thickStart)[i] = bed->thickStart;
     }
     if (isPresent(definedFieldCount, i_itemRgb) && isSelected(r_defaultindex, 4)) {
-      snprintf(rgbBuf, 8, "#%x", bed->itemRgb);
+      snprintf(rgbBuf, 8, "#%06x", bed->itemRgb);
       SET_STRING_ELT(itemRgb, i, mkChar(rgbBuf));
     }
     if (isPresent(definedFieldCount, i_blocks) && isSelected(r_defaultindex, 5)) {
