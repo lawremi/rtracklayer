@@ -211,18 +211,15 @@ bedString <- function(x) {
   blockStarts <- NULL
   if (!is.null(blocks)) {
     length <- length(blocks)
-    blockCount <- lapply(1:length, function(x) length(blocks[[x]]))
+    blockCount <- lengths(blocks)
     blockSizes <- lapply(width(blocks), function(x) paste(x, collapse=","))
     blockStarts <- lapply(start(blocks), function(x) paste(x, collapse=","))
     elementMetadata$blocks <- NULL
   }
-  columnCount <- nrow(elementMetadata)
-  rows <- lapply(1:columnCount, function(y) {
-    paste(as.matrix(elementMetadata[y,]), collapse = " ")
-  })
+  extraColumnsString <- do.call(paste, as.list(elementMetadata))
   paste(as.character(seqnames(x)), start(ranges(x)), end(ranges(x)), name, score,
                      strand, thickStart, thickEnd, itemRgb, blockCount, blockSizes,
-                     blockStarts, unlist(rows), collapse = "\n")
+                     blockStarts, extraColumnsString, collapse = "\n")
 }
 
 autoSqlString <- function(x) {
