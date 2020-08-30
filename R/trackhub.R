@@ -336,8 +336,8 @@ setGeneric("descriptionUrl<-", function(x, value) standardGeneric("descriptionUr
 setGeneric("writeTrackHub", function(x) standardGeneric("writeTrackHub"))
 setGeneric("genomeField", function(x, name, key) standardGeneric("genomeField"))
 setGeneric("genomeField<-", function(x, name, key, value) standardGeneric("genomeField<-"))
-setGeneric("GenomeInfo", function(x, name) standardGeneric("GenomeInfo"))
-setGeneric("GenomeInfo<-", function(x, value) standardGeneric("GenomeInfo<-"))
+setGeneric("genomeInfo", function(x, name) standardGeneric("genomeInfo"))
+setGeneric("genomeInfo<-", function(x, value) standardGeneric("genomeInfo<-"))
 
 setClass("TrackHub",
          representation(
@@ -540,14 +540,14 @@ setMethod("names", "TrackHub", function(x) genome(x))
 
 setMethod("length", "TrackHub", function(x) length(names(x)))
 
-setMethod("GenomeInfo", "TrackHub", function(x, name) {
+setMethod("genomeInfo", "TrackHub", function(x, name) {
     names <- names(x@genomeContainer)
     genome <- x@genomeContainer[[name]]
     if (length(genome) == 0L) stop("Genome '", name, "' does not exist")
     else genome
 })
 
-setReplaceMethod("GenomeInfo", "TrackHub", function(x, value) {
+setReplaceMethod("genomeInfo", "TrackHub", function(x, value) {
     stopIfNotGenome(value)
     name <- value@genome
     names <- names(x@genomeContainer)

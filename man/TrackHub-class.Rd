@@ -31,8 +31,8 @@
 \alias{descriptionUrl<-,TrackHub-method}
 \alias{genomeField,TrackHub-method}
 \alias{genomeField<-,TrackHub-method}
-\alias{GenomeInfo,TrackHub-method}
-\alias{GenomeInfo<-,TrackHub-method}
+\alias{genomeInfo,TrackHub-method}
+\alias{genomeInfo<-,TrackHub-method}
 
 %% Coercion:
 \alias{coerce,character,TrackHub-method}
@@ -135,10 +135,10 @@
       \code{genomeField(x, name, field) <- value}: Set or Update the \code{field} and \code{value} for \code{name} genome.
     }
     \item{}{
-      \code{GenomeInfo(x, name)}: Get the \code{Genome} object for \code{name} genome.
+      \code{genomeInfo(x, name)}: Get the \code{Genome} object for \code{name} genome.
     }
     \item{}{
-      \code{GenomeInfo(x) <- value}: Add \code{value} (Genome object) to existing genomes list.
+      \code{genomeInfo(x) <- value}: Add \code{value} (Genome object) to existing genomes list.
       \code{Genome} takes named arguemnts of all UCSC supported fields for genome
       file(like \code{genome, trackDb, twoBitPath}, etc).
     }

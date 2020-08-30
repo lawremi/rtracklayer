@@ -151,7 +151,7 @@ names(thg)
 \dontrun{
 th <- TrackHub(file.path(tests_dir, "trackhub"), create = TRUE)
 genomesFile(th) <- "genomes.txt"
-GenomeInfo(th) <- Genome(genome = "hg38", trackDb = "hg38/trackDb.txt")
+genomeInfo(th) <- Genome(genome = "hg38", trackDb = "hg38/trackDb.txt")
 genomeField(th, "hg38", "twoBitPath") <- "hg38/seq.2bit"
 writeTrackHub(th)
 thg <- TrackHubGenome(th, "hg38", create = TRUE)
