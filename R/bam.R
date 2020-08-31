@@ -24,6 +24,14 @@ setMethod("import", "BamFile",
             ans
           })
 
+fillColumn <- function(x, filler) {
+    if (is.null(x))
+        filler
+    else if (anyNA(x))
+        ifelse(is.na(x), filler, x)
+    else x
+}
+
 setMethod("export", c("GAlignments", "BamFile"),
           function(object, con, format, index = TRUE) {
             sam_path <- paste(file_path_sans_ext(path(con)), ".sam", sep = "")
@@ -43,19 +51,18 @@ setMethod("export", c("GAlignments", "BamFile"),
               writeLines(header, sam_con)
             }
             emd <- mcols(object)
-            aln <- paste(if (!is.null(names(object))) names(object) else "*",
-                         if (!is.null(emd[["flag"]])) emd[["flag"]] else
-                           ifelse(strand(object) == "-", "16", "0"),
+            aln <- paste(fillColumn(names(object), "*"),
+                         fillColumn(emd[["flag"]],
+                                    ifelse(strand(object) == "-", "16", "0")),
                          seqnames(object), start(object),
-                         if (!is.null(emd[["mapq"]])) emd[["mapq"]] else "255",
+                         fillColumn(emd[["mapq"]], "255"),
                          cigar(object),
-                         if (!is.null(emd[["mrnm"]])) emd[["mrnm"]] else "*",
-                         if (!is.null(emd[["mpos"]])) emd[["mpos"]] else "0",
-                         if (!is.null(emd[["isize"]])) emd[["isize"]] else "0",
+                         fillColumn(emd[["mrnm"]], "*"),
+                         fillColumn(emd[["mpos"]], "0"),
+                         fillColumn(emd[["isize"]], "0"),
                          if (is(object, "GappedReads")) object@qseq
-                           else if (!is.null(emd[["seq"]])) emd[["seq"]]
-                           else "*",
-                         if (!is.null(emd[["qual"]])) emd[["qual"]] else "*",
+                         else fillColumn(emd[["seq"]], "*"),
+                         fillColumn(emd[["qual"]], "*"),
                          sep = "\t")
             custom <- emd[nchar(names(emd)) == 2L]
             if (length(custom) > 0L) {
