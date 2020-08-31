@@ -1,0 +1,9 @@
+track wgEncodeUWDukeDnaseGM12878FdrPeaks
+bigDataUrl wgEncodeUWDukeDnaseGM12878.fdr01peaks.hg19.bb
+parent uniformDnasePeaks on
+type bigBed 6 +
+shortLabel GM12878
+longLabel GM12878 DNaseI FDR 1% Uniform Peak Calls from UW-Duke
+color 8,104,172
+subGroups view=Peaks tier=t1 cellType=GM12878 lab=UWDuke
+metadata cell=GM12878

@@ -43,7 +43,7 @@ import(GenomicRanges)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
            DNAStringSet, DNA_BASES, DNA_ALPHABET, alphabetFrequency,
-           reverseComplement)
+           reverseComplement, uniqueLetters)
 importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
 importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 
@@ -64,7 +64,8 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
               Bed15TrackLine, UCSCTrackModes, BigWigSelection,
-              UCSCSchema, Quickload, QuickloadGenome)
+              UCSCSchema, Quickload, QuickloadGenome, TrackHub, TrackHubGenome,
+              Track, TrackContainer)
 
 ## File classes
 exportClasses(RTLFile, CompressedFile, GFFFile, UCSCFile, BEDFile, WIGFile,
@@ -98,6 +99,10 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               referenceSequence, "referenceSequence<-",
               asBED, asGFF,
               split, fileFormat,
+              hub, "hub<-", shortLabel, "shortLabel<-", longLabel, "longLabel<-",
+              genomesFile, "genomesFile<-", email, "email<-", descriptionUrl,
+              "descriptionUrl<-", genomeField, "genomeField<-", getTracks , writeTrackHub,
+              trackField, "trackField<-", genomeInfo, "genomeInfo<-",
               ## from IRanges
               start, end, "start<-", "end<-",
               score, "score<-",
@@ -114,9 +119,10 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        ucscGenomes,
        readGFFPragmas, sniffGFFVersion, GFFcolnames, readGFF, readGFFAsGRanges,
        BigWigSelection, GRangesForUCSCGenome, GRangesForBSGenome,
-       summary, seqinfo, genome, "genome<-",
+       summary, seqinfo, genome, "genome<-", Genome,
        uri, Quickload, quickload, QuickloadGenome,
-       organism, releaseDate, mcols, wigToBigWig,
+       organism, releaseDate, mcols, TrackHub, trackhub, TrackHubGenome,
+       Track, TrackContainer, wigToBigWig,
        SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path,
        FileForFormat, cleanupBigWigCache, viewURL)
 
