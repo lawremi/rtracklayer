@@ -142,7 +142,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
   /* if extra fields are present and selected
    * identify the type information and allocate memory */
   if (extraFieldCount > 0) {
-    int k = 0, i = 0;
+    int k = 0;
     enum asTypes fieldType;
     struct asColumn *asCol = as->columnList;
     extraFields = PROTECT(allocVector(VECSXP, extraFieldCount));
