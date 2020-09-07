@@ -12,7 +12,7 @@ int getDefinedFieldCount(struct asObject *as) {
   freeMem(asText);
   struct asColumn *bedCol = bedAs->columnList;
   while (asCol && bedCol) {
-    if (strncmp(asCol->name, bedCol->name, sizeof(asCol->name)) == 0)
+    if (strncmp(asCol->name, bedCol->name, strlen(asCol->name)) == 0)
       ++definedFieldCount;
     bedCol = bedCol->next;
     asCol = asCol->next;
