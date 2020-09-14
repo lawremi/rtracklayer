@@ -1567,53 +1567,20 @@ setMethod("ucscTrackModes", "ucscTracks",
             ucscTrackModes(modes, labels)
           })
 
-## List available UCSC genomes
-.getOrganism <- function(db){
-  .ucsc <- "http://genome.ucsc.edu/cgi-bin"
-  .tryQuery <- function(url, query)
-    tryCatch({
-      htmlTreeParse(url, useInternalNodes=TRUE)[[query]]
-    }, error=function(err) {
-      warning(conditionMessage(err))
-      NA_character_
-    })
-  urls <- sprintf("%s/hgGateway?db=%s", .ucsc, db)
-  sapply(urls, .tryQuery, "string(//div[@id='sectTtl']/i)")
-}
-
 ucscGenomes <- function(organism=FALSE) {
-  url <- "http://genome.ucsc.edu/FAQ/FAQreleases"
-  df <- readHTMLTable(url)[[1L]][c(2,1,3,4,5)]
-  .cleanTableCells <- function(x)
-  {
-    x <- sub("^ *", "", x)
-    ## Some empty cells in the table of UCSC genome releases seem to contain
-    ## invisible junk. This junk seems to vary from one platform to the other
-    ## (not clear why, maybe some sort of local issue?).
-    ## There must be a simplest way to get rid of this junk...
-    ## TODO: Test this on Windows!
-    is_empty_cell <- x %in% c("<c2><a0>", "\xc2\xa0", "\xc3\x82\xc2\xa0")
-    x[is_empty_cell] <- ""
-    x
-  }
-  COLS <- c("UCSC VERSION", "SPECIES", "RELEASE DATE", "RELEASE NAME", "STATUS")
-  if (!identical(names(df), COLS))
-    stop("table of UCSC genome releases (found at ", url, "#release1) ",
-         "doesn't have expected columns ", paste(COLS, collapse=", ")) 
-  ## readHTMLTable is returning one NA row for some reason
-  names(df) <- c("db","species","date","name","status")
-  df <- df[!apply(df, 1, function(x) all(is.na(x))),]
-  df <- df[df$db != "" , ]
-  not_empty <- df$species != ""
-  df$species <- rep.int(df$species[not_empty], diff(which(c(not_empty, TRUE))))
-  df <- df[df$status == "Available", -5L]
-  if (organism) {
-    df$organism <- NA_character_
-    org <- lapply(as.character(df$db), function(xx) 
-                  unique(suppressWarnings(mapGenomeBuilds(xx)$organism)))
-    df$organism[!sapply(org, is.null)] <- unlist(org) 
-  }
-  rownames(df) <- NULL
+  stopifnot(isTRUEorFALSE(organism))
+  names <- c("db", "species", "date", "name", "organism")
+  url <- RestUri("http://api.genome.ucsc.edu/")
+  genomes <- read(url$list$ucscGenomes)
+  genomes <- genomes[[5]]
+  listOfDf <- lapply(1:length(genomes), function(x) {
+    data.frame(names(genomes[x]), genomes[[x]]$genome, genomes[[x]]$description,
+                     genomes[[x]]$sourceName, genomes[[x]]$scientificName,
+                     stringsAsFactors = FALSE)
+  })
+  df <- do.call(rbind, listOfDf)
+  names(df) <- names
+  if (!organism) df$organism <- NULL
   df
 }
 
