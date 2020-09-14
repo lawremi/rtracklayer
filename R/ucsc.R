@@ -332,14 +332,15 @@ ucscTablePost <- function(query, .parse = TRUE, tracks = FALSE, ...)
 
 setMethod("trackNames", "UCSCTableQuery",
           function(object) {
-            doc <- ucscTableGet(object, tracks = TRUE)
-            track_path <- "//select[@name = 'hgta_track']/option/@value"
-            tracks <- unlist(getNodeSet(doc, track_path))
-            label_path <- "//select[@name = 'hgta_track']/option/text()"
-            labels <- sub("\n.*$", "",
-                          sapply(getNodeSet(doc, label_path), xmlValue))
-            names(tracks) <- labels
-            tracks
+            session <- browserSession(object)
+            genome <- genome(session)
+            url <- RestUri(paste0(session@url, "hubApi"))
+            response <- read(url$list$tracks, genome = genome)
+            tracks <-  lapply(response[[5]], function(x) {
+              if (is.null(x$protectedData)) x$shortLabel
+            })
+            tracks <- Filter(Negate(is.null), tracks)
+            tracks <- setNames(names(tracks), unname(tracks))
           })
 
 ## returns a character vector of table names for a given track name + range
