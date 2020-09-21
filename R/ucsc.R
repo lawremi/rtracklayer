@@ -152,12 +152,10 @@ GRangesForUCSCGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 ## context for querying UCSC tables
 setClass("UCSCTableQuery",
          representation(session = "UCSCSession",
-                        track = "character_OR_NULL",
                         table = "character_OR_NULL",
                         range = "GRanges",
                         outputType = "character_OR_NULL",
-                        NAMES = "character_OR_NULL",
-                        intersectTrack = "character_OR_NULL"))
+                        NAMES = "character_OR_NULL"))
 
 setMethod("show", "UCSCTableQuery",
           function(object) {
@@ -174,8 +172,6 @@ setMethod("show", "UCSCTableQuery",
               end <- end(range)
             }
             cat(genome(range)[1], ":", chrom, ":", start, "-", end, sep="")
-            for (itrack in names(intersectTrack(object)))
-              cat(" &", itrack)
             cat("\n")
           })
 
@@ -199,14 +195,15 @@ setReplaceMethod("range", "UCSCTableQuery",
                  })
 
 setGeneric("trackName", function(x, ...) standardGeneric("trackName"))
-setMethod("trackName", "UCSCTableQuery", function(x) x@track)
+setMethod("trackName", "UCSCTableQuery", function(x) {
+  .Defunct("tableName", msg = "track is meaningless now you only go by the table")
+})
 
 setGeneric("trackName<-",
            function(x, ..., value) standardGeneric("trackName<-"))
 setReplaceMethod("trackName", "UCSCTableQuery", function(x, value)
                  {
-                   x@track <- normArgTrack(value, x)
-                   x
+                   .Defunct("tableName<-", msg = "track is meaningless now you only go by the table")
                  })
 
 setGeneric("tableName", function(x, ...) standardGeneric("tableName"))
@@ -244,12 +241,13 @@ setReplaceMethod("names", "UCSCTableQuery", function(x, value) {
 
 setGeneric("intersectTrack", function(x, ...)
            standardGeneric("intersectTrack"))
-setMethod("intersectTrack", "UCSCTableQuery", function(x) x@intersectTrack)
+setMethod("intersectTrack", "UCSCTableQuery", function(x) {
+  .Defunct(msg = "intersectTrack is no longer supported")
+})
 setGeneric("intersectTrack<-", function(x, ..., value)
            standardGeneric("intersectTrack<-"))
 setReplaceMethod("intersectTrack", "UCSCTableQuery", function(x, value) {
-  x@intersectTrack <- normArgTrack(value, x)
-  x
+  .Defunct(msg = "intersectTrack is no longer supported")
 })
 
 ## not exported
@@ -263,22 +261,6 @@ setReplaceMethod("outputType", "UCSCTableQuery",
                    x
                  })
 
-normArgTrack <- function(name, trackids) {
-  if (is.null(name))
-    return(name)
-  if (!isSingleString(name))
-    stop("'track' must be a single string")
-  if (is(trackids, "UCSCTableQuery"))
-    trackids <- trackNames(trackids)
-  if (!(name %in% trackids)) {
-    mapped_name <- trackids[name]
-    if (is.na(mapped_name))
-      stop("Unknown track: ", name)
-    name <- mapped_name
-  } else names(name) <- name
-  name
-}
-
 normTableQueryRange <- function(range, x) {
   normGenomeRange(range, x, max.length = 1000L)
 }
@@ -288,6 +270,10 @@ setMethod("ucscTableQuery", "UCSCSession",
           function(x, track = NULL, range = seqinfo(x), table = NULL,
                    names = NULL, intersectTrack = NULL, check = TRUE)
           {
+            if (!is.null(intersectTrack))
+              stop("intersectTrack is no longer supported")
+            if (!is.null(track))
+              warning("track is meaningless now you only go by the table")
             if (!is(names, "character_OR_NULL"))
               stop("'names' must be 'NULL' or a character vector")
             ## only inherit the genome from the session
@@ -296,13 +282,6 @@ setMethod("ucscTableQuery", "UCSCSession",
             else range <- normTableQueryRange(range, x)
             query <- new("UCSCTableQuery", session = x, range = range,
                          NAMES = names)
-            ## the following line must always happen to initialize the session
-            ## otherwise stuff can go haywire
-            trackids <- trackNames(query)
-            if (!is.null(track) || !is.null(intersectTrack)) {
-              query@track <- normArgTrack(track, trackids)
-              query@intersectTrack <- normArgTrack(intersectTrack, trackids)
-            }
             tableName(query, check=check) <- table
             query
           })
@@ -332,15 +311,7 @@ ucscTablePost <- function(query, .parse = TRUE, tracks = FALSE, ...)
 
 setMethod("trackNames", "UCSCTableQuery",
           function(object) {
-            session <- browserSession(object)
-            genome <- genome(session)
-            url <- RestUri(paste0(session@url, "hubApi"))
-            response <- read(url$list$tracks, genome = genome)
-            tracks <-  lapply(response[[5]], function(x) {
-              if (is.null(x$protectedData)) x$shortLabel
-            })
-            tracks <- Filter(Negate(is.null), tracks)
-            tracks <- setNames(names(tracks), unname(tracks))
+            .Defunct("tableNames", msg = "track is meaningless now you only go by the table")
           })
 
 ## returns a character vector of table names for a given track name + range
@@ -359,10 +330,7 @@ setMethod("tableNames", "UCSCTableQuery",
             tables <- getTableNames(object)
             outputType <- outputType(object)
             if (trackOnly) {
-              trackOutputs <- c("wigData", "wigBed", "bed")
-              if (!is.null(outputType))
-                outputType <- intersect(trackOutputs, outputType)
-              else outputType <- trackOutputs
+              .Defunct(msg = "track is meaningless now you only go by the table")
             }
             if (!is.null(outputType)) {
               tables <- tables[sapply(tables, tableHasOutput, object=object)]
@@ -523,25 +491,6 @@ ucscExport <- function(object)
                         "//script[contains(text(), '{showWarnBox')]/text()")
     if (length(error))
       warning(sub(".*'<li>(.*?)'.*", "\\1", xmlValue(error[[1]])))
-    hgsid <- get_hgsid(output)
-  }
-  if (!is.null(intersectTrack(object))) {
-    itrack <- intersectTrack(object)
-    iquery <- object
-    iquery@track <- itrack
-    itable <- tableNames(iquery, TRUE)
-    if (!length(itable))
-      stop("No table for intersection track: ", itrack)
-    if (length(itable) > 1) # for now anyway
-      itable <- itable[1]
-    output <- ucscTableGet(object, hgta_nextIntersectGroup = "allTracks",
-                           hgta_nextIntersectTrack = itrack,
-                           hgta_nextIntersectTable = itable,
-                           hgta_nextIntersectOp = "any",
-                           hgta_doIntersectSubmit = "submit",
-                           boolshad.hgta_nextInvertTable = "0",
-                           boolshad.hgta_nextInvertTable2 = "0",
-                           hgsid = hgsid)
     hgsid <- get_hgsid(output)
   }
   if (!spansGenome(object@range) && length(object@range) > 1L) {
@@ -1678,14 +1627,14 @@ setMethod("ucscForm", "UCSCTableQuery",
             if (!spansGenome(range) && length(range) == 1) {
               form <- c(form, ucscForm(range))
             }
-            if (is.null(object@track) && !tracks) {
-              form <- c(form, list(hgta_group = "allTables"))
-              if (is.null(table))
-                table <- "chromInfo"
-            }              
-            else
-              form <- c(form, list(hgta_group = "allTracks",
-                                   hgta_track = object@track))
+            # if (is.null(object@track) && !tracks) {
+            #   form <- c(form, list(hgta_group = "allTables"))
+            #   if (is.null(table))
+            #     table <- "chromInfo"
+            # }
+            # else
+            #   form <- c(form, list(hgta_group = "allTracks",
+            #                        hgta_track = object@track))
             if (spansGenome(range))
               regionType <- "genome"
             else if (length(range) == 1)
