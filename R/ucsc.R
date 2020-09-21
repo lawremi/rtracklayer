@@ -1572,15 +1572,16 @@ ucscGenomes <- function(organism=FALSE) {
   stopifnot(isTRUEorFALSE(organism))
   names <- c("db", "species", "date", "name", "organism")
   url <- RestUri("http://api.genome.ucsc.edu/")
-  genomes <- read(url$list$ucscGenomes)
-  genomes <- genomes[[5]]
-  listOfDf <- lapply(1:length(genomes), function(x) {
-    data.frame(names(genomes[x]), genomes[[x]]$genome, genomes[[x]]$description,
-                     genomes[[x]]$sourceName, genomes[[x]]$scientificName,
-                     stringsAsFactors = FALSE)
-  })
+  response <- read(url$list$ucscGenomes)
+  genomes <- response[[5]]
+  genomeNames <- names(genomes)
+  listOfDf <- Map(function(name, x) {
+    date <- sub("\\s*\\([^\\)]+\\)", "", x$description)
+    data.frame(name, x$genome, date, x$sourceName, x$scientificName)
+  }, genomeNames, genomes)
   df <- do.call(rbind, listOfDf)
   names(df) <- names
+  rownames(df) <- NULL
   if (!organism) df$organism <- NULL
   df
 }
