@@ -319,9 +319,16 @@ setGeneric("tableNames", function(object, ...)
            standardGeneric("tableNames"))
 
 getTableNames <- function(object) {
-    doc <- ucscTableGet(object)
-    table_path <- "//select[@name = 'hgta_table']/option/@value"
-    unlist(getNodeSet(doc, table_path))
+  session <- browserSession(object)
+  genome <- genome(session)
+  url <- RestUri(paste0(session@url, "hubApi"))
+  response <- read(url$list$tracks, genome = genome)
+  names <- names(response[[5]])
+  protectedStatus <- vapply(response[[5]], function(x) {
+    if (is.null(x$protectedData)) TRUE
+    else FALSE
+  }, logical(1L))
+  names[protectedStatus]
 }
 
 setMethod("tableNames", "UCSCTableQuery",
