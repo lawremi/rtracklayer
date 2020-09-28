@@ -339,8 +339,7 @@ setMethod("tableNames", "UCSCTableQuery",
 setClass("UCSCSchema",
          representation(genome = "character",
                         tableName = "character",
-                        rowCount = "integer",
-                        formatDescription = "character"),
+                        rowCount = "integer"),
          contains = "DFrame")
 
 setMethod("genome", "UCSCSchema", function(x) {
@@ -355,89 +354,24 @@ setMethod("nrow", "UCSCSchema", function(x) {
   x@rowCount
 })
 
-setGeneric("formatDescription",
-           function(x, ...) standardGeneric("formatDescription"))
-setMethod("formatDescription", "UCSCSchema", function(x) {
-  x@formatDescription
-})
-
-setClass("UCSCLinks",
-         representation(genome = "character",
-                        tableName = "character",
-                        fieldName = "character",
-                        viaName = "character"))
-
-setClass("UCSCSchemaDescription",
-         representation(schema = "UCSCSchema", links = "UCSCLinks",
-                        sample = "DataFrame"))
-
-setGeneric("ucscSchemaDescription",
-           function(object, ...) standardGeneric("ucscSchemaDescription"))
-
-## not currently exported, just ucscSchema() is public
-setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
-{
-  alphaNum <- function(x) gsub("^ *", "", gsub("[^a-zA-Z0-9()+,. _'-]", "", x))
-  getBoldLabeledField <- function(name) {
-    expr <- sprintf("//b[text() = '%s:']/following::text()[1]", name)
-    alphaNum(xmlValue(getNodeSet(doc, expr)[[1]]))
-  }
-  getDataFrame <- function(tableNode) {
-    getColumn <- function(ind) {
-      ## FIXME: special treatment required for missing cells
-      ## Is there a way to get child counts for every node in XPath?
-      expr <- sprintf("tr/td[%d]", ind)
-      children <- sapply(getNodeSet(tableNode, expr), xmlChildren)
-      col <- rep(NA, length(children))
-      col[elementNROWS(children) > 0] <-
-        alphaNum(sapply(unlist(children), xmlValue))
-      col
-    }
-    columnNames <- sapply(getNodeSet(tableNode, "tr[1]/th//text()"), xmlValue)
-    columns <- lapply(seq_along(columnNames), getColumn)
-    names(columns) <- columnNames
-    columns <- columns[elementNROWS(columns) > 0]
-    DataFrame(columns)
-  }
-  doc <- ucscTableGet(object, hgta_doSchema = "describe table schema")
-  genome <- getBoldLabeledField("Database")
-  tableName <- getBoldLabeledField("Primary Table")
-  rowCount <- as.integer(gsub(",", "", getBoldLabeledField("Row Count")))
-  format <- getBoldLabeledField("Format description")
-  schemaNode <- getNodeSet(doc, "//table[tr[1]/th[3]/text() = 'SQL type']")[[1]]
-  schema <- getDataFrame(schemaNode)
-  schema$RType <- sapply(schema$example, function(x) class(type.convert(x)))
-  schema$RType[!nzchar(schema$example)] <- "factor"
-  linkNode <- getNodeSet(doc, "//div[@class = 'subheadingBar' and contains(text(), 'Connected Tables and Joining Fields')]/following::table[1]/tr[2]/td[2]")
-  if (length(linkNode)) { ## this is apparently optional
-    linkNode <- linkNode[[1]]
-    linkTable <- sapply(getNodeSet(linkNode, "a/text()"), xmlValue)
-    linkText <- sapply(getNodeSet(linkNode, "text()"), xmlValue)
-    linkMat <- matrix(linkText, nrow=2)
-    linkGenome <- alphaNum(linkMat[1,])
-    linkGenome <- substring(linkGenome, 1, nchar(linkGenome)-1L)
-    linkSplit <- matrix(unlist(strsplit(linkMat[2,], " ", fixed=TRUE)), 3)
-    linkField <- substring(linkSplit[1,], 2)
-    linkVia <- sub(".*?\\.(.*?)\\)", "\\1", linkSplit[3,])
-    links <- new("UCSCLinks", genome = linkGenome, tableName = linkTable,
-                 fieldName = linkField, viaName = linkVia)
-  } else links <- new("UCSCLinks")
-  sampNode <- getNodeSet(doc, "//div[contains(@class, 'subheadingBar') and contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
-  sample <- getDataFrame(sampNode)
-  schema <- new("UCSCSchema", schema, genome = genome, tableName = tableName,
-                rowCount = rowCount, formatDescription = format)
-  new("UCSCSchemaDescription", schema = schema, links = links, sample = sample)
-})
-
 setGeneric("ucscSchema",
            function(object, ...) standardGeneric("ucscSchema"))
 
-setMethod("ucscSchema", "UCSCSchemaDescription", function(object) {
-  object@schema
-})
-
 setMethod("ucscSchema", "UCSCTableQuery", function(object) {
-  ucscSchema(ucscSchemaDescription(object))
+  session <- browserSession(object)
+  genome <- genome(session)
+  tableName <- tableName(object)
+  stopifnot(isSingleString(tableName))
+  url <- RestUri(paste0(session@url, "hubApi"))
+  response <- read(url$list$schema, genome = genome, track = tableName)
+  rowCount <- as.integer(response[["itemCount"]])
+  listOfDf <- lapply(response[["columnTypes"]], function(x) {
+    DataFrame(x$name, x$sqlType, x$jsonType, x$description)
+  })
+  schemaDf <- do.call(rbind, listOfDf)
+  names(schemaDf) <- c("field", "SQL.type", "JSON.type", "description")
+  schema <- new("UCSCSchema", schemaDf, genome = genome, tableName = tableName,
+                rowCount = rowCount)
 })
 
 .uploadTableBrowserRanges <- function(query, hgsid) {
