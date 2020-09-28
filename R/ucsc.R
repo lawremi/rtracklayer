@@ -270,6 +270,7 @@ setMethod("ucscTableQuery", "UCSCSession",
           function(x, track = NULL, range = seqinfo(x), table = NULL,
                    names = NULL, intersectTrack = NULL, check = TRUE)
           {
+            stopifnot(isSingleString(table))
             if (!is.null(intersectTrack))
               stop("intersectTrack is no longer supported")
             if (!is.null(track))
