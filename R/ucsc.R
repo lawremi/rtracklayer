@@ -163,7 +163,6 @@ setMethod("show", "UCSCTableQuery",
             cat("Get ")
             if (!is.null(tableName(object)))
               cat("table '", tableName(object), "' from ", sep = "")
-            cat("track '", names(trackName(object)), "' within ", sep = "")
             range <- range(object)
             if (length(range) > 1)
               start <- end <- chrom <- "*"
