@@ -374,53 +374,6 @@ setMethod("ucscSchema", "UCSCTableQuery", function(object) {
                 rowCount = rowCount)
 })
 
-.uploadTableBrowserRanges <- function(query, hgsid) {
-  lines <- export(query@range, format = "bed", ignore.strand = TRUE)
-  text <- paste(paste(lines, collapse = "\n"), "\n", sep = "")
-  upload <- fileUpload("ranges.bed", text, "text/plain")
-  ucscTablePost(query, hgta_enteredUserRegionFile = upload,
-                hgta_enteredUserRegions = "",
-                hgta_doSubmitUserRegions = "submit",
-                hgsid = hgsid)
-}
-
-## export data from UCSC (internal utility)
-ucscExport <- function(object)
-{
-  get_hgsid <- function(node)
-    getNodeSet(node, "//input[@name = 'hgsid']/@value")[[1]]
-  hgsid <- NULL
-  if (!is.null(names(object))) { # filter by names
-    text <- paste(names(object), collapse = "\n")
-    output <- ucscTablePost(object, hgta_doPastedIdentiers = "submit",
-                            hgta_pastedIdentifiers = text)
-    error <- getNodeSet(output,
-                        "//script[contains(text(), '{showWarnBox')]/text()")
-    if (length(error))
-      warning(sub(".*'<li>(.*?)'.*", "\\1", xmlValue(error[[1]])))
-    hgsid <- get_hgsid(output)
-  }
-  if (!spansGenome(object@range) && length(object@range) > 1L) {
-    output <- .uploadTableBrowserRanges(object, hgsid)
-    hgsid <- get_hgsid(output)
-  }
-  followup <- NULL
-  if (outputType(object) == "bed") { ## some formats have extra pages
-    followup <- list(hgta_doGetBed = "get BED",
-                     hgta_printCustomTrackHeaders = "on",
-                     boolshad.hgta_printCustomTrackHeaders = "1")
-  }
-  output <- ucscTableGet(object, !is.null(followup),
-                         hgta_doTopSubmit = "get output",
-                         hgsid = hgsid)
-  if (!is.null(followup)) {
-    hgsid <- get_hgsid(output)
-    form <- c(followup, list(hgsid = hgsid))
-    output <- ucscGet(browserSession(object), "tables", form, .parse = FALSE)
-  }
-  output
-}
-
 setMethod("track", "UCSCSession",
           function(object, name, ...)
           {
@@ -500,27 +453,34 @@ setGeneric("getTable",
 setMethod("getTable", "UCSCTableQuery",
           function(object, check = TRUE)
           {
-            outputType(object) <- "primaryTable"
-            if (is.null(tableName(object))) { # must specify a table name
-                tableName(object, check=FALSE) <- firstTableName(object)
-                if (is.null(tableName(object)))
-                    stop("No valid table found")
+            session <- browserSession(object)
+            tableName <- tableName(object)
+            stopifnot(isSingleString(tableName))
+            genome <- genome(session)
+            query <- list(genome = genome, track = tableName, jsonOutputArrays = 1)
+            if (length(object@range) == 1L) {
+              start <- start(object@range)
+              end <- end(object@range)
+              seqname <- as.vector(seqnames(object@range))
+              query <- c(query, chrom = seqname, start = start, end = end)
             }
-            else if (check && !outputType(object) %in% ucscTableOutputs(object))
-                stop("tabular output format not available")
-            output <- ucscExport(object)
-            ## since '#' is not treated as a comment, we discard the
-            ## error message, leaving only the header
-            if (grepl("\\n# No results", output))
-              output <- gsub("\\n.*", "", output)
-            f <- file()
-            writeLines(output, f)
-            tab <- read.table(f, sep = "\t", header=TRUE, comment.char = "",
-                              quote = "")
-            ## strip off the '#' => 'X.' header prefix
-            colnames(tab)[1L] <- substring(colnames(tab)[1L], 3L)
-            close(f)
-            tab
+            url <- RestUri(paste0(session@url, "hubApi"))
+            print(query)
+            response <- read(url$getData$track, query)
+            columnTypes <- response[["columnTypes"]]
+            names <- vapply(columnTypes, function(x) x$name, character(1L))
+            results <- response[[tableName]]
+            chromosomes <- names(results)
+            listOfDf <- lapply(chromosomes, function(x) {
+              listOfDf <- lapply(results[[x]], function(y) {
+                df <- data.frame(y)
+                names(df) <- names
+                df
+              })
+              df <- do.call(rbind, listOfDf)
+            })
+            output <- do.call(rbind, listOfDf)
+            output
           })
 setMethod("getTable", "UCSCSession",
           function(object, name, range = base::range(object), table = NULL) {
