@@ -35,10 +35,11 @@ setMethod("initialize", "UCSCSession",
           })
 
 setMethod("seqlengths", "UCSCSession", function(x) {
-  query <- ucscTableQuery(x, range = GRanges(), table = "chromInfo", check=FALSE)
-  chromInfo <- getTable(query, check=FALSE)
-  ans <- setNames(chromInfo$size, chromInfo$chrom)
-  ans[sortSeqlevels(names(ans))]
+  url <- RestUri(paste0(x@url, "hubApi"))
+  response <- read(url$list$chromosomes, genome = genome(x), track = "chromInfo")
+  chromosomes <- response[[8]]
+  chromosomes <- setNames(unlist(chromosomes), names(chromosomes))
+  chromosomes[sortSeqlevels(names(chromosomes))]
 })
 
 setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
