@@ -295,18 +295,10 @@ setMethod("ucscTableQuery", "character",
               ucscTableQuery(session, ...)
           })
 
-ucscTableGet <- function(query, .parse = TRUE, tracks = FALSE, ...)
-  ucscGet(browserSession(query), "tables",
-          c(ucscForm(query, tracks = tracks), ...), .parse = .parse)
-
 dropCookie <- function(object) {
     object@hguid <- character()
     object
 }
-
-ucscTablePost <- function(query, .parse = TRUE, tracks = FALSE, ...)
-  ucscPost(dropCookie(browserSession(query)), "tables",
-           c(ucscForm(query, tracks = tracks), list(...)), .parse = .parse)
 
 ## gets the track names available from the table browser
 
@@ -1483,37 +1475,6 @@ setMethod("ucscForm", "RTLFile",
           {
             upload <- fileUpload(path(object), "text/plain")
             ucscForm(upload, genome)
-          })
-
-setMethod("ucscForm", "UCSCTableQuery",
-          function(object, tracks = FALSE) {
-            ## range (ie genome) is required
-            range <- object@range
-            table <- object@table
-            form <- list()
-            if (!spansGenome(range) && length(range) == 1) {
-              form <- c(form, ucscForm(range))
-            }
-            # if (is.null(object@track) && !tracks) {
-            #   form <- c(form, list(hgta_group = "allTables"))
-            #   if (is.null(table))
-            #     table <- "chromInfo"
-            # }
-            # else
-            #   form <- c(form, list(hgta_group = "allTracks",
-            #                        hgta_track = object@track))
-            if (spansGenome(range))
-              regionType <- "genome"
-            else if (length(range) == 1)
-              regionType <- "range"
-            else regionType <- "userRegions"
-            form <- c(form, hgta_regionType = regionType,
-                      hgta_table = table)
-            if (!is.null(object@outputType)) {
-              form <- c(form, hgta_outputType = object@outputType)
-            }
-            form$hgta_compressType <- "none" # TODO: support gzip
-            form
           })
 
 setMethod("ucscForm", "NULL", function(object) list())
