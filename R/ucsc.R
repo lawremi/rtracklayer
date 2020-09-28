@@ -318,31 +318,21 @@ setMethod("trackNames", "UCSCTableQuery",
 setGeneric("tableNames", function(object, ...)
            standardGeneric("tableNames"))
 
-getTableNames <- function(object) {
-  session <- browserSession(object)
-  genome <- genome(session)
-  url <- RestUri(paste0(session@url, "hubApi"))
-  response <- read(url$list$tracks, genome = genome)
-  names <- names(response[[5]])
-  protectedStatus <- vapply(response[[5]], function(x) {
-    if (is.null(x$protectedData)) TRUE
-    else FALSE
-  }, logical(1L))
-  names[protectedStatus]
-}
-
 setMethod("tableNames", "UCSCTableQuery",
           function(object, trackOnly = FALSE)
           {
-            tables <- getTableNames(object)
-            outputType <- outputType(object)
-            if (trackOnly) {
-              .Defunct(msg = "track is meaningless now you only go by the table")
-            }
-            if (!is.null(outputType)) {
-              tables <- tables[sapply(tables, tableHasOutput, object=object)]
-            }
-            unname(tables)
+            if (trackOnly)
+              warning("track is meaningless now you only go by the table")
+            session <- browserSession(object)
+            genome <- genome(session)
+            url <- RestUri(paste0(session@url, "hubApi"))
+            response <- read(url$list$tracks, genome = genome, trackLeavesOnly = 1)
+            names <- names(response[[genome]])
+            protectedStatus <- vapply(response[[genome]], function(x) {
+              if (is.null(x$protectedData)) TRUE
+              else FALSE
+            }, logical(1L))
+            names[protectedStatus]
           })
 
 tableHasOutput <- function(object, table) {
