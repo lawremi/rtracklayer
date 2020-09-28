@@ -335,31 +335,6 @@ setMethod("tableNames", "UCSCTableQuery",
             names[protectedStatus]
           })
 
-tableHasOutput <- function(object, table) {
-    tableName(object, check=FALSE) <- table
-    any(outputType(object) %in% ucscTableOutputs(object))
-}
-
-firstTableName <- function(object) {
-    tables <- getTableNames(object)
-    for (table in tables)
-        if (tableHasOutput(object, table))
-            return(table)
-}
-
-setGeneric("ucscTableOutputs",
-           function(object, ...)
-           standardGeneric("ucscTableOutputs"))
-
-## returns a character vector of available output types for the table
-## not exported
-setMethod("ucscTableOutputs", "UCSCTableQuery",
-          function(object) {
-            doc <- ucscTableGet(object)
-            output_path <- "//select[@name = 'hgta_outputType']/option/@value"
-            unlist(getNodeSet(doc, output_path))
-          })
-
 setClass("UCSCSchema",
          representation(genome = "character",
                         tableName = "character",
