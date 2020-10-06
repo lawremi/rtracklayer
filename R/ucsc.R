@@ -443,7 +443,7 @@ setMethod("track", "UCSCTableQuery",
 setGeneric("getTable",
            function(object, ...) standardGeneric("getTable"))
 setMethod("getTable", "UCSCTableQuery",
-          function(object, check = TRUE)
+          function(object)
           {
             session <- browserSession(object)
             tableName <- tableName(object)
@@ -471,6 +471,10 @@ setMethod("getTable", "UCSCTableQuery",
               df <- do.call(rbind, listOfDf)
             })
             output <- do.call(rbind, listOfDf)
+            names <- names(object)
+            if (!is.null(names)) { # filter by names
+              output <- output[output$name %in% names,]
+            }
             output
           })
 setMethod("getTable", "UCSCSession",
