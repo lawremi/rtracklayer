@@ -457,7 +457,6 @@ setMethod("getTable", "UCSCTableQuery",
               query <- c(query, chrom = seqname, start = start, end = end)
             }
             url <- RestUri(paste0(session@url, "hubApi"))
-            print(query)
             response <- read(url$getData$track, query)
             columnTypes <- response[["columnTypes"]]
             names <- vapply(columnTypes, function(x) x$name, character(1L))
