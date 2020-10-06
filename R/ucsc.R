@@ -372,18 +372,6 @@ setMethod("track", "UCSCSession",
             track(ucscTableQuery(object, track=name, ...))
           })
 
-inconsistentFieldCounts <- function(x) {
-  con <- file()
-  on.exit(close(con))
-  writeLines(x, con)
-  length(unique(count.fields(con, skip=2L, sep="\t")) > 1L)
-}
-
-outputTruncated <- function(x) {
-  has.msg <- grepl("^-", tail(x, 1))
-  has.msg #|| inconsistentFieldCounts(x)
-}
-
 ## download a trackSet by name
 setMethod("track", "UCSCTableQuery",
           function(object)
@@ -392,34 +380,15 @@ setMethod("track", "UCSCTableQuery",
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
               stop("Unknown table: '", table, "'. Valid table names: ", tables)
-            formats <- c("wigData", "wigBed", "bed")
-            ## attempt to automatically determine the table
-            if (!is.null(table))
-              tables <- table
-            for (table in tables) {
-              object@table <- table
-              outputs <- ucscTableOutputs(object)
-              if (any(formats %in% outputs))
-                break
-            }
-            if (!any(formats %in% outputs))
-              stop("No supported output types")
-            if ("wigData" %in% outputs) { # track stored as wig
-              format <- "wig"
-              output <- "wigData"
-            } else {
-              format <- output <- "bed"
-              if ("wigBed" %in% outputs)
-                output <- "wigBed"
-            }
-            outputType(object) <- output
-            output <- ucscExport(object)
-            if (outputTruncated(output))
+            output <- getTable(object)
+            if (is.null(output))
               stop("Output is incomplete: ",
                    "track may have more than 100,000 elements. ",
                    "Try downloading the data via the UCSC FTP site.")
-            import(text = output, format = format,
-                   seqinfo = seqinfo(range(object)))
+            output <- GRanges(seqnames = output[["chrom"]], strand = output[["strand"]],
+                       ranges = IRanges(start = output[["chromStart"]], end = output[["chromEnd"]]))
+            genome(output) <- genome(browserSession(object))
+            output
           })
 
 ## grab sequences for features in 'track' at 'range'
