@@ -155,7 +155,6 @@ setClass("UCSCTableQuery",
          representation(session = "UCSCSession",
                         table = "character_OR_NULL",
                         range = "GRanges",
-                        outputType = "character_OR_NULL",
                         NAMES = "character_OR_NULL"))
 
 setMethod("show", "UCSCTableQuery",
@@ -369,7 +368,7 @@ setMethod("ucscSchema", "UCSCTableQuery", function(object) {
 setMethod("track", "UCSCSession",
           function(object, name, ...)
           {
-            track(ucscTableQuery(object, track=name, ...))
+            .Defunct(msg = "track is meaningless now you only go by the table")
           })
 
 ## download a trackSet by name
