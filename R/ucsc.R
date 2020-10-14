@@ -379,13 +379,16 @@ setMethod("track", "UCSCTableQuery",
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
               stop("Unknown table: '", table, "'. Valid table names: ", tables)
-            output <- getTable(object)
-            if (is.null(output))
+            table <- getTable(object)
+            if (is.null(table))
               stop("Output is incomplete: ",
                    "track may have more than 100,000 elements. ",
                    "Try downloading the data via the UCSC FTP site.")
-            output <- GRanges(seqnames = output[["chrom"]], strand = output[["strand"]],
-                       ranges = IRanges(start = output[["chromStart"]], end = output[["chromEnd"]]))
+            output <- GRanges(seqnames = table[["chrom"]], strand = table[["strand"]],
+                              ranges = IRanges(start = table[["chromStart"]],
+                              end = table[["chromEnd"]]))
+            table[["chrom"]] = table[["strand"]] = table[["chromStart"]] = table[["chromEnd"]] = NULL
+            elementMetadata(output) <- table
             genome(output) <- genome(browserSession(object))
             output
           })
