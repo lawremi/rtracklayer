@@ -402,7 +402,7 @@ getGenomesContent <- function(x) {
         genomesFileValue <- x@genomesFile
         if (!isFieldEmpty(genomesFileValue)) {
             genomesFilePath <- combineURI(uri(x), unname(genomesFileValue))
-            if (file.size(parseURI(genomesFilePath)$path) == 0L) {
+            if (isFileEmpty(genomesFilePath)) {
                 return(list())
             }
             content <- readLines(genomesFilePath, warn = FALSE)
@@ -716,7 +716,7 @@ readAndSanitize <- function(filepath) {
 }
 
 getTrackDbContent <- function(x, trackDbFilePath) {
-    if (file.size(parseURI(trackDbFilePath)$path) == 1L) {
+    if (isFileEmpty(trackDbFilePath)) {
         x@tracks <- TrackContainer()
         return(x)
     }
@@ -815,7 +815,7 @@ setMethod("writeTrackHub", "TrackHubGenome", function(x) {
     genome <- getGenome(trackhub, genome(x))
     trackDbValue <- genome@trackDb
     trackDbFilePath <- combineURI(uri(trackhub), trackDbValue)
-    if (file.size(parseURI(trackDbFilePath)$path) != 1L || length(x@tracks)) {
+    if (!isFileEmpty(trackDbFilePath) || length(x@tracks)) {
         tabStrings <- vapply(x@levels, function(y) {
             paste(rep("\t", y), collapse = "")
         },character(1L))
@@ -856,10 +856,9 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE) {
     trackDbValue <- genome@trackDb
     if (!isFieldEmpty(trackDbValue)) {
         trackDbFilePath <- combineURI(uri(trackhub(thg)), trackDbValue)
-        absolutePath <- parseURI(trackDbFilePath)$path
         if (!uriExists(trackDbFilePath) && create) {
             createResource(trackDbFilePath)
-        }else if (file.size(absolutePath) != 1L && uriExists(trackDbFilePath)) {
+        }else if (!isFileEmpty(trackDbFilePath) && uriExists(trackDbFilePath)) {
             thg <- getTrackDbContent(thg, trackDbFilePath)
         }
     }
@@ -993,4 +992,22 @@ isFieldEmpty <- function(x) {
 
 trimSlash <- function(x) {
     sub("/$", "", x)
+}
+
+isFileEmpty <- function(path) {
+    url <- parseURI(path)
+    if (uriIsLocal(url)) {
+        size <- file.size(url$path)
+        if (size == 1L || size == 0L)
+            TRUE
+        FALSE
+    } else {
+        response <- getURL(path, nobody = T, header = T)
+        header <- strsplit(response, "\r\n")[[1]]
+        position <- grep("Content-Length:", header)
+        contentLength <- sub("Content-Length: ", "", header[position])
+        if (contentLength != "NA")
+            TRUE
+        FALSE
+    }
 }
