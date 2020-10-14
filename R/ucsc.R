@@ -389,6 +389,8 @@ setMethod("track", "UCSCTableQuery",
                               end = table[["chromEnd"]]))
             table[["chrom"]] = table[["strand"]] = table[["chromStart"]] = table[["chromEnd"]] = NULL
             elementMetadata(output) <- table
+            if (!is.null(table[["value"]]))
+              output <- GPos(output)
             genome(output) <- genome(browserSession(object))
             output
           })
