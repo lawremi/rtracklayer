@@ -249,17 +249,6 @@ setReplaceMethod("intersectTrack", "UCSCTableQuery", function(x, value) {
   .Defunct(msg = "intersectTrack is no longer supported")
 })
 
-## not exported
-setGeneric("outputType", function(x, ...) standardGeneric("outputType"))
-setMethod("outputType", "UCSCTableQuery", function(x) x@outputType)
-setGeneric("outputType<-",
-           function(x, ..., value) standardGeneric("outputType<-"))
-setReplaceMethod("outputType", "UCSCTableQuery",
-                 function(x, value) {
-                   x@outputType <- value
-                   x
-                 })
-
 normTableQueryRange <- function(range, x) {
   normGenomeRange(range, x, max.length = 1000L)
 }
