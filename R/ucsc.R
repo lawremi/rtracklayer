@@ -152,7 +152,8 @@ setClass("UCSCTableQuery",
                         table = "character",
                         range = "GRanges",
                         NAMES = "character_OR_NULL",
-                        url = "character"))
+                        url = "character",
+                        hubUrl = "character_OR_NULL"))
 
 setMethod("show", "UCSCTableQuery",
           function(object) {
@@ -257,7 +258,7 @@ setMethod("ucscTableQuery", "UCSCSession",
 
 setMethod("ucscTableQuery", "character",
           function(x, track = NULL, range =  getseqinfo(x, genome), table = NULL,
-                   names = NULL, intersectTrack = NULL, check = TRUE,
+                   names = NULL, intersectTrack = NULL, check = TRUE, hubUrl = NULL,
                    genome = NULL, url = "http://genome.ucsc.edu/cgi-bin/") {
               stopifnot(isSingleString(x))
               if (!isSingleString(table))
@@ -270,14 +271,29 @@ setMethod("ucscTableQuery", "character",
                 stop("'names' must be 'NULL' or a character vector")
               if (is.null(genome))
                 genome <- getgenome(x)
+              if (uriExists(x)) {
+                if (is.null(genome))
+                  stop("'genome' is a mandatory parameter and must be a single character vector")
+                hubUrl <- x
+              }
               if (missing(range) || !check)
                   range <- as(range, "GRanges")
               else range <- normTableQueryRange(range, genome)
               query <- new("UCSCTableQuery", genome = genome, range = range,
-                          NAMES = names, url = url)
+                          NAMES = names, url = url, hubUrl = hubUrl)
               tableName(query, check=check) <- table
               query
           })
+
+isTrackHub <- function(x) {
+  status <- FALSE
+  if (!is.null(x@hubUrl)) {
+    if (uriExists(x@hubUrl))
+      status <- TRUE
+    else stop(paste("TrackHub", x@hubUrl, "does not exists"))
+  }
+  status
+}
 
 dropCookie <- function(object) {
     object@hguid <- character()
@@ -301,14 +317,19 @@ setMethod("tableNames", "UCSCTableQuery",
             if (trackOnly)
               warning("track is meaningless now you only go by the table")
             genome <- object@genome
-            url <- RestUri(paste0(object@url, "hubApi"))
-            response <- read(url$list$tracks, genome = genome, trackLeavesOnly = 1)
-            names <- names(response[[genome]])
-            protectedStatus <- vapply(response[[genome]], function(x) {
-              if (is.null(x$protectedData)) TRUE
-              else FALSE
-            }, logical(1L))
-            names[protectedStatus]
+            if (isTrackHub(object)) {
+              th <- TrackHub(object@hubUrl)
+              names(th[[genome]])
+            } else {
+              url <- RestUri(paste0(object@url, "hubApi"))
+              response <- read(url$list$tracks, genome = genome, trackLeavesOnly = 1)
+              names <- names(response[[genome]])
+              protectedStatus <- vapply(response[[genome]], function(x) {
+                if (is.null(x$protectedData)) TRUE
+                else FALSE
+              }, logical(1L))
+              names[protectedStatus]
+            }
           })
 
 setClass("UCSCSchema",
@@ -362,6 +383,18 @@ setMethod("track", "UCSCTableQuery",
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
               stop("Unknown table: '", table, "'. Valid table names: ", tables)
+            if (isTrackHub(object)) {
+              th <- TrackHub(object@hubUrl)
+              thg <- TrackHubGenome(th, object@genome)
+               if (length(object@range) == 1L) {
+                start <- start(object@range)
+                end <- end(object@range)
+                seqname <- as.vector(seqnames(object@range))
+                which <- GRanges(seqname, IRanges(start, end))
+                track <- track(thg, table, which = which)
+               } else track <- track(thg, table)
+               track
+            } else {
               table <- getTable(object)
               if (is.null(table))
                 stop("Output is incomplete: ",
@@ -376,6 +409,7 @@ setMethod("track", "UCSCTableQuery",
               output <- GPos(output)
               genome(output) <- object@genome
               output
+            }
           })
 
 ## grab sequences for features in 'track' at 'range'
@@ -411,9 +445,18 @@ setMethod("getTable", "UCSCTableQuery",
               seqname <- as.vector(seqnames(object@range))
               query <- c(query, chrom = seqname, start = start, end = end)
             }
-            url <- RestUri(paste0(object@url, "hubApi"))
-            response <- read(url$getData$track, query)
-            columnTypes <- response[["columnTypes"]]
+            if (isTrackHub(object)) {
+              th <- TrackHub(object@hubUrl)
+              thg <- TrackHubGenome(th, genome)
+               if (length(object@range) == 1L) {
+                which <- GRanges(seqname, IRanges(start, end))
+                track <- track(thg, tableName, which = which)
+               } else track <- track(thg, tableName)
+               as.data.frame(track)
+            } else {
+              url <- RestUri(paste0(object@url, "hubApi"))
+              response <- read(url$getData$track, query)
+                          columnTypes <- response[["columnTypes"]]
             names <- vapply(columnTypes, function(x) x$name, character(1L))
             results <- response[[tableName]]
             chromosomes <- names(results)
@@ -430,7 +473,8 @@ setMethod("getTable", "UCSCTableQuery",
             if (!is.null(names)) { # filter by names
               output <- output[output$name %in% names,]
             }
-            output
+              output
+            }
           })
 setMethod("getTable", "UCSCSession",
           function(object, name, range = base::range(object), table = NULL) {

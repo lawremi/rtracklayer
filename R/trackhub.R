@@ -886,9 +886,9 @@ setMethod("track", "TrackHubGenome", function(object, name, ...) {
         stop("Track '", name, "' does not contain any data file")
     }
     else if (uriIsLocal(parseURI(track[[1L]]@bigDataUrl))) {
-        import(paste0(parseURI(uri(trackhub(object)))$path, "/", track[[1L]]@bigDataUrl))
+        import(paste0(parseURI(uri(trackhub(object)))$path, "/", track[[1L]]@bigDataUrl), ...)
     }else {
-        import(track[[1L]]@bigDataUrl)
+        import(track[[1L]]@bigDataUrl, ...)
     }
 })
 
