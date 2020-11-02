@@ -148,10 +148,11 @@ GRangesForUCSCGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 
 ## context for querying UCSC tables
 setClass("UCSCTableQuery",
-         representation(session = "UCSCSession",
-                        table = "character_OR_NULL",
+         representation(genome = "character",
+                        table = "character",
                         range = "GRanges",
-                        NAMES = "character_OR_NULL"))
+                        NAMES = "character_OR_NULL",
+                        url = "character"))
 
 setMethod("show", "UCSCTableQuery",
           function(object) {
@@ -171,21 +172,20 @@ setMethod("show", "UCSCTableQuery",
           })
 
 setMethod("browserSession", "UCSCTableQuery", function(object) {
-  object@session
+  .Defunct("browserSession is no longer supported, instead use genome identifier")
 })
 
 setGeneric("browserSession<-",
            function(object, ..., value) standardGeneric("browserSession<-"))
-setReplaceMethod("browserSession", c("UCSCTableQuery", "UCSCSession"),
+setReplaceMethod("browserSession", "UCSCTableQuery",
                  function(object, value) {
-                   object@session <- value
-                   object
+                   .Defunct("browserSession is no longer supported, instead use genome identifier")
                  })
 
 setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
 setReplaceMethod("range", "UCSCTableQuery",
                  function(x, value) {
-                   x@range <- normTableQueryRange(value, browserSession(x), 1L)
+                   x@range <- normTableQueryRange(value, x@genome, 1L)
                    x
                  })
 
@@ -251,32 +251,32 @@ normTableQueryRange <- function(range, x, max.length = 1000L) {
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
-          function(x, track = NULL, range = seqinfo(x), table = NULL,
-                   names = NULL, intersectTrack = NULL, check = TRUE)
-          {
-            stopifnot(isSingleString(table))
-            if (!is.null(intersectTrack))
-              stop("intersectTrack is no longer supported")
-            if (!is.null(track))
-              warning("track is meaningless now you only go by the table")
-            if (!is(names, "character_OR_NULL"))
-              stop("'names' must be 'NULL' or a character vector")
-            ## only inherit the genome from the session
-            if (missing(range) || !check)
-                range <- as(range, "GRanges")
-            else range <- normTableQueryRange(range, x, 1L)
-            query <- new("UCSCTableQuery", session = x, range = range,
-                         NAMES = names)
-            tableName(query, check=check) <- table
-            query
+            function(x, ...) {
+              ucscTableQuery(genome(x), ...)
           })
 
 setMethod("ucscTableQuery", "character",
-          function(x, ...) {
+          function(x, track = NULL, range =  getseqinfo(x, genome), table = NULL,
+                   names = NULL, intersectTrack = NULL, check = TRUE,
+                   genome = NULL, url = "http://genome.ucsc.edu/cgi-bin/") {
               stopifnot(isSingleString(x))
-              session <- browserSession()
-              genome(session) <- x
-              ucscTableQuery(session, ...)
+              if (!isSingleString(table))
+                stop("'table' is a mandatory parameter and must be a single character vector")
+              if (!is.null(intersectTrack))
+                stop("intersectTrack is no longer supported")
+              if (!is.null(track))
+                warning("track is meaningless now you only go by the table")
+              if (!is(names, "character_OR_NULL"))
+                stop("'names' must be 'NULL' or a character vector")
+              if (is.null(genome))
+                genome <- getgenome(x)
+              if (missing(range) || !check)
+                  range <- as(range, "GRanges")
+              else range <- normTableQueryRange(range, genome)
+              query <- new("UCSCTableQuery", genome = genome, range = range,
+                          NAMES = names, url = url)
+              tableName(query, check=check) <- table
+              query
           })
 
 dropCookie <- function(object) {
@@ -300,9 +300,8 @@ setMethod("tableNames", "UCSCTableQuery",
           {
             if (trackOnly)
               warning("track is meaningless now you only go by the table")
-            session <- browserSession(object)
-            genome <- genome(session)
-            url <- RestUri(paste0(session@url, "hubApi"))
+            genome <- object@genome
+            url <- RestUri(paste0(object@url, "hubApi"))
             response <- read(url$list$tracks, genome = genome, trackLeavesOnly = 1)
             names <- names(response[[genome]])
             protectedStatus <- vapply(response[[genome]], function(x) {
@@ -334,11 +333,10 @@ setGeneric("ucscSchema",
            function(object, ...) standardGeneric("ucscSchema"))
 
 setMethod("ucscSchema", "UCSCTableQuery", function(object) {
-  session <- browserSession(object)
-  genome <- genome(session)
+  genome <- object@genome
   tableName <- tableName(object)
   stopifnot(isSingleString(tableName))
-  url <- RestUri(paste0(session@url, "hubApi"))
+  url <- RestUri(paste0(object@url, "hubApi"))
   response <- read(url$list$schema, genome = genome, track = tableName)
   rowCount <- as.integer(response[["itemCount"]])
   listOfDf <- lapply(response[["columnTypes"]], function(x) {
@@ -364,11 +362,11 @@ setMethod("track", "UCSCTableQuery",
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
               stop("Unknown table: '", table, "'. Valid table names: ", tables)
-            table <- getTable(object)
-            if (is.null(table))
-              stop("Output is incomplete: ",
-                   "track may have more than 100,000 elements. ",
-                   "Try downloading the data via the UCSC FTP site.")
+              table <- getTable(object)
+              if (is.null(table))
+                stop("Output is incomplete: ",
+                    "track may have more than 100,000 elements. ",
+                    "Try downloading the data via the UCSC FTP site.")
             output <- GRanges(seqnames = table[["chrom"]], strand = table[["strand"]],
                               ranges = IRanges(start = table[["chromStart"]],
                               end = table[["chromEnd"]]))
@@ -376,8 +374,8 @@ setMethod("track", "UCSCTableQuery",
             elementMetadata(output) <- table
             if (!is.null(table[["value"]]))
               output <- GPos(output)
-            genome(output) <- genome(browserSession(object))
-            output
+              genome(output) <- object@genome
+              output
           })
 
 ## grab sequences for features in 'track' at 'range'
@@ -403,10 +401,9 @@ setGeneric("getTable",
 setMethod("getTable", "UCSCTableQuery",
           function(object)
           {
-            session <- browserSession(object)
             tableName <- tableName(object)
             stopifnot(isSingleString(tableName))
-            genome <- genome(session)
+            genome <- object@genome
             query <- list(genome = genome, track = tableName, jsonOutputArrays = 1)
             if (length(object@range) == 1L) {
               start <- start(object@range)
@@ -414,7 +411,7 @@ setMethod("getTable", "UCSCTableQuery",
               seqname <- as.vector(seqnames(object@range))
               query <- c(query, chrom = seqname, start = start, end = end)
             }
-            url <- RestUri(paste0(session@url, "hubApi"))
+            url <- RestUri(paste0(object@url, "hubApi"))
             response <- read(url$getData$track, query)
             columnTypes <- response[["columnTypes"]]
             names <- vapply(columnTypes, function(x) x$name, character(1L))
