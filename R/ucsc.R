@@ -369,6 +369,13 @@ setMethod("ucscSchema", "UCSCTableQuery", function(object) {
                 rowCount = rowCount)
 })
 
+setMethod("show", "UCSCSchema", function(object) {
+  if (!is.null(tableName(object)))
+    cat("UCSCSchema table '", tableName(object), "' with ", object@rowCount,
+        " rows and ", length(object@listData), " columns\n", sep = "")
+  show(DataFrame(object))
+})
+
 setMethod("track", "UCSCSession",
           function(object, name, ...)
           {
