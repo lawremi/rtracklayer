@@ -35,11 +35,7 @@ setMethod("initialize", "UCSCSession",
           })
 
 setMethod("seqlengths", "UCSCSession", function(x) {
-  url <- RestUri(paste0(x@url, "hubApi"))
-  response <- read(url$list$chromosomes, genome = genome(x), track = "chromInfo")
-  chromosomes <- response[[8]]
-  chromosomes <- setNames(unlist(chromosomes), names(chromosomes))
-  chromosomes[sortSeqlevels(names(chromosomes))]
+  seqlengthsFromAPI(genome(x))
 })
 
 setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
@@ -189,7 +185,7 @@ setReplaceMethod("browserSession", c("UCSCTableQuery", "UCSCSession"),
 setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
 setReplaceMethod("range", "UCSCTableQuery",
                  function(x, value) {
-                   x@range <- normTableQueryRange(value, browserSession(x))
+                   x@range <- normTableQueryRange(value, browserSession(x), 1L)
                    x
                  })
 
@@ -249,8 +245,8 @@ setReplaceMethod("intersectTrack", "UCSCTableQuery", function(x, value) {
   .Defunct(msg = "intersectTrack is no longer supported")
 })
 
-normTableQueryRange <- function(range, x) {
-  normGenomeRange(range, x, max.length = 1000L)
+normTableQueryRange <- function(range, x, max.length = 1000L) {
+  normGenomeRange(range, x, max.length)
 }
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
@@ -268,7 +264,7 @@ setMethod("ucscTableQuery", "UCSCSession",
             ## only inherit the genome from the session
             if (missing(range) || !check)
                 range <- as(range, "GRanges")
-            else range <- normTableQueryRange(range, x)
+            else range <- normTableQueryRange(range, x, 1L)
             query <- new("UCSCTableQuery", session = x, range = range,
                          NAMES = names)
             tableName(query, check=check) <- table

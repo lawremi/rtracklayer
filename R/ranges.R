@@ -196,6 +196,37 @@ singleGenome <- function(x) {
 }
 
 
+seqlengthsFromAPI <- function(genome) {
+  url <- RestUri("http://api.genome.ucsc.edu/")
+  response <- read(url$list$chromosomes, genome = genome, track = "chromInfo")
+  chromosomes <- response[["chromosomes"]]
+  chromosomes <- setNames(unlist(chromosomes), names(chromosomes))
+  chromosomes[sortSeqlevels(names(chromosomes))]
+}
+
+getseqinfo <- function(session, genome = NULL) {
+  if (is(session, "UCSCSession")) {
+    seqinfo <- seqinfo(session)
+  } else {
+    if (uriExists(session))
+      session <- genome
+    sl <- seqlengthsFromAPI(session)
+    seqinfo <- Seqinfo(names(sl), sl, genome = session)
+  }
+}
+
+setgenome <- function(session, genome) {
+  if (is(session, "UCSCSession"))
+    genome(session) <- genome
+  else genome
+}
+
+getgenome <- function(session) {
+  if (is(session, "UCSCSession"))
+    genome(session)
+  else session
+}
+
 ## normalize 'range', using 'session' for default genome
 ## if 'single' is 'TRUE', only one interval should come out of this
 normGenomeRange <- function(range, session, max.length = 1L) {
@@ -205,32 +236,38 @@ normGenomeRange <- function(range, session, max.length = 1L) {
   ## - GRanges, the preferred way, possibly from GRangesForUCSCGenome()
   ## - We do not allow IntegerRanges, since it does not make sense to have
   ##   one range over many chromosomes
+  genome <- getgenome(session)
+  seqinfo <- getseqinfo(session)
   if (is.character(range)) {
     range <- singleGenome(range)
-    genome(session) <- range
-    return(GRangesForGenome(range, seqinfo = seqinfo(session)))
+    genome <- setgenome(session, range)
+    seqinfo <- getseqinfo(session)
+    return(GRangesForGenome(range, seqinfo = seqinfo))
   }
   if (is(range, "Seqinfo"))
     range <- as(range, "GRanges")
   if (!is(range, "IntegerRangesList") && !is(range, "GenomicRanges"))
     stop("'range' should be a genome string, IntegerRangesList, GRanges or Seqinfo")
-  genome <- genome(session)
+  genome <- getgenome(session)
   if (length(seqinfo(range)) == 0L) {
     ## hack: need to avoid calling seqlengths(session) here, so use 'foo'
     seqinfo(range) <- Seqinfo("foo", genome = genome)
   } else {
     rangeGenome <- singleGenome(genome(range))
     if (!is.na(rangeGenome) && rangeGenome != genome) {
-      genome(session) <- rangeGenome
-      on.exit(genome(session) <- genome)
+      previousgenome <- genome
+      genome <- setGenome(session, rangeGenome)
+      seqinfo <- getseqinfo(session)
+      if (is(session, "UCSCSession"))
+        on.exit(genome(session) <- previousgenome)
     }
-    si <- seqinfo(session)
+    si <- seqinfo
     seqinfo(range, new2old = match(seqlevels(si), seqlevels(range))) <-
       merge(si, seqinfo(range))
   }
   if (is(range, "IntegerRangesList")) {
     range <- GRangesForGenome(singleGenome(genome(range)), names(range),
-                              unlist(range), seqinfo = seqinfo(session))
+                              unlist(range), seqinfo = seqinfo)
   } else if (is(range, "GenomicRanges")) {
     strand(range) <- "*"
     mcols(range) <- NULL
