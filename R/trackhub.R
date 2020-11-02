@@ -702,21 +702,25 @@ createTrack <- function(trackDf) {
     track
 }
 
-getTabCountList <- function(contentdf) {
-    matches <- gregexpr("^(\\t)+", contentdf)
+getTabCountList <- function(filepath) {
+    fileContent <- readLines(filepath, warn = FALSE)
+    fileContent <- gsub("^\\t*\\s*#(.)*", "", fileContent)
+    fileContent <- fileContent[fileContent != ""]
+    matches <- gregexpr("^\\s+", fileContent)
     tabCountList <- vapply(matches, attr, integer(1L), "match.length")
-    tabCountList
+    indexes <- grep(-1, tabCountList)
+    tabCountList <- replace(tabCountList, indexes, 0)
+    as.integer(tabCountList)
 }
 
-readAndSanitize <- function(filepath) {
+readFileAsDf <- function(filepath) {
     fileContent <- readLines(filepath, warn = FALSE)
     fileContent <- gsub("^(\\t)*#(.)*", "", fileContent) # to avoid reading commented tracks
-    fileContent <- gsub(",", ";", fileContent)
-    contentDf <- read.csv(text = sub(" ", ",", fileContent), header = FALSE)
-    contentDf$V2 <- gsub(";", ",", contentDf$V2)
-    nonEmptyContent <- vapply(contentDf$V2, function(x) x!="", logical(1L))
-    contentDf <- contentDf[nonEmptyContent,]
-    contentDf
+    regex <- "^\\s*\\t*([a-zA-Z.]+)\\s?(.*)$"
+    field <- sub(regex, "\\1", fileContent)
+    value <- sub(regex, "\\2", fileContent)
+    contentDf <- data.frame(field, value)
+    contentDf <- contentDf[contentDf$field != "",]
 }
 
 getTrackDbContent <- function(x, trackDbFilePath) {
@@ -724,20 +728,19 @@ getTrackDbContent <- function(x, trackDbFilePath) {
         x@tracks <- TrackContainer()
         return(x)
     }
-    contentDf <- readAndSanitize(trackDbFilePath)
-    tracksIndex <- grep("\\btrack\\b", contentDf$V1)
-    levels <- getTabCountList(contentDf$V1)
+    contentDf <- readFileAsDf(trackDbFilePath)
+    levels <- getTabCountList(trackDbFilePath)
+    tracksIndex <- grep("\\btrack\\b", contentDf$field)
     levels <- levels[tracksIndex]
-    levels <- as.integer(gsub(-1, 0, levels))
     totalTracks <- length(tracksIndex)
-    tracksIndex[length(tracksIndex) + 1] <- length(contentDf$V1) + 1 # to read last track from file
-    contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
+    tracksIndex[length(tracksIndex) + 1] <- length(contentDf$field) + 1 # to read last track from file
+    contentDf$field <- gsub("^(\\t)+", "", contentDf$field)
     # to speed up, reading track by track
-    tracks <- lapply(c(1:totalTracks), function(x) {
+    tracks <- lapply(seq_len(totalTracks), function(x) {
         startPosition <- tracksIndex[x]
         endPosition <- tracksIndex[x + 1] - 1
-        trackDf <- setNames(data.frame(contentDf$V1[startPosition:endPosition],
-                                     contentDf$V2[startPosition:endPosition]),
+        trackDf <- setNames(data.frame(contentDf$field[startPosition:endPosition],
+                                       contentDf$value[startPosition:endPosition]),
                           c("field", "value"))
         track <- createTrack(trackDf)
     })
