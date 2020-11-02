@@ -539,7 +539,7 @@ setMethod("getTable", "UCSCTableQuery",
           })
 setMethod("getTable", "UCSCSession",
           function(object, name, range = base::range(object), table = NULL) {
-            getTable(ucscTableQuery(object, name, range, table))
+            getTable(ucscTableQuery(object, range = range, table = table))
           })
 
 ## UCSC genome view
