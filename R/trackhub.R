@@ -692,6 +692,10 @@ createTrack <- function(trackDf) {
         metadata = "character", noInherit = "logical", useScore = "integer")
     trackDf$value <- gsub("\\b[Oo]n\\b", "TRUE", trackDf$value)
     trackDf$value <- gsub("\\b[Oo]ff\\b", "FALSE", trackDf$value)
+    extrafields <- setdiff(trackDf$field, names(fieldToType))
+    selectedRows <- !(trackDf$field == extrafields)
+    if (length(selectedRows))
+        trackDf <- trackDf[selectedRows,]
     args <- Map(as, trackDf$value, fieldToType[trackDf$field])
     names(args) <- trackDf$field
     track <- do.call(Track, args)
