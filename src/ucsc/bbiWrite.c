@@ -329,7 +329,7 @@ if (initialReduction == 0)
 /* Call routine to make the initial zoom level and also a bit of work towards further levels. */
 struct lm *lm = lmInit(0);
 int zoomIncrement = bbiResIncrement;
-lineFileRewind(lf);
+// lineFileRewind(lf);
 struct bbiSummary *rezoomedList = writeReducedOnceReturnReducedTwice(usageList, fieldCount,
 	lf, initialReduction, initialReducedCount,
 	zoomIncrement, blockSize, itemsPerSlot, doCompress, lm, 

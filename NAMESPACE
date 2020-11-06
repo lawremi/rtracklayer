@@ -44,7 +44,7 @@ import(BiocIO)
 
 importFrom("Biostrings", get_seqtype_conversion_lookup, writeXStringSet,
            DNAStringSet, DNA_BASES, DNA_ALPHABET, alphabetFrequency,
-           reverseComplement)
+           reverseComplement, uniqueLetters)
 importMethodsFrom("Biostrings", masks, "masks<-", getSeq)
 importClassesFrom("Biostrings", DNAStringSet, XStringSet)
 
@@ -65,13 +65,14 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
               UCSCSession, UCSCView,
               UCSCData, TrackLine, BasicTrackLine, GraphTrackLine,
               Bed15TrackLine, UCSCTrackModes, BigWigSelection,
-              UCSCSchema, Quickload, QuickloadGenome)
+              BigBedSelection, UCSCSchema, Quickload, QuickloadGenome,
+              TrackHub, TrackHubGenome, Track, TrackContainer)
 
 ## File classes
-exportClasses(RTLFile, RTLFileList, CompressedFile, GFFFile, UCSCFile, BEDFile,
-              WIGFile, ChainFile, FastaFile, GFF1File, GFF2File, GFF3File,
-              BEDGraphFile, BED15File, GTFFile, GVFFile, BigWigFile,
-              BigWigFileList, TwoBitFile, BEDPEFile)
+exportClasses(RTLFile, RTLFileList, CompressedFile, GFFFile, UCSCFile, BEDFile, WIGFile,
+              ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,
+              BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, BigBedFile,
+              TwoBitFile, BEDPEFile)
 
 exportMethods(activeView, "activeView<-", blocks, browseGenome,
               browserSession, "browserSession<-",
@@ -79,10 +80,11 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               close, export, export.bed, export.bed15,
               export.bedGraph, export.gff, export.gff1, export.gff2,
               export.gff3, export.ucsc, export.wig, export.bw,
-              export.2bit,
+              export.bb, export.2bit,
               import, import.bed, import.bed15, import.bedGraph,
               import.gff, import.gff1, import.gff2, import.gff3,
-              import.ucsc, import.wig, import.bw, import.chain, import.2bit,
+              import.ucsc, import.wig, import.bw, import.chain,
+              import.2bit, import.bb,
               exportToTabix,
               "track<-",
               track, trackNames, "trackNames<-", getTable,
@@ -99,6 +101,10 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               referenceSequence, "referenceSequence<-",
               asBED, asGFF,
               split, fileFormat,
+              hub, "hub<-", shortLabel, "shortLabel<-", longLabel, "longLabel<-",
+              genomesFile, "genomesFile<-", email, "email<-", descriptionUrl,
+              "descriptionUrl<-", genomeField, "genomeField<-", getTracks , writeTrackHub,
+              trackField, "trackField<-", genomeInfo, "genomeInfo<-",
               ## from IRanges
               start, end, "start<-", "end<-",
               score, "score<-",
@@ -114,14 +120,16 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        score, "score<-", as.data.frame, space,
        ucscGenomes,
        readGFFPragmas, sniffGFFVersion, GFFcolnames, readGFF, readGFFAsGRanges,
-       BigWigSelection, GRangesForUCSCGenome, GRangesForBSGenome,
-       summary, seqinfo, genome, "genome<-",
+       BigWigSelection, BigBedSelection,
+       GRangesForUCSCGenome, GRangesForBSGenome,
+       summary, seqinfo, genome, "genome<-", Genome,
        uri, Quickload, quickload, QuickloadGenome,
-       organism, releaseDate, mcols, wigToBigWig,
+       organism, releaseDate, mcols, TrackHub, trackhub, TrackHubGenome,
+       Track, TrackContainer, wigToBigWig,
        SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path,
-       FileForFormat, cleanupBigWigCache, viewURL)
+       FileForFormat, cleanupBigWigCache, cleanupBigBedCache, viewURL)
 
 export(GFFFile, UCSCFile, BEDFile, WIGFile,
        ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,
        BED15File, GTFFile, GVFFile, BigWigFile, BigWigFileList, TwoBitFile,
-       BEDPEFile)
+       BEDPEFile, BigBedFile)

@@ -8,19 +8,23 @@
 
 setClass("Quickload", representation(uri = "character"))
 
-uri <- function(x, ...) x@uri
-
 Quickload_contents <- function(x) {
   read.table(contentsFile(x), sep = "\t", col.names = c("dir", "title"),
              colClasses = "character")
 }
+
+setGeneric("uri", function(x) standardGeneric("uri"))
+
+setMethod("uri", "Quickload", function(x) {
+  x@uri
+})
 
 setMethod("genome", "Quickload", function(x) {
   contents <- Quickload_contents(x)
   as.character(structure(contents$dir, names = contents$title))
 })
 
-setMethod("names", "Quickload", genome)
+setMethod("names", "Quickload", function(x) genome(x))
 
 setMethod("length", "Quickload", function(x) length(names(x)))
 
@@ -113,6 +117,10 @@ setMethod("names", "QuickloadGenome", function(x) {
   x_mcols <- mcols(x)
   structure(sapply(as.character(x_mcols$name), URLdecode),
             names = as.character(x_mcols$title))
+})
+
+setMethod("trackNames", "QuickloadGenome", function(object) {
+  names(object)
 })
 
 setMethod("mcols", "QuickloadGenome", function(x) {
