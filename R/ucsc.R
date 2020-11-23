@@ -417,7 +417,7 @@ setMethod("track", "UCSCTableQuery",
                                   end = table[["end"]]))
                 table[["chrom"]] = table[["start"]] = table[["end"]] = NULL
                 elementMetadata(output) <- table
-                output <- GPos(output)
+                # output <- GPos(output)
               }
               genome(output) <- object@genome
               output
