@@ -402,7 +402,7 @@ setMethod("track", "UCSCTableQuery",
                track
             } else {
               table <- getTable(object)
-              if (is.null(table))
+              if (nrow(table) == 1000000)
                 stop("Output is incomplete: ",
                     "track may have more than 100,000 elements. ",
                     "Try downloading the data via the UCSC FTP site.")
