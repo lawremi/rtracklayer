@@ -35,14 +35,13 @@ setMethod("initialize", "UCSCSession",
           })
 
 setMethod("seqlengths", "UCSCSession", function(x) {
-  seqlengthsFromAPI(genome(x))
+  seqlengths(seqinfo(x))
 })
 
 setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
 
 setMethod("seqinfo", "UCSCSession", function(x) {
-  sl <- seqlengths(x)
-  Seqinfo(names(sl), sl, genome = genome(x)) # no circularity information
+  Seqinfo(genome = genome(x)) # no circularity information
 })
 
 normArgTrackData <- function(value, session) {
@@ -257,7 +256,7 @@ setMethod("ucscTableQuery", "UCSCSession",
           })
 
 setMethod("ucscTableQuery", "character",
-          function(x, track = NULL, range =  getseqinfo(x, genome), table = NULL,
+          function(x, track = NULL, range =  NULL, table = NULL,
                    names = NULL, intersectTrack = NULL, check = TRUE, hubUrl = NULL,
                    genome = NULL, url = "http://genome.ucsc.edu/cgi-bin/") {
               stopifnot(isSingleString(x))
@@ -269,13 +268,13 @@ setMethod("ucscTableQuery", "character",
                 warning("track is meaningless now you only go by the table")
               if (!is(names, "character_OR_NULL"))
                 stop("'names' must be 'NULL' or a character vector")
-              if (is.null(genome))
-                genome <- getgenome(x)
-              if (uriExists(x)) {
+              if (uriExists(x)) { # if x is URI and it exits that means it's a trackHub
                 if (is.null(genome))
                   stop("'genome' is a mandatory parameter and must be a single character vector")
                 hubUrl <- x
-              }
+              } else genome <- x
+              if (is.null(range))
+                range <- Seqinfo(genome = genome)
               if (missing(range) || !check)
                   range <- as(range, "GRanges")
               else range <- normTableQueryRange(range, genome)
