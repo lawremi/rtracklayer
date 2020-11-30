@@ -206,10 +206,7 @@ normGenomeRange <- function(range, session, max.length = 1L) {
   ##   one range over many chromosomes
   if (is.character(range)) {
     range <- singleGenome(range)
-    if (is(session, "UCSCSession")) {
-        seqinfo <- seqinfo(session)
-        genome(session) <- range
-    } else seqinfo <- Seqinfo(genome = range)
+    seqinfo <- Seqinfo(genome = range)
     return(GRangesForGenome(range, seqinfo = seqinfo))
   }
 
