@@ -143,6 +143,12 @@ setMethod("liftOver", c("GRangesList", "Chain"),
               IRanges:::regroupBySupergroup(lifted, PartitioningByEnd(x))
           })
 
+setMethod("liftOver", c("Pairs", "Chain"),
+          function(x, chain) {
+              Pairs(liftOver(first(x), chain),
+                    liftOver(second(x), chain))
+          })
+
 setMethod("liftOver", c("ANY", "ANY"),
           function(x, chain) {
     chain <- as(chain, "Chain")
