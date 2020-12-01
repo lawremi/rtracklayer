@@ -6,7 +6,7 @@
 ### Classes
 ###
 
-setClass("BEDFile", contains = "RTLFile")
+setClass("BEDFile", contains = "BiocFile")
 BEDFile <- function(resource) {
   new("BEDFile", resource = resource)
 }
@@ -210,7 +210,7 @@ setMethod("export", c("CompressedGRangesList", "BEDFile"),
           })
 
 setMethod("export", c("SimpleGRangesList", "BEDFile"),
-          .export_SimpleGRangesList_RTLFile)
+          .export_SimpleGRangesList_BiocFile)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Import

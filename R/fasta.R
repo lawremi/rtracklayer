@@ -5,7 +5,7 @@
 ### Since we have 2bit, we might as well have FASTA
 ###
 
-setClass("FastaFile", contains = "RTLFile")
+setClass("FastaFile", contains = "BiocFile")
 
 FastaFile <- function(resource) {
   new("FastaFile", resource = resource)

@@ -12,7 +12,7 @@
 \alias{import,UCSCFile,ANY,ANY-method}
 \alias{import.ucsc}
 \alias{import.ucsc,ANY-method}
-\alias{import.ucsc,RTLFile-method}
+\alias{import.ucsc,BiocFile-method}
 
 %% Export:
 \alias{export,ANY,UCSCFile,ANY-method}
@@ -21,7 +21,7 @@
 \alias{export,UCSCData,UCSCFile,ANY-method}
 \alias{export.ucsc}
 \alias{export.ucsc,ANY,ANY-method}
-\alias{export.ucsc,ANY,RTLFile-method}
+\alias{export.ucsc,ANY,BiocFile-method}
 
 \title{UCSCFile objects}
 
@@ -70,7 +70,7 @@ export.ucsc(object, con, ...)
   }
   \item{subformat}{The file format to use for the actual features,
     between the track lines. Must be a text-based format that is
-    compatible with track lines (most are). If an \code{RTLFile}
+    compatible with track lines (most are). If an \code{\link[BiocIO]{BiocFile}}
     subclass other than \code{UCSCFile} is passed as \code{con} to
     \code{import.ucsc} or \code{export.ucsc}, the subformat is assumed
     to be the corresponding format of \code{con}. Otherwise it defaults
@@ -149,7 +149,7 @@ export.ucsc(object, con, ...)
 }
 
 \section{UCSCFile objects}{
-  The \code{UCSCFile} class extends \code{\linkS4class{RTLFile}} and is a
+  The \code{UCSCFile} class extends \code{\link[BiocIO]{BiocFile}} and is a
   formal represention of a resource in the UCSC format.
   To cast a path, URL or connection to a \code{UCSCFile}, pass it to
   the \code{UCSCFile} constructor.

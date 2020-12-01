@@ -6,7 +6,7 @@
 \alias{track<-,UCSCSession,GenomicRangesList-method}
 \alias{range<-}
 \alias{range<-,UCSCSession-method}
-\alias{track<-,UCSCSession,RTLFile-method}
+\alias{track<-,UCSCSession,BiocFile-method}
 \alias{genome,UCSCSession-method}
 \alias{genome<-,UCSCSession-method}
 \alias{range,UCSCSession-method}

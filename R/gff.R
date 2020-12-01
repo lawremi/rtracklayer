@@ -6,7 +6,7 @@
 ### Classes
 ###
 
-setClass("GFFFile", contains = "RTLFile")
+setClass("GFFFile", contains = "BiocFile")
 
 ## private
 GFFFile <- function(resource, version = c("", "1", "2", "3")) {
@@ -211,7 +211,7 @@ setMethod("export", c("GenomicRanges", "GFFFile"),
           })
 
 setMethod("export", c("SimpleGRangesList", "GFFFile"),
-          .export_SimpleGRangesList_RTLFile)
+          .export_SimpleGRangesList_BiocFile)
 
 setGeneric("export.gff1",
            function(object, con, ...) standardGeneric("export.gff1"))

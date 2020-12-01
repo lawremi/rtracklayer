@@ -95,7 +95,7 @@ setReplaceMethod("track", c("UCSCSession", "SimpleGRangesList"),
             object
           })
 
-setReplaceMethod("track", c("UCSCSession", "RTLFile"),
+setReplaceMethod("track", c("UCSCSession", "BiocFile"),
                  function(object, name = names(value), ..., value)
                  {
                    form <- ucscForm(value, genome(object), ...)
@@ -1222,7 +1222,7 @@ splitUCSCData <- function(x, f, drop=FALSE, ...) {
 setMethod("split", "UCSCData", splitUCSCData)
 setMethod("split", c("UCSCData", "Vector"), splitUCSCData)
 
-setClass("UCSCFile", contains = "RTLFile")
+setClass("UCSCFile", contains = "BiocFile")
 
 UCSCFile <- function(resource) {
   new("UCSCFile", resource = resource)
@@ -1235,7 +1235,7 @@ UCSCFile <- function(resource) {
 setGeneric("export.ucsc",
            function(object, con, ...) standardGeneric("export.ucsc"))
 
-setMethod("export.ucsc", c("ANY", "RTLFile"),
+setMethod("export.ucsc", c("ANY", "BiocFile"),
           function(object, con, subformat = "auto", ...)
           {
             if (subformat == "auto" && !is(con, "UCSCFile"))
@@ -1249,7 +1249,7 @@ setMethod("export.ucsc", c("ANY", "ANY"),
             export(object, con, "ucsc", ...)
           })
 
-.export_SimpleGRangesList_RTLFile <- function(object, con, format, ...) {
+.export_SimpleGRangesList_BiocFile <- function(object, con, format, ...) {
   export(object, UCSCFile(resource(con)), subformat = fileFormat(con), ...)
 }
 
@@ -1270,7 +1270,7 @@ setMethod("export", c("GRangesList", "UCSCFile"),
                                     append = append, index = index, ...)
               append <- TRUE
             }
-            RTLFileList(tracks)
+            BiocFileList(tracks)
           })
 
 trackLineClass <- function(subformat)
@@ -1390,7 +1390,7 @@ setMethod("import.ucsc", "ANY",
             import(con, "ucsc", ...)
           })
 
-setMethod("import.ucsc", "RTLFile",
+setMethod("import.ucsc", "BiocFile",
           function(con, subformat = "auto", ...)
           {
             if (!is(con, "UCSCFile")) {
@@ -1693,7 +1693,7 @@ setMethod("ucscForm", "SimpleGRangesList",
             genome <- singleGenome(genome(object))
             ucscForm(upload, genome)
           })
-setMethod("ucscForm", "RTLFile",
+setMethod("ucscForm", "BiocFile",
           function(object, genome, ...)
           {
             upload <- fileUpload(path(object), "text/plain")

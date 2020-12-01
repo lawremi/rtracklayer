@@ -21,7 +21,7 @@ setGeneric("queryForResource",
 ## that subsetting by 'which' has been performed and is no longer
 ## necessary. Probably premature.
 
-setMethod("queryForResource", "RTLFile", function(manager, x, which = NULL, ...)
+setMethod("queryForResource", "BiocFile", function(manager, x, which = NULL, ...)
 {
   r <- resource(x)
   ans <- structure(r, usedWhich = FALSE)

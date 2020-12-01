@@ -236,7 +236,7 @@ export.gff3(object, con, ...)
 }
 
 \section{GFFFile objects}{
-  The \code{GFFFile} class extends \code{\linkS4class{RTLFile}} and is a
+  The \code{GFFFile} class extends \code{\link[BiocIO]{BiocFile}} and is a
   formal represention of a resource in the GFF format.
   To cast a path, URL or connection to a \code{GFFFile}, pass it to
   the \code{GFFFile} constructor. The \code{GFF1File}, \code{GFF2File},
