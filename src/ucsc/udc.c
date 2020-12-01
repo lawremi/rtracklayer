@@ -30,6 +30,7 @@
 #endif
 
 #include <sys/file.h>
+#include <locale.h>
 #include "common.h"
 #include "hash.h"
 #include "obscure.h"
@@ -408,11 +409,17 @@ struct tm tm;
 time_t t;
 // Last-Modified: Wed, 15 Nov 1995 04:58:08 GMT
 // This will always be GMT
+char *locale = cloneString(setlocale(LC_TIME, NULL));
+setlocale(LC_TIME, "C");
 if (strptime(lastModString, "%a, %d %b %Y %H:%M:%S %Z", &tm) == NULL)
     { /* Handle error */;
+    setlocale(LC_TIME, locale);
+    freeMem(locale);
     hashFree(&hash);
     errAbort("unable to parse last-modified string [%s]", lastModString);
     }
+setlocale(LC_TIME, locale);
+freeMem(locale);
 t = mktimeFromUtc(&tm);
 if (t == -1)
     { /* Handle error */;
