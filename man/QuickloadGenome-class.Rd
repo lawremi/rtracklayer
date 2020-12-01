@@ -131,7 +131,8 @@
         Currently, supported \code{value} types include a
         \code{GenomicRanges}, \code{GRangesList}, or a file resource
         (copied to the repository).  The file resource may be
-        represented as a path, URL, \code{\link[BiocIO]{BiocFile}} or
+        represented as a path, URL,
+        \code{\link[BiocIO:BiocFile-class]{BiocFile}} or
         \code{\link[Rsamtools:RsamtoolsFile-class]{RsamtoolsFile}}. If
         not a file name, \code{value} is written in \code{format}. For
         generic interval data, this means a BigWig file (if there is a

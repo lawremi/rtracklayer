@@ -95,7 +95,8 @@ export.2bit(object, con, ...)
 
 \section{\code{TwoBitFile} objects}{
   A \code{TwoBitFile} object, an extension of
-  \code{\link[BiocIO]{BiocFile}} is a reference to a TwoBit file. To cast
+  \code{\link[BiocIO:BiocFile-class]{BiocFile-class}}
+  is a reference to a TwoBit file. To cast
   a path, URL or connection to a \code{TwoBitFile}, pass it to the
   \code{TwoBitFile} constructor.
 

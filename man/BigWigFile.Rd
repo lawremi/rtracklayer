@@ -125,8 +125,8 @@ export.bw(object, con, ...)
 
 \section{\code{BigWigFile} objects}{
   A \code{BigWigFile} object, an extension of
-  \code{\link[BiocIO]{BiocFile}} is a reference to a BigWig file. To cast
-  a path, URL or connection to a \code{BigWigFile}, pass it to the
+  \code{\link[BiocIO:BiocFile-class]{BiocFile}} is a reference to a BigWig file.
+  To cast a path, URL or connection to a \code{BigWigFile}, pass it to the
   \code{BigWigFile} constructor.
 
   BigWig files are more complex than most track files, and there are a

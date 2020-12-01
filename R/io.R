@@ -38,10 +38,10 @@ setMethod("show", "RTLFile", function(object) {
 
 setMethod("as.character", "RTLFile", function(x) path(x))
 
-resource <- function(x) {
-    .Deprecated("resource", msg = "Use BiocIO::resource()")
-    BiocIO::resource(x)
-}
+#resource <- function(x) {
+#    .Deprecated("resource", msg = "Use BiocIO::resource()")
+#    BiocIO::resource(x)
+#}
 
 path <- function(object) {
     .Deprecated("path", msg = "Use BiocIO::path")
@@ -101,7 +101,7 @@ normURI <- function(x) {
     stop("URI must be a single, non-NA string")
   uri <- .parseURI(x)
   if (uri$scheme == "") # /// (vs. //) needed for Windows
-    x <- paste("file:///", file_path_as_absolute(x), sep = "")
+    x <- paste("/", file_path_as_absolute(x), sep = "")
   x
 }
 
@@ -161,6 +161,31 @@ connectionForResource <- function(manager, x, open = "") {
   }
   con
 }
+
+## BestFileFormat
+
+setGeneric("bestFileFormat",
+           function(x, dest, ...) standardGeneric("bestFileFormat"))
+
+setMethod("bestFileFormat", c("GenomicRanges", "ANY"),
+          function(x, dest) {
+            ## have numbers on a single strand, use BigWig
+            if (is.numeric(score(x)) && length(unique(strand(x))) == 1L)
+              "bw"
+            else "bed"
+          })
+
+setMethod("bestFileFormat", c("GRangesList", "ANY"), function(x, dest) {
+  "bed" # need hierarchical structure
+})
+
+setMethod("bestFileFormat", c("RleList", "ANY"), function(x, dest) {
+  "bw" # e.g., coverage
+})
+
+setMethod("bestFileFormat", c("IntegerRangesList", "ANY"), function(x, dest) {
+  "bed" # just ranges...
+})
 
 ## Connection management (similar to memory management)
 
