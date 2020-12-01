@@ -1,30 +1,3 @@
-### =========================================================================
-### Import/export support
-### -------------------------------------------------------------------------
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Classes files and connections
-###
-
-### RTLFile is a base class for high-level file abstractions, where
-### subclasses are associated with a particular file format/type. It
-### wraps a low-level representation of a file, currently either a
-### path/URL or connection.
-
-setClass("RTLFile", representation(resource = "character_OR_connection"),
-         contains = "VIRTUAL")
-
-setClass("RTLFileList",
-         prototype = prototype(elementType = "RTLFile"),
-         contains = "SimpleList")
-
-RTLFileList <- function(files) {
-    new("RTLFileList", listData = files)
-}
-
-setMethod("showAsCell", "RTLFileList", function(object) {
-    showAsCell(vapply(object, path, character(1L)))
-})
 
 .ConnectionManager <- setRefClass("ConnectionManager",
                                   fields = c(connections = "list"))
@@ -48,27 +21,6 @@ resourceDescription <- function(x) {
     r <- summary(r)$description
   r
 }
-
-setGeneric("fileFormat", function(x) NULL)
-
-setMethod("fileFormat", "character", function(x) fileFormat(FileForFormat(x)))
-
-setMethod("fileFormat", "RTLFile", function(x)
-    tolower(sub("File$", "", class(x))))
-
-setMethod("path", "RTLFile", function(object) {
-  r <- resource(object)
-  if (!is.character(r))
-    stop("Connection resource requested as a path")
-  r
-})
-
-setMethod("show", "RTLFile", function(object) {
-  r <- resource(object)
-  if (!isSingleString(r))
-    r <- summary(r)$description
-  cat(class(object), "object\nresource:", r, "\n")
-})
 
 FileForFormat <- function(path, format = file_ext(path)) {
   if (!(isSingleString(path) || is(path, "connection")))
@@ -108,86 +60,6 @@ FileForFormat <- function(path, format = file_ext(path)) {
   get(constructorName, ns)(path)
 }
 
-setMethod("as.character", "RTLFile", function(x) path(x))
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Export
-###
-
-setGeneric("export",
-           function(object, con, format, ...) standardGeneric("export"))
-
-setMethod("export", c(con = "connection", format = "character"),
-          function(object, con, format, ...)
-          {
-            export(object, FileForFormat(con, format), ...)
-          })
-
-setMethod("export", c(con = "connection", format = "missing"),
-          function(object, con, format, ...)
-          {
-            format <- file_ext(summary(con)$description)
-            export(object, con, format, ...)
-          })
-
-setMethod("export", c(con = "missing", format = "character"),
-          function(object, con, format, ...)
-          {
-            con <- file()
-            on.exit(close(con))
-            export(object, con, format, ...)
-            text <- readLines(con, warn = FALSE)
-            text
-          })
-setMethod("export", c(con = "character", format = "missing"),
-          function(object, con, format, ...)
-          {
-            export(object, FileForFormat(con), ...)
-          })
-setMethod("export", c(con = "character", format = "character"),
-          function(object, con, format, ...)
-          {
-            export(object, FileForFormat(con, format), ...)
-          })
-
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Import
-###
-
-setGeneric("import",
-           function(con, format, text, ...) standardGeneric("import"))
-
-setMethod("import", c("connection", "character"),
-          function(con, format, text, ...)
-          {
-            import(FileForFormat(con, format), ...)
-          })
-setMethod("import", c("connection", "missing"),
-          function(con, format, text, ...)
-          {
-            format <- file_ext(summary(con)$description)
-            import(con, format, ...)
-          })
-setMethod("import", c("character", "missing"),
-          function(con, format, text, ...)
-          {
-            import(FileForFormat(con), ...)
-          })
-setMethod("import", c("character", "character"),
-          function(con, format, text, ...)
-          {
-            import(FileForFormat(con, format), ...)
-          })
-setMethod("import", c(con = "missing", text = "character"),
-          function(con, format, text, ...)
-          {
-            con <- file()
-            on.exit(close(con))
-            writeLines(text, con)
-            obj <- import(FileForFormat(con, format), ...)
-            obj
-          })
-
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
 ###
@@ -211,23 +83,17 @@ setMethod("bestFileFormat", c("RleList", "ANY"), function(x, dest) {
   "bw" # e.g., coverage
 })
 
-setMethod("bestFileFormat", c("IntegerRangesList", "ANY"), function(x, dest) {
+setMethod("bestFileFormat", c("RangesList", "ANY"), function(x, dest) {
   "bed" # just ranges...
 })
 
-## First checks for Windows drive letter.
+## Uses XML::parseURI, except first checks for Windows drive letter.
 ## There are no known URI schemes that are only a single character.
-isURL <- function(uri) {
-    if (!isSingleString(uri))
-        return(FALSE)
-    windowsDriveLetter <- .Platform$OS.type == "windows" &&
-        grepl("^[A-Za-z]:[/\\]", uri)
-    grepl("^[A-Za-z]+:", uri) && !windowsDriveLetter
-}
-
-## Uses XML::parseURI, except custom check for whether it is a URL
 .parseURI <- function(uri) {
-  if (!isURL(uri)) {
+  windowsDriveLetter <- .Platform$OS.type == "windows" &&
+      grepl("^[A-Za-z]:[/\\]", uri)
+  hasScheme <- grepl("^[A-Za-z]+:", uri) && !windowsDriveLetter
+  if (!hasScheme) {
     parsed <- parseURI("")
     parsed$path <- uri
   } else {
@@ -260,7 +126,7 @@ createResource <- function(x, dir = FALSE, content = "") {
 
 uriExists <- function(x) {
   uri <- .parseURI(x)
-  if (uriIsLocal(uri)) {
+  if (uriIsLocal(x)) {
     exists <- file.exists(uri$path)
   } else {
     txt <- getURL(x, header = TRUE)
@@ -306,56 +172,33 @@ connectionForResource <- function(manager, x, open = "") {
 
 ## Connection management (similar to memory management)
 
-manage <- function(manager, con) {
-    manager$connections <- unique(c(manager$connections, list(con)))
-    attr(con, "manager") <- manager
-    con
+manage <- function(con) {
+  if (!is.null(attr(con, "finalizerEnv")))
+    return(con)
+  env <- new.env()
+  finalizer <- function(obj) {
+    if (exists("con", parent.env(environment()), inherits=FALSE)) {
+      close(con)
+      rm(con, inherits = TRUE)
+      TRUE
+    } else FALSE
+  }
+  env$finalizer <- finalizer
+  reg.finalizer(env, finalizer)
+  attr(con, "finalizerEnv") <- env
+  rm(env)
+  con
 }
 
-managed <- function(manager, con) {
-    con %in% manager$connections
+unmanage <- function(con) {
+  attr(con, "finalizerEnv") <- NULL
+  con
 }
 
-unmanage <- function(manager, con) {
-    manager$connections <- setdiff(manager$connections, con)
-    attr(con, "manager") <- NULL
-    con
+release <- function(con) {
+  env <- attr(con, "finalizerEnv")
+  if (!is.null(env))
+    env$finalizer()
+  else FALSE
 }
 
-release <- function(manager, con) {
-    if (managed(manager, con)) {
-        unmanage(manager, con)
-        close(con)
-    }
-    con
-}
-
-## manage <- function(con) {
-##   if (!is.null(attr(con, "finalizerEnv")))
-##     return(con)
-##   env <- new.env()
-##   finalizer <- function(obj) {
-##     if (exists("con", parent.env(environment()), inherits=FALSE)) {
-##       close(con)
-##       rm(con, inherits = TRUE)
-##       TRUE
-##     } else FALSE
-##   }
-##   env$finalizer <- finalizer
-##   reg.finalizer(env, finalizer)
-##   attr(con, "finalizerEnv") <- env
-##   rm(env)
-##   con
-## }
-
-## unmanage <- function(con) {
-##   attr(con, "finalizerEnv") <- NULL
-##   con
-## }
-
-## release <- function(con) {
-##   env <- attr(con, "finalizerEnv")
-##   if (!is.null(env))
-##     env$finalizer()
-##   else FALSE
-## }
