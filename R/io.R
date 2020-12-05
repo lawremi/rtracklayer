@@ -118,7 +118,7 @@ createResource <- function(x, dir = FALSE, content = "") {
 
 uriExists <- function(x) {
   uri <- .parseURI(x)
-  if (uriIsLocal(x)) {
+  if (uriIsLocal(uri)) {
     exists <- file.exists(uri$path)
   } else {
     txt <- getURL(x, header = TRUE)

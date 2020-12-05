@@ -286,7 +286,7 @@ Genome <- function(...) {
 }
 
 stopIfNotGenome <- function(x) {
-    if (!is(value, "Genome"))
+    if (!is(x, "Genome"))
         stop("value must be Genome object")
 }
 

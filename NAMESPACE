@@ -14,7 +14,7 @@ import(zlibbioc)
 
 importFrom("stats", offset, setNames)
 importFrom("utils", count.fields, URLdecode, URLencode, browseURL,
-           download.file, read.table, type.convert, write.table,
+           download.file, read.table, read.csv, type.convert, write.table,
            packageVersion, strcapture)
 importFrom("tools", file_path_as_absolute, file_ext, file_path_sans_ext)
 importFrom("grDevices", col2rgb, rgb)
@@ -23,7 +23,7 @@ importFrom("grDevices", col2rgb, rgb)
 ### Non-bioconductor packages
 ###
 
-importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse,
+importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse, xmlTreeParse,
            xmlInternalTreeParse, parseURI, newXMLNode, xmlChildren,
            addChildren, removeChildren, readHTMLTable)
 importMethodsFrom("XML", saveXML)
