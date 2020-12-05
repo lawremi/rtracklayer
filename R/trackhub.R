@@ -938,7 +938,7 @@ setReplaceMethod("track",
                  })
 
 setReplaceMethod("track",
-                 signature(object = "TrackHubGenome", value = "RTLFile"),
+                 signature(object = "TrackHubGenome", value = "BiocFile"),
                  function(object, name, ..., value)
                  {
                      if (missing(name))
