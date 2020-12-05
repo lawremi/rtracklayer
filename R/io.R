@@ -94,7 +94,7 @@ normURI <- function(x) {
     stop("URI must be a single, non-NA string")
   uri <- .parseURI(x)
   if (uri$scheme == "") # /// (vs. //) needed for Windows
-    x <- paste("/", file_path_as_absolute(x), sep = "")
+    x <- paste("file:///", file_path_as_absolute(x), sep = "")
   x
 }
 
