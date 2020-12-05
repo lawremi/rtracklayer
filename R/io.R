@@ -7,13 +7,6 @@ setMethod("initialize", "RTLFile", function(.Object, ...) {
     callNextMethod()
 })
 
-setClass("CompressedFile", contains = c("RTLFile", "VIRTUAL"))
-
-setMethod("initialize", "CompressedFile", function(.Object, ...) {
-    .Deprecated("CompressedFile", msg = "This class is extending the deprecated CompressedFile class from rtracklayer. Use CompressedFile from BiocIO in place of CompressedFile from rtracklayer.")
-    callNextMethod()
-})
-
 setClass("RTLFileList",
          prototype = prototype(elementType = "RTLFile"),
          contains = "SimpleList")
