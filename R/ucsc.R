@@ -112,7 +112,7 @@ setMethod("range", "UCSCSession",
 
 setReplaceMethod("range", "UCSCSession",
                  function(x, value) {
-                   ucscGet(x, "cart", ucscForm(normGenomeRange(value, x)))
+                   ucscGet(x, "cart", ucscForm(normGenomeRange(value, seqinfo(x))))
                    x
                  })
 
@@ -245,8 +245,9 @@ setReplaceMethod("intersectTrack", "UCSCTableQuery", function(x, value) {
   .Defunct(msg = "intersectTrack is no longer supported")
 })
 
-normTableQueryRange <- function(range, x, max.length = 1000L) {
-  normGenomeRange(range, x, max.length)
+normTableQueryRange <- function(range, genome, max.length = 1000L) {
+  seqinfo <- Seqinfo(genome = genome)
+  normGenomeRange(range, seqinfo, max.length)
 }
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
@@ -573,7 +574,7 @@ setMethod("browserView", "UCSCSession",
                 }
                 return(BrowserViewList(views))
               }
-              range <- normGenomeRange(range, object)
+              range <- normGenomeRange(range, seqinfo(object))
               form <- c(form, ucscForm(range))
             }
             view <- new("UCSCView", session = object)

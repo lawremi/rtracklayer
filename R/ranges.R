@@ -195,9 +195,8 @@ singleGenome <- function(x) {
   x1
 }
 
-## normalize 'range', using 'session' for default genome
-## if 'single' is 'TRUE', only one interval should come out of this
-normGenomeRange <- function(range, session, max.length = 1L) {
+## normalize 'range', using 'seqinfo' for default genome
+normGenomeRange <- function(range, seqinfo, max.length = 1L) {
   ## the user can specify a portion of the genome in several ways:
   ## - String identifying a genome
   ## - IntegerRangesList
@@ -209,11 +208,7 @@ normGenomeRange <- function(range, session, max.length = 1L) {
     seqinfo <- Seqinfo(genome = range)
     return(GRangesForGenome(range, seqinfo = seqinfo))
   }
-
-  if (is(session, "UCSCSession"))
-    genome <- genome(session)
-  else genome <- session
-
+  genome <- genome(seqinfo)[1]
   if (is(range, "Seqinfo"))
     range <- as(range, "GRanges")
   if (!is(range, "IntegerRangesList") && !is(range, "GenomicRanges"))
@@ -227,14 +222,11 @@ normGenomeRange <- function(range, session, max.length = 1L) {
     if (!is.na(rangeGenome) && rangeGenome != genome) {
       genome <- rangeGenome
     }
-    si <- Seqinfo(genome = genome)
+    seqinfo <- si <- Seqinfo(genome = genome)
     seqinfo(range, new2old = match(seqlevels(si), seqlevels(range))) <-
       merge(si, seqinfo(range))
   }
   if (is(range, "IntegerRangesList")) {
-    if (is(session, "UCSCSession")) {
-        seqinfo <- seqinfo(session)
-    } else seqinfo <- Seqinfo(genome = genome)
     range <- GRangesForGenome(singleGenome(genome(range)), names(range),
                               unlist(range), seqinfo = seqinfo)
   } else if (is(range, "GenomicRanges")) {
