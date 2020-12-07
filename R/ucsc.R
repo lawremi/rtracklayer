@@ -543,7 +543,10 @@ setMethod("getTable", "UCSCTableQuery",
               output <- handleResponseForOutputTypes(response, tableName, query)
               NAMES <- names(object)
               if (!is.null(NAMES)) { # filter by NAMES
-                output <- output[output$name %in% NAMES,]
+                if (is.null(output$name))
+                  output <- output[output$frag %in% NAMES,] # as in some tables `frag` field is used instead of `name`
+                else output <- output[output$name %in% NAMES,]
+                rownames(output) <- seq(length=nrow(output))
               }
               output
             }
