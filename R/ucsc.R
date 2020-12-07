@@ -171,6 +171,10 @@ setMethod("show", "UCSCTableQuery",
             cat("\n")
           })
 
+setMethod("genome", "UCSCTableQuery", function(x) {
+  x@genome
+})
+
 setMethod("browserSession", "UCSCTableQuery", function(object) {
   .Defunct("browserSession is no longer supported, instead use genome identifier")
 })
