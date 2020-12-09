@@ -84,7 +84,7 @@ export.bb(object, con, ...)
 
 \section{\code{BigBedFile} objects}{
   A \code{BigWigFile} object, an extension of
-  \code{\linkS4class{RTLFile}} is a reference to a BigBed file. To cast
+  \code{\linkS4class{BiocFile}} is a reference to a BigBed file. To cast
   a path, URL or connection to a \code{BigBedFile}, pass it to the
   \code{BigBedFile} constructor.
 

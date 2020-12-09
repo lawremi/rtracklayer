@@ -286,7 +286,7 @@ Genome <- function(...) {
 }
 
 stopIfNotGenome <- function(x) {
-    if (!is(value, "Genome"))
+    if (!is(x, "Genome"))
         stop("value must be Genome object")
 }
 
@@ -938,7 +938,7 @@ setReplaceMethod("track",
                  })
 
 setReplaceMethod("track",
-                 signature(object = "TrackHubGenome", value = "RTLFile"),
+                 signature(object = "TrackHubGenome", value = "BiocFile"),
                  function(object, name, ..., value)
                  {
                      if (missing(name))

@@ -7,13 +7,6 @@ setMethod("initialize", "RTLFile", function(.Object, ...) {
     callNextMethod()
 })
 
-setClass("CompressedFile", contains = c("RTLFile", "VIRTUAL"))
-
-setMethod("initialize", "CompressedFile", function(.Object, ...) {
-    .Deprecated("CompressedFile", msg = "This class is extending the deprecated CompressedFile class from rtracklayer. Use CompressedFile from BiocIO in place of CompressedFile from rtracklayer.")
-    callNextMethod()
-})
-
 setClass("RTLFileList",
          prototype = prototype(elementType = "RTLFile"),
          contains = "SimpleList")
@@ -101,7 +94,7 @@ normURI <- function(x) {
     stop("URI must be a single, non-NA string")
   uri <- .parseURI(x)
   if (uri$scheme == "") # /// (vs. //) needed for Windows
-    x <- paste("/", file_path_as_absolute(x), sep = "")
+    x <- paste("file:///", file_path_as_absolute(x), sep = "")
   x
 }
 
@@ -118,7 +111,7 @@ createResource <- function(x, dir = FALSE, content = "") {
 
 uriExists <- function(x) {
   uri <- .parseURI(x)
-  if (uriIsLocal(x)) {
+  if (uriIsLocal(uri)) {
     exists <- file.exists(uri$path)
   } else {
     txt <- getURL(x, header = TRUE)

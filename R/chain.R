@@ -86,7 +86,7 @@ flipStrandTricky <- function(strand, flip) {
 
 smoothGaps <- function(qhits, ranges, offsets) {
     congruent_gaps <- width(gaps(ranges)) == abs(offsets)
-    congruent_gaps_rle <- Rle(congruent)
+    congruent_gaps_rle <- Rle(congruent_gaps)
     congruent_rle <- c(Rle(FALSE), congruent_gaps_rle)
     group_rle <- Rle(cumsum(!congruent_rle))
     group_ranges <- disjoin(ranges(Rle(qhits)), ranges(group_rle))

@@ -6,7 +6,7 @@
 ### Classes
 ###
 
-setClass("BigBedFile", contains = "RTLFile")
+setClass("BigBedFile", contains = "BiocFile")
 setClass("BBFile", contains = "BigBedFile")
 
 BigBedFile <- function(path) {
