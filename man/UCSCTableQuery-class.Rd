@@ -4,13 +4,11 @@
 \alias{UCSCTableQuery-class}
 
 % Accessors:
-\alias{browserSession,UCSCTableQuery-method}
-\alias{browserSession<-}
-\alias{browserSession<-,UCSCTableQuery,UCSCSession-method}
-\alias{trackName}
-\alias{trackName,UCSCTableQuery-method}
-\alias{trackName<-}
-\alias{trackName<-,UCSCTableQuery-method}
+\alias{genome,UCSCTableQuery-method}
+\alias{genome<-,UCSCTableQuery-method}
+\alias{hubUrl}
+\alias{hubUrl,UCSCTableQuery-method}
+\alias{hubUrl<-,UCSCTableQuery-method}
 \alias{tableName}
 \alias{tableName,UCSCTableQuery-method}
 \alias{tableName<-}
@@ -19,7 +17,6 @@
 \alias{range<-,UCSCTableQuery-method}
 \alias{names,UCSCTableQuery-method}
 \alias{names<-,UCSCTableQuery-method}
-\alias{trackNames,UCSCTableQuery-method}
 \alias{ucscSchema}
 \alias{ucscSchema,UCSCTableQuery-method}
 
@@ -48,19 +45,14 @@
   incremental construction and adjustment of a query.} 
 
 \details{
-  There are five supported fields for a table query:
+  There are six supported fields for a table query:
   \describe{
-    \item{session}{The \code{\linkS4class{UCSCSession}} instance from
+    \item{provider}{
+      The provider should be a session, a genome identifier, or a TrackHub URI.
+      \code{session}: The \code{\linkS4class{UCSCSession}} instance from
       the tables are retrieved. Although all sessions are based on the
       same database, the set of user-uploaded tracks, which are represented
       as tables, is not the same, in general.
-    }
-    \item{trackName}{The name of a track from which to retrieve a
-      table. Each track can have multiple tables. Many times there is a
-      primary table that is used to display the track, while the other
-      tables are supplemental. Sometimes, tracks are displayed by
-      aggregating multiple tables. If \code{NULL}, search for a primary
-      table across all of the tracks (will not find secondary tables).
     }
     \item{tableName}{The name of the specific table to retrieve. May be
       \code{NULL}, in which case the behavior depends on how the query
@@ -74,6 +66,8 @@
       data for the entire genome, and \code{\link{GRangesForUCSCGenome}}
       facilitates downloading data for e.g. an entire chromosome.
     }
+    \item{hubUrl}{The URI of the specific TrackHub}
+    \item{genome}{A genome identifier of the specific TrackHub, only need to provide it if the provider is up of TrackHub URI.}
     \item{names}{Names/accessions of the desired features}
   } 
 
@@ -95,17 +89,14 @@
 \section{Constructor}{
   \describe{
     \item{}{
-      \code{ucscTableQuery(x, track, range = seqinfo(x), table = NULL,
-        names = NULL)}: Creates a \code{UCSCTableQuery} with the
-        \code{UCSCSession} or genome identifier given as \code{x} and
-        the track name given by
-        the single string \code{track}. \code{range} should be a genome
-        string identifier, a \code{GRanges} instance or
+      \code{ucscTableQuery(x, range = seqinfo(x), table = NULL,
+        names = NULL, hubUrl = NULL, genome = NULL)}: Creates a \code{UCSCTableQuery} with the
+        \code{UCSCSession}, genome identifier or TrackHub URI given as \code{x} and
+        the table name given by the single string \code{table}. \code{range} should
+        be a genome string identifier, a \code{GRanges} instance or
         \code{IntegerRangesList} instance, and it effectively defaults to
         \code{genome(x)}. If the genome is missing, it is taken from the
-        session. The table name is given by
-        \code{table}, which may be a single string or
-        \code{NULL}. Feature names, such as gene identifiers, may be
+        provider. Feature names, such as gene identifiers, may be
         passed via \code{names} as a character vector.
     }
   }
@@ -130,7 +121,7 @@
     }
     \item{}{
       \code{tableNames(object)}: Gets the names of the tables available
-      for the session, track and range specified by the query.
+      for the provider, table and range specified by the query.
     }
   }
 }
@@ -140,16 +131,12 @@
   \code{UCSCTableQuery} object.
 
   \describe{
-    \item{}{\code{browserSession(object)},
-      \code{browserSession(object) <- value}:
-      Get or set the \code{UCSCSession} to query.
+    \item{}{\code{genome(x)}, \code{genome(x) <- value}: Gets or sets
+    the genome identifier (e.g. \dQuote{hg18}) of the object.
     }
-    \item{}{\code{trackName(x)}, \code{trackName(x) <- value}: Get or
-      set the single string indicating the track containing the table of
-      interest.
+    \item{}{\code{hubUrl(x)}, \code{hubUrl(x) <- value}: Gets or sets
+    the TrackHub URI.
     }
-    \item{}{\code{trackNames(x)}}{List the names of the tracks available
-        for retrieval for the assigned genome.}
     \item{}{\code{tableName(x)}, \code{tableName(x) <- value}: Get or
       set the single string indicating the name of the table to
       retrieve. May be \code{NULL}, in which case the table is
@@ -175,27 +162,31 @@
 
 \examples{
 \dontrun{
+# query using `session` provider
 session <- browserSession()
 genome(session) <- "mm9"
-trackNames(session) ## list the track names
-## choose the Conservation track for a portion of mm9 chr1
-query <- ucscTableQuery(session, "Conservation",
-                        GRangesForUCSCGenome("mm9", "chr12",
+## choose the phastCons30way table for a portion of mm9 chr1
+query <- ucscTableQuery(session, table = "phastCons30way",
+                        range = GRangesForUCSCGenome("mm9", "chr12",
                                              IRanges(57795963, 57815592)))
 ## list the table names
 tableNames(query)
-## get the phastCons30way track
-tableName(query) <- "phastCons30way"
 ## retrieve the track data
 track(query)  # a GRanges object
-## get a data.frame summarizing the multiple alignment
+## get the multiz30waySummary track
 tableName(query) <- "multiz30waySummary"
+## get a data.frame summarizing the multiple alignment
 getTable(query)
 
-genome(session) <- "hg18"
-query <- ucscTableQuery(session, "snp129",
+# query using `genome identifier` provider
+query <- ucscTableQuery("hg18", table = "snp129",
                         names = c("rs10003974", "rs10087355", "rs10075230"))
 ucscSchema(query)
+getTable(query)
+
+# query using `TrackHub URI` provider
+query <- ucscTableQuery("https://ftp.ncbi.nlm.nih.gov/snp/population_frequency/TrackHub/20200227123210/",
+                        genome = "hg19", table = "ALFA_GLB")
 getTable(query)
 }
 }
