@@ -5,8 +5,6 @@
 \alias{genome,UCSCSchema-method}
 \alias{tableName,UCSCSchema-method}
 \alias{genome,UCSCSchema-method}
-\alias{formatDescription}
-\alias{formatDescription,UCSCSchema-method}
 \alias{nrow,UCSCSchema-method}
 \alias{ucscSchema,UCSCSchemaDescription-method}
 
@@ -27,8 +25,6 @@
     \item{}{\code{genome(x)}: Get the genome for the table. }
     \item{}{\code{tableName(x)}: Get the name of the table. }
     \item{}{\code{nrow(x)}: Get the number of rows in the table. }
-    \item{}{\code{formatDescription(x)}: Get a textual description of
-      the table format. }
   }
 }
 

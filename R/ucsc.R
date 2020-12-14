@@ -35,17 +35,13 @@ setMethod("initialize", "UCSCSession",
           })
 
 setMethod("seqlengths", "UCSCSession", function(x) {
-  query <- ucscTableQuery(x, range = GRanges(), table = "chromInfo", check=FALSE)
-  chromInfo <- getTable(query, check=FALSE)
-  ans <- setNames(chromInfo$size, chromInfo$chrom)
-  ans[sortSeqlevels(names(ans))]
+  seqlengths(seqinfo(x))
 })
 
 setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
 
 setMethod("seqinfo", "UCSCSession", function(x) {
-  sl <- seqlengths(x)
-  Seqinfo(names(sl), sl, genome = genome(x)) # no circularity information
+  Seqinfo(genome = genome(x)) # no circularity information
 })
 
 normArgTrackData <- function(value, session) {
@@ -116,7 +112,7 @@ setMethod("range", "UCSCSession",
 
 setReplaceMethod("range", "UCSCSession",
                  function(x, value) {
-                   ucscGet(x, "cart", ucscForm(normGenomeRange(value, x)))
+                   ucscGet(x, "cart", ucscForm(normGenomeRange(value, seqinfo(x))))
                    x
                  })
 
@@ -151,20 +147,18 @@ GRangesForUCSCGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 
 ## context for querying UCSC tables
 setClass("UCSCTableQuery",
-         representation(session = "UCSCSession",
-                        track = "character_OR_NULL",
-                        table = "character_OR_NULL",
+         representation(genome = "character",
+                        table = "character",
                         range = "GRanges",
-                        outputType = "character_OR_NULL",
                         NAMES = "character_OR_NULL",
-                        intersectTrack = "character_OR_NULL"))
+                        url = "character",
+                        hubUrl = "character_OR_NULL"))
 
 setMethod("show", "UCSCTableQuery",
           function(object) {
             cat("Get ")
             if (!is.null(tableName(object)))
               cat("table '", tableName(object), "' from ", sep = "")
-            cat("track '", names(trackName(object)), "' within ", sep = "")
             range <- range(object)
             if (length(range) > 1)
               start <- end <- chrom <- "*"
@@ -174,39 +168,46 @@ setMethod("show", "UCSCTableQuery",
               end <- end(range)
             }
             cat(genome(range)[1], ":", chrom, ":", start, "-", end, sep="")
-            for (itrack in names(intersectTrack(object)))
-              cat(" &", itrack)
             cat("\n")
           })
 
+setMethod("genome", "UCSCTableQuery", function(x) {
+  x@genome
+})
+
+setReplaceMethod("genome", "UCSCTableQuery", function(x, value) {
+  x@genome <- value
+  x
+})
+
 setMethod("browserSession", "UCSCTableQuery", function(object) {
-  object@session
+  .Defunct("browserSession is no longer supported, instead use genome identifier")
 })
 
 setGeneric("browserSession<-",
            function(object, ..., value) standardGeneric("browserSession<-"))
-setReplaceMethod("browserSession", c("UCSCTableQuery", "UCSCSession"),
+setReplaceMethod("browserSession", "UCSCTableQuery",
                  function(object, value) {
-                   object@session <- value
-                   object
+                   .Defunct("browserSession is no longer supported, instead use genome identifier")
                  })
 
 setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
 setReplaceMethod("range", "UCSCTableQuery",
                  function(x, value) {
-                   x@range <- normTableQueryRange(value, browserSession(x))
+                   x@range <- normTableQueryRange(value, x@genome, 1L)
                    x
                  })
 
 setGeneric("trackName", function(x, ...) standardGeneric("trackName"))
-setMethod("trackName", "UCSCTableQuery", function(x) x@track)
+setMethod("trackName", "UCSCTableQuery", function(x) {
+  .Defunct("tableName", msg = "track is meaningless now you only go by the table")
+})
 
 setGeneric("trackName<-",
            function(x, ..., value) standardGeneric("trackName<-"))
 setReplaceMethod("trackName", "UCSCTableQuery", function(x, value)
                  {
-                   x@track <- normArgTrack(value, x)
-                   x
+                   .Defunct("tableName<-", msg = "track is meaningless now you only go by the table")
                  })
 
 setGeneric("tableName", function(x, ...) standardGeneric("tableName"))
@@ -244,161 +245,113 @@ setReplaceMethod("names", "UCSCTableQuery", function(x, value) {
 
 setGeneric("intersectTrack", function(x, ...)
            standardGeneric("intersectTrack"))
-setMethod("intersectTrack", "UCSCTableQuery", function(x) x@intersectTrack)
+setMethod("intersectTrack", "UCSCTableQuery", function(x) {
+  .Defunct(msg = "intersectTrack is no longer supported")
+})
 setGeneric("intersectTrack<-", function(x, ..., value)
            standardGeneric("intersectTrack<-"))
 setReplaceMethod("intersectTrack", "UCSCTableQuery", function(x, value) {
-  x@intersectTrack <- normArgTrack(value, x)
-  x
+  .Defunct(msg = "intersectTrack is no longer supported")
 })
 
-## not exported
-setGeneric("outputType", function(x, ...) standardGeneric("outputType"))
-setMethod("outputType", "UCSCTableQuery", function(x) x@outputType)
-setGeneric("outputType<-",
-           function(x, ..., value) standardGeneric("outputType<-"))
-setReplaceMethod("outputType", "UCSCTableQuery",
-                 function(x, value) {
-                   x@outputType <- value
-                   x
-                 })
-
-normArgTrack <- function(name, trackids) {
-  if (is.null(name))
-    return(name)
-  if (!isSingleString(name))
-    stop("'track' must be a single string")
-  if (is(trackids, "UCSCTableQuery"))
-    trackids <- trackNames(trackids)
-  if (!(name %in% trackids)) {
-    mapped_name <- trackids[name]
-    if (is.na(mapped_name))
-      stop("Unknown track: ", name)
-    name <- mapped_name
-  } else names(name) <- name
-  name
-}
-
-normTableQueryRange <- function(range, x) {
-  normGenomeRange(range, x, max.length = 1000L)
+normTableQueryRange <- function(range, genome, max.length = 1000L) {
+  seqinfo <- Seqinfo(genome = genome)
+  normGenomeRange(range, seqinfo, max.length)
 }
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
-          function(x, track = NULL, range = seqinfo(x), table = NULL,
-                   names = NULL, intersectTrack = NULL, check = TRUE)
-          {
-            if (!is(names, "character_OR_NULL"))
-              stop("'names' must be 'NULL' or a character vector")
-            ## only inherit the genome from the session
-            if (missing(range) || !check)
-                range <- as(range, "GRanges")
-            else range <- normTableQueryRange(range, x)
-            query <- new("UCSCTableQuery", session = x, range = range,
-                         NAMES = names)
-            ## the following line must always happen to initialize the session
-            ## otherwise stuff can go haywire
-            trackids <- trackNames(query)
-            if (!is.null(track) || !is.null(intersectTrack)) {
-              query@track <- normArgTrack(track, trackids)
-              query@intersectTrack <- normArgTrack(intersectTrack, trackids)
-            }
-            tableName(query, check=check) <- table
-            query
+            function(x, ...) {
+              ucscTableQuery(genome(x), ...)
           })
 
 setMethod("ucscTableQuery", "character",
-          function(x, ...) {
+          function(x, track = NULL, range =  NULL, table = NULL,
+                   names = NULL, intersectTrack = NULL, check = TRUE, hubUrl = NULL,
+                   genome = NULL, url = "http://genome.ucsc.edu/cgi-bin/") {
               stopifnot(isSingleString(x))
-              session <- browserSession()
-              genome(session) <- x
-              ucscTableQuery(session, ...)
+              if (!isSingleString(table))
+                stop("'table' is a mandatory parameter and must be a single character vector")
+              if (!is.null(intersectTrack))
+                stop("intersectTrack is no longer supported")
+              if (!is.null(track))
+                warning("track is meaningless now you only go by the table")
+              if (!is(names, "character_OR_NULL"))
+                stop("'names' must be 'NULL' or a character vector")
+              if (uriExists(x)) { # if x is URI and it exits that means it's a trackHub
+                if (is.null(genome))
+                  stop("'genome' is a mandatory parameter and must be a single character vector")
+                hubUrl <- x
+              } else genome <- x
+              if (is.null(range)) {
+                range <- Seqinfo(genome = genome)
+                range <- as(range, "GRanges")
+              } else range <- normTableQueryRange(range, genome)
+              query <- new("UCSCTableQuery", genome = genome, range = range,
+                          NAMES = names, url = url, hubUrl = hubUrl)
+              tableName(query, check=check) <- table
+              query
           })
 
-ucscTableGet <- function(query, .parse = TRUE, tracks = FALSE, ...)
-  ucscGet(browserSession(query), "tables",
-          c(ucscForm(query, tracks = tracks), ...), .parse = .parse)
+isTrackHub <- function(x) {
+  status <- FALSE
+  if (!is.null(x@hubUrl)) {
+    if (uriExists(x@hubUrl))
+      status <- TRUE
+    else stop(paste("TrackHub", x@hubUrl, "does not exists"))
+  }
+  status
+}
 
 dropCookie <- function(object) {
     object@hguid <- character()
     object
 }
 
-ucscTablePost <- function(query, .parse = TRUE, tracks = FALSE, ...)
-  ucscPost(dropCookie(browserSession(query)), "tables",
-           c(ucscForm(query, tracks = tracks), list(...)), .parse = .parse)
+setGeneric("hubUrl", function(x) standardGeneric("hubUrl"))
+setGeneric("hubUrl<-", function(x,value) standardGeneric("hubUrl<-"))
+setMethod("hubUrl", "UCSCTableQuery", function(x) x@hubUrl)
+setReplaceMethod("hubUrl", "UCSCTableQuery", function(x, value) {
+  x@hubUrl <- value
+  x
+})
 
 ## gets the track names available from the table browser
 
 setMethod("trackNames", "UCSCTableQuery",
           function(object) {
-            doc <- ucscTableGet(object, tracks = TRUE)
-            track_path <- "//select[@name = 'hgta_track']/option/@value"
-            tracks <- unlist(getNodeSet(doc, track_path))
-            label_path <- "//select[@name = 'hgta_track']/option/text()"
-            labels <- sub("\n.*$", "",
-                          sapply(getNodeSet(doc, label_path), xmlValue))
-            names(tracks) <- labels
-            tracks
+            .Defunct("tableNames", msg = "track is meaningless now you only go by the table")
           })
 
 ## returns a character vector of table names for a given track name + range
 setGeneric("tableNames", function(object, ...)
            standardGeneric("tableNames"))
 
-getTableNames <- function(object) {
-    doc <- ucscTableGet(object)
-    table_path <- "//select[@name = 'hgta_table']/option/@value"
-    unlist(getNodeSet(doc, table_path))
-}
-
 setMethod("tableNames", "UCSCTableQuery",
           function(object, trackOnly = FALSE)
           {
-            tables <- getTableNames(object)
-            outputType <- outputType(object)
-            if (trackOnly) {
-              trackOutputs <- c("wigData", "wigBed", "bed")
-              if (!is.null(outputType))
-                outputType <- intersect(trackOutputs, outputType)
-              else outputType <- trackOutputs
+            if (trackOnly)
+              warning("track is meaningless now you only go by the table")
+            genome <- object@genome
+            if (isTrackHub(object)) {
+              th <- TrackHub(object@hubUrl)
+              names(th[[genome]])
+            } else {
+              url <- RestUri(paste0(object@url, "hubApi"))
+              response <- read(url$list$tracks, genome = genome, trackLeavesOnly = 1)
+              names <- names(response[[genome]])
+              protectedStatus <- vapply(response[[genome]], function(x) {
+                if (is.null(x$protectedData)) TRUE
+                else FALSE
+              }, logical(1L))
+              names[protectedStatus]
             }
-            if (!is.null(outputType)) {
-              tables <- tables[sapply(tables, tableHasOutput, object=object)]
-            }
-            unname(tables)
-          })
-
-tableHasOutput <- function(object, table) {
-    tableName(object, check=FALSE) <- table
-    any(outputType(object) %in% ucscTableOutputs(object))
-}
-
-firstTableName <- function(object) {
-    tables <- getTableNames(object)
-    for (table in tables)
-        if (tableHasOutput(object, table))
-            return(table)
-}
-
-setGeneric("ucscTableOutputs",
-           function(object, ...)
-           standardGeneric("ucscTableOutputs"))
-
-## returns a character vector of available output types for the table
-## not exported
-setMethod("ucscTableOutputs", "UCSCTableQuery",
-          function(object) {
-            doc <- ucscTableGet(object)
-            output_path <- "//select[@name = 'hgta_outputType']/option/@value"
-            unlist(getNodeSet(doc, output_path))
           })
 
 setClass("UCSCSchema",
          representation(genome = "character",
                         tableName = "character",
-                        rowCount = "integer",
-                        formatDescription = "character"),
+                        rowCount = "integer"),
          contains = "DFrame")
 
 setMethod("genome", "UCSCSchema", function(x) {
@@ -413,174 +366,37 @@ setMethod("nrow", "UCSCSchema", function(x) {
   x@rowCount
 })
 
-setGeneric("formatDescription",
-           function(x, ...) standardGeneric("formatDescription"))
-setMethod("formatDescription", "UCSCSchema", function(x) {
-  x@formatDescription
-})
-
-setClass("UCSCLinks",
-         representation(genome = "character",
-                        tableName = "character",
-                        fieldName = "character",
-                        viaName = "character"))
-
-setClass("UCSCSchemaDescription",
-         representation(schema = "UCSCSchema", links = "UCSCLinks",
-                        sample = "DataFrame"))
-
-setGeneric("ucscSchemaDescription",
-           function(object, ...) standardGeneric("ucscSchemaDescription"))
-
-## not currently exported, just ucscSchema() is public
-setMethod("ucscSchemaDescription", "UCSCTableQuery", function(object)
-{
-  alphaNum <- function(x) gsub("^ *", "", gsub("[^a-zA-Z0-9()+,. _'-]", "", x))
-  getBoldLabeledField <- function(name) {
-    expr <- sprintf("//b[text() = '%s:']/following::text()[1]", name)
-    alphaNum(xmlValue(getNodeSet(doc, expr)[[1]]))
-  }
-  getDataFrame <- function(tableNode) {
-    getColumn <- function(ind) {
-      ## FIXME: special treatment required for missing cells
-      ## Is there a way to get child counts for every node in XPath?
-      expr <- sprintf("tr/td[%d]", ind)
-      children <- sapply(getNodeSet(tableNode, expr), xmlChildren)
-      col <- rep(NA, length(children))
-      col[elementNROWS(children) > 0] <-
-        alphaNum(sapply(unlist(children), xmlValue))
-      col
-    }
-    columnNames <- sapply(getNodeSet(tableNode, "tr[1]/th//text()"), xmlValue)
-    columns <- lapply(seq_along(columnNames), getColumn)
-    names(columns) <- columnNames
-    columns <- columns[elementNROWS(columns) > 0]
-    DataFrame(columns)
-  }
-  doc <- ucscTableGet(object, hgta_doSchema = "describe table schema")
-  genome <- getBoldLabeledField("Database")
-  tableName <- getBoldLabeledField("Primary Table")
-  rowCount <- as.integer(gsub(",", "", getBoldLabeledField("Row Count")))
-  format <- getBoldLabeledField("Format description")
-  schemaNode <- getNodeSet(doc, "//table[tr[1]/th[3]/text() = 'SQL type']")[[1]]
-  schema <- getDataFrame(schemaNode)
-  schema$RType <- sapply(schema$example, function(x) class(type.convert(x)))
-  schema$RType[!nzchar(schema$example)] <- "factor"
-  linkNode <- getNodeSet(doc, "//div[@class = 'subheadingBar' and contains(text(), 'Connected Tables and Joining Fields')]/following::table[1]/tr[2]/td[2]")
-  if (length(linkNode)) { ## this is apparently optional
-    linkNode <- linkNode[[1]]
-    linkTable <- sapply(getNodeSet(linkNode, "a/text()"), xmlValue)
-    linkText <- sapply(getNodeSet(linkNode, "text()"), xmlValue)
-    linkMat <- matrix(linkText, nrow=2)
-    linkGenome <- alphaNum(linkMat[1,])
-    linkGenome <- substring(linkGenome, 1, nchar(linkGenome)-1L)
-    linkSplit <- matrix(unlist(strsplit(linkMat[2,], " ", fixed=TRUE)), 3)
-    linkField <- substring(linkSplit[1,], 2)
-    linkVia <- sub(".*?\\.(.*?)\\)", "\\1", linkSplit[3,])
-    links <- new("UCSCLinks", genome = linkGenome, tableName = linkTable,
-                 fieldName = linkField, viaName = linkVia)
-  } else links <- new("UCSCLinks")
-  sampNode <- getNodeSet(doc, "//div[contains(@class, 'subheadingBar') and contains(text(), 'Sample')]/following::table[1]//table//table")[[1]]
-  sample <- getDataFrame(sampNode)
-  schema <- new("UCSCSchema", schema, genome = genome, tableName = tableName,
-                rowCount = rowCount, formatDescription = format)
-  new("UCSCSchemaDescription", schema = schema, links = links, sample = sample)
-})
-
 setGeneric("ucscSchema",
            function(object, ...) standardGeneric("ucscSchema"))
 
-setMethod("ucscSchema", "UCSCSchemaDescription", function(object) {
-  object@schema
-})
-
 setMethod("ucscSchema", "UCSCTableQuery", function(object) {
-  ucscSchema(ucscSchemaDescription(object))
+  genome <- object@genome
+  tableName <- tableName(object)
+  stopifnot(isSingleString(tableName))
+  url <- RestUri(paste0(object@url, "hubApi"))
+  response <- read(url$list$schema, genome = genome, track = tableName)
+  rowCount <- as.integer(response[["itemCount"]])
+  listOfDf <- lapply(response[["columnTypes"]], function(x) {
+    DataFrame(x$name, x$sqlType, x$jsonType, x$description)
+  })
+  schemaDf <- do.call(rbind, listOfDf)
+  names(schemaDf) <- c("field", "SQL.type", "JSON.type", "description")
+  schema <- new("UCSCSchema", schemaDf, genome = genome, tableName = tableName,
+                rowCount = rowCount)
 })
 
-.uploadTableBrowserRanges <- function(query, hgsid) {
-  lines <- export(query@range, format = "bed", ignore.strand = TRUE)
-  text <- paste(paste(lines, collapse = "\n"), "\n", sep = "")
-  upload <- fileUpload("ranges.bed", text, "text/plain")
-  ucscTablePost(query, hgta_enteredUserRegionFile = upload,
-                hgta_enteredUserRegions = "",
-                hgta_doSubmitUserRegions = "submit",
-                hgsid = hgsid)
-}
-
-## export data from UCSC (internal utility)
-ucscExport <- function(object)
-{
-  get_hgsid <- function(node)
-    getNodeSet(node, "//input[@name = 'hgsid']/@value")[[1]]
-  hgsid <- NULL
-  if (!is.null(names(object))) { # filter by names
-    text <- paste(names(object), collapse = "\n")
-    output <- ucscTablePost(object, hgta_doPastedIdentiers = "submit",
-                            hgta_pastedIdentifiers = text)
-    error <- getNodeSet(output,
-                        "//script[contains(text(), '{showWarnBox')]/text()")
-    if (length(error))
-      warning(sub(".*'<li>(.*?)'.*", "\\1", xmlValue(error[[1]])))
-    hgsid <- get_hgsid(output)
-  }
-  if (!is.null(intersectTrack(object))) {
-    itrack <- intersectTrack(object)
-    iquery <- object
-    iquery@track <- itrack
-    itable <- tableNames(iquery, TRUE)
-    if (!length(itable))
-      stop("No table for intersection track: ", itrack)
-    if (length(itable) > 1) # for now anyway
-      itable <- itable[1]
-    output <- ucscTableGet(object, hgta_nextIntersectGroup = "allTracks",
-                           hgta_nextIntersectTrack = itrack,
-                           hgta_nextIntersectTable = itable,
-                           hgta_nextIntersectOp = "any",
-                           hgta_doIntersectSubmit = "submit",
-                           boolshad.hgta_nextInvertTable = "0",
-                           boolshad.hgta_nextInvertTable2 = "0",
-                           hgsid = hgsid)
-    hgsid <- get_hgsid(output)
-  }
-  if (!spansGenome(object@range) && length(object@range) > 1L) {
-    output <- .uploadTableBrowserRanges(object, hgsid)
-    hgsid <- get_hgsid(output)
-  }
-  followup <- NULL
-  if (outputType(object) == "bed") { ## some formats have extra pages
-    followup <- list(hgta_doGetBed = "get BED",
-                     hgta_printCustomTrackHeaders = "on",
-                     boolshad.hgta_printCustomTrackHeaders = "1")
-  }
-  output <- ucscTableGet(object, !is.null(followup),
-                         hgta_doTopSubmit = "get output",
-                         hgsid = hgsid)
-  if (!is.null(followup)) {
-    hgsid <- get_hgsid(output)
-    form <- c(followup, list(hgsid = hgsid))
-    output <- ucscGet(browserSession(object), "tables", form, .parse = FALSE)
-  }
-  output
-}
+setMethod("show", "UCSCSchema", function(object) {
+  if (!is.null(tableName(object)))
+    cat("UCSCSchema table '", tableName(object), "' with ", object@rowCount,
+        " rows and ", length(object@listData), " columns\n", sep = "")
+  show(DataFrame(object))
+})
 
 setMethod("track", "UCSCSession",
           function(object, name, ...)
           {
-            track(ucscTableQuery(object, track=name, ...))
+            .Defunct(msg = "track is meaningless now you only go by the table")
           })
-
-inconsistentFieldCounts <- function(x) {
-  con <- file()
-  on.exit(close(con))
-  writeLines(x, con)
-  length(unique(count.fields(con, skip=2L, sep="\t")) > 1L)
-}
-
-outputTruncated <- function(x) {
-  has.msg <- grepl("^-", tail(x, 1))
-  has.msg #|| inconsistentFieldCounts(x)
-}
 
 ## download a trackSet by name
 setMethod("track", "UCSCTableQuery",
@@ -590,34 +406,39 @@ setMethod("track", "UCSCTableQuery",
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
               stop("Unknown table: '", table, "'. Valid table names: ", tables)
-            formats <- c("wigData", "wigBed", "bed")
-            ## attempt to automatically determine the table
-            if (!is.null(table))
-              tables <- table
-            for (table in tables) {
-              object@table <- table
-              outputs <- ucscTableOutputs(object)
-              if (any(formats %in% outputs))
-                break
-            }
-            if (!any(formats %in% outputs))
-              stop("No supported output types")
-            if ("wigData" %in% outputs) { # track stored as wig
-              format <- "wig"
-              output <- "wigData"
+            if (isTrackHub(object)) {
+              th <- TrackHub(object@hubUrl)
+              thg <- TrackHubGenome(th, object@genome)
+               if (length(object@range) == 1L) {
+                start <- start(object@range)
+                end <- end(object@range)
+                seqname <- as.vector(seqnames(object@range))
+                which <- GRanges(seqname, IRanges(start, end))
+                track <- track(thg, table, which = which)
+               } else track <- track(thg, table)
+               track
             } else {
-              format <- output <- "bed"
-              if ("wigBed" %in% outputs)
-                output <- "wigBed"
+              table <- getTable(object)
+              if (nrow(table) == 1000000)
+                stop("Output is incomplete: ",
+                    "track may have more than 100,000 elements. ",
+                    "Try downloading the data via the UCSC FTP site.")
+              if (table$tracktype == "bed" || table$tracktype == "bigBed") {
+                output <- GRanges(seqnames = table[["chrom"]], strand = table[["strand"]],
+                                  ranges = IRanges(start = table[["chromStart"]],
+                                  end = table[["chromEnd"]]))
+                table[["chrom"]] = table[["strand"]] = table[["chromStart"]] = table[["chromEnd"]] = NULL
+                elementMetadata(output) <- table
+              } else if (table$tracktype == "wig" || table$tracktype == "bigWig") {
+                output <- GRanges(seqnames = table[["chrom"]], ranges = IRanges(start = table[["start"]],
+                                  end = table[["end"]]))
+                table[["chrom"]] = table[["start"]] = table[["end"]] = NULL
+                elementMetadata(output) <- table
+                # output <- GPos(output)
+              }
+              genome(output) <- object@genome
+              output
             }
-            outputType(object) <- output
-            output <- ucscExport(object)
-            if (outputTruncated(output))
-              stop("Output is incomplete: ",
-                   "track may have more than 100,000 elements. ",
-                   "Try downloading the data via the UCSC FTP site.")
-            import(text = output, format = format,
-                   seqinfo = seqinfo(range(object)))
           })
 
 ## grab sequences for features in 'track' at 'range'
@@ -636,38 +457,115 @@ setMethod("track", "UCSCTableQuery",
 ##             set
 ##           })
 
+handleResponseForOutputTypes <- function(response, tableName, query) {
+  listToDataframe <- function(results, columnNames, transpose = FALSE) {
+    if (transpose)
+      results <- lapply(results, t)
+    listOfDf <- lapply(results, function(x) {
+        df <- data.frame(x)
+        names(df) <- columnNames
+        df
+    })
+    df <- do.call(rbind, listOfDf)
+  }
+  outputType <- sapply(strsplit(response[["trackType"]], " "), getElement, 1)
+  columnTypes <- response[["columnTypes"]]
+  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
+  if (outputType == "bed") {# For Bed file
+    results <- response[[tableName]]
+    if (!is.null(query[["chrom"]])) {# with chrom
+      df <- listToDataframe(results, columnNames)
+    } else {
+      chromosomes <- names(results)
+      listOfDf <- lapply(chromosomes, function(x) {
+        df <- listToDataframe(results[[x]], columnNames)
+      })
+      df <- do.call(rbind, listOfDf)
+    }
+    df[["tracktype"]] <- "bed"
+    df
+  }
+  else if (outputType == "wig") {# For Wig file
+    if (!is.null(query[["chrom"]])) {# with chrom
+      results <- response[[query[["chrom"]]]]
+      df <- listToDataframe(results, columnNames, TRUE)
+      df[["chrom"]] <- query[["chrom"]]
+      df
+    } else {
+      results <- response[[tableName]]
+      chromosomes <- names(results)
+      listOfDf <- lapply(chromosomes, function(x) {
+        df <- listToDataframe(results[[x]], columnNames, TRUE)
+        df[["chrom"]] <- x
+        df
+      })
+      df <- do.call(rbind, listOfDf)
+    }
+    df[["tracktype"]] <- "wig"
+    df
+  } else if (outputType == "bigBed") {# For bigBig file
+      results <- response[[tableName]]
+      df <- listToDataframe(results, columnNames)
+      df[["tracktype"]] <- "bigBed"
+      df
+  } else if (outputType == "bigWig") {# For bigWig file
+      results <- response[[tableName]]
+      chromosomes <- names(results)
+      listOfDf <- lapply(chromosomes, function(x) {
+        df <- listToDataframe(results[[x]], columnNames, TRUE)
+        df[["chrom"]] <- x
+        df
+      })
+      df <- do.call(rbind, listOfDf)
+      df[["tracktype"]] <- "bigWig"
+      df
+  } else {
+    stop(paste("Unsupported file format : ", outputType))
+  }
+}
+
 ## get a data.frame from a UCSC table
 ## think about taking specific columns
 setGeneric("getTable",
            function(object, ...) standardGeneric("getTable"))
 setMethod("getTable", "UCSCTableQuery",
-          function(object, check = TRUE)
+          function(object)
           {
-            outputType(object) <- "primaryTable"
-            if (is.null(tableName(object))) { # must specify a table name
-                tableName(object, check=FALSE) <- firstTableName(object)
-                if (is.null(tableName(object)))
-                    stop("No valid table found")
+            tableName <- tableName(object)
+            stopifnot(isSingleString(tableName))
+            genome <- object@genome
+            query <- list(genome = genome, track = tableName, jsonOutputArrays = 1)
+            if (length(object@range) == 1L) {
+              start <- start(object@range)
+              end <- end(object@range)
+              seqname <- as.vector(seqnames(object@range))
+              query <- c(query, chrom = seqname, start = start, end = end)
             }
-            else if (check && !outputType(object) %in% ucscTableOutputs(object))
-                stop("tabular output format not available")
-            output <- ucscExport(object)
-            ## since '#' is not treated as a comment, we discard the
-            ## error message, leaving only the header
-            if (grepl("\\n# No results", output))
-              output <- gsub("\\n.*", "", output)
-            f <- file()
-            writeLines(output, f)
-            tab <- read.table(f, sep = "\t", header=TRUE, comment.char = "",
-                              quote = "")
-            ## strip off the '#' => 'X.' header prefix
-            colnames(tab)[1L] <- substring(colnames(tab)[1L], 3L)
-            close(f)
-            tab
+            if (isTrackHub(object)) {
+              th <- TrackHub(object@hubUrl)
+              thg <- TrackHubGenome(th, genome)
+               if (length(object@range) == 1L) {
+                which <- GRanges(seqname, IRanges(start, end))
+                track <- track(thg, tableName, which = which)
+               } else track <- track(thg, tableName)
+               as.data.frame(track)
+            } else {
+              url <- RestUri(paste0(object@url, "hubApi"))
+              response <- read(url$getData$track, query)
+              output <- handleResponseForOutputTypes(response, tableName, query)
+              NAMES <- names(object)
+              if (!is.null(NAMES)) { # filter by NAMES
+                if (is.null(output$name))
+                  output <- output[output$frag %in% NAMES,] # as in some tables `frag` field is used instead of `name`
+                else output <- output[output$name %in% NAMES,]
+                rownames(output) <- seq(length=nrow(output))
+              }
+              output
+            }
           })
 setMethod("getTable", "UCSCSession",
           function(object, name, range = base::range(object), table = NULL) {
-            getTable(ucscTableQuery(object, name, range, table))
+            getTable(ucscTableQuery(object, range = range, table = table))
           })
 
 ## UCSC genome view
@@ -695,7 +593,7 @@ setMethod("browserView", "UCSCSession",
                 }
                 return(BrowserViewList(views))
               }
-              range <- normGenomeRange(range, object)
+              range <- normGenomeRange(range, seqinfo(object))
               form <- c(form, ucscForm(range))
             }
             view <- new("UCSCView", session = object)
@@ -1567,53 +1465,21 @@ setMethod("ucscTrackModes", "ucscTracks",
             ucscTrackModes(modes, labels)
           })
 
-## List available UCSC genomes
-.getOrganism <- function(db){
-  .ucsc <- "http://genome.ucsc.edu/cgi-bin"
-  .tryQuery <- function(url, query)
-    tryCatch({
-      htmlTreeParse(url, useInternalNodes=TRUE)[[query]]
-    }, error=function(err) {
-      warning(conditionMessage(err))
-      NA_character_
-    })
-  urls <- sprintf("%s/hgGateway?db=%s", .ucsc, db)
-  sapply(urls, .tryQuery, "string(//div[@id='sectTtl']/i)")
-}
-
 ucscGenomes <- function(organism=FALSE) {
-  url <- "http://genome.ucsc.edu/FAQ/FAQreleases"
-  df <- readHTMLTable(url)[[1L]][c(2,1,3,4,5)]
-  .cleanTableCells <- function(x)
-  {
-    x <- sub("^ *", "", x)
-    ## Some empty cells in the table of UCSC genome releases seem to contain
-    ## invisible junk. This junk seems to vary from one platform to the other
-    ## (not clear why, maybe some sort of local issue?).
-    ## There must be a simplest way to get rid of this junk...
-    ## TODO: Test this on Windows!
-    is_empty_cell <- x %in% c("<c2><a0>", "\xc2\xa0", "\xc3\x82\xc2\xa0")
-    x[is_empty_cell] <- ""
-    x
-  }
-  COLS <- c("UCSC VERSION", "SPECIES", "RELEASE DATE", "RELEASE NAME", "STATUS")
-  if (!identical(names(df), COLS))
-    stop("table of UCSC genome releases (found at ", url, "#release1) ",
-         "doesn't have expected columns ", paste(COLS, collapse=", ")) 
-  ## readHTMLTable is returning one NA row for some reason
-  names(df) <- c("db","species","date","name","status")
-  df <- df[!apply(df, 1, function(x) all(is.na(x))),]
-  df <- df[df$db != "" , ]
-  not_empty <- df$species != ""
-  df$species <- rep.int(df$species[not_empty], diff(which(c(not_empty, TRUE))))
-  df <- df[df$status == "Available", -5L]
-  if (organism) {
-    df$organism <- NA_character_
-    org <- lapply(as.character(df$db), function(xx) 
-                  unique(suppressWarnings(mapGenomeBuilds(xx)$organism)))
-    df$organism[!sapply(org, is.null)] <- unlist(org) 
-  }
+  stopifnot(isTRUEorFALSE(organism))
+  names <- c("db", "species", "date", "name", "organism")
+  url <- RestUri("http://api.genome.ucsc.edu/")
+  response <- read(url$list$ucscGenomes)
+  genomes <- response[[5]]
+  genomeNames <- names(genomes)
+  listOfDf <- Map(function(name, x) {
+    date <- sub("\\s*\\([^\\)]+\\)", "", x$description)
+    data.frame(name, x$genome, date, x$sourceName, x$scientificName)
+  }, genomeNames, genomes)
+  df <- do.call(rbind, listOfDf)
+  names(df) <- names
   rownames(df) <- NULL
+  if (!organism) df$organism <- NULL
   df
 }
 
@@ -1698,37 +1564,6 @@ setMethod("ucscForm", "BiocFile",
           {
             upload <- fileUpload(path(object), "text/plain")
             ucscForm(upload, genome)
-          })
-
-setMethod("ucscForm", "UCSCTableQuery",
-          function(object, tracks = FALSE) {
-            ## range (ie genome) is required
-            range <- object@range
-            table <- object@table
-            form <- list()
-            if (!spansGenome(range) && length(range) == 1) {
-              form <- c(form, ucscForm(range))
-            }
-            if (is.null(object@track) && !tracks) {
-              form <- c(form, list(hgta_group = "allTables"))
-              if (is.null(table))
-                table <- "chromInfo"
-            }              
-            else
-              form <- c(form, list(hgta_group = "allTracks",
-                                   hgta_track = object@track))
-            if (spansGenome(range))
-              regionType <- "genome"
-            else if (length(range) == 1)
-              regionType <- "range"
-            else regionType <- "userRegions"
-            form <- c(form, hgta_regionType = regionType,
-                      hgta_table = table)
-            if (!is.null(object@outputType)) {
-              form <- c(form, hgta_outputType = object@outputType)
-            }
-            form$hgta_compressType <- "none" # TODO: support gzip
-            form
           })
 
 setMethod("ucscForm", "NULL", function(object) list())

@@ -93,7 +93,7 @@ test_trackhub <- function() {
     correct_trackhubgenome_length <- 1L
     correct_trackhubgenome_organism <- "BigFoot"
     correct_trackhubgenome_names <- "wgEncodeUWDukeDnaseGM12878FdrPeaks"
-    correct_bigDataUrl <- "wgEncodeUWDukeDnaseGM12878.fdr01peaks.hg19.bb"
+    correct_bigDataUrl <- "hg19/wgEncodeUWDukeDnaseGM12878.fdr01peaks.hg19.bb"
 
     thg <- TrackHubGenome(th, "hg19")
 

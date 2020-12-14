@@ -1,5 +1,5 @@
 track wgEncodeUWDukeDnaseGM12878FdrPeaks
-bigDataUrl wgEncodeUWDukeDnaseGM12878.fdr01peaks.hg19.bb
+bigDataUrl hg19/wgEncodeUWDukeDnaseGM12878.fdr01peaks.hg19.bb
 parent uniformDnasePeaks on
 type bigBed 6 +
 shortLabel GM12878

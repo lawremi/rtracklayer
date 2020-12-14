@@ -152,7 +152,7 @@ setMethod("browseGenome", "GenomicRanges_OR_GenomicRangesList",
             # open view of 'range'
             if (view) {
               if (!missing(range))
-                range <- normGenomeRange(range, session)
+                range <- normGenomeRange(range, seqinfo(session))
               viewParams <- c(list(session, range), viewParams)
               do.call(browserView, viewParams)
             }

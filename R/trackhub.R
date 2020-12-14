@@ -402,7 +402,7 @@ getGenomesContent <- function(x) {
         genomesFileValue <- x@genomesFile
         if (!isFieldEmpty(genomesFileValue)) {
             genomesFilePath <- combineURI(uri(x), unname(genomesFileValue))
-            if (file.size(parseURI(genomesFilePath)$path) == 0L) {
+            if (isFileEmpty(genomesFilePath)) {
                 return(list())
             }
             content <- readLines(genomesFilePath, warn = FALSE)
@@ -692,48 +692,55 @@ createTrack <- function(trackDf) {
         metadata = "character", noInherit = "logical", useScore = "integer")
     trackDf$value <- gsub("\\b[Oo]n\\b", "TRUE", trackDf$value)
     trackDf$value <- gsub("\\b[Oo]ff\\b", "FALSE", trackDf$value)
+    extrafields <- setdiff(trackDf$field, names(fieldToType))
+    selectedRows <- !(trackDf$field == extrafields)
+    if (length(selectedRows))
+        trackDf <- trackDf[selectedRows,]
     args <- Map(as, trackDf$value, fieldToType[trackDf$field])
     names(args) <- trackDf$field
     track <- do.call(Track, args)
     track
 }
 
-getTabCountList <- function(contentdf) {
-    matches <- gregexpr("^(\\t)+", contentdf)
+getTabCountList <- function(filepath) {
+    fileContent <- readLines(filepath, warn = FALSE)
+    fileContent <- gsub("^\\t*\\s*#(.)*", "", fileContent)
+    fileContent <- fileContent[fileContent != ""]
+    matches <- gregexpr("^\\s+", fileContent)
     tabCountList <- vapply(matches, attr, integer(1L), "match.length")
-    tabCountList
+    indexes <- grep(-1, tabCountList)
+    tabCountList <- replace(tabCountList, indexes, 0)
+    as.integer(tabCountList)
 }
 
-readAndSanitize <- function(filepath) {
+readFileAsDf <- function(filepath) {
     fileContent <- readLines(filepath, warn = FALSE)
     fileContent <- gsub("^(\\t)*#(.)*", "", fileContent) # to avoid reading commented tracks
-    fileContent <- gsub(",", ";", fileContent)
-    contentDf <- read.csv(text = sub(" ", ",", fileContent), header = FALSE)
-    contentDf$V2 <- gsub(";", ",", contentDf$V2)
-    nonEmptyContent <- vapply(contentDf$V2, function(x) x!="", logical(1L))
-    contentDf <- contentDf[nonEmptyContent,]
-    contentDf
+    regex <- "^\\s*\\t*([a-zA-Z.]+)\\s?(.*)$"
+    field <- sub(regex, "\\1", fileContent)
+    value <- sub(regex, "\\2", fileContent)
+    contentDf <- data.frame(field, value)
+    contentDf <- contentDf[contentDf$field != "",]
 }
 
 getTrackDbContent <- function(x, trackDbFilePath) {
-    if (file.size(parseURI(trackDbFilePath)$path) == 1L) {
+    if (isFileEmpty(trackDbFilePath)) {
         x@tracks <- TrackContainer()
         return(x)
     }
-    contentDf <- readAndSanitize(trackDbFilePath)
-    tracksIndex <- grep("\\btrack\\b", contentDf$V1)
-    levels <- getTabCountList(contentDf$V1)
+    contentDf <- readFileAsDf(trackDbFilePath)
+    levels <- getTabCountList(trackDbFilePath)
+    tracksIndex <- grep("\\btrack\\b", contentDf$field)
     levels <- levels[tracksIndex]
-    levels <- as.integer(gsub(-1, 0, levels))
     totalTracks <- length(tracksIndex)
-    tracksIndex[length(tracksIndex) + 1] <- length(contentDf$V1) + 1 # to read last track from file
-    contentDf$V1 <- gsub("^(\\t)+", "", contentDf$V1)
+    tracksIndex[length(tracksIndex) + 1] <- length(contentDf$field) + 1 # to read last track from file
+    contentDf$field <- gsub("^(\\t)+", "", contentDf$field)
     # to speed up, reading track by track
-    tracks <- lapply(c(1:totalTracks), function(x) {
+    tracks <- lapply(seq_len(totalTracks), function(x) {
         startPosition <- tracksIndex[x]
         endPosition <- tracksIndex[x + 1] - 1
-        trackDf <- setNames(data.frame(contentDf$V1[startPosition:endPosition],
-                                     contentDf$V2[startPosition:endPosition]),
+        trackDf <- setNames(data.frame(contentDf$field[startPosition:endPosition],
+                                       contentDf$value[startPosition:endPosition]),
                           c("field", "value"))
         track <- createTrack(trackDf)
     })
@@ -815,7 +822,7 @@ setMethod("writeTrackHub", "TrackHubGenome", function(x) {
     genome <- getGenome(trackhub, genome(x))
     trackDbValue <- genome@trackDb
     trackDbFilePath <- combineURI(uri(trackhub), trackDbValue)
-    if (file.size(parseURI(trackDbFilePath)$path) != 1L || length(x@tracks)) {
+    if (!isFileEmpty(trackDbFilePath) || length(x@tracks)) {
         tabStrings <- vapply(x@levels, function(y) {
             paste(rep("\t", y), collapse = "")
         },character(1L))
@@ -856,10 +863,9 @@ TrackHubGenome <- function(trackhub, genome, create = FALSE) {
     trackDbValue <- genome@trackDb
     if (!isFieldEmpty(trackDbValue)) {
         trackDbFilePath <- combineURI(uri(trackhub(thg)), trackDbValue)
-        absolutePath <- parseURI(trackDbFilePath)$path
         if (!uriExists(trackDbFilePath) && create) {
             createResource(trackDbFilePath)
-        }else if (file.size(absolutePath) != 1L && uriExists(trackDbFilePath)) {
+        }else if (!isFileEmpty(trackDbFilePath) && uriExists(trackDbFilePath)) {
             thg <- getTrackDbContent(thg, trackDbFilePath)
         }
     }
@@ -880,9 +886,9 @@ setMethod("track", "TrackHubGenome", function(object, name, ...) {
         stop("Track '", name, "' does not contain any data file")
     }
     else if (uriIsLocal(parseURI(track[[1L]]@bigDataUrl))) {
-        import(paste0(parseURI(uri(trackhub(object)))$path, "/", track[[1L]]@bigDataUrl))
+        import(paste0(parseURI(uri(trackhub(object)))$path, "/", track[[1L]]@bigDataUrl), ...)
     }else {
-        import(track[[1L]]@bigDataUrl)
+        import(track[[1L]]@bigDataUrl, ...)
     }
 })
 
@@ -993,4 +999,22 @@ isFieldEmpty <- function(x) {
 
 trimSlash <- function(x) {
     sub("/$", "", x)
+}
+
+isFileEmpty <- function(path) {
+    url <- parseURI(path)
+    if (uriIsLocal(url)) {
+        size <- file.size(url$path)
+        if (size == 1L || size == 0L)
+            TRUE
+        FALSE
+    } else {
+        response <- getURL(path, nobody = T, header = T)
+        header <- strsplit(response, "\r\n")[[1]]
+        position <- grep("Content-Length:", header)
+        contentLength <- sub("Content-Length: ", "", header[position])
+        if (contentLength != "NA")
+            TRUE
+        FALSE
+    }
 }

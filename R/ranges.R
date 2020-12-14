@@ -195,10 +195,8 @@ singleGenome <- function(x) {
   x1
 }
 
-
-## normalize 'range', using 'session' for default genome
-## if 'single' is 'TRUE', only one interval should come out of this
-normGenomeRange <- function(range, session, max.length = 1L) {
+## normalize 'range', using 'seqinfo' for default genome
+normGenomeRange <- function(range, seqinfo, max.length = 1L) {
   ## the user can specify a portion of the genome in several ways:
   ## - String identifying a genome
   ## - IntegerRangesList
@@ -207,30 +205,30 @@ normGenomeRange <- function(range, session, max.length = 1L) {
   ##   one range over many chromosomes
   if (is.character(range)) {
     range <- singleGenome(range)
-    genome(session) <- range
-    return(GRangesForGenome(range, seqinfo = seqinfo(session)))
+    seqinfo <- Seqinfo(genome = range)
+    return(GRangesForGenome(range, seqinfo = seqinfo))
   }
+  genome <- genome(seqinfo)[1]
   if (is(range, "Seqinfo"))
     range <- as(range, "GRanges")
   if (!is(range, "IntegerRangesList") && !is(range, "GenomicRanges"))
     stop("'range' should be a genome string, IntegerRangesList, GRanges or Seqinfo")
-  genome <- genome(session)
+
   if (length(seqinfo(range)) == 0L) {
     ## hack: need to avoid calling seqlengths(session) here, so use 'foo'
     seqinfo(range) <- Seqinfo("foo", genome = genome)
   } else {
     rangeGenome <- singleGenome(genome(range))
     if (!is.na(rangeGenome) && rangeGenome != genome) {
-      genome(session) <- rangeGenome
-      on.exit(genome(session) <- genome)
+      genome <- rangeGenome
     }
-    si <- seqinfo(session)
+    seqinfo <- si <- Seqinfo(genome = genome)
     seqinfo(range, new2old = match(seqlevels(si), seqlevels(range))) <-
       merge(si, seqinfo(range))
   }
   if (is(range, "IntegerRangesList")) {
     range <- GRangesForGenome(singleGenome(genome(range)), names(range),
-                              unlist(range), seqinfo = seqinfo(session))
+                              unlist(range), seqinfo = seqinfo)
   } else if (is(range, "GenomicRanges")) {
     strand(range) <- "*"
     mcols(range) <- NULL
