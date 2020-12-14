@@ -175,6 +175,11 @@ setMethod("genome", "UCSCTableQuery", function(x) {
   x@genome
 })
 
+setReplaceMethod("genome", "UCSCTableQuery", function(x, value) {
+  x@genome <- value
+  x
+})
+
 setMethod("browserSession", "UCSCTableQuery", function(object) {
   .Defunct("browserSession is no longer supported, instead use genome identifier")
 })
@@ -302,6 +307,14 @@ dropCookie <- function(object) {
     object@hguid <- character()
     object
 }
+
+setGeneric("hubUrl", function(x) standardGeneric("hubUrl"))
+setGeneric("hubUrl<-", function(x,value) standardGeneric("hubUrl<-"))
+setMethod("hubUrl", "UCSCTableQuery", function(x) x@hubUrl)
+setReplaceMethod("hubUrl", "UCSCTableQuery", function(x, value) {
+  x@hubUrl <- value
+  x
+})
 
 ## gets the track names available from the table browser
 
