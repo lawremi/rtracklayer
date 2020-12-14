@@ -278,11 +278,10 @@ setMethod("ucscTableQuery", "character",
                   stop("'genome' is a mandatory parameter and must be a single character vector")
                 hubUrl <- x
               } else genome <- x
-              if (is.null(range))
+              if (is.null(range)) {
                 range <- Seqinfo(genome = genome)
-              if (missing(range) || !check)
-                  range <- as(range, "GRanges")
-              else range <- normTableQueryRange(range, genome)
+                range <- as(range, "GRanges")
+              } else range <- normTableQueryRange(range, genome)
               query <- new("UCSCTableQuery", genome = genome, range = range,
                           NAMES = names, url = url, hubUrl = hubUrl)
               tableName(query, check=check) <- table
