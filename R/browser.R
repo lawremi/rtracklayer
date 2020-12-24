@@ -151,7 +151,7 @@ setMethod("browseGenome", "GenomicRanges_OR_GenomicRangesList",
             session <- do.call(`track<-`, c(trackParams, list(value = object)))
             # open view of 'range'
             if (view) {
-              if (!missing(range))
+              if (!missing(range) && length(range) > 0L)
                 range <- normGenomeRange(range, seqinfo(session))
               viewParams <- c(list(session, range), viewParams)
               do.call(browserView, viewParams)
