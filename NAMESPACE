@@ -31,6 +31,8 @@ importMethodsFrom("XML", saveXML)
 importFrom("RCurl", curlUnescape, fileUpload, getCurlHandle, getForm, getURL,
            postForm, url.exists, getCurlInfo)
 
+import(restfulr)
+
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Bioconductor packages
 ###
