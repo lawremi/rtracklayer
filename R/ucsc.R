@@ -270,19 +270,28 @@ setMethod("ucscTableQuery", "character",
                    names = NULL, intersectTrack = NULL, check = TRUE, hubUrl = NULL,
                    genome = NULL, url = "http://genome.ucsc.edu/cgi-bin/") {
               stopifnot(isSingleString(x))
-              if (!isSingleString(table))
-                stop("'table' is a mandatory parameter and must be a single character vector")
               if (!is.null(intersectTrack))
                 stop("intersectTrack is no longer supported")
-              if (!is.null(track))
-                warning("track is meaningless now you only go by the table")
+              # if (!is.null(track))
+              #   warning("track is meaningless now you only go by the table")
               if (!is(names, "character_OR_NULL"))
                 stop("'names' must be 'NULL' or a character vector")
               if (uriExists(x)) { # if x is URI and it exits that means it's a trackHub
                 if (is.null(genome))
-                  stop("'genome' is a mandatory parameter and must be a single character vector")
+                  stop("'genome' is a mandatory parameter and must be a single string")
                 hubUrl <- x
               } else genome <- x
+              if (!is.null(track)) {
+                trackids <- ucscTableTracks(genome)
+                if (track %in% names(trackids)) {
+                  track <- trackids[[track]]
+                } else stop("Unknown track: ", track)
+                form <- c(db = genome, hgta_group = "allTracks", hgta_track = track)
+                doc <- httpGet(paste(url, "hgTables", sep = ""), form)
+                table <- unlist(getNodeSet(doc, "//select[@name='hgta_table']/option[1]/@value"))
+              }
+              if (!isSingleString(table))
+                stop("'table' is a mandatory parameter and must be a single string")
               if (is.null(range)) {
                 range <- Seqinfo(genome = genome)
                 range <- as(range, "GRanges")
@@ -317,10 +326,20 @@ setReplaceMethod("hubUrl", "UCSCTableQuery", function(x, value) {
 })
 
 ## gets the track names available from the table browser
+ucscTableTracks <- function(genome) {
+  doc <- httpGet("http://genome-euro.ucsc.edu/cgi-bin/hgTables", c(db = genome, hgta_group = "allTracks"))
+  label_path <- "//select[@name = 'hgta_track']/option/text()"
+  labels <- sub("\n.*$", "", sapply(getNodeSet(doc, label_path), xmlValue))
+  track_path <- "//select[@name = 'hgta_track']/option/@value"
+  tracks <- unlist(getNodeSet(doc, track_path))
+  names(tracks) <- labels
+  tracks
+}
 
 setMethod("trackNames", "UCSCTableQuery",
           function(object) {
-            .Defunct("tableNames", msg = "track is meaningless now you only go by the table")
+            # .Defunct("tableNames", msg = "track is meaningless now you only go by the table")
+            ucscTableTracks(object@genome)
           })
 
 ## returns a character vector of table names for a given track name + range
