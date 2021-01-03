@@ -272,8 +272,6 @@ setMethod("ucscTableQuery", "character",
               stopifnot(isSingleString(x))
               if (!is.null(intersectTrack))
                 stop("intersectTrack is no longer supported")
-              # if (!is.null(track))
-              #   warning("track is meaningless now you only go by the table")
               if (!is(names, "character_OR_NULL"))
                 stop("'names' must be 'NULL' or a character vector")
               if (uriExists(x)) { # if x is URI and it exits that means it's a trackHub
@@ -282,6 +280,7 @@ setMethod("ucscTableQuery", "character",
                 hubUrl <- x
               } else genome <- x
               if (!is.null(track)) {
+                warning("track is going to be deprecated now you go by the table instead")
                 trackids <- ucscTableTracks(genome)
                 if (track %in% names(trackids)) {
                   track <- trackids[[track]]
