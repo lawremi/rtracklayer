@@ -259,6 +259,12 @@ normTableQueryRange <- function(range, genome, max.length = 1000L) {
   normGenomeRange(range, seqinfo, max.length)
 }
 
+ucscTable <- function(url, genome, track) {
+  form <- c(db = genome, hgta_group = "allTracks", hgta_track = track)
+  doc <- httpGet(paste(url, "hgTables", sep = ""), form)
+  unlist(getNodeSet(doc, "//select[@name='hgta_table']/option[1]/@value"))
+}
+
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
 setMethod("ucscTableQuery", "UCSCSession",
             function(x, ...) {
@@ -285,9 +291,7 @@ setMethod("ucscTableQuery", "character",
                 if (track %in% names(trackids)) {
                   track <- trackids[[track]]
                 } else stop("Unknown track: ", track)
-                form <- c(db = genome, hgta_group = "allTracks", hgta_track = track)
-                doc <- httpGet(paste(url, "hgTables", sep = ""), form)
-                table <- unlist(getNodeSet(doc, "//select[@name='hgta_table']/option[1]/@value"))
+                table <- ucscTable(url, genome, track)
               }
               if (!isSingleString(table))
                 stop("'table' is a mandatory parameter and must be a single string")
