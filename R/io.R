@@ -36,10 +36,12 @@ setMethod("as.character", "RTLFile", function(x) path(x))
 #    BiocIO::resource(x)
 #}
 
-path <- function(object) {
-    .Deprecated("path", msg = "Use BiocIO::path")
-    BiocIO::path(object)
-}
+setMethod("path", "RTLFile", function(object) {
+    r <- resource(object)
+    if (!is.character(r))
+        stop("Connection resource requested as a path")
+    r
+})
 
 FileForFormat <- function(path, format = file_ext(path)) {
     .Deprecated("FileForFormat", msg = "Use BiocIO::FileForFormat")
