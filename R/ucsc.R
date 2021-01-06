@@ -271,6 +271,18 @@ setMethod("ucscTableQuery", "UCSCSession",
               ucscTableQuery(genome(x), ...)
           })
 
+normArgTrack <- function(name, trackids) {
+  if (!isSingleString(name))
+    stop("'track' must be a single string")
+  if (!(name %in% trackids)) {
+    mapped_name <- trackids[name]
+    if (is.na(mapped_name))
+      stop("Unknown track: ", name)
+    name <- mapped_name
+  }
+  unname(name)
+}
+
 setMethod("ucscTableQuery", "character",
           function(x, track = NULL, range =  NULL, table = NULL,
                    names = NULL, intersectTrack = NULL, check = TRUE, hubUrl = NULL,
@@ -285,12 +297,11 @@ setMethod("ucscTableQuery", "character",
                   stop("'genome' is a mandatory parameter and must be a single string")
                 hubUrl <- x
               } else genome <- x
-              if (!is.null(track)) {
+              # if the table is provied then it will not try to identify the table from the track
+              if (!is.null(track) && is.null(table)) {
                 warning("track is going to be deprecated now you go by the table instead")
                 trackids <- ucscTableTracks(genome)
-                if (track %in% names(trackids)) {
-                  track <- trackids[[track]]
-                } else stop("Unknown track: ", track)
+                track <- normArgTrack(track, trackids)
                 table <- ucscTable(url, genome, track)
               }
               if (is.null(range)) {
