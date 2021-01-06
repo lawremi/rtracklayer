@@ -148,7 +148,7 @@ GRangesForUCSCGenome <- function(genome, chrom = NULL, ranges = NULL, ...)
 ## context for querying UCSC tables
 setClass("UCSCTableQuery",
          representation(genome = "character",
-                        table = "character",
+                        table = "character_OR_NULL",
                         range = "GRanges",
                         NAMES = "character_OR_NULL",
                         url = "character",
@@ -293,14 +293,14 @@ setMethod("ucscTableQuery", "character",
                 } else stop("Unknown track: ", track)
                 table <- ucscTable(url, genome, track)
               }
-              if (!isSingleString(table))
-                stop("'table' is a mandatory parameter and must be a single string")
               if (is.null(range)) {
                 range <- Seqinfo(genome = genome)
                 range <- as(range, "GRanges")
               } else range <- normTableQueryRange(range, genome)
               query <- new("UCSCTableQuery", genome = genome, range = range,
                           NAMES = names, url = url, hubUrl = hubUrl)
+              if (is.null(table))
+                check <- FALSE
               tableName(query, check=check) <- table
               query
           })
@@ -318,6 +318,11 @@ isTrackHub <- function(x) {
 dropCookie <- function(object) {
     object@hguid <- character()
     object
+}
+
+stopIfTableEmpty <- function(object) {
+  if (is.null(object@table))
+    stop("'table' is a mandatory value and must be a single string, Use tableName()<- to set it")
 }
 
 setGeneric("hubUrl", function(x) standardGeneric("hubUrl"))
@@ -424,6 +429,7 @@ setMethod("track", "UCSCSession",
 setMethod("track", "UCSCTableQuery",
           function(object)
           {
+            stopIfTableEmpty(object)
             tables <- tableNames(object)
             table <- tableName(object)
             if (!is.null(table) && !(table %in% tables))
@@ -553,8 +559,8 @@ setGeneric("getTable",
 setMethod("getTable", "UCSCTableQuery",
           function(object)
           {
+            stopIfTableEmpty(object)
             tableName <- tableName(object)
-            stopifnot(isSingleString(tableName))
             genome <- object@genome
             query <- list(genome = genome, track = tableName, jsonOutputArrays = 1)
             if (length(object@range) == 1L) {
