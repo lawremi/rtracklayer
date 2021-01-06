@@ -299,7 +299,7 @@ setMethod("ucscTableQuery", "character",
               } else genome <- x
               # if the table is provied then it will not try to identify the table from the track
               if (!is.null(track) && is.null(table)) {
-                warning("track is going to be deprecated now you go by the table instead")
+                warning("track parameter is deprecated now you go by the table instead")
                 trackids <- ucscTableTracks(genome)
                 track <- normArgTrack(track, trackids)
                 table <- ucscTable(url, genome, track)
