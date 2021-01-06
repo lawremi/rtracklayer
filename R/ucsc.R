@@ -558,6 +558,19 @@ handleResponseForOutputTypes <- function(response, tableName, query) {
       df <- do.call(rbind, listOfDf)
       df[["tracktype"]] <- "bigWig"
       df
+  } else if (outputType == "genePred") {# For genePred file
+    results <- response[[tableName]]
+    if (!is.null(query[["chrom"]])) {# with chrom
+      df <- listToDataframe(results, columnNames)
+    } else {
+      chromosomes <- names(results)
+      listOfDf <- lapply(chromosomes, function(x) {
+        df <- listToDataframe(results[[x]], columnNames)
+      })
+      df <- do.call(rbind, listOfDf)
+    }
+    df[["tracktype"]] <- "genePred"
+    df
   } else {
     stop(paste("Unsupported file format : ", outputType))
   }
