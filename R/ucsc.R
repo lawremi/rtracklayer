@@ -259,10 +259,23 @@ normTableQueryRange <- function(range, genome, max.length = 1000L) {
   normGenomeRange(range, seqinfo, max.length)
 }
 
-ucscTable <- function(url, genome, track) {
+ucscTables <- function(genome, track) {
+  url <- "http://genome.ucsc.edu/cgi-bin/hgTables"
+  if (!isSingleString(genome))
+    stop("'genome' must be a single non-NA string")
+  # check genome is valid or not
+  doc <- httpGet(url, c(db = genome))
+  genomes <- unlist(getNodeSet(doc, "//select[@name='db']/option/@value"))
+  if (!(genome %in% unname(genomes)))
+    stop("Invalid genome :'", genome, "'")
+  # retrieve track for a genome
+  trackids <- ucscTableTracks(genome)
+  track <- normArgTrack(track, trackids)
+  # retrieve tables for a track
   form <- c(db = genome, hgta_group = "allTracks", hgta_track = track)
-  doc <- httpGet(paste(url, "hgTables", sep = ""), form)
-  unlist(getNodeSet(doc, "//select[@name='hgta_table']/option[1]/@value"))
+  doc <- httpGet(url, form)
+  tables <- unlist(getNodeSet(doc, "//select[@name='hgta_table']/option/@value"))
+  unname(tables)
 }
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
@@ -299,10 +312,10 @@ setMethod("ucscTableQuery", "character",
               } else genome <- x
               # if the table is provied then it will not try to identify the table from the track
               if (!is.null(track) && is.null(table)) {
-                warning("track parameter is deprecated now you go by the table instead")
-                trackids <- ucscTableTracks(genome)
-                track <- normArgTrack(track, trackids)
-                table <- ucscTable(url, genome, track)
+                warning("'track' parameter is deprecated now you go by the 'table' instead
+                Use ucscTables(genome, track) to retrieve the list of tables for a track")
+                tables <- ucscTables(genome, track)
+                table <- tables[1]
               }
               if (is.null(range)) {
                 range <- Seqinfo(genome = genome)
