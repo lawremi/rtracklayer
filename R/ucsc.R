@@ -35,7 +35,7 @@ setMethod("initialize", "UCSCSession",
           })
 
 setMethod("seqlengths", "UCSCSession", function(x) {
-  seqlengths(seqinfo(x))
+  seqlengths(Seqinfo(genome = genome(x)))
 })
 
 setMethod("seqnames", "UCSCSession", function(x) names(seqlengths(x)))
