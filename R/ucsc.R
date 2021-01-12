@@ -509,81 +509,114 @@ setMethod("track", "UCSCTableQuery",
 ##             set
 ##           })
 
-handleResponseForOutputTypes <- function(response, tableName, query) {
-  listToDataframe <- function(results, columnNames, transpose = FALSE) {
-    if (transpose)
-      results <- lapply(results, t)
-    listOfDf <- lapply(results, function(x) {
-        df <- data.frame(x)
-        names(df) <- columnNames
-        df
+listToDataframe <- function(results, columnNames, transpose = FALSE) {
+  if (transpose)
+    results <- lapply(results, t)
+  listOfDf <- lapply(results, function(x) {
+      df <- data.frame(x)
+      names(df) <- columnNames
+      df
+  })
+  df <- do.call(rbind, listOfDf)
+}
+
+parseBedDf <- function(response, query) {
+  columnTypes <- response[["columnTypes"]]
+  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
+  tableName <- response[["track"]]
+  results <- response[[tableName]]
+  if (!is.null(query[["chrom"]])) {# with chrom
+    df <- listToDataframe(results, columnNames)
+  } else {
+    chromosomes <- names(results)
+    listOfDf <- lapply(chromosomes, function(x) {
+      df <- listToDataframe(results[[x]], columnNames)
     })
     df <- do.call(rbind, listOfDf)
   }
-  outputType <- sapply(strsplit(response[["trackType"]], " "), getElement, 1)
+  df[["tracktype"]] <- "bed"
+  df
+}
+
+parseWigDf <- function(response, query) {
   columnTypes <- response[["columnTypes"]]
   columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
-  if (outputType == "bed") {# For Bed file
-    results <- response[[tableName]]
-    if (!is.null(query[["chrom"]])) {# with chrom
-      df <- listToDataframe(results, columnNames)
-    } else {
-      chromosomes <- names(results)
-      listOfDf <- lapply(chromosomes, function(x) {
-        df <- listToDataframe(results[[x]], columnNames)
-      })
-      df <- do.call(rbind, listOfDf)
-    }
-    df[["tracktype"]] <- "bed"
+  tableName <- response[["track"]]
+  if (!is.null(query[["chrom"]])) {# with chrom
+    results <- response[[query[["chrom"]]]]
+    df <- listToDataframe(results, columnNames, TRUE)
+    df[["chrom"]] <- query[["chrom"]]
     df
+  } else {
+    results <- response[[tableName]]
+    chromosomes <- names(results)
+    listOfDf <- lapply(chromosomes, function(x) {
+      df <- listToDataframe(results[[x]], columnNames, TRUE)
+      df[["chrom"]] <- x
+      df
+    })
+    df <- do.call(rbind, listOfDf)
   }
-  else if (outputType == "wig") {# For Wig file
-    if (!is.null(query[["chrom"]])) {# with chrom
-      results <- response[[query[["chrom"]]]]
-      df <- listToDataframe(results, columnNames, TRUE)
-      df[["chrom"]] <- query[["chrom"]]
-      df
-    } else {
-      results <- response[[tableName]]
-      chromosomes <- names(results)
-      listOfDf <- lapply(chromosomes, function(x) {
-        df <- listToDataframe(results[[x]], columnNames, TRUE)
-        df[["chrom"]] <- x
-        df
-      })
-      df <- do.call(rbind, listOfDf)
-    }
-    df[["tracktype"]] <- "wig"
+  df[["tracktype"]] <- "wig"
+  df
+}
+
+parseBbDf <- function(response) {
+  columnTypes <- response[["columnTypes"]]
+  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
+  tableName <- response[["track"]]
+  results <- response[[tableName]]
+  df <- listToDataframe(results, columnNames)
+  df[["tracktype"]] <- "bigBed"
+  df
+}
+
+parseBwDf <- function(response) {
+  columnTypes <- response[["columnTypes"]]
+  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
+  tableName <- response[["track"]]
+  results <- response[[tableName]]
+  chromosomes <- names(results)
+  listOfDf <- lapply(chromosomes, function(x) {
+    df <- listToDataframe(results[[x]], columnNames, TRUE)
+    df[["chrom"]] <- x
     df
+  })
+  df <- do.call(rbind, listOfDf)
+  df[["tracktype"]] <- "bigWig"
+  df
+}
+
+parseGenePredDf <- function(response, query) {
+  columnTypes <- response[["columnTypes"]]
+  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
+  tableName <- response[["track"]]
+  results <- response[[tableName]]
+  if (!is.null(query[["chrom"]])) {# with chrom
+    df <- listToDataframe(results, columnNames)
+  } else {
+    chromosomes <- names(results)
+    listOfDf <- lapply(chromosomes, function(x) {
+      df <- listToDataframe(results[[x]], columnNames)
+    })
+    df <- do.call(rbind, listOfDf)
+  }
+  df[["tracktype"]] <- "genePred"
+  df
+}
+
+handleResponseForOutputTypes <- function(response, tableName, query) {
+  outputType <- sapply(strsplit(response[["trackType"]], " "), getElement, 1)
+  if (outputType == "bed") {# For Bed file
+    parseBedDf(response, query)
+  } else if (outputType == "wig") {# For Wig file
+    parseWigDf(response, query)
   } else if (outputType == "bigBed") {# For bigBig file
-      results <- response[[tableName]]
-      df <- listToDataframe(results, columnNames)
-      df[["tracktype"]] <- "bigBed"
-      df
+    parseBbDf(response)
   } else if (outputType == "bigWig") {# For bigWig file
-      results <- response[[tableName]]
-      chromosomes <- names(results)
-      listOfDf <- lapply(chromosomes, function(x) {
-        df <- listToDataframe(results[[x]], columnNames, TRUE)
-        df[["chrom"]] <- x
-        df
-      })
-      df <- do.call(rbind, listOfDf)
-      df[["tracktype"]] <- "bigWig"
-      df
+    parseBwDf(response)
   } else if (outputType == "genePred") {# For genePred file
-    results <- response[[tableName]]
-    if (!is.null(query[["chrom"]])) {# with chrom
-      df <- listToDataframe(results, columnNames)
-    } else {
-      chromosomes <- names(results)
-      listOfDf <- lapply(chromosomes, function(x) {
-        df <- listToDataframe(results[[x]], columnNames)
-      })
-      df <- do.call(rbind, listOfDf)
-    }
-    df[["tracktype"]] <- "genePred"
-    df
+    parseGenePredDf(response, query)
   } else {
     stop(paste("Unsupported file format : ", outputType))
   }
