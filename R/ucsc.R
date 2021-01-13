@@ -561,7 +561,7 @@ parseWigDf <- function(response, query) {
   df
 }
 
-parseBbDf <- function(response) {
+parseBigBedDf <- function(response) {
   columnTypes <- response[["columnTypes"]]
   columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
   tableName <- response[["track"]]
@@ -571,7 +571,7 @@ parseBbDf <- function(response) {
   df
 }
 
-parseBwDf <- function(response) {
+parseBigWigDf <- function(response) {
   columnTypes <- response[["columnTypes"]]
   columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
   tableName <- response[["track"]]
@@ -612,9 +612,9 @@ handleResponseForOutputTypes <- function(response, tableName, query) {
   } else if (outputType == "wig") {# For Wig file
     parseWigDf(response, query)
   } else if (outputType == "bigBed") {# For bigBig file
-    parseBbDf(response)
+    parseBigBedDf(response)
   } else if (outputType == "bigWig") {# For bigWig file
-    parseBwDf(response)
+    parseBigWigDf(response)
   } else if (outputType == "genePred") {# For genePred file
     parseGenePredDf(response, query)
   } else {
