@@ -19,6 +19,7 @@
 \alias{names<-,UCSCTableQuery-method}
 \alias{ucscSchema}
 \alias{ucscSchema,UCSCTableQuery-method}
+\alias{ucscTables}
 
 % Query execution
 \alias{tableNames}
@@ -155,6 +156,10 @@
     }
     \item{}{\code{ucscSchema(x)}: Get
       the \code{\linkS4class{UCSCSchema}} object describing the selected table.}
+    \item{}{\code{ucscTables(genome, track)}: Get the list of tables for the 
+      specified track(e.g. \dQuote{Assembly}) and genome identifier (e.g. \dQuote{hg19}).
+      Here \code{genome} and \code{track} must be a single non-NA string.
+    }
   }
 }
 
@@ -188,6 +193,8 @@ getTable(query)
 query <- ucscTableQuery("https://ftp.ncbi.nlm.nih.gov/snp/population_frequency/TrackHub/20200227123210/",
                         genome = "hg19", table = "ALFA_GLB")
 getTable(query)
+# get the list of tables for 'Assembly' track and 'hg19' genome identifier
+ucscTables("hg19", "Assembly")
 }
 }
 
