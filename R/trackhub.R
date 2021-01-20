@@ -881,14 +881,15 @@ setMethod("track", "TrackHubGenome", function(object, name, ...) {
     track <- object@tracks[names == name]
     if (length(track) == 0L) stop("Track '", name, "' does not exist")
     else if (length(track) > 1L) stop("Multiple tracks match ", name)
-
-    if (isEmpty(track[[1L]]@bigDataUrl)) {
+    bigDataUrl <- track[[1L]]@bigDataUrl
+    parsed <- parseURI(bigDataUrl)
+    if (isEmpty(bigDataUrl)) {
         stop("Track '", name, "' does not contain any data file")
-    }
-    else if (uriIsLocal(parseURI(track[[1L]]@bigDataUrl))) {
-        import(paste0(parseURI(uri(trackhub(object)))$path, "/", track[[1L]]@bigDataUrl), ...)
-    }else {
-        import(track[[1L]]@bigDataUrl, ...)
+    } else if (uriIsLocal(parsed)) {
+        uri <- uri(trackhub(object))
+        import(paste0(uri, "/", bigDataUrl), ...)
+    } else {
+        import(bigDataUrl, ...)
     }
 })
 
