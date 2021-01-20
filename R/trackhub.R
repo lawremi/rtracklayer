@@ -882,7 +882,7 @@ setMethod("track", "TrackHubGenome", function(object, name, ...) {
     if (length(track) == 0L) stop("Track '", name, "' does not exist")
     else if (length(track) > 1L) stop("Multiple tracks match ", name)
     bigDataUrl <- track[[1L]]@bigDataUrl
-    parsed <- parseURI(bigDataUrl)
+    parsed <- .parseURI(bigDataUrl)
     if (isEmpty(bigDataUrl)) {
         stop("Track '", name, "' does not contain any data file")
     } else if (uriIsLocal(parsed)) {
@@ -1003,7 +1003,7 @@ trimSlash <- function(x) {
 }
 
 isFileEmpty <- function(path) {
-    url <- parseURI(path)
+    url <- .parseURI(path)
     if (uriIsLocal(url)) {
         size <- file.size(url$path)
         if (size == 1L || size == 0L)
