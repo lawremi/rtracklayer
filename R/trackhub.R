@@ -608,6 +608,8 @@ TrackHub <- function(uri, create = FALSE) {
     }
     th <- new("TrackHub")
     th@uri <- normURI(uri)
+    # To fix windows errors, XML::parseURI() cannot parse the windows absolute path with the scheme
+    th@uri <- sub("file:///", "", th@uri)
     if (create && !uriExists(hubFile(th))) {
         createResource(hubFile(th))
     } else {

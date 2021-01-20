@@ -1,7 +1,7 @@
 test_trackhub <- function() {
     test_trackhub_path <- system.file("tests", "trackhub", package = "rtracklayer")
 
-    correct_trackhub_uri <- file.path("file://", test_trackhub_path)
+    correct_trackhub_uri <- test_trackhub_path
     correct_trackhub_genome <- "hg19"
     correct_trackhub_length <- 1L
     correct_hub <- "test_hub"
