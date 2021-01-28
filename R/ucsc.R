@@ -391,11 +391,12 @@ setMethod("tableNames", "UCSCTableQuery",
               url <- RestUri(paste0(object@url, "hubApi"))
               response <- read(url$list$tracks, genome = genome, trackLeavesOnly = 1)
               names <- names(response[[genome]])
-              protectedStatus <- vapply(response[[genome]], function(x) {
-                if (is.null(x$protectedData)) TRUE
-                else FALSE
-              }, logical(1L))
-              names[protectedStatus]
+              tables <- mapply(function(name, response) {
+                                   if (!is.null(response$protectedData)) NULL
+                                   else if (!is.null(response$table)) response$table
+                                   else name
+                          }, names, response[[genome]])
+              Filter(Negate(is.null), tables)
             }
           })
 
