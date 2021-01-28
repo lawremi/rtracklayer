@@ -152,7 +152,8 @@ setClass("UCSCTableQuery",
                         range = "GRanges",
                         NAMES = "character_OR_NULL",
                         url = "character",
-                        hubUrl = "character_OR_NULL"))
+                        hubUrl = "character_OR_NULL",
+                        track = "character_OR_NULL"))
 
 setMethod("show", "UCSCTableQuery",
           function(object) {
@@ -322,7 +323,7 @@ setMethod("ucscTableQuery", "character",
                 range <- as(range, "GRanges")
               } else range <- normTableQueryRange(range, genome)
               query <- new("UCSCTableQuery", genome = genome, range = range,
-                          NAMES = names, url = url, hubUrl = hubUrl)
+                          NAMES = names, url = url, hubUrl = hubUrl, track = track)
               if (is.null(table))
                 check <- FALSE
               tableName(query, check=check) <- table
@@ -384,7 +385,9 @@ setMethod("tableNames", "UCSCTableQuery",
             if (trackOnly)
               warning("track is meaningless now you only go by the table")
             genome <- object@genome
-            if (isTrackHub(object)) {
+            if (!is.null(object@track)) {
+              ucscTables(object@genome, object@track)
+            } else if (isTrackHub(object)) {
               th <- TrackHub(object@hubUrl)
               names(th[[genome]])
             } else {
