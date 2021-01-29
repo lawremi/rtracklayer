@@ -479,19 +479,22 @@ setMethod("track", "UCSCTableQuery",
                 stop("Output is incomplete: ",
                     "track may have more than 100,000 elements. ",
                     "Try downloading the data via the UCSC FTP site.")
-              if (table$tracktype == "bed" || table$tracktype == "bigBed") {
-                output <- GRanges(seqnames = table[["chrom"]], strand = table[["strand"]],
-                                  ranges = IRanges(start = table[["chromStart"]],
-                                  end = table[["chromEnd"]]))
-                table[["chrom"]] = table[["strand"]] = table[["chromStart"]] = table[["chromEnd"]] = NULL
-                elementMetadata(output) <- table
-              } else if (table$tracktype == "wig" || table$tracktype == "bigWig") {
-                output <- GRanges(seqnames = table[["chrom"]], ranges = IRanges(start = table[["start"]],
-                                  end = table[["end"]]))
-                table[["chrom"]] = table[["start"]] = table[["end"]] = NULL
-                elementMetadata(output) <- table
-                # output <- GPos(output)
+              # normalize column names
+              names(table)[names(table) == "chromStart"] <- "start"
+              names(table)[names(table) == "chromEnd"] <- "end"
+              if(!"strand" %in% names(table)) {
+                strand <- rep("*", dim(table)[1])
+                cbind(table,strand)
               }
+
+              # create GRange object
+              output <- GRanges(seqnames = table[["chrom"]], ranges = IRanges(start = table[["start"]],
+                                  end = table[["end"]]), strand = table[["strand"]])
+
+              # remove used columns
+              table[["chrom"]] = table[["strand"]] = table[["start"]] = table[["end"]] = NULL
+              # add left columns to the GRange object
+              elementMetadata(output) <- table
               genome(output) <- object@genome
               output
             }
@@ -513,117 +516,19 @@ setMethod("track", "UCSCTableQuery",
 ##             set
 ##           })
 
-listToDataframe <- function(results, columnNames, transpose = FALSE) {
-  if (transpose)
-    results <- lapply(results, t)
-  listOfDf <- lapply(results, function(x) {
-      df <- data.frame(x)
-      names(df) <- columnNames
-      df
-  })
-  df <- do.call(rbind, listOfDf)
-}
-
-parseBedDf <- function(response, query) {
-  columnTypes <- response[["columnTypes"]]
-  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
-  tableName <- response[["track"]]
+parseResponse <- function(response, tableName) {
   results <- response[[tableName]]
-  if (!is.null(query[["chrom"]])) {# with chrom
-    df <- listToDataframe(results, columnNames)
+  if (is.null(names(results))) {
+    df <- do.call(rbind.data.frame, results)
   } else {
     chromosomes <- names(results)
     listOfDf <- lapply(chromosomes, function(x) {
-      df <- listToDataframe(results[[x]], columnNames)
+      do.call(rbind.data.frame, results[[x]])
     })
     df <- do.call(rbind, listOfDf)
   }
-  df[["tracktype"]] <- "bed"
+  rownames(df) <- NULL
   df
-}
-
-parseWigDf <- function(response, query) {
-  columnTypes <- response[["columnTypes"]]
-  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
-  tableName <- response[["track"]]
-  if (!is.null(query[["chrom"]])) {# with chrom
-    results <- response[[query[["chrom"]]]]
-    df <- listToDataframe(results, columnNames, TRUE)
-    df[["chrom"]] <- query[["chrom"]]
-    df
-  } else {
-    results <- response[[tableName]]
-    chromosomes <- names(results)
-    listOfDf <- lapply(chromosomes, function(x) {
-      df <- listToDataframe(results[[x]], columnNames, TRUE)
-      df[["chrom"]] <- x
-      df
-    })
-    df <- do.call(rbind, listOfDf)
-  }
-  df[["tracktype"]] <- "wig"
-  df
-}
-
-parseBigBedDf <- function(response) {
-  columnTypes <- response[["columnTypes"]]
-  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
-  tableName <- response[["track"]]
-  results <- response[[tableName]]
-  df <- listToDataframe(results, columnNames)
-  df[["tracktype"]] <- "bigBed"
-  df
-}
-
-parseBigWigDf <- function(response) {
-  columnTypes <- response[["columnTypes"]]
-  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
-  tableName <- response[["track"]]
-  results <- response[[tableName]]
-  chromosomes <- names(results)
-  listOfDf <- lapply(chromosomes, function(x) {
-    df <- listToDataframe(results[[x]], columnNames, TRUE)
-    df[["chrom"]] <- x
-    df
-  })
-  df <- do.call(rbind, listOfDf)
-  df[["tracktype"]] <- "bigWig"
-  df
-}
-
-parseGenePredDf <- function(response, query) {
-  columnTypes <- response[["columnTypes"]]
-  columnNames <- vapply(columnTypes, function(x) x$name, character(1L))
-  tableName <- response[["track"]]
-  results <- response[[tableName]]
-  if (!is.null(query[["chrom"]])) {# with chrom
-    df <- listToDataframe(results, columnNames)
-  } else {
-    chromosomes <- names(results)
-    listOfDf <- lapply(chromosomes, function(x) {
-      df <- listToDataframe(results[[x]], columnNames)
-    })
-    df <- do.call(rbind, listOfDf)
-  }
-  df[["tracktype"]] <- "genePred"
-  df
-}
-
-handleResponseForOutputTypes <- function(response, tableName, query) {
-  outputType <- sapply(strsplit(response[["trackType"]], " "), getElement, 1)
-  if (outputType == "bed") {# For Bed file
-    parseBedDf(response, query)
-  } else if (outputType == "wig") {# For Wig file
-    parseWigDf(response, query)
-  } else if (outputType == "bigBed") {# For bigBig file
-    parseBigBedDf(response)
-  } else if (outputType == "bigWig") {# For bigWig file
-    parseBigWigDf(response)
-  } else if (outputType == "genePred") {# For genePred file
-    parseGenePredDf(response, query)
-  } else {
-    stop(paste("Unsupported file format : ", outputType))
-  }
 }
 
 ## get a data.frame from a UCSC table
@@ -636,7 +541,7 @@ setMethod("getTable", "UCSCTableQuery",
             stopIfTableEmpty(object)
             tableName <- tableName(object)
             genome <- object@genome
-            query <- list(genome = genome, track = tableName, jsonOutputArrays = 1)
+            query <- list(genome = genome, track = tableName)
             if (length(object@range) == 1L) {
               start <- start(object@range)
               end <- end(object@range)
@@ -654,7 +559,7 @@ setMethod("getTable", "UCSCTableQuery",
             } else {
               url <- RestUri(paste0(object@url, "hubApi"))
               response <- read(url$getData$track, query)
-              output <- handleResponseForOutputTypes(response, tableName, query)
+              output <- parseResponse(response, tableName)
               NAMES <- names(object)
               if (!is.null(NAMES)) { # filter by NAMES
                 if (is.null(output$name))
