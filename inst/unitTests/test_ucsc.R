@@ -10,16 +10,16 @@ test_ucsc <- function(x) {
     custom_range <- GRangesForUCSCGenome(genome, "chr1", IRanges(67003232, 67132477))
     selected_table <- data.frame(bin = 963, chrom = "chr5", chromStart = 49656261,
                                  chromEnd = 49661871, ix = 804, type ="W", frag="ABBA01004242.1",
-                                 fragStart = 0, fragEnd = 5610, strand = "+", tracktype = "bed")
+                                 fragStart = 0, fragEnd = 5610, strand = "+")
 
     # creating a track and a table for UCSCSession and genome identifier
     elementMetadata  <- list(bin = 0, ix = 1060, type = "F", frag = "AL133320.8",
-                             fragStart = 2000, fragEnd = 131245, tracktype = "bed")
+                             fragStart = 2000, fragEnd = 131245)
     track <- GRanges("chr1", IRanges(67003232, 67132477), "+", elementMetadata)
     genome(track) <- genome
     table <- data.frame(bin = 0, chrom = "chr1", chromStart = 67003232, chromEnd = 67132477,
                         ix = 1060, type = "F", frag = "AL133320.8", fragStart = 2000, 
-                        fragEnd = 131245,strand = "+", tracktype = "bed")
+                        fragEnd = 131245,strand = "+")
 
 
     test_trackhub_path <- system.file("tests", "trackhub", package = "rtracklayer")
