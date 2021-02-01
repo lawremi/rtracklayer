@@ -492,7 +492,7 @@ setMethod("track", "UCSCTableQuery",
                                   end = table[["end"]]), strand = table[["strand"]])
 
               # remove used columns
-              table[["chrom"]] = table[["strand"]] = table[["start"]] = table[["end"]] = NULL
+              table[["chrom"]] <- table[["strand"]] <- table[["start"]] <- table[["end"]] <- NULL
               # add left columns to the GRange object
               elementMetadata(output) <- table
               genome(output) <- object@genome
