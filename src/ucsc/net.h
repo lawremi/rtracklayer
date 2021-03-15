@@ -12,6 +12,8 @@
 
 #define DEFAULTCONNECTTIMEOUTMSEC 10000  /* default connect timeout for tcp in milliseconds */
 #define DEFAULTREADWRITETTIMEOUTSEC 120  /* default read/write timeout for tcp in seconds */
+#define MAXURLSIZE 4096 /* maximum size in characters for a URL, but also see the struct netParsedUrl definition */
+
 
 int setReadWriteTimeouts(int sd, int seconds);
 /* Set read and write timeouts on socket sd 
@@ -168,6 +170,10 @@ int netUrlHead(char *url, struct hash *hash);
  * lines with upper cased keywords for case-insensitive lookup, 
  * including hopefully CONTENT-TYPE: . */
 
+ int netUrlFakeHeadByGet(char *url, struct hash *hash);
+/* Use GET with byteRange as an alternate method to HEAD.
+ * Return status.
+
 long long netUrlSizeByRangeResponse(char *url);
 /* Use byteRange as a work-around alternate method to get file size (content-length).  
  * Return negative number if can't get. */
@@ -230,6 +236,9 @@ int netHttpGetMultiple(char *url, struct slName *queries, void *userData,
  * until we can't connect or until all requests have been served. 
  * For each HTTP response, do a callback. */
 
+char *transferParamsToRedirectedUrl(char *url, char *newUrl);
+/* Transfer password, byteRange, and any other parameters from url to newUrl and return result.
+ * freeMem result. */
 
 boolean netSkipHttpHeaderLinesWithRedirect(int sd, char *url, char **redirectedUrl);
 /* Skip http header lines. Return FALSE if there's a problem.
