@@ -1551,6 +1551,37 @@ if (byteRangeUsed && !foundContentRange
 return TRUE;
 }
 
+int netUrlFakeHeadByGet(char *url, struct hash *hash)
+/* Use GET with byteRange as an alternate method to HEAD.
+ * Return status. */
+{
+    char rangeUrl[MAXURLSIZE];
+    safef(rangeUrl, sizeof(rangeUrl), "%s;byterange=0-0", url);
+    int status = netUrlHeadExt(rangeUrl, "GET", hash);
+    return status;
+}
+
+char *transferParamsToRedirectedUrl(char *url, char *newUrl)
+/* Transfer password, byteRange, and any other parameters from url to newUrl and return result.
+ * freeMem result. */
+{
+    struct netParsedUrl npu, newNpu;
+/* Parse the old URL to make parts available for graft onto the redirected url. */
+/* This makes redirection work with byterange urls and user:password@ */
+    netParseUrl(url, &npu);
+    netParseUrl(newUrl, &newNpu);
+    if (npu.byteRangeStart != -1)
+    {
+        newNpu.byteRangeStart = npu.byteRangeStart;
+        newNpu.byteRangeEnd = npu.byteRangeEnd;
+    }
+    if ((npu.user[0] != 0) && (newNpu.user[0] == 0))
+    {
+        safecpy(newNpu.user,     sizeof newNpu.user,     npu.user);
+        safecpy(newNpu.password, sizeof newNpu.password, npu.password);
+    }
+    return urlFromNetParsedUrl(&newNpu);
+}
 
 boolean netSkipHttpHeaderLinesHandlingRedirect(int sd, char *url, int *redirectedSd, char **redirectedUrl)
 /* Skip http headers lines, returning FALSE if there is a problem.  Generally called as
