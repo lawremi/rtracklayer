@@ -156,10 +156,14 @@ setMethod("toString", "GenomeDescription", function(x) {
 ## Not sure where this method should land. I'm sure it will be useful
 ## for publishing adhoc genomes through Quickload.
 setMethod("seqinfo", "DNAStringSet", function(x) {
-  x_names <- names(x)
-  if (is.null(x_names))
-    x_names <- as.character(seq(length(x)))
-  Seqinfo(x_names, width(x))
+  si <- metadata(x)$seqinfo
+  if (is.null(si)) {
+      x_names <- names(x)
+      if (is.null(x_names))
+        x_names <- as.character(seq(length(x)))
+      si <- Seqinfo(x_names, width(x))
+  }
+  si
 })
 
 QuickloadGenome <- function(quickload, genome, create = FALSE,
