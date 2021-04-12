@@ -437,6 +437,12 @@ retInfo->size = status.st_size;
 return TRUE;
 }
 
+static bool udcCacheEnabled()
+/* TRUE if caching is activated */
+{
+return (defaultDir != NULL);
+}
+
 #ifndef WIN32
 
 /********* Section for http protocol **********/
@@ -471,12 +477,6 @@ if (ci == NULL)
 else
     ci->offset += total;
 return total;
-}
-
-static bool udcCacheEnabled()
-/* TRUE if caching is activated */
-{
-return (defaultDir != NULL);
 }
 
 boolean udcInfoViaHttp(char *url, struct udcRemoteFileInfo *retInfo)
@@ -1995,6 +1995,9 @@ off_t udcFileSize(char *url)
 {
 if (udcIsLocal(url))
     return fileSize(url);
+
+off_t ret = -1;
+
 #ifdef WIN32
  errAbort("udc/udcFileSize: invalid protocol for url %s, only file:// URLs are supported on Windows", url);
 #else
@@ -2003,7 +2006,6 @@ off_t cacheSize = udcSizeFromCache(url, NULL);
 if (cacheSize!=-1)
     return cacheSize;
 
-off_t ret = -1;
 struct udcRemoteFileInfo info;
 
 if (startsWith("http://",url) || startsWith("https://",url))
