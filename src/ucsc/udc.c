@@ -43,9 +43,6 @@
 #include "udc.h"
 #include "htmlPage.h"
 #include "hex.h"
-#include <sys/mman.h>
-#include <openssl/sha.h>
-
 
 /* The stdio stream we'll use to output statistics on file i/o.  Off by default. */
 FILE *udcLogStream = NULL;
@@ -150,7 +147,6 @@ struct udcFile
     bits64 endData;		/* End of area in file we know to have data. */
     bits32 bitmapVersion;	/* Version of associated bitmap we were opened with. */
     struct connInfo connInfo;   /* Connection info for open net connection. */
-    void *mmapBase;             /* pointer to memory address if file has been mmapped, or NULL */
     struct ios ios;             /* Statistics on file access. */
     };
 
@@ -1015,58 +1011,14 @@ void udcParseUrl(char *url, char **retProtocol, char **retAfterProtocol, char **
 udcParseUrlFull(url, retProtocol, retAfterProtocol, retColon, NULL);
 }
 
-static void addElementToDy(struct dyString *dy, int maxLen, char *name)
-/* add one element of a path to a dyString, hashing it if it's longer
- * than NAME_MAX */
-{
-if (strlen(name) > maxLen)
-    {
-    unsigned char hash[SHA_DIGEST_LENGTH];
-    char newName[(SHA_DIGEST_LENGTH + 1) * 2];
-
-    SHA1((const unsigned char *)name, strlen(name), hash);
-    hexBinaryString(hash,  SHA_DIGEST_LENGTH, newName, (SHA_DIGEST_LENGTH + 1) * 2);
-
-    dyStringAppend(dy, newName);
-    }
-else
-    dyStringAppend(dy, name);
-}
-
-static char *longDirHash(char *cacheDir, char *name)
-/* take a path and hash the elements that are longer than NAME_MAX */
-{
-int maxLen = pathconf(cacheDir, _PC_NAME_MAX);
-if (maxLen < 0)   // if we can't get the real system max, assume it's 255
-    maxLen = 255;
-struct dyString *dy = newDyString(strlen(name));
-char *ptr = strchr(name, '/');
-
-while(ptr)
-    {
-    *ptr = 0;
-    addElementToDy(dy, maxLen, name);
-
-    dyStringAppend(dy, "/");
-
-    name = ptr + 1;
-    ptr = strchr(name, '/');
-    }
-
-addElementToDy(dy, maxLen, name);
-
-return dyStringCannibalize(&dy);
-}
-
 void udcPathAndFileNames(struct udcFile *file, char *cacheDir, char *protocol, char *afterProtocol)
 /* Initialize udcFile path and names */
 {
 if (cacheDir==NULL)
     return;
-char *hashedAfterProtocol = longDirHash(cacheDir, afterProtocol);
-int len = strlen(cacheDir) + 1 + strlen(protocol) + 1 + strlen(hashedAfterProtocol) + 1;
+int len = strlen(cacheDir) + 1 + strlen(protocol) + 1 + strlen(afterProtocol) + 1;
 file->cacheDir = needMem(len);
-safef(file->cacheDir, len, "%s/%s/%s", cacheDir, protocol, hashedAfterProtocol);
+safef(file->cacheDir, len, "%s/%s/%s", cacheDir, protocol, afterProtocol);
 
 /* Create file names for bitmap and data portions. */
 file->bitmapFileName = fileNameInCacheDir(file, bitmapName);
@@ -1282,11 +1234,6 @@ if (file != NULL)
            file->ios.sparse.numSeeks, file->ios.sparse.numReads, file->ios.sparse.bytesRead, file->ios.sparse.numWrites,  file->ios.sparse.bytesWritten,
            file->ios.udc.numSeeks, file->ios.udc.numReads, file->ios.udc.bytesRead, file->ios.udc.numWrites,  file->ios.udc.bytesWritten,
            file->ios.net.numSeeks, file->ios.net.numReads, file->ios.net.bytesRead, file->ios.net.numWrites,  file->ios.net.bytesWritten);
-        }
-    if (file->mmapBase != NULL)
-        {
-        if (munmap(file->mmapBase, file->size) < 0)
-            errnoAbort("munmap() failed on %s", file->url);
         }
     if (file->connInfo.socket != 0)
 	mustCloseFd(&(file->connInfo.socket));
@@ -2091,31 +2038,4 @@ boolean udcExists(char *url)
 /* return true if a local or remote file exists */
 {
 return udcFileSize(url)!=-1;
-}
-void udcMMap(struct udcFile *file)
-/* Enable access to underlying file as memory using mmap.  udcMMapFetch
- * must be called to actually access regions of the file. */
-{
-if (file->mmapBase != NULL)
-    errAbort("File is already mmaped: %s", file->url);
-file->mmapBase = mmap(NULL, file->size, PROT_READ, MAP_SHARED, file->fdSparse, 0);
-if (file->mmapBase == MAP_FAILED)
-    errnoAbort("mmap() failed for %s", file->url);
-}
-
-void *udcMMapFetch(struct udcFile *file, bits64 offset, bits64 size)
-/* Return pointer to a region of the file in memory, ensuring that regions is
- * cached. udcMMap must have been called to enable access.  This must be
- * called for first access to a range of the file or erroneous (zeros) data
- * maybe returned.  Maybe called multiple times on a range or overlapping
- * returns. */
-{
-if (file->mmapBase == NULL)
-    errAbort("udcMMap() has not been called for: %s", file->url);
-if ((offset + size) > file->size)
-    errAbort("udcMMapFetch on offset %lld for %lld bytes exceeds length of file %lld on %s",
-             offset, size, file->size, file->url);
-if (udcCacheEnabled() && !sameString(file->protocol, "transparent"))
-    udcCachePreload(file, offset, size);
-return ((char*)file->mmapBase) + offset;
 }
