@@ -174,7 +174,7 @@ if (FALSE) { # enable to test an HTTP URL using the R help server
   test <- import(test_bed_gz)
   checkIdentical(correct_list, test)
   
-  test_bed_gz_url <- paste("file:///", test_bed_gz, sep = "")
+  test_bed_gz_url <- paste("file://", test_bed_gz, sep = "")
   export(correct_ucsc, test_bed_gz_url)
   test <- import(test_bed_gz_url)
   checkIdentical(correct_ucsc, test)
