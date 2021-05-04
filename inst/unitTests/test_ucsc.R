@@ -70,6 +70,9 @@ test_ucsc <- function(x) {
     checkIdentical(track(query), track)
     checkIdentical(getTable(query), table)
 
+    if (.Platform$OS.type == "windows")
+        return()
+
     ## TEST: ucscTableQuery with Track Hub(character) without any custom range selection
     query <- ucscTableQuery(test_trackhub_path, table = trackhub_table_name,
                             genome = trackhub_genome)
