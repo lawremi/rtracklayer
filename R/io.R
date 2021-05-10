@@ -48,21 +48,11 @@ FileForFormat <- function(path, format = file_ext(path)) {
     BiocIO::FileForFormat(path, format)
 }
 
-.ConnectionManager <- setRefClass("ConnectionManager",
-                                  fields = c(connections = "list"))
+manager <- BiocIO:::manager
 
-manager <- function() .ConnectionManager()
+connection <- BiocIO:::connection
 
-connection <- function(manager, x, open = "") {
-  connectionForResource(manager, resource(x), open = open)
-}
-
-resourceDescription <- function(x) {
-  r <- resource(x)
-  if (is(r, "connection"))
-    r <- summary(r)$description
-  r
-}
+resourceDescription <- BiocIO:::resourceDescription
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Utilities
@@ -70,26 +60,9 @@ resourceDescription <- function(x) {
 
 ## First checks for Windows drive letter.
 ## There are no known URI schemes that are only a single character.
-isURL <- function(uri) {
-    if (!isSingleString(uri))
-        return(FALSE)
-    windowsDriveLetter <- .Platform$OS.type == "windows" &&
-        grepl("^[A-Za-z]:[/\\]", uri)
-    grepl("^[A-Za-z]+:", uri) && !windowsDriveLetter
-}
+isURL <- BiocIO:::isURL
 
-## Uses XML::parseURI, except custom check for whether it is a URL
-.parseURI <- function(uri) {
-  if (!isURL(uri)) {
-    parsed <- parseURI("")
-    parsed$path <- uri
-  } else {
-    parsed <- parseURI(uri)
-    if (parsed$scheme == "file" && .Platform$OS.type == "windows") 
-      parsed$path <- substring(parsed$path, 2) # trim '/' from '/C:/foo/bar.txt'
-  }
-  parsed
-}
+.parseURI <- BiocIO:::.parseURI
 
 normURI <- function(x) {
   if (!isSingleString(x))
@@ -140,22 +113,7 @@ checkArgFormat <- function(con, format) {
     stop("Cannot treat a '", class(con), "' as format '", format, "'")
 }
 
-connectionForResource <- function(manager, x, open = "") {
-  resource <- decompress(manager, x)
-  if (is.character(resource)) {
-    if (!nzchar(resource))
-      stop("path cannot be an empty string")
-    uri <- .parseURI(resource)
-    if (uri$scheme != "")
-      con <- url(resource)
-    else con <- file(resource)
-  } else con <- resource
-  if (!isOpen(con) && nzchar(open)) {
-      open(con, open)
-      con <- manage(manager, con)
-  }
-  con
-}
+connectionForResource <- BiocIO:::connectionForResource
 
 ## BestFileFormat
 
@@ -184,26 +142,10 @@ setMethod("bestFileFormat", c("IntegerRangesList", "ANY"), function(x, dest) {
 
 ## Connection management (similar to memory management)
 
-manage <- function(manager, con) {
-    manager$connections <- unique(c(manager$connections, list(con)))
-    attr(con, "manager") <- manager
-    con
-}
+manage <- BiocIO:::manage
 
-managed <- function(manager, con) {
-    con %in% manager$connections
-}
+managed <- BiocIO:::managed
 
-unmanage <- function(manager, con) {
-    manager$connections <- setdiff(manager$connections, con)
-    attr(con, "manager") <- NULL
-    con
-}
+unmanage <- BiocIO:::unmanage
 
-release <- function(manager, con) {
-    if (managed(manager, con)) {
-        unmanage(manager, con)
-        close(con)
-    }
-    con
-}
+release <- BiocIO:::release
