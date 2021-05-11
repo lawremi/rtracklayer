@@ -603,13 +603,11 @@ TrackHub <- function(uri, create = FALSE) {
         if (uriExists(uri)) {
             message("NOTE: '", uri, "' already exists")
             create <- FALSE
-        } ## must create this before calling normURI (requires existence)
+        }
         else createResource(uri, dir = TRUE)
     }
     th <- new("TrackHub")
-    th@uri <- normURI(uri)
-    # To fix windows errors, XML::parseURI() cannot parse the windows absolute path with the scheme
-    th@uri <- sub("file:///", "", th@uri)
+    th@uri <- checkURI(uri)
     if (create && !uriExists(hubFile(th))) {
         createResource(hubFile(th))
     } else {

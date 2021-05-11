@@ -45,10 +45,10 @@ Quickload <- function(uri = "quickload", create = FALSE) {
     if (uriExists(uri)) {
       message("NOTE: '", uri, "' already exists")
       create <- FALSE
-    } ## must create this before calling normURI (requires existence)
+    }
     else createResource(uri, dir = TRUE)
   }
-  ql <- new("Quickload", uri = normURI(uri))
+  ql <- new("Quickload", uri = checkURI(uri))
   if (create)
     createResource(contentsFile(ql))
   ql
