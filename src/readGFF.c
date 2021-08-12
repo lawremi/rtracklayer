@@ -494,7 +494,10 @@ static void load_tagval(const char *tag, int tag_len,
 	return;
 }
 
-#define	IOBUF_SIZE 65536
+/* Some stupid GFF files like GCF_000001735.4_TAIR10.1_genomic.gff.gz (RefSeq
+ * GFF for Arabidopsis thaliana TAIR10.1) can contain lines up to 168975
+ * chars long. */
+#define	IOBUF_SIZE 200000
 
 /*
  * We use a heuristic to detect the format of the "attributes" col.
