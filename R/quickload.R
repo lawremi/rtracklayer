@@ -126,7 +126,7 @@ setMethod("trackNames", "QuickloadGenome", function(object) {
 setMethod("mcols", "QuickloadGenome", function(x) {
   files <- QuickloadGenome_annotFiles(x)
   if (!length(xmlChildren(files)))
-    new("DataFrame", nrows = length(x))
+    make_zero_col_DFrame(length(x))
   else
     Reduce(function(x, y) merge(as.data.frame(as.list(x)),
                                 as.data.frame(as.list(y)), all = TRUE),
