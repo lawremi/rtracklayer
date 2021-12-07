@@ -13,7 +13,6 @@
 \alias{[[,Quickload,ANY,ANY-method}
 \alias{genome,Quickload-method}
 \alias{length,Quickload-method}
-\alias{uri}
 
 %% Coercion:
 \alias{coerce,character,Quickload-method}

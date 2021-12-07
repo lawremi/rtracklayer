@@ -26,7 +26,7 @@
     \item{}{
       \code{chrom(x), chrom(x) <- value}: Gets or sets the chromosome
       names for \code{x}. This is an alias for
-      \code{\link[IRanges]{names}(x)}.
+      \code{names(x)}.
     }
   }
 }
