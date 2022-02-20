@@ -102,7 +102,7 @@ setMethod("import", "BigBedFile",
             defaultNames <- defaultFields[defaultFields %in% selectedFields]
             extraNames <- ValidextraFields[ValidextraFields %in% extraFields]
             C_ans <- .Call(BBDFile_query, expandPath(path(con)),
-                           as.character(seqnames(si)), ranges(which),
+                           as.character(seqnames(which)), ranges(which),
                            defaultFieldIndexes, extraFieldIndexes)
             nhits <- C_ans[[1L]]
             gr <- GRanges(rep(seqnames(which), nhits), C_ans[[3L]], seqinfo=si)
