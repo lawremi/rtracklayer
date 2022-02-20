@@ -34,7 +34,7 @@ test_bb <- function() {
   checkIdentical(test, correct_which)
 
   ## TEST: BigBedSelection (GRanges, no field)
-  which <- GRanges(c("chr10"), IRanges(c(180185, 180335)))
+  which <- GRanges(c("chr10"), IRanges(173925, width = 151))
   test <- import(test_bb,
                  selection = BigBedSelection(which, colnames = character()))
   correct_subset <- subsetByOverlaps(correct_fixed, which)
