@@ -1,4 +1,3 @@
-#include <S.h>
 #include "ucsc/common.h"
 #include "ucsc/hash.h"
 
@@ -67,9 +66,9 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       value = hashFindVal(hash, header[2]);
       if (!value) { /* new block */
         int name_size = strlen(header[2])+1;
-        block = Salloc(1, ChainBlock);
+        block = (ChainBlock *)S_alloc(1, sizeof(ChainBlock));
         hashAdd(hash, header[2], block);
-        block->name = Salloc(name_size, char);
+        block->name = (char *)S_alloc(name_size, sizeof(char));
         memcpy(block->name, header[2], name_size);
         block->ranges = new_IntPairAE(0, 0);
         block->offset = new_IntAE(0, 0, 0);
@@ -125,7 +124,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       }
     }
   }
-  result = Salloc(hashNumEntries(hash), ChainBlock *);
+  result = (ChainBlock **)S_alloc(hashNumEntries(hash), sizeof(ChainBlock *));
   hash_elements = hashElListHash(hash);
   for (struct hashEl *h = hash_elements; h; h = h->next, i++) {
     result[i] = h->val;
