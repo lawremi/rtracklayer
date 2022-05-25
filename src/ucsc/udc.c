@@ -1098,17 +1098,16 @@ char* get_hashed_basename_path(char *afterProtocol) {
 
     /* calculate size of url without basename and total buffer size*/
     int url_size = strlen(afterProtocol) - strlen(name);
-    int total_size = url_size + sizeof(unsigned long);
+    int total_size = url_size + floor(1.0 + log10((double) llabs(hash_id))) + 1;
 
     /* substring afterProtocol to get url without basename*/
-    char path[url_size];
+    char path[url_size + 1];
     memcpy(path, afterProtocol, url_size);
     path[url_size] = '\0';
 
     /*create buffer and concat url without base and hash_id*/
-    char *full_path = malloc(total_size * sizeof(char));
-    int cx = snprintf(full_path, total_size, "%s", path);
-    snprintf(full_path + cx, total_size, "%ld", hash_id);
+    char *full_path = needMem(total_size * sizeof(char));
+    snprintf(full_path, total_size, "%s%ld", path, hash_id);
 
     return full_path;
 }
@@ -1198,6 +1197,7 @@ else
 if (udcCacheTimeout() > 0 && udcCacheEnabled() && fileExists(file->bitmapFileName))
 	    (void)maybeTouchFile(file->bitmapFileName);
 #endif
+    freeMem(full_path);
 	}
 
     if (udcCacheEnabled())
@@ -1251,6 +1251,7 @@ freeMem(file->sparseFileName);
 freeMem(file);
 freeMem(protocol);
 freeMem(afterProtocol);
+freeMem(full_path);
 return list;
 }
 
