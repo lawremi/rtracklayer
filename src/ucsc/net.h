@@ -122,7 +122,7 @@ struct netParsedUrl
    char password[128];	/* Password  (optional)  */
    char host[128];	/* Name of host computer - www.yahoo.com, etc. */
    char port[16];       /* Port, usually 80 or 8080. */
-   char file[1024];	/* Remote file name/query string, starts with '/' */
+   char file[2024];	/* Remote file name/query string, starts with '/' */
    ssize_t byteRangeStart; /* Start of byte range, use -1 for none */
    ssize_t byteRangeEnd;   /* End of byte range use -1 for none */
    };
