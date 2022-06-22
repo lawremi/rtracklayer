@@ -1081,6 +1081,37 @@ if (startsWith("http", protocol))
     }
 }
 
+unsigned long djb2_hash(unsigned char *str) {
+    unsigned long hash = 5381;
+    int c;
+
+    while (c = *str++)
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
+
+char* get_hashed_basename_path(char *afterProtocol) {
+    /*retrive basename and hash it*/
+    char *name = basename(afterProtocol);
+    unsigned long hash_id = djb2_hash((unsigned char*)name);
+
+    /* calculate size of url without basename and total buffer size*/
+    int url_size = strlen(afterProtocol) - strlen(name);
+    int total_size = url_size + floor(1.0 + log10((double) llabs(hash_id))) + 1;
+
+    /* substring afterProtocol to get url without basename*/
+    char path[url_size + 1];
+    memcpy(path, afterProtocol, url_size);
+    path[url_size] = '\0';
+
+    /*create buffer and concat url without base and hash_id*/
+    char *full_path = needMem(total_size * sizeof(char));
+    snprintf(full_path, total_size, "%s%ld", path, hash_id);
+
+    return full_path;
+}
+
 struct udcFile *udcFileMayOpen(char *url, char *cacheDir)
 /* Open up a cached file. cacheDir may be null in which case udcDefaultDir() will be
  * used.  Return NULL if file doesn't exist.
@@ -1153,7 +1184,8 @@ if (isTransparent)
     }
 else
     {
-    udcPathAndFileNames(file, cacheDir, protocol, afterProtocol);
+    char *full_path = get_hashed_basename_path(afterProtocol);
+    udcPathAndFileNames(file, cacheDir, protocol, full_path);
     if (!useCacheInfo)
 	{
 	file->updateTime = info.updateTime;
@@ -1165,6 +1197,7 @@ else
 if (udcCacheTimeout() > 0 && udcCacheEnabled() && fileExists(file->bitmapFileName))
 	    (void)maybeTouchFile(file->bitmapFileName);
 #endif
+    freeMem(full_path);
 	}
 
     if (udcCacheEnabled())
@@ -1205,7 +1238,8 @@ udcParseUrl(url, &protocol, &afterProtocol, &colon);
 if (colon == NULL)
     return NULL;
 AllocVar(file);
-udcPathAndFileNames(file, cacheDir, protocol, afterProtocol);
+char *full_path = get_hashed_basename_path(afterProtocol);
+udcPathAndFileNames(file, cacheDir, protocol, full_path);
 struct slName *list = NULL;
 slAddHead(&list, slNameNew(file->bitmapFileName));
 slAddHead(&list, slNameNew(file->sparseFileName));
@@ -1217,6 +1251,7 @@ freeMem(file->sparseFileName);
 freeMem(file);
 freeMem(protocol);
 freeMem(afterProtocol);
+freeMem(full_path);
 return list;
 }
 
