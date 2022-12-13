@@ -487,9 +487,14 @@ setMethod("track", "UCSCTableQuery",
                 cbind(table,strand)
               }
 
+              if (is.null(table[["chrom"]]))
+                  table[["chrom"]] <- as.character(seqnames(object@range))
+
               # create GRange object
-              output <- GRanges(seqnames = table[["chrom"]], ranges = IRanges(start = table[["start"]],
-                                  end = table[["end"]]), strand = table[["strand"]])
+              output <- GRanges(seqnames = table[["chrom"]],
+                                ranges = IRanges(start = as.numeric(table[["start"]]),
+                                                 end = as.numeric(table[["end"]])),
+                                                 strand = table[["strand"]])
 
               # remove used columns
               table[["chrom"]] <- table[["strand"]] <- table[["start"]] <- table[["end"]] <- NULL
@@ -516,8 +521,11 @@ setMethod("track", "UCSCTableQuery",
 ##             set
 ##           })
 
-parseResponse <- function(response, tableName) {
+parseResponse <- function(response, tableName, chrom) {
   results <- response[[tableName]]
+  if (is.null(results)) {
+    return(as.data.frame(do.call(rbind, response[[chrom]])))
+  }
   if (is.null(names(results))) {
     df <- do.call(rbind.data.frame, results)
   } else {
@@ -559,7 +567,8 @@ setMethod("getTable", "UCSCTableQuery",
             } else {
               url <- RestUri(paste0(object@url, "hubApi"))
               response <- read(url$getData$track, query)
-              output <- parseResponse(response, tableName)
+              seqnames <- as.character(seqnames(object@range))
+              output <- parseResponse(response, tableName, seqnames)
               NAMES <- names(object)
               if (!is.null(NAMES)) { # filter by NAMES
                 if (is.null(output$name))
