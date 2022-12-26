@@ -92,7 +92,7 @@ ChainBlock **read_chain_file(FILE *stream, const char *exclude, int *nblocks) {
       if (qrc)
         qstart = atoi(header[8]) - qstart + 2;
     } else {
-      int matches = chopByChar(linebuf, '\t', data, DATA_SIZE), width;
+      int matches = chopByWhite(linebuf, data, DATA_SIZE), width;
       if (matches != 1 && matches != 3)
         error("expecting 1 or 3 elements on line %d, got %d", line, matches);
       width = atoi(data[0]);
