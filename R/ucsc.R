@@ -1460,7 +1460,7 @@ setMethod("ucscTracks", "UCSCSession",
             nodes <- getNodeSet(tracks, "//select/@name")
             trackIds <- unlist(nodes)
             ##trackIds <- sapply(nodes, xmlValue)
-            nodes <- getNodeSet(tracks, "//select/../a[not(@class)]/text()")
+            nodes <- getNodeSet(tracks, "//select/../a[not(@class='pennantIconText')]/text()")
             nms <- sapply(nodes, xmlValue)
             names(trackIds) <- sub("^ ", "", nms)
             new("ucscTracks", ids = trackIds, modes = trackModes)
