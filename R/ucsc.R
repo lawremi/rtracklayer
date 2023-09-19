@@ -261,7 +261,7 @@ normTableQueryRange <- function(range, genome, max.length = 1000L) {
 }
 
 ucscTables <- function(genome, track) {
-  url <- "http://genome.ucsc.edu/cgi-bin/hgTables"
+  url <- "https://genome.ucsc.edu/cgi-bin/hgTables"
   if (!isSingleString(genome))
     stop("'genome' must be a single non-NA string")
   # check genome is valid or not
