@@ -23,8 +23,7 @@
   \code{x} is a \code{IntegerRangesList} object.
 
   \describe{
-    \item{}{
-      \code{chrom(x), chrom(x) <- value}: Gets or sets the chromosome
+    \item{\code{chrom(x), chrom(x) <- value}:}{ Gets or sets the chromosome
       names for \code{x}. This is an alias for
       \code{names(x)}.
     }

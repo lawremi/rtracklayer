@@ -20,8 +20,8 @@
 
 \section{Constructor}{
   \describe{
-    \item{}{\code{BigBedSelection(ranges = GRanges(), colnames =
-        "score")}: Constructs a \code{BigBedSelection} with the given
+    \item{\code{BigBedSelection(ranges = GRanges(), colnames =
+        "score")}:}{ Constructs a \code{BigBedSelection} with the given
         \code{ranges} and \code{colnames}.
         a \code{character} identifying a genome (see
         \code{\link{GenomicSelection}}), or a
@@ -33,7 +33,7 @@
 
 \section{Coercion}{
   \describe{
-    \item{}{\code{as(from, "BigBedSelection")}: Coerces \code{from} to a
+    \item{\code{as(from, "BigBedSelection")}:}{ Coerces \code{from} to a
       \code{BigBedSelection} object. Typically, \code{from} is a
       \code{\link[GenomicRanges]{GRanges}} or
       a \code{\link[IRanges]{IntegerRangesList}}, the ranges of

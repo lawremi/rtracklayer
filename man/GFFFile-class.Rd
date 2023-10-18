@@ -245,7 +245,7 @@ export.gff3(object, con, ...)
 
   It has the following utility methods:
   \describe{
-    \item{}{\code{genome}: Gets the genome identifier from
+    \item{\code{genome}:}{ Gets the genome identifier from
       the \dQuote{genome-build} header directive.
     }
   }

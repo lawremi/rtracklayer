@@ -27,22 +27,17 @@
   Every implementation should support these methods:
   
   \describe{
-    \item{}{
-      \code{length(x)}: number of tracks
+    \item{\code{length(x)}:}{ number of tracks
     }
-    \item{}{
-      \code{names(x)}, \code{trackNames(x)}: names of the tracks
+    \item{\code{names(x)}, \code{trackNames(x)}:}{ names of the tracks
     }
-    \item{}{
-      \code{mcols(x)}: merged metadata on the tracks
+    \item{\code{mcols(x)}:}{ merged metadata on the tracks
     }
-    \item{}{
-      \code{track(x, name)}, \code{x$name}, \code{x[[name]]}:
+    \item{\code{track(x, name)}, \code{x$name}, \code{x[[name]]}:}{
       get the track called \code{name}
     }
-    \item{}{
-      \code{track(x, name) <- value}, \code{x$name <- value},
-      \code{x[[name]] <- value}: store the track \code{value} under
+    \item{\code{track(x, name) <- value}, \code{x$name <- value},
+      \code{x[[name]] <- value}:}{ store the track \code{value} under
       \code{name}. Different implementations will support different
       types for \code{value}. Generally, an interval data structure like
       \code{GenomicRanges}.

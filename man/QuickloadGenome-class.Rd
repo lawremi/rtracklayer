@@ -45,10 +45,9 @@
 
 \section{Constructor}{
   \describe{
-    \item{}{
-      \code{QuickloadGenome(quickload, genome, create = FALSE,
+    \item{\code{QuickloadGenome(quickload, genome, create = FALSE,
         seqinfo = seqinfo(genome),
-        title = toString(genome))}: Constructs a
+        title = toString(genome))}:}{ Constructs a
         new \code{QuickloadGenome} object, representing \code{genome} in
         the repository \code{quickload} (a URI string or a
         \code{\linkS4class{Quickload}} object).
@@ -78,30 +77,24 @@
   \code{Quickload} object.
   
   \describe{
-    \item{}{
-      \code{seqinfo(x)}, \code{seqinfo(x) <- value}: Gets or sets the
+    \item{\code{seqinfo(x)}, \code{seqinfo(x) <- value}:}{ Gets or sets the
       \code{\link[GenomeInfoDb]{Seqinfo}} object indicating the lengths
       of the sequences in the genome. No circularity information or genome
       identifier is stored.
     }
-    \item{}{
-      \code{quickload(x)}: Get the Quickload object that contains this
+    \item{\code{quickload(x)}:}{ Get the Quickload object that contains this
       genome.
     }
-    \item{}{
-      \code{uri(x)}: Get the uri pointing to the genome directory in the
+    \item{\code{uri(x)}:}{ Get the uri pointing to the genome directory in the
       Quickload repository
     }
-    \item{}{
-      \code{genome(x)}: Get the name of the genome, e.g.
+    \item{\code{genome(x)}:}{ Get the name of the genome, e.g.
       \dQuote{H_sapiens_Feb_2009}.
     }
-    \item{}{
-      \code{releaseDate(x)}: Get the release portion of the genome name,
+    \item{\code{releaseDate(x)}:}{ Get the release portion of the genome name,
       e.g., \dQuote{Feb_2009}.
     }
-    \item{}{
-      \code{organism(object)}: Get the organism portion of the genome name,
+    \item{\code{organism(object)}:}{ Get the organism portion of the genome name,
       e.g., \dQuote{H sapiens}.
     }
   }
@@ -109,21 +102,16 @@
 
 \section{Data Access}{
   \describe{
-    \item{}{
-      \code{length(x)}: number of datasets
+    \item{\code{length(x)}:}{ number of datasets
     }
-    \item{}{
-      \code{names(x), trackNames(x)}: names of the datasets
+    \item{\code{names(x), trackNames(x)}:}{ names of the datasets
     }
-    \item{}{
-      \code{mcols(x)}: merged metadata on the datasets
+    \item{\code{mcols(x)}:}{ merged metadata on the datasets
     }
-    \item{}{
-      \code{track(x, name), x$name}: get the track called \code{name}
+    \item{\code{track(x, name), x$name}:}{ get the track called \code{name}
     }
-    \item{}{
-      \code{track(x, name, format = bestFileFormat(value), ...) <-
-        value, x$name <- value}: store the track \code{value} under
+    \item{\code{track(x, name, format = bestFileFormat(value), ...) <-
+        value, x$name <- value}:}{ store the track \code{value} under
         \code{name}. Note that track storing is only supported
         for local repositories, i.e., those with a \code{file://} URI
         scheme.
@@ -148,12 +136,10 @@
         interpretation is up to the client. IGB supports an ever-growing
         list; please see its documentation.
     }
-    \item{}{
-      \code{referenceSequence(x)}: Get the reference sequence, as a
+    \item{\code{referenceSequence(x)}:}{ Get the reference sequence, as a
       \code{DNAStringSet}.
     }
-    \item{}{
-      \code{referenceSequence(x) <- value}: Set the reference sequence, as a
+    \item{\code{referenceSequence(x) <- value}:}{ Set the reference sequence, as a
       \code{DNAStringSet}. It is written as a 2bit file. This only works
       on local repositories.
     }

@@ -134,17 +134,15 @@ export.bw(object, con, ...)
   information:
 
   \describe{
-    \item{}{
-      \code{seqinfo(x)}:
+    \item{\code{seqinfo(x)}:}{
       Gets the \code{\link[GenomeInfoDb]{Seqinfo}} object
       indicating the lengths of the sequences for the intervals in the
       file. No circularity or genome information is available.
     }
-    \item{}{
-      \code{summary(ranges = as(seqinfo(object), "GenomicRanges"), size
+    \item{\code{summary(ranges = as(seqinfo(object), "GenomicRanges"), size
         = 1L, type = c("mean", "min", "max", "coverage", "sd"),
         defaultValue = NA_real_),
-	as = c("GRangesList", "RleList", "matrix"), ...}:
+	as = c("GRangesList", "RleList", "matrix"), ...}:}{
         Aggregates the intervals in the file
         that fall into \code{ranges}, which should be something
         coercible to \code{GRanges}.  The aggregation essentially
