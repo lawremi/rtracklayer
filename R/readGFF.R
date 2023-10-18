@@ -7,7 +7,7 @@
 {
     if (isSingleString(filepath))
         return(XVector:::open_input_files(filepath)[[1L]])
-    if (!is(filepath, "connection"))
+    if (!is(filepath, "BiocGenerics::connection"))
         stop(wmsg("'filepath' must be a single string or a connection"))
     if (!isSeekable(filepath))
         stop(wmsg("connection is not seekable"))
@@ -22,7 +22,7 @@
 readGFFPragmas <- function(filepath)
 {
     filexp <- .make_filexp_from_filepath(filepath)
-    if (is(filexp, "connection")) {
+    if (is(filexp, "BiocGenerics::connection")) {
         if (!isOpen(filexp)) {
             open(filexp)
             on.exit(close(filexp))
@@ -266,7 +266,7 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
 {
     ## Check 'filepath'.
     filexp <- .make_filexp_from_filepath(filepath)
-    if (is(filexp, "connection")) {
+    if (is(filexp, "BiocGenerics::connection")) {
         if (!isOpen(filexp)) {
             open(filexp)
             on.exit(close(filexp))
@@ -285,7 +285,7 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
     pragmas <- .Call(read_gff_pragmas, filexp)
 
     ## Rewind file.
-    if (is(filexp, "connection")) {
+    if (is(filexp, "BiocGenerics::connection")) {
         seek(filexp, where=0)
     } else {
         XVector:::rewind_filexp(filexp)
@@ -322,7 +322,7 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
     nrows <- scan_ans[[2L]]
 
     ## Rewind file.
-    if (is(filexp, "connection")) {
+    if (is(filexp, "BiocGenerics::connection")) {
         seek(filexp, where=0)
     } else {
         XVector:::rewind_filexp(filexp)
