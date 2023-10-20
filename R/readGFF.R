@@ -9,7 +9,7 @@
         return(XVector:::open_input_files(filepath)[[1L]])
     if (!inherits(filepath, "connection"))
         stop(wmsg("'filepath' must be a single string or a connection"))
-    if (!isSeekable(filepath))
+    if (!base::isSeekable(filepath))
         stop(wmsg("connection is not seekable"))
     filepath
 }
@@ -23,14 +23,14 @@ readGFFPragmas <- function(filepath)
 {
     filexp <- .make_filexp_from_filepath(filepath)
     if (inherits(filexp, "connection")) {
-        if (!isOpen(filexp)) {
-            open(filexp)
-            on.exit(close(filexp))
+        if (!base::isOpen(filexp)) {
+            base::open(filexp)
+            on.exit(base::close(filexp))
         }
-        if (seek(filexp) != 0) {
+        if (base::seek(filexp) != 0) {
             warning(wmsg("connection is not positioned at the start ",
                          "of the file, rewinding it"), immediate.=TRUE)
-            seek(filexp, where=0)
+            base::seek(filexp, where=0)
         }
     }
     .Call(read_gff_pragmas, filexp)
@@ -267,14 +267,14 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
     ## Check 'filepath'.
     filexp <- .make_filexp_from_filepath(filepath)
     if (inherits(filexp, "connection")) {
-        if (!isOpen(filexp)) {
-            open(filexp)
-            on.exit(close(filexp))
+        if (!base::isOpen(filexp)) {
+            base::open(filexp)
+            on.exit(base::close(filexp))
         }
-        if (seek(filexp) != 0) {
+        if (base::seek(filexp) != 0) {
             warning(wmsg("connection is not positioned at the start ",
                          "of the file, rewinding it"), immediate.=TRUE)
-            seek(filexp, where=0)
+            base::seek(filexp, where=0)
         }
     }
 
@@ -286,7 +286,7 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
 
     ## Rewind file.
     if (inherits(filexp, "connection")) {
-        seek(filexp, where=0)
+        base::seek(filexp, where=0)
     } else {
         XVector:::rewind_filexp(filexp)
     }
@@ -323,7 +323,7 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
 
     ## Rewind file.
     if (inherits(filexp, "connection")) {
-        seek(filexp, where=0)
+        base::seek(filexp, where=0)
     } else {
         XVector:::rewind_filexp(filexp)
     }
@@ -396,7 +396,7 @@ readGFF <- function(filepath, version=0, columns=NULL, tags=NULL,
 .parseSequenceRegionsAsSeqinfo <- function(lines) {
     sr <- grep("##sequence-region", lines, value=TRUE)
     srcon <- file()
-    on.exit(close(srcon))
+    on.exit(base::close(srcon))
     writeLines(sr, srcon)
     srt <- read.table(srcon, comment.char="",
                       colClasses=list(NULL, "character", "integer",
