@@ -126,7 +126,7 @@ setReplaceMethod("genome", "UCSCSession",
                    if (!isSingleString(value))
                      stop("'genome' must be a single non-NA string")
                    ucscGet(x, "gateway", list(db = value))
-                   if (sub(".*_", "", genome(x)) != value)
+                   if (genome(x) != value)
                      stop("Failed to set session genome to '", value, "'")
                    x
                  })
@@ -320,7 +320,6 @@ setMethod("ucscTableQuery", "character",
                 table <- tables[1]
               }
               if (is.null(range)) {
-                genome <- sub(".*_", "", genome)
                 range <- Seqinfo(genome = genome)
                 range <- as(range, "GRanges")
               } else range <- normTableQueryRange(range, genome)
@@ -1426,6 +1425,7 @@ setMethod("ucscCart", "UCSCSession",
             mat <- matrix(unlist(pairs), nrow = 2)
             vals <- mat[2,]
             names(vals) <- mat[1,]
+            vals[["db"]] <- sub(".*_", "", vals[["db"]])
             new("ucscCart", vals)
           })
 setMethod("ucscCart", "UCSCView",
