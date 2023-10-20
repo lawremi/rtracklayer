@@ -23,7 +23,7 @@ ucscGenomes(organism=FALSE)
   genome.}
 \details{
   For populating the organism column, the web url
-  \url{http://genome.ucsc.edu/cgi-bin} is scraped for every assembly
+  \url{https://genome.ucsc.edu/cgi-bin} is scraped for every assembly
   version to get the scientific name.
 }
 \examples{

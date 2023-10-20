@@ -8,7 +8,7 @@ setClass("UCSCSession",
 
 # gets an 'hgsid' to initialize the session
 setMethod("initialize", "UCSCSession",
-          function(.Object, url = "http://genome.ucsc.edu/cgi-bin/",
+          function(.Object, url = "https://genome.ucsc.edu/cgi-bin/",
                    user = NULL, session = NULL, force = FALSE, ...)
           {
             .Object@url <- url
@@ -300,7 +300,7 @@ normArgTrack <- function(name, trackids) {
 setMethod("ucscTableQuery", "character",
           function(x, track = NULL, range =  NULL, table = NULL,
                    names = NULL, intersectTrack = NULL, check = TRUE, hubUrl = NULL,
-                   genome = NULL, url = "http://genome.ucsc.edu/cgi-bin/") {
+                   genome = NULL, url = "https://genome.ucsc.edu/cgi-bin/") {
               stopifnot(isSingleString(x))
               if (!is.null(intersectTrack))
                 stop("intersectTrack is no longer supported")
@@ -361,7 +361,7 @@ setReplaceMethod("hubUrl", "UCSCTableQuery", function(x, value) {
 
 ## gets the track names available from the table browser
 ucscTableTracks <- function(genome) {
-  doc <- httpGet("http://genome-euro.ucsc.edu/cgi-bin/hgTables", c(db = genome, hgta_group = "allTracks"))
+  doc <- httpGet("https://genome-euro.ucsc.edu/cgi-bin/hgTables", c(db = genome, hgta_group = "allTracks"))
   label_path <- "//select[@name = 'hgta_track']/option/text()"
   labels <- sub("\n.*$", "", sapply(getNodeSet(doc, label_path), xmlValue))
   track_path <- "//select[@name = 'hgta_track']/option/@value"
@@ -1485,7 +1485,7 @@ setMethod("ucscTrackModes", "ucscTracks",
 ucscGenomes <- function(organism=FALSE) {
   stopifnot(isTRUEorFALSE(organism))
   names <- c("db", "species", "date", "name", "organism")
-  url <- RestUri("http://api.genome.ucsc.edu/")
+  url <- RestUri("https://api.genome.ucsc.edu/")
   response <- read(url$list$ucscGenomes)
   genomes <- response[[5]]
   genomeNames <- names(genomes)

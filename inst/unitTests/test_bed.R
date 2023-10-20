@@ -266,7 +266,7 @@ test_extendedBed <- function()
 
         # the narrowPeak format represents a variety of "BED6+N" formats
         # used by the ENCODE project.  see
-        # http://genome.ucsc.edu/FAQ/FAQformat.html
+        # https://genome.ucsc.edu/FAQ/FAQformat.html
         # "This format is used to provide called peaks of signal
         #  enrichment based on pooled, normalized (interpreted) data.
         #  It is a BED6+4 format."
