@@ -134,7 +134,7 @@ export.wig(object, con, ...)
 \author{Michael Lawrence}
 
 \references{
-  \url{http://genome.ucsc.edu/goldenPath/help/wiggle.html}
+  \url{https://genome.ucsc.edu/goldenPath/help/wiggle.html}
 }
 
 \examples{

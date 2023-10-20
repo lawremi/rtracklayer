@@ -41,7 +41,7 @@
   }
 }
 \references{
-  \url{http://genome.ucsc.edu/goldenPath/help/customTrack.html#TRACK}
+  \url{https://genome.ucsc.edu/goldenPath/help/customTrack.html#TRACK}
   for the official documentation. }
 \author{ Michael Lawrence }
 

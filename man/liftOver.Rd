@@ -36,7 +36,7 @@ liftOver(x, chain, ...)
   from the corresponding element in the input (may be one-to-many).
 }
 \references{
-  \url{http://genome.ucsc.edu/cgi-bin/hgLiftOver}
+  \url{https://genome.ucsc.edu/cgi-bin/hgLiftOver}
 }
 \examples{
 \dontrun{

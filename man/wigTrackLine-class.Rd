@@ -69,7 +69,7 @@
   }
 }
 \references{ Official documentation:
-  \url{http://genome.ucsc.edu/goldenPath/help/wiggle.html}. }
+  \url{https://genome.ucsc.edu/goldenPath/help/wiggle.html}. }
 \author{ Michael Lawrence }
 \seealso{
   \code{\link{export.wig}}, \code{\link{export.bedGraph}} for exporting

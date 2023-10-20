@@ -44,7 +44,7 @@
   }
 }
 \references{ Official documentation:
-  \url{http://genomewiki.ucsc.edu/index.php/Microarray_track}. }
+  \url{https://genomewiki.ucsc.edu/index.php/Microarray_track}. }
 \author{ Michael Lawrence }
 \seealso{
   \code{\link{export.bed15}} for exporting bed15 tracks.

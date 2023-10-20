@@ -159,7 +159,7 @@ export.ucsc(object, con, ...)
 \author{Michael Lawrence}
 
 \references{
-  \url{http://genome.ucsc.edu/goldenPath/help/customTrack.html}
+  \url{https://genome.ucsc.edu/goldenPath/help/customTrack.html}
 }
 
 \keyword{methods}
