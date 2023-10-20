@@ -17,7 +17,8 @@ setMethod("initialize", "UCSCSession",
             gw <- httpGet(gwURL, cookiefile = tempfile(), header = TRUE,
                           .parse=FALSE, ...)
             if (grepl("redirectTd", gw)) {
-                url <- sub(".*?a href=\"h([^[:space:]]+cgi-bin/).*", "h\\1", gw)
+                url <- sub(".*?a href=\"http([^[:space:]]+cgi-bin/).*",
+                           "https\\1", gw)
                 return(initialize(.Object, url, user=user, session=session,
                                   force=TRUE, ...))
             }
