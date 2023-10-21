@@ -289,13 +289,10 @@ setMethod("ucscTableQuery", "UCSCSession",
 normArgTrack <- function(name, trackids) {
   if (!isSingleString(name))
     stop("'track' must be a single string")
-  if (!(name %in% trackids)) {
-    mapped_name <- trackids[name]
-    if (is.na(mapped_name))
+  if (name %in% names(trackids))
+      unname(trackids[name])
+  else
       stop("Unknown track: ", name)
-    name <- mapped_name
-  }
-  unname(name)
 }
 
 setMethod("ucscTableQuery", "character",
