@@ -361,7 +361,7 @@ setReplaceMethod("hubUrl", "UCSCTableQuery", function(x, value) {
 
 ## gets the track names available from the table browser
 ucscTableTracks <- function(genome) {
-  doc <- httpGet("https://genome-euro.ucsc.edu/cgi-bin/hgTables", c(db = genome, hgta_group = "allTracks"))
+  doc <- httpGet("https://genome.ucsc.edu/cgi-bin/hgTables", c(db = genome, hgta_group = "allTracks"))
   label_path <- "//select[@name = 'hgta_track']/option/text()"
   labels <- sub("\n.*$", "", sapply(getNodeSet(doc, label_path), xmlValue))
   track_path <- "//select[@name = 'hgta_track']/option/@value"
