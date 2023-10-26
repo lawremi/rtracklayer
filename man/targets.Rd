@@ -32,4 +32,3 @@ targetTrack <- with(targets,
                 strand = strand, chrom = chrom))
 }
 \keyword{datasets}
-

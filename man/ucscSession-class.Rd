@@ -97,9 +97,8 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
       the \code{table} parameter. See \code{\link{tableNames}} for a way
       to list the available tables.
     }
-    \item{}{
-      \code{getTable(object, name, range = base::range(object), table =
-      NULL)}: Retrieves the table indicated by the track \code{name} and
+    \item{\code{getTable(object, name, range = base::range(object), table =
+      NULL)}:}{ Retrieves the table indicated by the track \code{name} and
       \code{table} name, over \code{range}, as a \code{data.frame}. See
       \code{\link{getTable}}.
     }

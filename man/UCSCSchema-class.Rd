@@ -22,9 +22,9 @@
   \code{UCSCSchema} object.
 
   \describe{
-    \item{}{\code{genome(x)}: Get the genome for the table. }
-    \item{}{\code{tableName(x)}: Get the name of the table. }
-    \item{}{\code{nrow(x)}: Get the number of rows in the table. }
+    \item{\code{genome(x)}:}{ Get the genome for the table. }
+    \item{\code{tableName(x)}:}{ Get the name of the table. }
+    \item{\code{nrow(x)}:}{ Get the number of rows in the table. }
   }
 }
 

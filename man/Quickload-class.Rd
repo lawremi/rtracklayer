@@ -33,8 +33,7 @@
 
 \section{Constructor}{
   \describe{
-    \item{}{
-      \code{Quickload(uri = "quickload", create = FALSE)}: Constructs a
+    \item{\code{Quickload(uri = "quickload", create = FALSE)}:}{ Constructs a
       new \code{Quickload} object, representing a repository at
       \code{uri}. If \code{create} is \code{TRUE}, and \code{uri} is
       writeable (i.e., local), the repository is created if it does not
@@ -49,16 +48,16 @@
   object.
   
   \describe{
-    \item{}{\code{x$genome}, \code{x[["genome"]]}: Get
+    \item{\code{x$genome}, \code{x[["genome"]]}:}{ Get
       the \code{\linkS4class{QuickloadGenome}} object for the genome named
       \code{genome}. This is where all the data is stored.
     }
-    \item{}{\code{length(x)}: number of genomes in the repository
+    \item{\code{length(x)}:}{ number of genomes in the repository
     }
-    \item{}{\code{uri(x)}:
+    \item{\code{uri(x)}:}{
       Get the URI pointing to the Quickload repository.
     }
-    \item{}{\code{genome(x)}:
+    \item{\code{genome(x)}:}{
       Get the identifiers of the genomes present in the repository.
     }
   }

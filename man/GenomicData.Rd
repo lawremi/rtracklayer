@@ -21,13 +21,11 @@ to manipulate data on genomic ranges.}
   \code{x} is a \code{GenomicRanges} or \code{IntegerRangesList} object.
 
   \describe{
-    \item{}{
-      \code{chrom(x), chrom(x) <- value}: Gets or
+    \item{\code{chrom(x), chrom(x) <- value}:}{ Gets or
       sets the chromosome names for \code{x}. The length of \code{value}
       should equal the length of \code{x}.
     }
-    \item{}{
-      \code{score(x)}: Gets the \dQuote{score} column from the element
+    \item{\code{score(x)}:}{ Gets the \dQuote{score} column from the element
       metadata of a \code{GenomicRanges} or \code{GRangesList}. Many
       track formats have a score column, so this is often used during
       export. The \code{ANY} fallback for this method simply returns
@@ -38,9 +36,8 @@ to manipulate data on genomic ranges.}
 
 \section{Constructor}{
   \describe{
-    \item{}{
-      \code{GenomicData(ranges, ..., strand = NULL, chrom = NULL,
-        genome = NULL)}: Constructs a \code{GRanges} instance with
+    \item{\code{GenomicData(ranges, ..., strand = NULL, chrom = NULL,
+        genome = NULL)}:}{ Constructs a \code{GRanges} instance with
       the given \code{ranges} and variables in \code{...} (see the
       \code{\link[GenomicRanges]{GRanges}} constructor).
 

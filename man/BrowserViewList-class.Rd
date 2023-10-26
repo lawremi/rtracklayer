@@ -16,7 +16,7 @@
 
 \section{Constructor}{
   \describe{
-  \item{}{\code{BrowserViewList(...)}: Concatenates the
+  \item{\code{BrowserViewList(...)}:}{ Concatenates the
       \code{BrowserView} objects in \code{...} into a new
       \code{BrowserViewList}.  This is rarely called by the user.
     } 

@@ -46,25 +46,20 @@
   \code{ChainBlock} objects.
   
   \describe{
-    \item{}{
-      \code{ranges(x)}:
+    \item{\code{ranges(x)}:}{
       Get the \code{\link[IRanges]{IntegerRanges}} object holding
       the starts and ends of the "from" ranges. Each range is a
       contiguous block of positions aligned without gaps to the other
       sequence.
     }
-    \item{}{
-      \code{offset(x)}: Integer offset from the "from" start to the
+    \item{\code{offset(x)}:}{ Integer offset from the "from" start to the
       "end" start (which could be in another chromosome).
     }
-    \item{}{
-      \code{score(x)}: The score for each mapping.
+    \item{\code{score(x)}:}{ The score for each mapping.
     }
-    \item{}{
-      \code{space(x)}: The space (chromosome) of the "to" range.
+    \item{\code{space(x)}:}{ The space (chromosome) of the "to" range.
     }
-    \item{}{
-      \code{reversed(x)}: Whether the mapping inverts the region, i.e.,
+    \item{\code{reversed(x)}:}{ Whether the mapping inverts the region, i.e.,
       the alignment is between different strands.
     }
   }
@@ -80,8 +75,7 @@
   \code{exclude} argument to the \code{import} method.
   
   \describe{
-    \item{}{
-      \code{import.chain(con, exclude = "_", ...)}:
+    \item{\code{import.chain(con, exclude = "_", ...)}:}{
       Imports a chain file named \code{con} as a \code{Chain} object, a
       list of \code{ChainBlock}s. Alignments for chromosomes matching the
       \code{exclude} pattern are not imported.

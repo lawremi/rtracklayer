@@ -89,9 +89,8 @@
 
 \section{Constructor}{
   \describe{
-    \item{}{
-      \code{ucscTableQuery(x, range = seqinfo(x), table = NULL,
-        names = NULL, hubUrl = NULL, genome = NULL)}: Creates a \code{UCSCTableQuery} with the
+    \item{\code{ucscTableQuery(x, range = seqinfo(x), table = NULL,
+        names = NULL, hubUrl = NULL, genome = NULL)}:}{ Creates a \code{UCSCTableQuery} with the
         \code{UCSCSession}, genome identifier or TrackHub URI given as \code{x} and
         the table name given by the single string \code{table}. \code{range} should
         be a genome string identifier, a \code{GRanges} instance or
@@ -107,21 +106,18 @@
   Below, \code{object} is a \code{UCSCTableQuery} instance.
   
   \describe{
-    \item{}{
-      \code{track(object)}:
+    \item{\code{track(object)}:}{
       Retrieves the indicated table as a track, i.e. a \code{GRanges}
       object. Note that not all tables are available as tracks.
     }
-    \item{}{
-      \code{getTable(object)}: Retrieves the indicated table as a
+    \item{\code{getTable(object)}:}{ Retrieves the indicated table as a
       \code{data.frame}. Note that not all tables are output in
       parseable form, and that UCSC will truncate responses if they
       exceed certain limits (usually around 100,000 records). The safest
       (and most efficient) bet for large queries is to download the file
       via FTP and query it locally.
     }
-    \item{}{
-      \code{tableNames(object)}: Gets the names of the tables available
+    \item{\code{tableNames(object)}:}{ Gets the names of the tables available
       for the provider, table and range specified by the query.
     }
   }
@@ -132,31 +128,31 @@
   \code{UCSCTableQuery} object.
 
   \describe{
-    \item{}{\code{genome(x)}, \code{genome(x) <- value}: Gets or sets
+    \item{\code{genome(x)}, \code{genome(x) <- value}:}{ Gets or sets
     the genome identifier (e.g. \dQuote{hg18}) of the object.
     }
-    \item{}{\code{hubUrl(x)}, \code{hubUrl(x) <- value}: Gets or sets
+    \item{\code{hubUrl(x)}, \code{hubUrl(x) <- value}:}{ Gets or sets
     the TrackHub URI.
     }
-    \item{}{\code{tableName(x)}, \code{tableName(x) <- value}: Get or
+    \item{\code{tableName(x)}, \code{tableName(x) <- value}:}{ Get or
       set the single string indicating the name of the table to
       retrieve. May be \code{NULL}, in which case the table is
       automatically determined.
     }
-    \item{}{\code{range(x)}, \code{range(x) <- value}: Get or set the
+    \item{\code{range(x)}, \code{range(x) <- value}:}{ Get or set the
       \code{GRanges} indicating the portion of the table to retrieve in
       genomic coordinates. Any missing information, such as the genome
       identifier, is filled in using \code{range(browserSession(x))}. It
       is also possible to set the genome identifier string or
       a \code{IntegerRangesList}.
     }
-    \item{}{\code{names(x)}, \code{names(x) <- value}: Get or set the
+    \item{\code{names(x)}, \code{names(x) <- value}:}{ Get or set the
       names of the features to retrieve. If \code{NULL}, this filter is
       disabled.
     }
-    \item{}{\code{ucscSchema(x)}: Get
+    \item{\code{ucscSchema(x)}:}{ Get
       the \code{\linkS4class{UCSCSchema}} object describing the selected table.}
-    \item{}{\code{ucscTables(genome, track)}: Get the list of tables for the 
+    \item{\code{ucscTables(genome, track)}:}{ Get the list of tables for the 
       specified track(e.g. \dQuote{Assembly}) and genome identifier (e.g. \dQuote{hg19}).
       Here \code{genome} and \code{track} must be a single non-NA string.
     }
