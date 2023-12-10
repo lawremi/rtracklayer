@@ -36,20 +36,6 @@ int htmlColorCount()
 return (sizeof(htmlColors) / (sizeof(struct htmlColor)));
 }
 
-struct slName *htmlColorNames()
-/* Return list of defined HTML colors */
-{
-int count = htmlColorCount();
-int i;
-struct slName *colors = NULL;
-for (i=0; i<count; i++)
-    {
-    slAddHead(&colors, slNameNew(htmlColors[i].name));
-    }
-slReverse(&colors);
-return colors;
-}
-
 boolean htmlColorForName(char *name, unsigned *value)
 /* Lookup color for name.  Return false if not a valid color name */
 {
@@ -81,21 +67,4 @@ if (value != NULL)
 if (*end == '\0')
     return TRUE;
 return FALSE;
-}
-
-boolean htmlColorExists(char *name)
-/* Determine if color name is one of the defined HTML basic set */
-{
-return htmlColorForName(name, NULL);
-}
-
-void htmlColorToRGB(unsigned value, int *r, int *g, int *b)
-/* Convert an unsigned RGB value into separate R, G, and B components */
-{
-    if (r != NULL)
-        *r = (value >> 16) & 0xff;
-    if (g != NULL)
-        *g = (value >> 8) & 0xff;
-    if (b != NULL)
-        *b = value & 0xff;
 }

@@ -10,16 +10,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-struct slName *listDir(char *dir, char *pattern);
-/* Return an alphabetized list of all files that match 
- * the wildcard pattern in directory. */
-
-struct slName *listDirRegEx(char *dir, char *regEx, int flags);
-/* Return an alphabetized list of all files that match 
- * the regular expression pattern in directory.
- * See REGCOMP(3) for flags (e.g. REG_ICASE)  */
-
-
 struct fileInfo 
 /* Info about a file. */
     {
@@ -53,9 +43,6 @@ char *getCurrentDir();
 void setCurrentDir(char *newDir);
 /* Set current directory.  Abort if it fails. */
 
-boolean maybeSetCurrentDir(char *newDir);
-/* Change directory, return FALSE (and set errno) if fail. */
-
 boolean makeDir(char *dirName);
 /* Make dir.  Returns TRUE on success.  Returns FALSE
  * if failed because directory exists.  Prints error
@@ -80,9 +67,6 @@ void sleep1000(int milli);
 long clock1();
 /* A 1 hz clock. */
 
-char *rTempName(char *dir, char *base, char *suffix);
-/* Make a temp name that's almost certainly unique. */
-
 /* This structure helps us generate temp names and use
  * them.  Since different servers locate where the cgi
  * runs from differently, and where the generated html
@@ -95,12 +79,6 @@ struct tempName
 
 void makeTempName(struct tempName *tn, char *base, char *suffix);
 /* Make a good name for a temp file. */
-
-void mustRename(char *oldName, char *newName);
-/* Rename file or die trying. */
-
-void mustRemove(char *path);
-/* Remove file or die trying */
 
 char *semiUniqName(char *base);
 /* Figure out a name likely to be unique.
@@ -120,26 +98,12 @@ void mkdirTrashDirectory(char *prefix);
 double machineSpeed();
 /* Return relative speed of machine.  UCSC CSE dept. 1999 web server is 1.0 */
 
-char *mysqlHost();
-/* Return host computer on network for mySQL database. */
-
 char *getHost();
 /* Get name of this machine. */
-
-void uglyfBreak();
-/* Invoke the debugger. */
-
-char *getUser();
-/* Get user name */
 
 void envUpdate(char *name, char *value);
 /* Update an environment string */
 
-int mustFork();
-/* Fork or abort. */
-
-int rawKeyIn();
-/* Read in an unbuffered, unechoed character from keyboard. */
 
 time_t fileModTime(char *pathName);
 /* Return file last modification time.  The units of
@@ -147,22 +111,12 @@ time_t fileModTime(char *pathName);
  * later files having a larger time. */
 
 
-boolean isPipe(int fd);
-/* determine in an open file is a pipe  */
-
 boolean maybeTouchFile(char *fileName);
 /* If file exists, set its access and mod times to now.  If it doesn't exist, create it.
  * Return FALSE if we have a problem doing so. */
 
 boolean isRegularFile(char *fileName);
 /* Return TRUE if fileName is a regular file. */
-
-void makeSymLink(char *oldName, char *newName);
-/* Return a symbolic link from newName to oldName or die trying */
-
-long long freeSpaceOnFileSystem(char *path);
-/* Given a path to a file or directory on a file system,  return free space
- * in bytes. */
 
 #endif /* PORTABLE_H */
 

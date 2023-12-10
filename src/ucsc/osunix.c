@@ -32,17 +32,6 @@ if (stat(pathname,&mystat)==-1)
 return mystat.st_size;
 }
 
-long long freeSpaceOnFileSystem(char *path)
-/* Given a path to a file or directory on a file system,  return free space
- * in bytes. */
-{
-struct statvfs fi;
-int err = statvfs(path,&fi);
-if (err < 0)
-    errnoAbort("freeSpaceOnFileSystem could not statvfs");
-return (long long)fi.f_bsize * fi.f_bavail;
-}
-
 long clock1000()
 /* A millisecond clock. */
 {
@@ -74,13 +63,6 @@ gettimeofday(&tv, NULL);
 return tv.tv_sec;
 }
 
-void uglyfBreak()
-/* Go into debugger. */
-{
-static char *nullPt = NULL;
-nullPt[0] = 0;
-}
-
 char *getCurrentDir()
 /* Return current directory.  Abort if it fails. */
 {
@@ -96,72 +78,6 @@ void setCurrentDir(char *newDir)
 {
 if (chdir(newDir) != 0)
     errnoAbort("setCurrentDir: can't to set current directory: %s", newDir);
-}
-
-boolean maybeSetCurrentDir(char *newDir)
-/* Change directory, return FALSE (and set errno) if fail. */
-{
-return chdir(newDir) == 0;
-}
-
-struct slName *listDir(char *dir, char *pattern)
-/* Return an alphabetized list of all files that match 
- * the wildcard pattern in directory. */
-{
-struct slName *list = NULL, *name;
-struct dirent *de;
-DIR *d;
-
-if ((d = opendir(dir)) == NULL)
-    return NULL;
-while ((de = readdir(d)) != NULL)
-    {
-    char *fileName = de->d_name;
-    if (differentString(fileName, ".") && differentString(fileName, ".."))
-	{
-	if (pattern == NULL || wildMatch(pattern, fileName))
-	    {
-	    name = newSlName(fileName);
-	    slAddHead(&list, name);
-	    }
-	}
-    }
-closedir(d);
-slNameSort(&list);
-return list;
-}
-
-struct slName *listDirRegEx(char *dir, char *regEx, int flags)
-/* Return an alphabetized list of all files that match 
- * the regular expression pattern in directory.
- * See REGCOMP(3) for flags (e.g. REG_ICASE)  */
-{
-struct slName *list = NULL, *name;
-struct dirent *de;
-DIR *d;
-regex_t re;
-int err = regcomp(&re, regEx, flags | REG_NOSUB);
-if(err)
-    errAbort("regcomp failed; err: %d", err);
-
-if ((d = opendir(dir)) == NULL)
-    return NULL;
-while ((de = readdir(d)) != NULL)
-    {
-    char *fileName = de->d_name;
-    if (differentString(fileName, ".") && differentString(fileName, ".."))
-	{
-	if (!regexec(&re, fileName, 0, NULL, 0))
-	    {
-	    name = newSlName(fileName);
-	    slAddHead(&list, name);
-	    }
-	}
-    }
-closedir(d);
-regfree(&re);
-slNameSort(&list);
-return list;
 }
 
 boolean makeDir(char *dirName)
@@ -282,25 +198,6 @@ if (hostName == NULL)
 return hostName;
 }
 
-char *mysqlHost()
-/* Return host computer on network for mySQL database. */
-{
-boolean gotIt = FALSE;
-static char *host = NULL;
-if (!gotIt)
-    {
-    static char hostBuf[128];
-    gotIt = TRUE;
-    if (fileExists("mysqlHost"))
-	{
-	return (host = firstWordInFile("mysqlHost", hostBuf, sizeof(hostBuf)));
-	}
-    else
-	return (host = getenv("MYSQLHOST"));
-    }
-return host;
-}
-
 char *semiUniqName(char *base)
 /* Figure out a name likely to be unique.
  * Name will have no periods.  Returns a static
@@ -320,40 +217,6 @@ static char name[PATH_LEN];
 safef(name, sizeof(name), "%s_%s_%x_%x",
 	base, host, pid, num);
 return name;
-}
-
-char *rTempName(char *dir, char *base, char *suffix)
-/* Make a temp name that's almost certainly unique. */
-{
-char *x;
-static char fileName[PATH_LEN];
-int i;
-char *lastSlash = (lastChar(dir) == '/' ? "" : "/");
-for (i=0;;++i)
-    {
-    x = semiUniqName(base);
-    safef(fileName, sizeof(fileName), "%s%s%s%d%s",
-    	dir, lastSlash, x, i, suffix);
-    if (!fileExists(fileName))
-        break;
-    }
-return fileName;
-}
-
-void mustRename(char *oldName, char *newName)
-/* Rename file or die trying. */
-{
-int err = rename(oldName, newName);
-if (err < 0)
-    errnoAbort("Couldn't rename %s to %s", oldName, newName);
-}
-
-void mustRemove(char *path)
-/* Remove file or die trying */
-{
-int err = remove(path);
-if (err < 0)
-    errnoAbort("Couldn't remove %s", path);
 }
 
 static void eatSlashSlashInPath(char *path)
@@ -457,98 +320,6 @@ if (lastPos > 0 && newPath[lastPos] == '/')
     newPath[lastPos] = 0;
 
 return cloneString(newPath);
-}
-
-#ifdef DEBUG
-void simplifyPathToDirSelfTest()
-{
-/* First test some cases which should remain the same. */
-assert(sameString(simplifyPathToDir(""),""));
-assert(sameString(simplifyPathToDir("a"),"a"));
-assert(sameString(simplifyPathToDir("a/b"),"a/b"));
-assert(sameString(simplifyPathToDir("/"),"/"));
-assert(sameString(simplifyPathToDir("/.."),"/.."));
-assert(sameString(simplifyPathToDir("/../a"),"/../a"));
-
-/* Now test removing trailing slash. */
-assert(sameString(simplifyPathToDir("a/"),"a"));
-assert(sameString(simplifyPathToDir("a/b/"),"a/b"));
-
-/* Test .. removal. */
-assert(sameString(simplifyPathToDir("a/.."),""));
-assert(sameString(simplifyPathToDir("a/../"),""));
-assert(sameString(simplifyPathToDir("a/../b"),"b"));
-assert(sameString(simplifyPathToDir("/a/.."),"/"));
-assert(sameString(simplifyPathToDir("/a/../"),"/"));
-assert(sameString(simplifyPathToDir("/a/../b"),"/b"));
-assert(sameString(simplifyPathToDir("a/b/.."),"a"));
-assert(sameString(simplifyPathToDir("a/b/../"),"a"));
-assert(sameString(simplifyPathToDir("a/b/../c"),"a/c"));
-assert(sameString(simplifyPathToDir("a/../b/../c"),"c"));
-assert(sameString(simplifyPathToDir("a/../b/../c/.."),""));
-assert(sameString(simplifyPathToDir("/a/../b/../c/.."),"/"));
-
-/* Test // removal */
-assert(sameString(simplifyPathToDir("//"),"/"));
-assert(sameString(simplifyPathToDir("//../"),"/.."));
-assert(sameString(simplifyPathToDir("a//b///c"),"a/b/c"));
-assert(sameString(simplifyPathToDir("a/b///"),"a/b"));
-}
-#endif /* DEBUG */
-
-char *getUser()
-/* Get user name */
-{
-uid_t uid = geteuid();
-struct passwd *pw = getpwuid(uid);
-if (pw == NULL)
-    errnoAbort("getUser: can't get user name for uid %d", (int)uid);
-return pw->pw_name;
-}
-
-int mustFork()
-/* Fork or abort. */
-{
-int childId = fork();
-if (childId == -1)
-    errnoAbort("mustFork: Unable to fork");
-return childId;
-}
-
-int rawKeyIn()
-/* Read in an unbuffered, unechoed character from keyboard. */
-{
-struct termios attr;
-tcflag_t old;
-char c;
-
-/* Set terminal to non-echoing non-buffered state. */
-if (tcgetattr(STDIN_FILENO, &attr) != 0)
-    errAbort("Couldn't do tcgetattr");
-old = attr.c_lflag;
-attr.c_lflag &= ~ICANON;
-attr.c_lflag &= ~ECHO;
-if (tcsetattr(STDIN_FILENO, TCSANOW, &attr) == -1)
-    errAbort("Couldn't do tcsetattr");
-
-/* Read one byte */
-if (read(STDIN_FILENO,&c,1) != 1)
-   errnoAbort("rawKeyIn: I/O error");
-
-/* Put back terminal to how it was. */
-attr.c_lflag = old;
-if (tcsetattr(STDIN_FILENO, TCSANOW, &attr) == -1)
-    errAbort("Couldn't do tcsetattr2");
-return c;
-}
-
-boolean isPipe(int fd)
-/* determine in an open file is a pipe  */
-{
-struct stat buf;
-if (fstat(fd, &buf) < 0)
-    errnoAbort("isPipe: fstat failed");
-return S_ISFIFO(buf.st_mode);
 }
 
 void childExecFailedExit(char *msg)
@@ -679,12 +450,3 @@ if (S_ISREG(st.st_mode))
     return TRUE;
 return FALSE;
 }
-
-void makeSymLink(char *oldName, char *newName)
-/* Return a symbolic link from newName to oldName or die trying */
-{
-int err = symlink(oldName, newName);
-if (err < 0)
-     errnoAbort("Couldn't make symbolic link from %s to %s\n", oldName, newName);
-}
-

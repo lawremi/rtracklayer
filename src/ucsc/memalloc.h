@@ -22,34 +22,5 @@ struct memHandler *pushMemHandler(struct memHandler *newHandler);
 struct memHandler *popMemHandler();
 /* Removes top element from memHandler stack and returns it. */
 
-void setDefaultMemHandler();
-/* Sets memHandler to the default. */
-
-void pushCarefulMemHandler(size_t maxAlloc);
-/* Push the careful (paranoid, conservative, checks everything)
- * memory handler  top of the memHandler stack and use it. */
-
-void carefulCheckHeap();
-/* Walk through allocated memory and make sure that all cookies are
- * in place. Only walks through what's been done since 
- * pushCarefulMemHandler(). */
-
-int carefulCountBlocksAllocated();
-/* How many memory items are allocated? (Since called
- * pushCarefulMemHandler(). */
-
-size_t carefulTotalAllocated();
-/* Return total bases allocated */
-
-void setMaxAlloc(size_t s);
-/* Set large allocation limit. */
-
-void memTrackerStart();
-/* Push memory handler that will track blocks allocated so that
- * they can be automatically released with memTrackerEnd().  */
-
-void memTrackerEnd();
-/* Free any remaining blocks and pop tracker memory handler. */
-
 #endif /* MEMALLOC_H */
 

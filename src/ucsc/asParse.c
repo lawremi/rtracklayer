@@ -59,92 +59,6 @@ if (type == NULL)
 return type;
 }
 
-static void sqlSymDef(struct asColumn *col, struct dyString *dy)
-/* print symbolic column definition for sql */
-{
-dyStringPrintf(dy, "%s(", col->lowType->sqlName);
-struct slName *val;
-for (val = col->values; val != NULL; val = val->next)
-    {
-    dyStringPrintf(dy, "\"%s\"", val->name);
-    if (val->next != NULL)
-        dyStringAppend(dy, ", ");
-    }
-dyStringPrintf(dy, ")");
-}
-
-struct dyString *asColumnToSqlType(struct asColumn *col)
-/* Convert column to a sql type spec in returned dyString */
-{
-struct asTypeInfo *lt = col->lowType;
-struct dyString *type = dyStringNew(32);
-if ((lt->type == t_enum) || (lt->type == t_set))
-    sqlSymDef(col, type);
-else if (col->isList || col->isArray)
-    dyStringPrintf(type, "longblob");
-else if (lt->type == t_char)
-    dyStringPrintf(type, "char(%d)", col->fixedSize ? col->fixedSize : 1);
-else
-    dyStringPrintf(type, "%s", lt->sqlName);
-return type;
-}
-
-char *asTypeNameFromSqlType(char *sqlType)
-/* Return the autoSql type name (not enum) for the given SQL type, or NULL.
- * Don't attempt to free result. */
-// Unfortunately, when sqlType is longblob, we don't know whether it's a list
-// of some type or an lstring.  :(
-{
-if (sqlType == NULL)
-    return NULL;
-// For comparison with asTypes[*], we need to strip '(...)' strings from all types
-// except 'varchar' which must be 'varchar(255)'.  For 'char', we need to remember
-// what was in the '(...)' so we can add back the '[...]' after type comparison.
-boolean isArray = FALSE;
-int arraySize = 0;
-static char buf[1024];
-if (startsWith("varchar", sqlType))
-    safecpy(buf, sizeof(buf), "varchar(255)");
-else if (sameString("blob", sqlType))
-    safecpy(buf, sizeof(buf), "longblob");
-else
-    {
-    safecpy(buf, sizeof(buf), sqlType);
-    char *leftParen = strstr(buf, " (");
-    if (leftParen == NULL)
-	leftParen = strchr(buf, '(');
-    if (leftParen != NULL)
-	{
-	isArray = startsWith("char", sqlType);
-	char *rightParen = strrchr(leftParen, ')');
-	if (rightParen != NULL)
-	    {
-	    *rightParen = '\0';
-	    arraySize = atoi(leftParen+1);
-	    strcpy(leftParen, rightParen+1);
-	    }
-	else
-	    errAbort("asTypeNameFromSqlType: mismatched ( in sql type def'%s'", sqlType);
-	}
-    }
-int i;
-for (i = 0;  i < ArraySize(asTypes);  i++)
-    if (sameString(buf, asTypes[i].sqlName))
-	{
-	if (isArray)
-	    {
-	    int typeLen = strlen(buf);
-	    safef(buf+typeLen, sizeof(buf)-typeLen, "[%d]", arraySize);
-	    return buf;
-	    }
-	else
-	    return asTypes[i].name;
-	}
-if (sameString(buf, "date"))
-    return "string";
-return NULL;
-}
-
 static struct asColumn *findColumn(struct asObject *table, char *colName)
 /* Return column or null. */
 {
@@ -528,12 +442,6 @@ for (el = *pList; el != NULL; el = next)
 *pList = NULL;
 }
 
-struct asObject *asParseFile(char *fileName)
-/* Parse autoSql .as file. */
-{
-return asParseLineFile(lineFileOpen(fileName, TRUE));
-}
-
 
 struct asObject *asParseText(char *text)
 /* Parse autoSql from text (as opposed to file). */
@@ -570,15 +478,6 @@ for (ac = list; ac != NULL; ac = ac->next, ix++)
 return -1;
 }
 
-int asColumnMustFindIx(struct asColumn *list, char *name)
-/* Return index of first element of asColumn list that matches name.
- * errAbort if not found. */
-{
-int ix = asColumnFindIx(list, name);
-if (ix < 0)
-    errAbort("asColumnMustFindIx: cannot find column \"%s\" in list", name);
-return ix;
-}
 
 boolean asCompareObjs(char *name1, struct asObject *as1, char *name2, struct asObject *as2, int numColumnsToCheck,
  int *retNumColumnsSame, boolean abortOnDifference)
@@ -678,28 +577,4 @@ if (differencesFound)
 if (retNumColumnsSame)
     *retNumColumnsSame = checkCount;
 return (!differencesFound);
-}
-
-boolean asColumnNamesMatchFirstN(struct asObject *as1, struct asObject *as2, int n)
-/* Compare only the column names of as1 and as2, not types because if an asObj has been
- * created from sql type info, longblobs are cast to lstrings but in the proper autoSql
- * might be lists instead (e.g. longblob in sql, uint exonStarts[exonCount] in autoSql. */
-{
-struct asColumn *col1 = as1->columnList, *col2 = as2->columnList;
-int checkCount = 0;
-for (col1 = as1->columnList, col2 = as2->columnList;
-     col1 != NULL && col2 != NULL && checkCount < n;
-     col1 = col1->next, col2 = col2->next, ++checkCount)
-    {
-    char *name1 = col1->name;
-    char *name2 = col2->name;
-    // Ignore initial _ -- sometimes added to bigBed field names to suppress hgc display.
-    if (name1 && name1[0] == '_')
-        name1++;
-    if (name2 && name2[0] == '_')
-        name2++;
-    if (!sameOk(name1, name2))
-	return FALSE;
-    }
-return TRUE;
 }

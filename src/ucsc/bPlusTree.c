@@ -575,24 +575,3 @@ for (i=levels-1; i > 0; --i)
 writeLeafLevel(blockSize, itemArray, itemSize, itemCount, 
 	fetchKey, keySize, fetchVal, valSize, f);
 }
-
-void bptFileCreate(
-	void *itemArray, 	/* Sorted array of things to index. */
-	int itemSize, 		/* Size of each element in array. */
-	bits64 itemCount, 	/* Number of elements in array. */
-	bits32 blockSize,	/* B+ tree block size - # of children for each node. */
-	void (*fetchKey)(const void *va, char *keyBuf),  /* Given item, copy key to keyBuf */ 
-	bits32 keySize,					 /* Size of key */
-	void* (*fetchVal)(const void *va), 		 /* Given item, return pointer to value */
-	bits32 valSize, 				 /* Size of value */
-	char *fileName)                                  /* Name of output file. */
-/* Create a b+ tree index file from a sorted array. */
-
-{
-/* Open file and write header. */
-FILE *f = mustOpen(fileName, "wb");
-bptFileBulkIndexToOpenFile(itemArray, itemSize, itemCount, blockSize, fetchKey, keySize, 
-	fetchVal, valSize, f);
-carefulClose(&f);
-}
-

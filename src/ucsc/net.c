@@ -240,15 +240,6 @@ if (sd < 0)
 return sd;
 }
 
-int netMustConnectTo(char *hostName, char *portName)
-/* Start connection with a server and a port that needs to be converted to integer */
-{
-if (!isdigit(portName[0]))
-    errAbort("netConnectTo: ports must be numerical, not %s", portName);
-return netMustConnect(hostName, atoi(portName));
-}
-
-
 int netAcceptingSocketFrom(int port, int queueSize, char *host)
 /* Create a socket that can accept connections from a 
  * IP address on the current machine if the current machine
@@ -273,67 +264,6 @@ if (bind(sd, (struct sockaddr*)&sai, sizeof(sai)) == -1)
     }
 listen(sd, queueSize);
 return sd;
-}
-
-int netAcceptingSocket(int port, int queueSize)
-/* Create a socket that can accept connections from
- * anywhere. */
-{
-return netAcceptingSocketFrom(port, queueSize, NULL);
-}
-
-int netAccept(int sd)
-/* Accept incoming connection from socket descriptor. */
-{
-socklen_t fromLen;
-return accept(sd, NULL, &fromLen);
-}
-
-int netAcceptFrom(int acceptor, unsigned char subnet[4])
-/* Wait for incoming connection from socket descriptor
- * from IP address in subnet.  Subnet is something
- * returned from netParseSubnet or internetParseDottedQuad. 
- * Subnet may be NULL. */
-{
-struct sockaddr_in sai;		/* Some system socket info. */
-ZeroVar(&sai);
-sai.sin_family = AF_INET;
-for (;;)
-    {
-    socklen_t addrSize = sizeof(sai);
-    int sd = accept(acceptor, (struct sockaddr *)&sai, &addrSize);
-    if (sd >= 0)
-	{
-	if (subnet == NULL)
-	    return sd;
-	else
-	    {
-	    unsigned char unpacked[4]; 
-	    internetUnpackIp(ntohl(sai.sin_addr.s_addr), unpacked);
-	    if (internetIpInSubnet(unpacked, subnet))
-		{
-		return sd;
-		}
-	    else
-		{
-		close(sd);
-		}
-	    }
-	}
-    }
-}
-
-FILE *netFileFromSocket(int socket)
-/* Wrap a FILE around socket.  This should be fclose'd
- * and separately the socket close'd. */
-{
-FILE *f;
-if ((socket = dup(socket)) < 0)
-   errnoAbort("Couldn't dupe socket in netFileFromSocket");
-f = fdopen(socket, "r+");
-if (f == NULL)
-   errnoAbort("Couldn't fdopen socket in netFileFromSocket");
-return f;
 }
 
 static boolean plumberInstalled = FALSE;
@@ -370,49 +300,11 @@ while (totalRead < size)
 return totalRead;
 }
 
-ssize_t netMustReadAll(int sd, void *vBuf, ssize_t size)
-/* Read given number of bytes into buffer or die.
- * Don't give up if first read is short! */
-{
-ssize_t ret = netReadAll(sd, vBuf, size);
-if (ret < 0)
-    errnoAbort("Couldn't finish netReadAll");
-return ret;
-}
-
 static void notGoodSubnet(char *sns)
 /* Complain about subnet format. */
 {
 errAbort("'%s' is not a properly formatted subnet.  Subnets must consist of\n"
          "one to three dot-separated numbers between 0 and 255", sns);
-}
-
-void netParseSubnet(char *in, unsigned char out[4])
-/* Parse subnet, which is a prefix of a normal dotted quad form.
- * Out will contain 255's for the don't care bits. */
-{
-out[0] = out[1] = out[2] = out[3] = 255;
-if (in != NULL)
-    {
-    char *snsCopy = strdup(in);
-    char *words[5];
-    int wordCount, i;
-    wordCount = chopString(snsCopy, ".", words, ArraySize(words));
-    if (wordCount > 3 || wordCount < 1)
-        notGoodSubnet(in);
-    for (i=0; i<wordCount; ++i)
-	{
-	char *s = words[i];
-	int x;
-	if (!isdigit(s[0]))
-	    notGoodSubnet(in);
-	x = atoi(s);
-	if (x > 255)
-	    notGoodSubnet(in);
-	out[i] = x;
-	}
-    freez(&snsCopy);
-    }
 }
 
 static void parseByteRange(char *url, ssize_t *rangeStart, ssize_t *rangeEnd, boolean terminateAtByteRange)
@@ -1270,33 +1162,6 @@ return netUrlHeadExt(url, "HEAD", hash);
 }
 
 
-long long netUrlSizeByRangeResponse(char *url)
-/* Use byteRange as a work-around alternate method to get file size (content-length).  
- * Return negative number if can't get. */
-{
-long long retVal = -1;
-char rangeUrl[2048];
-safef(rangeUrl, sizeof(rangeUrl), "%s;byterange=0-0", url);
-struct hash *hash = newHash(0);
-int status = netUrlHeadExt(rangeUrl, "GET", hash);
-if (status == 206)
-    { 
-    char *rangeString = hashFindValUpperCase(hash, "Content-Range:");
-    if (rangeString)
-	{
- 	/* input pattern: Content-Range: bytes 0-99/2738262 */
-	char *slash = strchr(rangeString,'/');
-	if (slash)
-	    {
-	    retVal = atoll(slash+1);
-	    }
-	}
-    }
-hashFree(&hash);
-return retVal;
-}
-
-
 int netUrlOpenSockets(char *url, int *retCtrlSocket)
 /* Return socket descriptor (low-level file handle) for read()ing url data,
  * or -1 if error. 
@@ -1336,17 +1201,6 @@ struct dyString *dy = newDyString(4*1024);
 /* Slurp file into dy and return. */
 while ((readSize = read(sd, buf, sizeof(buf))) > 0)
     dyStringAppendN(dy, buf, readSize);
-return dy;
-}
-
-struct dyString *netSlurpUrl(char *url)
-/* Go grab all of URL and return it as dynamic string. */
-{
-int sd = netUrlOpen(url);
-if (sd < 0)
-    errAbort("netSlurpUrl: failed to open socket for [%s]", url);
-struct dyString *dy = netSlurpFile(sd);
-close(sd);
 return dy;
 }
 
@@ -1734,29 +1588,6 @@ else
     }
 }
 
-int netUrlMustOpenPastHeader(char *url)
-/* Get socket descriptor for URL.  Process header, handling any forwarding and
- * the like.  Do errAbort if there's a problem, which includes anything but a 200
- * return from http after forwarding. */
-{
-int sd = netUrlOpen(url);
-if (sd < 0)
-    noWarnAbort();
-int newSd = 0;
-if (startsWith("http://",url) || startsWith("https://",url))
-    {  
-    char *newUrl = NULL;
-    if (!netSkipHttpHeaderLinesHandlingRedirect(sd, url, &newSd, &newUrl))
-	noWarnAbort();
-    if (newUrl != NULL)
-	{
-	sd = newSd;
-	freeMem(newUrl); 
-	}
-    }
-return sd;
-}
-
 struct lineFile *netLineFileSilentOpen(char *url)
 /* Open a lineFile on a URL.  Just return NULL without any user
  * visible warning message if there's a problem. */
@@ -1766,104 +1597,6 @@ struct lineFile *lf = netLineFileMayOpen(url);
 popWarnHandler();
 return lf;
 }
-
-char *netReadTextFileIfExists(char *url)
-/* Read entire URL and return it as a string.  URL should be text (embedded zeros will be
- * interpreted as end of string).  If the url doesn't exist or has other problems,
- * returns NULL. */
-{
-struct lineFile *lf = netLineFileSilentOpen(url);
-if (lf == NULL)
-    return NULL;
-char *text = lineFileReadAll(lf);
-lineFileClose(&lf);
-return text;
-}
-
-struct lineFile *netLineFileOpen(char *url)
-/* Return a lineFile attached to url.  This one
- * will skip any headers.   Free this with
- * lineFileClose(). */
-{
-struct lineFile *lf = netLineFileMayOpen(url);
-if (lf == NULL)
-    noWarnAbort();
-return lf;
-}
-
-boolean netSendString(int sd, char *s)
-/* Send a string down a socket - length byte first. */
-{
-int length = strlen(s);
-UBYTE len;
-
-if (length > 255)
-    errAbort("Trying to send a string longer than 255 bytes (%d bytes)", length);
-len = length;
-if (write(sd, &len, 1)<0)
-    {
-    warn("Couldn't send string to socket");
-    return FALSE;
-    }
-if (write(sd, s, length)<0)
-    {
-    warn("Couldn't send string to socket");
-    return FALSE;
-    }
-return TRUE;
-}
-
-boolean netSendLongString(int sd, char *s)
-/* Send a long string down socket: two bytes for length. */
-{
-unsigned length = strlen(s);
-UBYTE b[2];
-
-if (length >= 64*1024)
-    {
-    warn("Trying to send a string longer than 64k bytes (%d bytes)", length);
-    return FALSE;
-    }
-b[0] = (length>>8);
-b[1] = (length&0xff);
-if (write(sd, b, 2) < 0)
-    {
-    warn("Couldn't send long string to socket");
-    return FALSE;
-    }
-if (write(sd, s, length)<0)
-    {
-    warn("Couldn't send long string to socket");
-    return FALSE;
-    }
-return TRUE;
-}
-
-boolean netSendHugeString(int sd, char *s)
-/* Send a long string down socket: four bytes for length. */
-{
-unsigned long length = strlen(s);
-unsigned long l = length;
-UBYTE b[4];
-int i;
-for (i=3; i>=0; --i)
-    {
-    b[i] = l & 0xff;
-    l >>= 8;
-    }
-if (write(sd, b, 4) < 0)
-    {
-    warn("Couldn't send huge string to socket");
-    return FALSE;
-    }
-if (write(sd, s, length) < 0)
-    {
-    warn("Couldn't send huge string to socket");
-    return FALSE;
-    }
-return TRUE;
-}
-
 
 char *netGetString(int sd, char buf[256])
 /* Read string into buf and return it.  If buf is NULL
@@ -1958,37 +1691,6 @@ return s;
 }
 
 
-char *netRecieveString(int sd, char buf[256])
-/* Read string into buf and return it.  If buf is NULL
- * an internal buffer will be used. Abort if any problem. */
-{
-char *s = netGetString(sd, buf);
-if (s == NULL)
-     noWarnAbort();   
-return s;
-}
-
-char *netRecieveLongString(int sd)
-/* Read string and return it.  freeMem
- * the result when done. Abort if any problem*/
-{
-char *s = netGetLongString(sd);
-if (s == NULL)
-     noWarnAbort();   
-return s;
-}
-
-char *netRecieveHugeString(int sd)
-/* Read string and return it.  freeMem
- * the result when done. Abort if any problem*/
-{
-char *s = netGetHugeString(sd);
-if (s == NULL)
-     noWarnAbort();   
-return s;
-}
-
-
 struct lineFile *netHttpLineFileMayOpen(char *url, struct netParsedUrl **npu)
 /* Parse URL and open an HTTP socket for it but don't send a request yet. */
 {
@@ -2043,90 +1745,6 @@ mustWriteFd(lf->fd, dy->string, dy->stringSize);
 dyStringFree(&dy);
 } /* netHttpGet */
 
-int netHttpGetMultiple(char *url, struct slName *queries, void *userData,
-		       void (*responseCB)(void *userData, char *req,
-					  char *hdr, struct dyString *body))
-/* Given an URL which is the base of all requests to be made, and a 
- * linked list of queries to be appended to that base and sent in as 
- * requests, send the requests as a batch and read the HTTP response 
- * headers and bodies.  If not all the requests get responses (i.e. if 
- * the server is ignoring Keep-Alive or is imposing a limit), try again 
- * until we can't connect or until all requests have been served. 
- * For each HTTP response, do a callback. */
-{
-  struct slName *qStart;
-  struct slName *qPtr;
-  struct lineFile *lf;
-  struct netParsedUrl *npu;
-  struct dyString *dyQ    = newDyString(512);
-  struct dyString *body;
-  char *base;
-  char *hdr;
-  int qCount;
-  int qTotal;
-  int numParseFailures;
-  int contentLength;
-  boolean chunked;
-  boolean done;
-  boolean keepAlive;
-
-  /* Find out how many queries we'll need to do so we know how many times 
-   * it's OK to run into end of file in case server ignores Keep-Alive. */
-  qTotal = 0;
-  for (qPtr = queries;  qPtr != NULL;  qPtr = qPtr->next)
-    {
-      qTotal++;
-    }
-
-  done = FALSE;
-  qCount = 0;
-  numParseFailures = 0;
-  qStart = queries;
-  while ((! done) && (qStart != NULL))
-    {
-      lf = netHttpLineFileMayOpen(url, &npu);
-      if (lf == NULL)
-	{
-	  done = TRUE;
-	  break;
-	}
-      base = cloneString(npu->file);
-      /* Send all remaining requests with keep-alive. */
-      for (qPtr = qStart;  qPtr != NULL;  qPtr = qPtr->next)
-	{
-	  dyStringClear(dyQ);
-	  dyStringAppend(dyQ, base);
-	  dyStringAppend(dyQ, qPtr->name);
-	  strcpy(npu->file, dyQ->string);
-	  keepAlive = (qPtr->next == NULL) ? FALSE : TRUE;
-	  netHttpGet(lf, npu, keepAlive);
-	}
-      /* Get as many responses as we can; call responseCB() and 
-       * advance qStart for each. */
-      for (qPtr = qStart;  qPtr != NULL;  qPtr = qPtr->next)
-        {
-	  if (lineFileParseHttpHeader(lf, &hdr, &chunked, &contentLength))
-	    {
-	      body = lineFileSlurpHttpBody(lf, chunked, contentLength);
-	      dyStringClear(dyQ);
-	      dyStringAppend(dyQ, base);
-	      dyStringAppend(dyQ, qPtr->name);
-	      responseCB(userData, dyQ->string, hdr, body);
-	      qStart = qStart->next;
-	      qCount++;
-	    }
-	  else
-	    {
-	      if (numParseFailures++ > qTotal) {
-		done = TRUE;
-	      }
-	      break;
-	    }
-	}
-    }
-
-  return qCount;
-} /* netHttpMultipleQueries */
 #endif
 
 boolean hasProtocol(char *urlOrPath)

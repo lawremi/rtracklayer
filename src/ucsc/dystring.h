@@ -28,11 +28,6 @@ void freeDyString(struct dyString **pDs);
 
 #define dyStringFree(a) freeDyString(a);
 
-void freeDyStringList(struct dyString **pDs);
-/* Free up a list of dynamic strings */
-
-#define dyStringFreeList(a) freeDyStringList(a);
-
 void dyStringAppend(struct dyString *ds, char *string);
 /* Append zero terminated string to end of dyString. */
 
@@ -41,13 +36,6 @@ void dyStringAppendN(struct dyString *ds, char *string, int stringSize);
 
 char dyStringAppendC(struct dyString *ds, char c);
 /* Append char to end of string. */
-
-void dyStringAppendMultiC(struct dyString *ds, char c, int n);
-/* Append N copies of char to end of string. */
-
-void dyStringAppendEscapeQuotes(struct dyString *dy, char *string,
-	char quot, char esc);
-/* Append escaped-for-quotation version of string to dy. */
 
 #define dyStringWriteOne(dy, var) dyStringAppendN(dy, (char *)(&var), sizeof(var))
 /* Write one variable (binary!) to dyString - for cases when want to treat string like
@@ -63,18 +51,8 @@ __attribute__((format(printf, 2, 3)))
 #endif
     ;
 
-struct dyString *dyStringCreate(char *format, ...);
-/*  Create a dyString with a printf style initial content */
-
 #define dyStringClear(ds) (ds->string[0] = ds->stringSize = 0)
 /* Clear string. */
-
-struct dyString * dyStringSub(char *orig, char *in, char *out);
-/* Make up a duplicate of orig with all occurences of in substituted
- * with out. */
-
-void dyStringBumpBufSize(struct dyString *ds, int size);
-/* Force dyString buffer to be at least given size. */
 
 char *dyStringCannibalize(struct dyString **pDy);
 /* Kill dyString, but return the string it is wrapping
@@ -86,13 +64,6 @@ char *dyStringCannibalize(struct dyString **pDy);
 
 #define dyStringLen(ds) ds->stringSize
 /* return raw string length. */
-
-void dyStringResize(struct dyString *ds, int newSize);
-/* resize a string, if the string expands, blanks are appended */
-
-void dyStringQuoteString(struct dyString *dy, char quotChar, char *text);
-/* Append quotChar-quoted text (with any internal occurrences of quotChar
- * \-escaped) onto end of dy. */
 
 #endif /* DYSTRING_H */
 

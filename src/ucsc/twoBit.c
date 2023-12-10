@@ -462,19 +462,6 @@ slReverse(&tbf->indexList);
 return tbf;
 }
 
-struct twoBitFile *twoBitOpenExternalBptIndex(char *twoBitName, char *bptName)
-/* Open file, read in header, but not regular index.  Instead use
- * bpt index.   Beware if you use this the indexList field will be NULL
- * as will the hash. */
-{
-struct twoBitFile *tbf = twoBitOpenReadHeader(twoBitName, FALSE);
-tbf->bpt = bptFileOpen(bptName);
-if (tbf->seqCount != tbf->bpt->itemCount)
-    errAbort("%s and %s don't have same number of sequences!", twoBitName, bptName);
-return tbf;
-}
-
-
 static int findGreatestLowerBound(int blockCount, bits32 *pos, 
 	int val)
 /* Find index of greatest element in posArray that is less 
@@ -587,24 +574,6 @@ twoBit->data = needLargeMem(packByteCount);
 (*tbf->ourMustRead)(f, twoBit->data, packByteCount);
 
 return twoBit;
-}
-
-struct twoBit *twoBitFromFile(char *fileName)
-/* Get twoBit list of all sequences in twoBit file. */
-{
-struct twoBitFile *tbf = twoBitOpen(fileName);
-struct twoBitIndex *index;
-struct twoBit *twoBitList = NULL;
-
-for (index = tbf->indexList; index != NULL; index = index->next)
-    {
-    struct twoBit *twoBit = twoBitOneFromFile(tbf, index->name);
-    slAddHead(&twoBitList, twoBit);
-    }
-
-twoBitClose(&tbf);
-slReverse(&twoBitList);
-return twoBitList;
 }
 
 void twoBitFree(struct twoBit **pTwoBit)
@@ -820,80 +789,11 @@ struct dnaSeq *twoBitReadSeqFrag(struct twoBitFile *tbf, char *name,
 return twoBitReadSeqFragExt(tbf, name, fragStart, fragEnd, TRUE, NULL);
 }
 
-struct dnaSeq *twoBitReadSeqFragLower(struct twoBitFile *tbf, char *name,
-	int fragStart, int fragEnd)
-/* Same as twoBitReadSeqFrag, but sequence is returned in lower case. */
-{
-return twoBitReadSeqFragExt(tbf, name, fragStart, fragEnd, FALSE, NULL);
-}
-
 int twoBitSeqSize(struct twoBitFile *tbf, char *name)
 /* Return size of sequence in two bit file in bases. */
 {
 twoBitSeekTo(tbf, name);
 return (*tbf->ourReadBits32)(tbf->f, tbf->isSwapped);
-}
-
-long long twoBitTotalSize(struct twoBitFile *tbf)
-/* Return total size of all sequences in two bit file. */
-{
-struct twoBitIndex *index;
-long long totalSize = 0;
-for (index = tbf->indexList; index != NULL; index = index->next)
-    {
-    (*tbf->ourSeek)(tbf->f, index->offset);
-    totalSize += (*tbf->ourReadBits32)(tbf->f, tbf->isSwapped);
-    }
-return totalSize;
-}
-
-struct dnaSeq *twoBitLoadAll(char *spec)
-/* Return list of all sequences matching spec, which is in
- * the form:
- *
- *    file/path/input.2bit[:seqSpec1][,seqSpec2,...]
- *
- * where seqSpec is either
- *     seqName
- *  or
- *     seqName:start-end */
-{
-struct twoBitSpec *tbs = twoBitSpecNew(spec);
-struct twoBitFile *tbf = twoBitOpen(tbs->fileName);
-struct dnaSeq *list = NULL;
-if (tbs->seqs != NULL)
-    {
-    struct twoBitSeqSpec *tbss;
-    for (tbss = tbs->seqs; tbss != NULL; tbss = tbss->next)
-        slSafeAddHead(&list, twoBitReadSeqFrag(tbf, tbss->name,
-                                               tbss->start, tbss->end));
-    }
-else
-    {
-    struct twoBitIndex *index;
-    for (index = tbf->indexList; index != NULL; index = index->next)
-	slSafeAddHead(&list, twoBitReadSeqFrag(tbf, index->name, 0, 0));
-    }
-slReverse(&list);
-twoBitClose(&tbf);
-twoBitSpecFree(&tbs);
-return list;
-}
-
-struct slName *twoBitSeqNames(char *fileName)
-/* Get list of all sequences in twoBit file. */
-{
-struct twoBitFile *tbf = twoBitOpen(fileName);
-struct twoBitIndex *index;
-struct slName *name, *list = NULL;
-for (index = tbf->indexList; index != NULL; index = index->next)
-    {
-    name = slNameNew(index->name);
-    slAddHead(&list, name);
-    }
-twoBitClose(&tbf);
-slReverse(&list);
-return list;
 }
 
 boolean twoBitIsFile(char *fileName)
@@ -991,12 +891,6 @@ freeMem(dupe);
 return isRange;
 }
 
-boolean twoBitIsFileOrRange(char *spec)
-/* Return TRUE if it is a two bit file or subrange. */
-{
-return twoBitIsFile(spec) || twoBitIsRange(spec);
-}
-
 static struct twoBitSeqSpec *parseSeqSpec(char *seqSpecStr)
 /* parse one sequence spec */
 {
@@ -1025,15 +919,6 @@ else
 if (!isOk || (seq->end < seq->start))
     errAbort("invalid twoBit sequence specification: \"%s\"", seqSpecStr);
 return seq;
-}
-
-boolean twoBitIsSpec(char *spec)
-/* Return TRUE spec is a valid 2bit spec (see twoBitSpecNew) */
-{
-struct twoBitSpec *tbs = twoBitSpecNew(spec);
-boolean isSpec = (tbs != NULL);
-twoBitSpecFree(&tbs);
-return isSpec;
 }
 
 struct twoBitSpec *twoBitSpecNew(char *specStr)
@@ -1093,26 +978,6 @@ if (s != NULL)
 return spec;
 }
 
-struct twoBitSpec *twoBitSpecNewFile(char *twoBitFile, char *specFile)
-/* parse a file containing a list of specifications for sequences in the
- * specified twoBit file. Specifications are one per line in forms:
- *     seqName
- *  or
- *     seqName:start-end
- */
-{
-struct lineFile *lf = lineFileOpen(specFile, TRUE);
-char *line;
-struct twoBitSpec *spec;
-AllocVar(spec);
-spec->fileName = cloneString(twoBitFile);
-while (lineFileNextReal(lf, &line))
-    slSafeAddHead(&spec->seqs, parseSeqSpec(trimSpaces(line)));
-slReverse(&spec->seqs);
-lineFileClose(&lf);
-return spec;
-}
-
 void twoBitSpecFree(struct twoBitSpec **specPtr)
 /* free a twoBitSpec object */
 {
@@ -1128,46 +993,6 @@ if (spec != NULL)
     freeMem(spec->fileName);
     freeMem(spec);
     *specPtr = NULL;
-    }
-}
-
-void twoBitOutNBeds(struct twoBitFile *tbf, char *seqName, FILE *outF)
-/* output a series of bed3's that enumerate the number of N's in a sequence*/
-{
-int nBlockCount;
-
-twoBitSeekTo(tbf, seqName);
-
-(*tbf->ourReadBits32)(tbf->f, tbf->isSwapped);
-
-/* Read in blocks of N. */
-nBlockCount = (*tbf->ourReadBits32)(tbf->f, tbf->isSwapped);
-
-if (nBlockCount > 0)
-    {
-    bits32 *nStarts = NULL, *nSizes = NULL;
-    int i;
-
-    AllocArray(nStarts, nBlockCount);
-    AllocArray(nSizes, nBlockCount);
-    (*tbf->ourMustRead)(tbf->f, nStarts, sizeof(nStarts[0]) * nBlockCount);
-    (*tbf->ourMustRead)(tbf->f, nSizes, sizeof(nSizes[0]) * nBlockCount);
-    if (tbf->isSwapped)
-	{
-	for (i=0; i<nBlockCount; ++i)
-	    {
-	    nStarts[i] = byteSwap32(nStarts[i]);
-	    nSizes[i] = byteSwap32(nSizes[i]);
-	    }
-	}
-
-    for (i=0; i<nBlockCount; ++i)
-	{
-	fprintf(outF, "%s\t%d\t%d\n", seqName, nStarts[i], nStarts[i] + nSizes[i]);
-	}
-
-    freez(&nStarts);
-    freez(&nSizes);
     }
 }
 
@@ -1213,23 +1038,4 @@ if (nBlockCount > 0)
     }
 
 return(size);
-}
-
-long long twoBitTotalSizeNoN(struct twoBitFile *tbf)
-/* return the size of the all the sequence in file, not counting N's*/
-{
-struct twoBitIndex *index;
-long long totalSize = 0;
-for (index = tbf->indexList; index != NULL; index = index->next)
-    {
-    int size = twoBitSeqSizeNoNs(tbf, index->name);
-    totalSize += size;
-    }
-return totalSize;
-}
-
-boolean twoBitIsSequence(struct twoBitFile *tbf, char *chromName)
-/* Return TRUE if chromName is in 2bit file. */
-{
-return (hashFindVal(tbf->hash, chromName) != NULL);
 }

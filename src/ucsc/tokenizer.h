@@ -25,17 +25,11 @@ struct tokenizer
     bool uncommentShell; /* Take out # style comments. */
     };
 
-struct tokenizer *tokenizerNew(char *fileName);
-/* Return a new tokenizer. */
-
 struct tokenizer *tokenizerOnLineFile(struct lineFile *lf);
 /* Create a new tokenizer on open lineFile. */
 
 void tokenizerFree(struct tokenizer **pTkz);
 /* Tear down a tokenizer. */
-
-void tokenizerReuse(struct tokenizer *tkz);
-/* Reuse token. */
 
 int tokenizerLineCount(struct tokenizer *tkz);
 /* Return line of current token. */
@@ -55,10 +49,6 @@ void tokenizerErrAbort(struct tokenizer *tkz, char *format, ...)
 __attribute__((format(printf, 2, 3)))
 #endif
 ;
-
-
-void tokenizerNotEnd(struct tokenizer *tkz);
-/* Squawk if at end. */
 
 char *tokenizerMustHaveNext(struct tokenizer *tkz);
 /* Get next token, which must be there. */

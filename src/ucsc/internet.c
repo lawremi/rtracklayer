@@ -78,29 +78,6 @@ else
 return TRUE;
 }
 
-boolean internetIpToDottedQuad(bits32 ip, char dottedQuad[17])
-/* Convert IP4 address in host byte order to dotted quad 
- * notation.  Warn and return FALSE if there's a 
- * problem. */
-{
-#ifndef __CYGWIN32__
-struct in_addr ia;
-zeroBytes(dottedQuad, 17);
-ZeroVar(&ia);
-ia.s_addr = htonl(ip);
-if (inet_ntop(AF_INET, &ia, dottedQuad, 16) == NULL)
-    {
-    warn("conversion problem on 0x%x in internetIpToDottedQuad: %s", 
-    	ip, strerror(errno));
-    return FALSE;
-    }
-return TRUE;
-#else
-warn("Sorry, internetIpToDottedQuad not supported in Windows.");
-return FALSE;
-#endif
-}
-
 boolean internetDottedQuadToIp(char *dottedQuad, bits32 *retIp)
 /* Convert dotted quad format address to IP4 address in
  * host byte order.  Warn and return FALSE if there's a 
@@ -119,20 +96,6 @@ return TRUE;
 warn("Sorry, internetDottedQuadToIp not supported in Windows.");
 return FALSE;
 #endif
-}
-
-void internetParseDottedQuad(char *dottedQuad, unsigned char quad[4])
-/* Parse dotted quads into quad */
-{
-char *s = dottedQuad;
-int i;
-if (!internetIsDottedQuad(s))
-    errAbort("%s is not a dotted quad", s);
-for (i=0; i<4; ++i)
-    {
-    quad[i] = atoi(s);
-    s = strchr(s, '.') + 1;
-    }
 }
 
 void internetUnpackIp(bits32 packed, unsigned char unpacked[4])

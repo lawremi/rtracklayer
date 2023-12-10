@@ -75,15 +75,9 @@ char *getFileNameFromHdrSig(char *m);
 struct lineFile *lineFileDecompressFd(char *name, bool zTerm, int fd);
 /* open a linefile with decompression from a file or socket descriptor */
 
-struct lineFile *lineFileDecompressMem(bool zTerm, char *mem, long size);
-/* open a linefile with decompression from a memory stream */
-
 struct lineFile *lineFileMayOpen(char *fileName, bool zTerm);
 /* Try and open up a lineFile. If fileName ends in .gz, .Z, or .bz2,
  * it will be read from a decompress pipeline. */
-
-struct lineFile *lineFileUdcMayOpen(char *fileName, bool zTerm);
-/* Open a lineFile through the UDC */
 
 struct lineFile *lineFileOpen(char *fileName, bool zTerm);
 /* Open up a lineFile or die trying If fileName ends in .gz, .Z, or .bz2,
@@ -106,9 +100,6 @@ struct lineFile *lineFileOnBigBed(char *bigBedFileName);
 void lineFileClose(struct lineFile **pLf);
 /* Close up a line file. */
 
-void lineFileCloseList(struct lineFile **pList);
-/* Close up a list of line files. */
-
 boolean lineFileNext(struct lineFile *lf, char **retStart, int *retSize);
 /* Fetch next line from file. */
 
@@ -122,19 +113,8 @@ boolean lineFileNextReal(struct lineFile *lf, char **retStart);
 /* Fetch next line from file that is not blank and
  * does not start with a '#'. */
 
-boolean lineFileNextFullReal(struct lineFile *lf, char **retStart);
-// Fetch next line from file that is not blank and does not start with a '#'.
-// Continuation lines (ending in '\') are joined into a single line.
-
-void lineFileNeedNext(struct lineFile *lf, char **retStart, int *retSize);
-/* Fetch next line from file.  Squawk and die if it's not there. */
-
 void lineFileReuse(struct lineFile *lf);
 /* Reuse current line. */
-
-void lineFileReuseFull(struct lineFile *lf);
-// Reuse last full line read.  Unlike lineFileReuse,
-// lineFileReuseFull only works with previous lineFileNextFull call
 
 #define lineFileString(lf) ((lf)->buf + (lf)->lineStart)
 /* Current string in line file. */
@@ -144,9 +124,6 @@ void lineFileReuseFull(struct lineFile *lf);
 
 void lineFileSeek(struct lineFile *lf, off_t offset, int whence);
 /* Seek to read next line from given position. */
-
-void lineFileRewind(struct lineFile *lf);
-/* Return lineFile to start. */
 
 void lineFileAbort(struct lineFile *lf, char *format, ...)
 /* Print file name, line number, and error message, and abort. */
@@ -167,9 +144,6 @@ void lineFileExpectWords(struct lineFile *lf, int expecting, int got);
 void lineFileExpectAtLeast(struct lineFile *lf, int expecting, int got);
 /* Check line has right number of words. */
 
-void lineFileShort(struct lineFile *lf);
-/* Complain that line is too short. */
-
 boolean lineFileNextRow(struct lineFile *lf, char *words[], int wordCount);
 /* Return next non-blank line that doesn't start with '#' chopped into words.
  * Returns FALSE at EOF.  Aborts on error. */
@@ -177,17 +151,6 @@ boolean lineFileNextRow(struct lineFile *lf, char *words[], int wordCount);
 #define lineFileRow(lf, words) lineFileNextRow(lf, words, ArraySize(words))
 /* Read in line chopped into fixed size word array. */
 
-boolean lineFileNextCharRow(struct lineFile *lf, char sep, char *words[], int wordCount);
-/* Return next non-blank line that doesn't start with '#' chopped into words
- * delimited by sep. Returns FALSE at EOF.  Aborts on error. */
-
-boolean lineFileNextRowTab(struct lineFile *lf, char *words[], int wordCount);
-/* Return next non-blank line that doesn't start with '#' chopped into words
- * at tabs. Returns FALSE at EOF.  Aborts on error. */
-
-#define lineFileRowTab(lf, words) \
-	lineFileNextRowTab(lf, words, ArraySize(words))
-/* Read in line chopped by tab into fixed size word array. */
 
 int lineFileChopNext(struct lineFile *lf, char *words[], int maxWords);
 /* Return next non-blank line that doesn't start with '#' chopped into words. */
@@ -232,20 +195,9 @@ int lineFileNeedNum(struct lineFile *lf, char *words[], int wordIx);
 /* Make sure that words[wordIx] is an ascii integer, and return
  * binary representation of it. */
 
-int lineFileNeedFullNum(struct lineFile *lf, char *words[], int wordIx);
-/* Make sure that words[wordIx] is an ascii integer, and return
- * binary representation of it. Require all chars in word to be digits.*/
-
 double lineFileNeedDouble(struct lineFile *lf, char *words[], int wordIx);
 /* Make sure that words[wordIx] is an ascii double value, and return
  * binary representation of it. */
-
-void lineFileSkip(struct lineFile *lf, int lineCount);
-/* Skip a number of lines. */
-
-char *lineFileSkipToLineStartingWith(struct lineFile *lf, char *start, int maxCount);
-/* Skip to next line that starts with given string.  Return NULL
- * if no such line found, otherwise return the line. */
 
 char *lineFileReadAll(struct lineFile *lf);
 /* Read remainder of lineFile and return it as a string. */
@@ -260,12 +212,6 @@ struct dyString *lineFileSlurpHttpBody(struct lineFile *lf,
 /* Return a dyString that contains the http response body in lf.  Handle
  * chunk-encoding and content-length. */
 
-void lineFileSetMetaDataOutput(struct lineFile *lf, FILE *f);
-/* set file to write meta data to,
- * should be called before reading from input file */
-
-void lineFileSetUniqueMetaData(struct lineFile *lf);
-/* suppress duplicate lines in metadata */
 
 void lineFileExpandBuf(struct lineFile *lf, int newSize);
 /* Expand line file buffer. */
@@ -280,16 +226,6 @@ void lineFileRemoveInitialCustomTrackLines(struct lineFile *lf);
      "http://samtools.sourceforge.net/ and rebuilt kent/src with USE_TABIX=1\n" \
      "(see http://genomewiki.ucsc.edu/index.php/Build_Environment_Variables)."
 
-struct lineFile *lineFileTabixMayOpen(char *fileOrUrl, bool zTerm);
-/* Wrap a line file around a data file that has been compressed and indexed
- * by the tabix command line program.  The index file <fileName>.tbi must be
- * readable in addition to fileName. If there's a problem, warn & return NULL.
- * This works only if kent/src has been compiled with USE_TABIX=1 and linked
- * with the tabix C library. */
-
-boolean lineFileSetTabixRegion(struct lineFile *lf, char *seqName, int start, int end);
-/* Assuming lf was created by lineFileTabixMayOpen, tell tabix to seek to the specified region
- * and return TRUE (or if there are no items in region, return FALSE). */
 
 #endif /* LINEFILE_H */
 

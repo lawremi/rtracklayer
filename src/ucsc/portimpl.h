@@ -34,6 +34,3 @@ struct webServerSpecific
 
 extern struct webServerSpecific wssMicrosoftII, wssMicrosoftPWS, wssDefault,
 	wssLinux, wssCommandLine, wssBrcMcw;
-
-char *rTempName(char *dir, char *base, char *suffix);
-/* Make a temp name that's almost certainly unique. */

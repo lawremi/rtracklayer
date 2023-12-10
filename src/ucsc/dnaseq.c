@@ -25,21 +25,6 @@ seq->mask = NULL;
 return seq;
 }
 
-struct dnaSeq *cloneDnaSeq(struct dnaSeq *orig)
-/* Duplicate dna sequence in RAM. */
-{
-struct dnaSeq *seq = CloneVar(orig);
-seq->name = cloneString(seq->name);
-seq->dna = needHugeMem(seq->size+1);
-memcpy(seq->dna, orig->dna, seq->size+1);
-seq->mask = NULL;
-if (orig->mask != NULL)
-    {
-    seq->mask = bitClone(orig->mask, seq->size);
-    }
-return seq;
-}
-
 void freeDnaSeq(struct dnaSeq **pSeq)
 /* Free up DNA seq. (And unlink underlying resource node.) */
 {
@@ -50,36 +35,6 @@ freeMem(seq->name);
 freeMem(seq->dna);
 bitFree(&seq->mask);
 freez(pSeq);
-}
-
-void freeDnaSeqList(struct dnaSeq **pSeqList)
-/* Free up list of DNA sequences. */
-{
-struct dnaSeq *seq, *next;
-
-for (seq = *pSeqList; seq != NULL; seq = next)
-    {
-    next = seq->next;
-    freeDnaSeq(&seq);
-    }
-*pSeqList = NULL;
-}
-
-boolean seqIsLower(bioSeq *seq)
-/* Return TRUE if sequence is all lower case. */
-{
-int size = seq->size, i;
-char *poly = seq->dna;
-for (i=0; i<size; ++i)
-    if (!islower(poly[i]))
-        return FALSE;
-return TRUE;
-}
-
-boolean seqIsDna(bioSeq *seq)
-/* Make educated guess whether sequence is DNA or protein. */
-{
-return isDna(seq->dna, seq->size);
 }
 
 
@@ -119,63 +74,3 @@ seq->size = actualSize;
 seq->name = cloneString(inSeq->name);
 return seq;
 }
-
-aaSeq *translateSeq(struct dnaSeq *inSeq, unsigned offset, boolean stop)
-/* Return a translated sequence.  Offset is position of first base to
- * translate. If stop is TRUE then stop at first stop codon.  (Otherwise 
- * represent stop codons as 'Z'). */
-{
-return translateSeqN(inSeq, offset, 0, stop);
-}
-
-bioSeq *whichSeqIn(bioSeq **seqs, int seqCount, char *letters)
-/* Figure out which if any sequence letters is in. */
-{
-aaSeq *seq;
-int i;
-
-for (i=0; i<seqCount; ++i)
-    {
-    seq = seqs[i];
-    if (seq->dna <= letters && letters < seq->dna + seq->size)
-        return seq;
-    }
-internalErr();
-return NULL;
-}
-
-Bits *maskFromUpperCaseSeq(bioSeq *seq)
-/* Allocate a mask for sequence and fill it in based on
- * sequence case. */
-{
-int size = seq->size, i;
-char *poly = seq->dna;
-Bits *b = bitAlloc(size);
-for (i=0; i<size; ++i)
-    {
-    if (isupper(poly[i]))
-        bitSetOne(b, i);
-    }
-return b;
-}
-
-struct hash *dnaSeqHash(struct dnaSeq *seqList)
-/* Return hash of sequences keyed by name. */
-{
-int size = slCount(seqList)+1;
-int sizeLog2 = digitsBaseTwo(size);
-struct hash *hash = hashNew(sizeLog2);
-struct dnaSeq *seq;
-for (seq = seqList; seq != NULL; seq = seq->next)
-    hashAddUnique(hash, seq->name, seq);
-return hash;
-}
-
-int dnaSeqCmpName(const void *va, const void *vb)
-/* Compare to sort based on sequence name. */
-{
-const struct dnaSeq *a = *((struct dnaSeq **)va);
-const struct dnaSeq *b = *((struct dnaSeq **)vb);
-return strcmp(a->name, b->name);
-}
-

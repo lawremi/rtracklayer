@@ -39,9 +39,6 @@ struct rbTree *rbTreeNew(int (*compare)(void *, void *));
 void rbTreeFree(struct rbTree **pTree);
 /* Frees space used by the red-black tree pointed to by t. */
 
-void rbTreeFreeList(struct rbTree **pList);
-/* Free up a list of rbTrees. */
-
 struct rbTree *rbTreeNewDetailed(int (*compare)(void *, void *), struct lm *lm, 
 	struct rbTreeNode *stack[128]);
 /* Allocate rbTree on an existing local memory & stack.  This is for cases
@@ -73,10 +70,6 @@ void rbTreeTraverseRange(struct rbTree *tree, void *minItem, void *maxItem,
 /* Apply doItem function to all items in tree such that
  * minItem <= item <= maxItem */
 
-struct slRef *rbTreeItemsInRange(struct rbTree *tree, void *minItem, void *maxItem);
-/* Return a sorted list of references to items in tree between range.
- * slFreeList this list when done. */
-
 void rbTreeTraverse(struct rbTree *tree, void (*doItem)(void *item));
 /* Apply doItem function to all items in tree */
 
@@ -85,18 +78,6 @@ void rbTreeTraverseWithContext(struct rbTree *tree,
 /* Traverse tree calling doItem on every item with context pointer passed through to doItem.
  * This often avoids having to declare global or static variables for the doItem callback to use. */
 
-struct slRef *rbTreeItems(struct rbTree *tree);
-/* Return sorted list of items.  slFreeList this when done.*/
-
-void rbTreeDump(struct rbTree *tree, FILE *f, 
-	void (*dumpItem)(void *item, FILE *f));
-/* Dump out rb tree to file, mostly for debugging. */
-
-int rbTreeCmpString(void *a, void *b);	
-/* Set up rbTree so as to work on strings. */
-
-int rbTreeCmpWord(void *a, void *b);	
-/* Set up rbTree so as to work on case-insensitive strings. */
 
 #endif /* RBTREE_H */
 
