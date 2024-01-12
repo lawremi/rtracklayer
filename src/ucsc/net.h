@@ -27,28 +27,10 @@ int netConnect(char *hostName, int port);
 int netMustConnect(char *hostName, int port);
 /* Start connection with server or die. */
 
-int netMustConnectTo(char *hostName, char *portName);
-/* Start connection with a server and a port that needs to be converted to integer */
-
-int netAcceptingSocket(int port, int queueSize);
-/* Create a socket for to accept connections. */
-
 int netAcceptingSocketFrom(int port, int queueSize, char *host);
 /* Create a socket that can accept connections from a 
  * IP address on the current machine if the current machine
  * has multiple IP addresses. */
-
-int netAccept(int sd);
-/* Accept incoming connection from socket descriptor. */
-
-int netAcceptFrom(int sd, unsigned char subnet[4]);
-/* Wait for incoming connection from socket descriptor
- * from IP address in subnet.  Subnet is something
- * returned from netParseDottedQuad.  */
-
-FILE *netFileFromSocket(int socket);
-/* Wrap a FILE around socket.  This should be fclose'd
- * and separately the socket close'd. */
 
 int netWaitForData(int sd, int microseconds);
 /* Wait for descriptor to have some data to read, up to given number of
@@ -60,31 +42,6 @@ void netBlockBrokenPipes();
 ssize_t netReadAll(int sd, void *vBuf, ssize_t size);
 /* Read given number of bytes into buffer.
  * Don't give up on first read! */
-
-ssize_t netMustReadAll(int sd, void *vBuf, ssize_t size);
-/* Read given number of bytes into buffer or die.
- * Don't give up if first read is short! */
-
-boolean netSendString(int sd, char *s);
-/* Send a string down a socket - length byte first. */
-
-boolean netSendLongString(int sd, char *s);
-/* Send a string down a socket - up to 64k characters. */
-
-boolean netSendHugeString(int sd, char *s);
-/* Send a string down a socket - up to 4G characters. */
-
-char *netRecieveString(int sd, char buf[256]);
-/* Read string into buf and return it.  If buf is NULL
- * an internal buffer will be used. Abort if any problem. */
-
-char *netRecieveLongString(int sd);
-/* Read string up to 64k and return it.  freeMem
- * the result when done. Abort if any problem*/
-
-char *netRecieveHugeString(int sd);
-/* Read string up to 4G and return it.  freeMem
- * the result when done. Abort if any problem*/
 
 char *netGetString(int sd, char buf[256]);
 /* Read string into buf and return it.  If buf is NULL
@@ -100,19 +57,6 @@ char *netGetHugeString(int sd);
 /* Read string up to 4 gig and return it.  freeMem
  * the result when done.  Print warning message and
  * return NULL if any problem. */
-
-void netCatchPipes();
-/* Set up to catch broken pipe signals. */
-
-boolean netPipeIsBroken();
-/* Return TRUE if pipe is broken */
-
-void  netClearPipeFlag();
-/* Clear broken pipe flag. */
-
-void netParseSubnet(char *in, unsigned char out[4]);
-/* Parse subnet, which is a prefix of a normal dotted quad form.
- * Out will contain 255's for the don't care bits. */
 
 struct netParsedUrl
 /* A parsed URL. */
@@ -144,11 +88,6 @@ int netUrlOpen(char *url);
  * which may just say "file not found." Consider using netUrlMustOpenPastHeader
  * instead .*/
 
-int netUrlMustOpenPastHeader(char *url);
-/* Get socket descriptor for URL.  Process header, handling any forwarding and
- * the like.  Do errAbort if there's a problem, which includes anything but a 200
- * return from http after forwarding. */
-
 int netUrlOpenSockets(char *url, int *retCtrlSocket);
 /* Return socket descriptor (low-level file handle) for read()ing url data,
  * or -1 if error. 
@@ -172,16 +111,8 @@ int netUrlHead(char *url, struct hash *hash);
 
  int netUrlFakeHeadByGet(char *url, struct hash *hash);
 /* Use GET with byteRange as an alternate method to HEAD.
- * Return status.
+ * Return status. */
 
-long long netUrlSizeByRangeResponse(char *url);
-/* Use byteRange as a work-around alternate method to get file size (content-length).  
- * Return negative number if can't get. */
-
-struct lineFile *netLineFileOpen(char *url);
-/* Return a lineFile attached to url.  This one
- * will skip any headers.   Free this with
- * lineFileClose(). */
 
 struct lineFile *netLineFileMayOpen(char *url);
 /* Same as netLineFileOpen, but warns and returns
@@ -194,15 +125,6 @@ struct lineFile *netLineFileSilentOpen(char *url);
 struct dyString *netSlurpFile(int sd);
 /* Slurp file into dynamic string and return.  Result will include http headers and
  * the like. */
-
-struct dyString *netSlurpUrl(char *url);
-/* Go grab all of URL and return it as dynamic string.  Result will include http headers
- * and the like. This will errAbort if there's a problem. */
-
-char *netReadTextFileIfExists(char *url);
-/* Read entire URL and return it as a string.  URL should be text (embedded zeros will be
- * interpreted as end of string).  If the url doesn't exist or has other problems,
- * returns NULL. Does *not* include http headers. */
 
 struct lineFile *netHttpLineFileMayOpen(char *url, struct netParsedUrl **npu);
 /* Parse URL and open an HTTP socket for it but don't send a request yet. */
@@ -224,17 +146,6 @@ int netHttpConnect(char *url, char *method, char *protocol, char *agent, char *o
  * lines such as cookie info. 
  * Proxy support via hg.conf httpProxy or env var http_proxy
  * Return data socket, or -1 if error.*/
-
-int netHttpGetMultiple(char *url, struct slName *queries, void *userData,
-		       void (*responseCB)(void *userData, char *req,
-					  char *hdr, struct dyString *body));
-/* Given an URL which is the base of all requests to be made, and a 
- * linked list of queries to be appended to that base and sent in as 
- * requests, send the requests as a batch and read the HTTP response 
- * headers and bodies.  If not all the requests get responses (i.e. if 
- * the server is ignoring Keep-Alive or is imposing a limit), try again 
- * until we can't connect or until all requests have been served. 
- * For each HTTP response, do a callback. */
 
 char *transferParamsToRedirectedUrl(char *url, char *newUrl);
 /* Transfer password, byteRange, and any other parameters from url to newUrl and return result.
