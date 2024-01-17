@@ -89,26 +89,6 @@ if (lf->isMetaUnique && lf->metaLines)
     freeHash(&lf->metaLines);
 }
 
-void lineFileSetMetaDataOutput(struct lineFile *lf, FILE *f)
-/* set file to write meta data to,
- * should be called before reading from input file */
-{
-struct metaOutput *meta = NULL;
-if (lf == NULL)
-    return;
-AllocVar(meta);
-meta->next = NULL;
-meta->metaFile = f;
-slAddHead(&lf->metaOutput, meta);
-}
-
-void lineFileSetUniqueMetaData(struct lineFile *lf)
-/* suppress duplicate lines in metadata */
-{
-lf->isMetaUnique = TRUE;
-lf->metaLines = hashNew(8);
-}
-
 static char * headerBytes(char *fileName, int numbytes)
 /* Return specified number of header bytes from file
  * if file exists as a string which should be freed. */
@@ -162,22 +142,6 @@ lf->pl = pl;
 return lf;
 }
 
-
-
-struct lineFile *lineFileDecompressMem(bool zTerm, char *mem, long size)
-/* open a linefile with decompression from a memory stream */
-{
-struct pipeline *pl;
-struct lineFile *lf;
-char *fileName = getFileNameFromHdrSig(mem);
-if (fileName==NULL)
-  return NULL;
-pl = pipelineOpenMem1(getDecompressor(fileName), pipelineRead|pipelineSigpipe, mem, size, STDERR_FILENO);
-lf = lineFileAttach(fileName, zTerm, pipelineFd(pl));
-lf->pl = pl;
-return lf;
-}
-
 #endif
 
 struct lineFile *lineFileAttach(char *fileName, bool zTerm, int fd)
@@ -213,101 +177,6 @@ return lf;
 #define bgzf_tell ti_bgzf_tell
 #define bgzf_read ti_bgzf_read
 #endif
-
-struct lineFile *lineFileTabixMayOpen(char *fileOrUrl, bool zTerm)
-/* Wrap a line file around a data file that has been compressed and indexed
- * by the tabix command line program.  The index file <fileOrUrl>.tbi must be
- * readable in addition to fileOrUrl. If there's a problem, warn & return NULL.
- * This works only if kent/src has been compiled with USE_TABIX=1 and linked
- * with the tabix C library. */
-{
-#ifdef USE_TABIX
-if (fileOrUrl == NULL)
-    errAbort("lineFileTabixMayOpen: fileOrUrl is NULL");
-int tbiNameSize = strlen(fileOrUrl) + strlen(".tbi") + 1;
-char tbiName[tbiNameSize];
-safef(tbiName, sizeof(tbiName), "%s.tbi", fileOrUrl);
-tabix_t *tabix = ti_open(fileOrUrl, tbiName);
-if (tabix == NULL)
-    {
-    warn("Unable to open \"%s\"", fileOrUrl);
-    return NULL;
-    }
-if ((tabix->idx = ti_index_load(tbiName)) == NULL)
-    {
-    warn("Unable to load tabix index from \"%s\"", tbiName);
-    ti_close(tabix);
-    tabix = NULL;
-    return NULL;
-    }
-struct lineFile *lf = needMem(sizeof(struct lineFile));
-lf->fileName = cloneString(fileOrUrl);
-lf->fd = -1;
-lf->bufSize = 64 * 1024;
-lf->buf = needMem(lf->bufSize);
-lf->zTerm = zTerm;
-lf->tabix = tabix;
-lf->tabixIter = ti_iter_first();
-return lf;
-#else // no USE_TABIX
-warn(COMPILE_WITH_TABIX, "lineFileTabixMayOpen");
-return NULL;
-#endif // no USE_TABIX
-}
-
-boolean lineFileSetTabixRegion(struct lineFile *lf, char *seqName, int start, int end)
-/* Assuming lf was created by lineFileTabixMayOpen, tell tabix to seek to the specified region
- * and return TRUE (or if there are no items in region, return FALSE). */
-{
-#ifdef USE_TABIX
-if (lf->tabix == NULL)
-    errAbort("lineFileSetTabixRegion: lf->tabix is NULL.  Did you open lf with lineFileTabixMayOpen?");
-if (seqName == NULL)
-    return FALSE;
-int tabixSeqId = ti_get_tid(lf->tabix->idx, seqName);
-if (tabixSeqId < 0 && startsWith("chr", seqName))
-    // We will get some files that have chr-less Ensembl chromosome names:
-    tabixSeqId = ti_get_tid(lf->tabix->idx, seqName+strlen("chr"));
-if (tabixSeqId < 0)
-    return FALSE;
-ti_iter_t iter = ti_queryi(lf->tabix, tabixSeqId, start, end);
-if (iter == NULL)
-    return FALSE;
-if (lf->tabixIter != NULL)
-    ti_iter_destroy(lf->tabixIter);
-lf->tabixIter = iter;
-lf->bufOffsetInFile = bgzf_tell(lf->tabix->fp);
-lf->bytesInBuf = 0;
-lf->lineIx = -1;
-lf->lineStart = 0;
-lf->lineEnd = 0;
-return TRUE;
-#else // no USE_TABIX
-warn(COMPILE_WITH_TABIX, "lineFileSetTabixRegion");
-return FALSE;
-#endif // no USE_TABIX
-}
-
-struct lineFile *lineFileUdcMayOpen(char *fileOrUrl, bool zTerm)
-/* Create a line file object with an underlying UDC cache. NULL if not found. */
-{
-if (fileOrUrl == NULL)
-    errAbort("lineFileUdcMayOpen: fileOrUrl is NULL");
-
-struct udcFile *udcFile = udcFileMayOpen(fileOrUrl, NULL);
-if (udcFile == NULL)
-    return NULL;
-
-struct lineFile *lf;
-AllocVar(lf);
-lf->fileName = cloneString(fileOrUrl);
-lf->fd = -1;
-lf->bufSize = 0;
-lf->buf = NULL;
-lf->zTerm = zTerm;
-lf->udcFile = udcFile;
-return lf;
-}
 
 
 void lineFileExpandBuf(struct lineFile *lf, int newSize)
@@ -384,13 +253,6 @@ if (lf->udcFile)
 lf->lineStart = lf->lineEnd = lf->bytesInBuf = 0;
 if ((lf->bufOffsetInFile = lseek(lf->fd, offset, whence)) == -1)
     errnoAbort("Couldn't lineFileSeek %s", lf->fileName);
-}
-
-void lineFileRewind(struct lineFile *lf)
-/* Return lineFile to start. */
-{
-lineFileSeek(lf, 0, SEEK_SET);
-lf->lineIx = 0;
 }
 
 int lineFileLongNetRead(int fd, char *buf, int size)
@@ -671,13 +533,6 @@ void lineFileUnexpectedEnd(struct lineFile *lf)
 errAbort("Unexpected end of file in %s", lf->fileName);
 }
 
-void lineFileNeedNext(struct lineFile *lf, char **retStart, int *retSize)
-/* Fetch next line from file.  Squawk and die if it's not there. */
-{
-if (!lineFileNext(lf, retStart, retSize))
-    lineFileUnexpectedEnd(lf);
-}
-
 void lineFileClose(struct lineFile **pLf)
 /* Close up a line file. */
 {
@@ -717,19 +572,6 @@ if ((lf = *pLf) != NULL)
     }
 }
 
-void lineFileCloseList(struct lineFile **pList)
-/* Close up a list of line files. */
-{
-struct lineFile *el, *next;
-
-for (el = *pList; el != NULL; el = next)
-    {
-    next = el->next;
-    lineFileClose(&el);
-    }
-*pList = NULL;
-}
-
 void lineFileExpectWords(struct lineFile *lf, int expecting, int got)
 /* Check line has right number of words. */
 {
@@ -745,21 +587,6 @@ if (got < expecting)
     errAbort("Expecting at least %d words line %d of %s got %d",
 	    expecting, lf->lineIx, lf->fileName, got);
 }
-
-void lineFileShort(struct lineFile *lf)
-/* Complain that line is too short. */
-{
-errAbort("Short line %d of %s", lf->lineIx, lf->fileName);
-}
-
-void lineFileReuseFull(struct lineFile *lf)
-// Reuse last full line read.  Unlike lineFileReuse,
-// lineFileReuseFull only works with previous lineFileNextFull call
-{
-assert(lf->fullLine != NULL);
-lf->fullLineReuse = TRUE;
-}
-
 
 boolean lineFileNextFull(struct lineFile *lf, char **retFull, int *retFullSize,
                         char **retRaw, int *retRawSize)
@@ -880,20 +707,6 @@ while (lineFileNext(lf, retStart, NULL))
 return FALSE;
 }
 
-boolean lineFileNextFullReal(struct lineFile *lf, char **retStart)
-// Fetch next line from file that is not blank and does not start with a '#'.
-// Continuation lines (ending in '\') are joined into a single line.
-{
-while (lineFileNextFull(lf, retStart, NULL, NULL, NULL))
-    {
-    char *clippedText = skipLeadingSpaces(*retStart);
-    if (clippedText[0] != '\0' && clippedText[0] != '#')
-        return TRUE;
-    }
-return FALSE;
-}
-
-
 int lineFileChopNext(struct lineFile *lf, char *words[], int maxWords)
 /* Return next non-blank line that doesn't start with '#' chopped into words. */
 {
@@ -947,19 +760,6 @@ while (lineFileNext(lf, &line, &lineSize))
 return 0;
 }
 
-boolean lineFileNextCharRow(struct lineFile *lf, char sep, char *words[], int wordCount)
-/* Return next non-blank line that doesn't start with '#' chopped into words
- * delimited by sep. Returns FALSE at EOF.  Aborts on error. */
-{
-int wordsRead;
-wordsRead = lineFileChopCharNext(lf, sep, words, wordCount);
-if (wordsRead == 0)
-    return FALSE;
-if (wordsRead < wordCount)
-    lineFileExpectWords(lf, wordCount, wordsRead);
-return TRUE;
-}
-
 boolean lineFileNextRow(struct lineFile *lf, char *words[], int wordCount)
 /* Return next non-blank line that doesn't start with '#' chopped into words.
  * Returns FALSE at EOF.  Aborts on error. */
@@ -971,35 +771,6 @@ if (wordsRead == 0)
 if (wordsRead < wordCount)
     lineFileExpectWords(lf, wordCount, wordsRead);
 return TRUE;
-}
-
-boolean lineFileNextRowTab(struct lineFile *lf, char *words[], int wordCount)
-/* Return next non-blank line that doesn't start with '#' chopped into words
- * at tabs. Returns FALSE at EOF.  Aborts on error. */
-{
-int wordsRead;
-wordsRead = lineFileChopNextTab(lf, words, wordCount);
-if (wordsRead == 0)
-    return FALSE;
-if (wordsRead < wordCount)
-    lineFileExpectWords(lf, wordCount, wordsRead);
-return TRUE;
-}
-
-int lineFileNeedFullNum(struct lineFile *lf, char *words[], int wordIx)
-/* Make sure that words[wordIx] is an ascii integer, and return
- * binary representation of it. Require all chars in word to be digits.*/
-{
-char *c;
-for (c = words[wordIx]; *c; c++)
-    {
-    if (*c == '-' || isdigit(*c))
-        /* NOTE: embedded '-' will be caught by lineFileNeedNum */
-        continue;
-    errAbort("Expecting integer field %d line %d of %s, got %s",
-            wordIx+1, lf->lineIx, lf->fileName, words[wordIx]);
-    }
-return lineFileNeedNum(lf, words, wordIx);
 }
 
 int lineFileNeedNum(struct lineFile *lf, char *words[], int wordIx)
@@ -1216,31 +987,6 @@ if ((*val == '\0') || (*valEnd != '\0'))
 return doubleValue;
 }
 
-void lineFileSkip(struct lineFile *lf, int lineCount)
-/* Skip a number of lines. */
-{
-int i, lineSize;
-char *line;
-
-for (i=0; i<lineCount; ++i)
-    {
-    if (!lineFileNext(lf, &line, &lineSize))
-        errAbort("Premature end of file in %s", lf->fileName);
-    }
-}
-
-char *lineFileSkipToLineStartingWith(struct lineFile *lf, char *start, int maxCount)
-/* Skip to next line that starts with given string.  Return NULL
- * if no such line found, otherwise return the line. */
-{
-char *line;
-while (lineFileNext(lf, &line, NULL) && --maxCount >= 0)
-    {
-    if (startsWith(start, line))
-        return line;
-    }
-return NULL;
-}
 
 char *lineFileReadAll(struct lineFile *lf)
 /* Read remainder of lineFile and return it as a string. */

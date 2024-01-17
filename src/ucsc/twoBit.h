@@ -75,19 +75,11 @@ struct twoBitFile *twoBitOpen(char *fileName);
 /* Open file, read in header and index.  
  * Squawk and die if there is a problem. */
 
-struct twoBitFile *twoBitOpenExternalBptIndex(char *twoBitName, char *bptName);
-/* Open file, read in header, but not regular index.  Instead use
- * bpt index.   Beware if you use this the indexList field will be NULL
- * as will the hash. */
-
 void twoBitClose(struct twoBitFile **pTbf);
 /* Free up resources associated with twoBitFile. */
 
 int twoBitSeqSize(struct twoBitFile *tbf, char *name);
 /* Return size of sequence in two bit file in bases. */
-
-long long twoBitTotalSize(struct twoBitFile *tbf);
-/* Return total size of all sequences in two bit file. */
 
 struct dnaSeq *twoBitReadSeqFragExt(struct twoBitFile *tbf, char *name,
                                     int fragStart, int fragEnd, boolean doMask, int *retFullSize);
@@ -103,30 +95,9 @@ struct dnaSeq *twoBitReadSeqFrag(struct twoBitFile *tbf, char *name,
  * be mixed case, with repeats in lower case and rest in
  * upper case. */
 
-struct dnaSeq *twoBitReadSeqFragLower(struct twoBitFile *tbf, char *name,
-	int fragStart, int fragEnd);
-/* Same as twoBitReadSeqFrag, but sequence is returned in lower case. */
-
-struct dnaSeq *twoBitLoadAll(char *spec);
-/* Return list of all sequences matching spec, which is in
- * the form:
- *
- *    file/path/input.2bit[:seqSpec1][,seqSpec2,...]
- *
- * where seqSpec is either
- *     seqName
- *  or
- *     seqName:start-end */
-
-struct slName *twoBitSeqNames(char *fileName);
-/* Get list of all sequences in twoBit file. */
-
 struct twoBit *twoBitFromDnaSeq(struct dnaSeq *seq, boolean doMask);
 /* Convert dnaSeq representation in memory to twoBit representation.
  * If doMask is true interpret lower-case letters as masked. */
-
-struct twoBit *twoBitFromFile(char *fileName);
-/* Get twoBit list of all sequences in twoBit file. */
 
 struct twoBit *twoBitOneFromFile(struct twoBitFile *tbf, char *name);
 /* Get single sequence as two bit. */
@@ -164,12 +135,6 @@ boolean twoBitParseRange(char *rangeSpec, char **retFile,
 boolean twoBitIsRange(char *rangeSpec);
 /* Return TRUE if it looks like a two bit range specifier. */
 
-boolean twoBitIsFileOrRange(char *spec);
-/* Return TRUE if it is a two bit file or subrange. */
-
-boolean twoBitIsSpec(char *spec);
-/* Return TRUE spec is a valid 2bit spec (see twoBitSpecNew) */
-
 struct twoBitSpec *twoBitSpecNew(char *specStr);
 /* Parse a .2bit file and sequence spec into an object.
  * The spec is a string in the form:
@@ -184,26 +149,10 @@ struct twoBitSpec *twoBitSpecNew(char *specStr);
  * free result with twoBitSpecFree().
  */
 
-struct twoBitSpec *twoBitSpecNewFile(char *twoBitFile, char *specFile);
-/* parse a file containing a list of specifications for sequences in the
- * specified twoBit file. Specifications are one per line in forms:
- *     seqName
- *  or
- *     seqName:start-end
- */
-
 void twoBitSpecFree(struct twoBitSpec **specPtr);
 /* free a twoBitSpec object */
-
-void twoBitOutNBeds(struct twoBitFile *tbf, char *seqName, FILE *outF);
-/* output a series of bed3's that enumerate the number of N's in a sequence*/
 
 int twoBitSeqSizeNoNs(struct twoBitFile *tbf, char *seqName);
 /* return the length of the sequence, not counting N's */
 
-long long twoBitTotalSizeNoN(struct twoBitFile *tbf);
-/* return the size of the all the sequence in file, not counting N's*/
-
-boolean twoBitIsSequence(struct twoBitFile *tbf, char *chromName);
-/* Return TRUE if chromName is in 2bit file. */
 #endif /* TWOBIT_H */

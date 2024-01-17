@@ -39,16 +39,6 @@ void bigWigFileCreateEx(
 	char *outName);
 /* Convert ascii format wig file (in fixedStep, variableStep or bedGraph format) 
  * to binary big wig format. */
-void bigWigFileCreate(
-	char *inName, 		/* Input file in ascii wiggle format. */
-	char *chromSizes, 	/* Two column tab-separated file: <chromosome> <size>. */
-	int blockSize,		/* Number of items to bundle in r-tree.  1024 is good. */
-	int itemsPerSlot,	/* Number of items in lowest level of tree.  512 is good. */
-	boolean clipDontDie,	/* If TRUE then clip items off end of chrom rather than dying. */
-	boolean compress,	/* If TRUE then compress data. */
-	char *outName);
-/* Convert ascii format wig file (in fixedStep, variableStep or bedGraph format) 
- * to binary big wig format. */
 
 struct bbiFile *bigWigFileOpen(char *fileName);
 /* Open up big wig file.   Free this up with bbiFileClose */
@@ -59,11 +49,6 @@ struct bbiInterval *bigWigIntervalQuery(struct bbiFile *bwf, char *chrom, bits32
 	struct lm *lm);
 /* Get data for interval.  Return list allocated out of lm. */
 
-int bigWigIntervalDump(struct bbiFile *bwf, char *chrom, bits32 start, bits32 end, int maxCount,
-	FILE *out);
-/* Print out info on bigWig parts that intersect chrom:start-end.   Set maxCount to 0 if you 
- * don't care how many are printed.  Returns number printed. */
-
 boolean bigWigSummaryArray(struct bbiFile *bwf, char *chrom, bits32 start, bits32 end,
 	enum bbiSummaryType summaryType, int summarySize, double *summaryValues);
 /* Fill in summaryValues with  data from indicated chromosome range in bigWig file.
@@ -72,20 +57,6 @@ boolean bigWigSummaryArray(struct bbiFile *bwf, char *chrom, bits32 start, bits3
  * be 0.0 or nan(0) depending on the application.)  Returns FALSE if no data
  * at that position. */
 
-boolean bigWigSummaryArrayExtended(struct bbiFile *bwf, char *chrom, bits32 start, bits32 end,
-	int summarySize, struct bbiSummaryElement *summary);
-/* Get extended summary information for summarySize evenely spaced elements into
- * the summary array. */
-
-double bigWigSingleSummary(struct bbiFile *bwf, char *chrom, int start, int end,
-    enum bbiSummaryType summaryType, double defaultVal);
-/* Return the summarized single value for a range. */
-
-boolean isBigWig(char *fileName);
-/* Peak at a file to see if it's bigWig */
-
-boolean bigWigFileCheckSigs(char *fileName);
-/* check file signatures at beginning and end of file */
 
 /* bigWigValsOnChrom - a little system for optimizing bigWig use when doing a pass over the
  * whole chromosome.   How it is used typically is:

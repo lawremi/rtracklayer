@@ -16,11 +16,6 @@ boolean internetFillInAddress(char *hostName, int port,
 	struct sockaddr_in *address);
 /* Fill in address. Warn and return FALSE if can't.  */
 
-boolean internetIpToDottedQuad(bits32 ip, char dottedQuad[17]);
-/* Convert IP4 address in host byte order to dotted quad 
- * notation.  Warn and return FALSE if there's a 
- * problem. */
-
 boolean internetDottedQuadToIp(char *dottedQuad, bits32 *retIp);
 /* Convert dotted quad format address to IP4 address in
  * host byte order.  Warn and return FALSE if there's a 
@@ -28,9 +23,6 @@ boolean internetDottedQuadToIp(char *dottedQuad, bits32 *retIp);
 
 boolean internetIsDottedQuad(char *s);
 /* Returns TRUE if it looks like s is a dotted quad. */
-
-void internetParseDottedQuad(char *dottedQuad, unsigned char quad[4]);
-/* Parse dotted quads into quad */
 
 void internetUnpackIp(bits32 packed, unsigned char unpacked[4]);
 /* Convert from 32 bit to 4-byte format with most significant

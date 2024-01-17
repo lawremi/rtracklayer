@@ -28,9 +28,6 @@ __attribute__((format(printf, 2, 3)))
 #endif
     ;
 
-void verboseDot();
-/* Write I'm alive dot (at verbosity level 1) */
-
 boolean verboseDotsEnabled();
 /* check if outputting of happy dots are enabled.  They will be enabled if the
  * verbosity is > 0, stderr is a tty and we don't appear to be running an
@@ -38,16 +35,6 @@ boolean verboseDotsEnabled();
 
 int verboseLevel(void);
 /* Get verbosity level. */
-
-void verboseSetLevel(int verbosity);
-/* Set verbosity level in log.  0 for no logging,
- * higher number for increasing verbosity. */
-
-void verboseSetLogFile(char *name);
-/* Set logFile for verbose messages overrides stderr. */
-
-FILE *verboseLogFile();
-/* Get the verbose log file. */
 
 #endif /* VERBOSE_H */
 

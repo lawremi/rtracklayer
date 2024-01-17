@@ -216,50 +216,6 @@ c = codonTable[ix].protCode;
 return c;
 }
 
-boolean isStopCodon(DNA *dna)
-/* Return TRUE if it's a stop codon. */
-{
-return lookupCodon(dna) == 0;
-}
-
-boolean isKozak(char *dna, int dnaSize, int pos)
-/* Return TRUE if it's a Kozak compatible start. */
-{
-if (lookupCodon(dna+pos) != 'M')
-   {
-   return FALSE;
-   }
-if (pos + 3 < dnaSize)
-    {
-    if (ntVal[(int)dna[pos+3]] == G_BASE_VAL)
-        return TRUE;
-    }
-if (pos >= 3)
-    {
-    int c = ntVal[(int)dna[pos-3]];
-    if (c == A_BASE_VAL || c == G_BASE_VAL)
-        return TRUE;
-    }
-return FALSE;
-}
-
-
-boolean isReallyStopCodon(char *dna, boolean selenocysteine)
-/* Return TRUE if it's really a stop codon, even considering
- * possibilility of selenocysteine. */
-{
-if (selenocysteine)
-    {
-    /* Luckily the mitochondria *also* replaces TGA with 
-     * something else, even though it isn't selenocysteine */
-    return lookupMitoCodon(dna) == 0;
-    }
-else
-    {
-    return lookupCodon(dna) == 0;
-    }
-}
-
 
 /* Returns one letter code for protein, 
  * 0 for stop codon or X for bad input,
@@ -283,48 +239,6 @@ for (i=0; i<3; ++i)
 c = codonTable[ix].mitoCode;
 c = toupper(c);
 return c;
-}
-
-Codon codonVal(DNA *start)
-/* Return value from 0-63 of codon starting at start. 
- * Returns -1 if not a codon. */
-{
-int v1,v2,v3;
-
-if ((v1 = ntVal[(int)start[0]]) < 0)
-    return -1;
-if ((v2 = ntVal[(int)start[1]]) < 0)
-    return -1;
-if ((v3 = ntVal[(int)start[2]]) < 0)
-    return -1;
-return ((v1<<4) + (v2<<2) + v3);
-}
-
-DNA *valToCodon(int val)
-/* Return  codon corresponding to val (0-63) */
-{
-assert(val >= 0 && val < 64);
-return codonTable[val].codon;
-}
-
-void dnaTranslateSome(DNA *dna, char *out, int outSize)
-/* Translate DNA upto a stop codon or until outSize-1 amino acids, 
- * whichever comes first. Output will be zero terminated. */
-{
-int i;
-int dnaSize;
-int protSize = 0;
-
-outSize -= 1;  /* Room for terminal zero */
-dnaSize = strlen(dna);
-for (i=0; i<dnaSize-2; i+=3)
-    {
-    if (protSize >= outSize)
-        break;
-    if ((out[protSize++] = lookupCodon(dna+i)) == 0)
-        break;
-    }
-out[protSize] = 0;
 }
 
 /* A little array to help us decide if a character is a 
@@ -447,33 +361,6 @@ reverseBytes(dna, length);
 complement(dna, length);
 }
 
-/* Reverse offset - return what will be offset (0 based) to
- * same member of array after array is reversed. */
-long reverseOffset(long offset, long arraySize)
-{
-return arraySize-1 - offset;
-}
-
-/* Switch start/end (zero based half open) coordinates
- * to opposite strand. */
-void reverseIntRange(int *pStart, int *pEnd, int size)
-{
-int temp;
-temp = *pStart;
-*pStart = size - *pEnd;
-*pEnd = size - temp;
-}
-
-/* Switch start/end (zero based half open) coordinates
- * to opposite strand. */
-void reverseUnsignedRange(unsigned *pStart, unsigned *pEnd, int size)
-{
-unsigned temp;
-temp = *pStart;
-*pStart = size - *pEnd;
-*pEnd = size - temp;
-}
-
 boolean isAllNt(char *seq, int size)
 /* Return TRUE if all letters in seq are ACGTNU-. */
 {
@@ -485,115 +372,6 @@ boolean isAllNt(char *seq, int size)
 		return FALSE;
 	}
     return TRUE;
-}
-
-char *reverseComplementSlashSeparated(char *alleleStr)
-/* Given a slash-separated series of sequences (a common representation of variant alleles),
- * returns a slash-sep series with the reverse complement of each sequence (if it is a
- * nucleotide sequence).
- * Special behavior to support dbSNP's variant allele conventions:
- * 1. Reverse the order of sequences (to maintain alphabetical ordering).
- * 2. If alleleStr begins with "-/", then after reversing, move "-/" back to the beginning. */
-{
-int len = strlen(alleleStr);
-char choppyCopy[len+1];
-safecpy(choppyCopy, sizeof(choppyCopy), alleleStr);
-char *alleles[len];
-int alCount = chopByChar(choppyCopy, '/', alleles, ArraySize(alleles));
-char *outStr = needMem(len+1);
-int i;
-for (i = alCount-1;  i >= 0;  i--)
-    {
-    char *allele = alleles[i];
-    int alLen = strlen(allele);
-    if (isAllNt(allele, alLen))
-        reverseComplement(allele, alLen);
-    if (i != alCount-1)
-        safecat(outStr, len+1, "/");
-    safecat(outStr, len+1, allele);
-    }
-if (startsWith("-/", alleleStr))
-    {
-    // Keep "-/" at the beginning:
-    memmove(outStr+2, outStr, len-2);
-    outStr[0] = '-';
-    outStr[1] = '/';
-    }
-return outStr;
-}
-
-int cmpDnaStrings(DNA *a, DNA *b)
-/* Compare using screwy non-alphabetical DNA order TCGA */
-{
-for (;;)
-    {
-    DNA aa = *a++;
-    DNA bb = *b++;
-    if (aa != bb)
-        return ntVal[(int)aa] - ntVal[(int)bb];
-    if (aa == 0)
-	break;
-    }
-return 0;
-}
-
-
-/* Convert T's to U's */
-void toRna(DNA *dna)
-{
-DNA c;
-for (;;)
-    {
-    c = *dna;
-    if (c == 't')
-	*dna = 'u';
-    else if (c == 'T')
-	*dna = 'U';
-    else if (c == 0)
-	break;
-    ++dna;
-    }
-}
-
-char *skipIgnoringDash(char *a, int size, bool skipTrailingDash)
-/* Count size number of characters, and any 
- * dash characters. */
-{
-while (size > 0)
-    {
-    if (*a++ != '-')
-        --size;
-    }
-if (skipTrailingDash)
-    while (*a == '-')
-       ++a;
-return a;
-}
-
-int countNonDash(char *a, int size)
-/* Count number of non-dash characters. */
-{
-int count = 0;
-int i;
-for (i=0; i<size; ++i)
-    if (a[i] != '-') 
-        ++count;
-return count;
-}
-
-int nextPowerOfFour(long x)
-/* Return next power of four that would be greater or equal to x.
- * For instance if x < 4, return 1, if x < 16 return 2.... 
- * (From biological point of view how many bases are needed to
- * code this number.) */
-{
-int count = 1;
-while (x > 4)
-    {
-    count += 1;
-    x >>= 2;
-    }
-return count;
 }
 
 long dnaOrAaFilteredSize(char *raw, char filter[256])
@@ -621,134 +399,6 @@ while ((c = *in++) != 0)
 *out++ = 0;
 }
 
-long dnaFilteredSize(char *rawDna)
-/* Return how long DNA will be after non-DNA is filtered out. */
-{
-return dnaOrAaFilteredSize(rawDna, ntChars);
-}
-
-void dnaFilter(char *in, DNA *out)
-/* Filter out non-DNA characters and change to lower case. */
-{
-dnaOrAaFilter(in, out, ntChars);
-}
-
-void dnaFilterToN(char *in, DNA *out)
-/* Change all non-DNA characters to N. */
-{
-DNA c;
-initNtChars();
-while ((c = *in++) != 0)
-    {
-    if ((c = ntChars[(int)c]) != 0) *out++ = c;
-    else *out++ = 'n';
-    }
-*out++ = 0;
-}
-
-void dnaMixedCaseFilter(char *in, DNA *out)
-/* Filter out non-DNA characters but leave case intact. */
-{
-dnaOrAaFilter(in, out, ntMixedCaseChars);
-}
-
-long aaFilteredSize(char *raw)
-/* Return how long aa will be after non-aa chars is filtered out. */
-{
-return dnaOrAaFilteredSize(raw, aaChars);
-}
-
-void aaFilter(char *in, DNA *out)
-/* Filter out non-aa characters and change to upper case. */
-{
-dnaOrAaFilter(in, out, aaChars);
-}
-
-void upperToN(char *s, int size)
-/* Turn upper case letters to N's. */
-{
-char c;
-int i;
-for (i=0; i<size; ++i)
-    {
-    c = s[i];
-    if (isupper(c))
-        s[i] = 'n';
-    }
-}
-
-void lowerToN(char *s, int size)
-/* Turn lower case letters to N's. */
-{
-char c;
-int i;
-for (i=0; i<size; ++i)
-    {
-    c = s[i];
-    if (islower(c))
-        s[i] = 'N';
-    }
-}
-
-
-void dnaBaseHistogram(DNA *dna, int dnaSize, int histogram[4])
-/* Count up frequency of occurance of each base and store 
- * results in histogram. */
-{
-int val;
-zeroBytes(histogram, 4*sizeof(int));
-while (--dnaSize >= 0)
-    {
-    if ((val = ntVal[(int)*dna++]) >= 0)
-        ++histogram[val];
-    }
-}
-
-bits64 basesToBits64(char *dna, int size)
-/* Convert dna of given size (up to 32) to binary representation */
-{
-if (size > 32)
-    errAbort("basesToBits64 called on %d bases, can only go up to 32", size);
-bits64 result = 0;
-int i;
-for (i=0; i<size; ++i)
-    {
-    result <<= 2;
-    result += ntValNoN[(int)dna[i]];
-    }
-return result;
-}
-
-bits32 packDna16(DNA *in)
-/* pack 16 bases into a word */
-{
-bits32 out = 0;
-int count = 16;
-int bVal;
-while (--count >= 0)
-    {
-    bVal = ntValNoN[(int)*in++];
-    out <<= 2;
-    out += bVal;
-    }
-return out;
-}
-
-bits16 packDna8(DNA *in)
-/* Pack 8 bases into a short word */
-{
-bits16 out = 0;
-int count = 8;
-int bVal;
-while (--count >= 0)
-    {
-    bVal = ntValNoN[(int)*in++];
-    out <<= 2;
-    out += bVal;
-    }
-return out;
-}
-
 UBYTE packDna4(DNA *in)
 /* Pack 4 bases into a UBYTE */
 {
@@ -763,45 +413,6 @@ while (--count >= 0)
     }
 return out;
 }
-
-void unpackDna(bits32 *tiles, int tileCount, DNA *out)
-/* Unpack DNA. Expands to 16x tileCount in output. */
-{
-int i, j;
-bits32 tile;
-
-for (i=0; i<tileCount; ++i)
-    {
-    tile = tiles[i];
-    for (j=15; j>=0; --j)
-        {
-        out[j] = valToNt[tile & 0x3];
-        tile >>= 2;
-        }
-    out += 16;
-    }
-}
-
-void unpackDna4(UBYTE *tiles, int byteCount, DNA *out)
-/* Unpack DNA. Expands to 4x byteCount in output. */
-{
-int i, j;
-UBYTE tile;
-
-for (i=0; i<byteCount; ++i)
-    {
-    tile = tiles[i];
-    for (j=3; j>=0; --j)
-        {
-        out[j] = valToNt[tile & 0x3];
-        tile >>= 2;
-        }
-    out += 4;
-    }
-}
-
-
-
 
 static void checkSizeTypes()
 /* Make sure that some of our predefined types are the right size. */
@@ -831,22 +442,6 @@ else
     return 0;
 }
 
-int intronOrientation(DNA *iStart, DNA *iEnd)
-/* Given a gap in genome from iStart to iEnd, return 
- * Return 1 for GT/AG intron between left and right, -1 for CT/AC, 0 for no
- * intron.  Assumes DNA is lower cased. */
-{
-return intronOrientationMinSize(iStart, iEnd, 32);
-}
-
-int dnaScore2(DNA a, DNA b)
-/* Score match between two bases (relatively crudely). */
-{
-if (a == 'n' || b == 'n') return 0;
-if (a == b) return 1;
-else return -1;
-}
-
 int  dnaOrAaScoreMatch(char *a, char *b, int size, int matchScore, int mismatchScore, 
 	char ignore)
 /* Compare two sequences (without inserts or deletions) and score. */
@@ -865,45 +460,6 @@ for (i=0; i<size; ++i)
         score += mismatchScore;
     }
 return score;
-}
-
-int dnaScoreMatch(DNA *a, DNA *b, int size)
-/* Compare two pieces of DNA base by base. Total mismatches are
- * subtracted from total matches and returned as score. 'N's 
- * neither hurt nor help score. */
-{
-return dnaOrAaScoreMatch(a, b, size, 1, -1, 'n');
-}
-
-int aaScore2(AA a, AA b)
-/* Score match between two amino acids (relatively crudely). */
-{
-if (a == 'X' || b == 'X') return 0;
-if (a == b) return 2;
-else return -1;
-}
-
-int aaScoreMatch(AA *a, AA *b, int size)
-/* Compare two peptides aa by aa. */
-{
-return dnaOrAaScoreMatch(a, b, size, 2, -1, 'X');
-}
-
-void writeSeqWithBreaks(FILE *f, char *letters, int letterCount, int maxPerLine)
-/* Write out letters with newlines every maxLine. */
-{
-int lettersLeft = letterCount;
-int lineSize;
-while (lettersLeft > 0)
-    {
-    lineSize = lettersLeft;
-    if (lineSize > maxPerLine)
-        lineSize = maxPerLine;
-    mustWrite(f, letters, lineSize);
-    fputc('\n', f);
-    letters += lineSize;
-    lettersLeft -= lineSize;
-    }
 }
 
 static int findTailPolyAMaybeMask(DNA *dna, int size, boolean doMask,
@@ -962,21 +518,6 @@ if (bestPos >= 0)
 return trimSize;
 }
 
-int tailPolyASizeLoose(DNA *dna, int size)
-/* Return size of PolyA at end (if present).  This allows a few non-A's as 
- * noise to be trimmed too, but skips first two aa for taa stop codon.  
- * It is less conservative in extending the polyA region than maskTailPolyA. */
-{
-return findTailPolyAMaybeMask(dna, size, FALSE, TRUE);
-}
-
-int maskTailPolyA(DNA *dna, int size)
-/* Convert PolyA at end to n.  This allows a few non-A's as noise to be 
- * trimmed too.  Returns number of bases trimmed.  Leaves very last a. */
-{
-return findTailPolyAMaybeMask(dna, size, TRUE, FALSE);
-}
-
 static int findHeadPolyTMaybeMask(DNA *dna, int size, boolean doMask,
 				  boolean loose)
 /* Return size of PolyT at start (if present); mask to 'n' if specified.  
@@ -1032,22 +573,6 @@ if (bestPos >= 0)
 return trimSize;
 }
 
-int headPolyTSizeLoose(DNA *dna, int size)
-/* Return size of PolyT at start (if present).  This allows a few non-T's as 
- * noise to be trimmed too, but skips last two tt for revcomp'd taa stop 
- * codon.  
- * It is less conservative in extending the polyA region than maskHeadPolyT. */
-{
-return findHeadPolyTMaybeMask(dna, size, FALSE, TRUE);
-}
-
-int maskHeadPolyT(DNA *dna, int size)
-/* Convert PolyT at start.  This allows a few non-T's as noise to be 
- * trimmed too.  Returns number of bases trimmed.  */
-{
-return findHeadPolyTMaybeMask(dna, size, TRUE, FALSE);
-}
-
 boolean isDna(char *poly, int size)
 /* Return TRUE if letters in poly are at least 90% ACGTNU- */
 {
@@ -1062,15 +587,6 @@ for (i=0; i<size; ++i)
     }
 return (dnaCount >= round(0.9 * size));
 }
-
-boolean isAllDna(char *poly, int size)
-/* Return TRUE if size is great than 1 and letters in poly are 100% ACGTNU- */
-{
-if (size <= 1)
-    return FALSE;
-return isAllNt(poly, size);
-}
-
 
 
 /* Tables to convert from 0-20 to ascii single letter representation

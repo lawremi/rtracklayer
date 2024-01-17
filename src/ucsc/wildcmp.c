@@ -23,18 +23,6 @@ for(;;)
     }
 }
 
-boolean anyWild(const char *string)
-/* Return TRUE if any wild card characters in string. */
-{
-char c;
-while ((c = *string++) != 0)
-    {
-    if (c == '?' || c == '*')
-        return TRUE;
-    }
-return FALSE;
-}
-
 static boolean globMatch(const char *wildCard, const char *string, char single, char multi)
 /* does a case sensitive wild card match with a string.
  * * matches any string or no character.
@@ -107,10 +95,4 @@ boolean wildMatch(const char *wildCard, const char *string)
 /* Match using * and ? wildcards. */
 {
 return globMatch(wildCard, string, '?', '*');
-}
-
-boolean sqlMatchLike(char *wildCard, char *string)
-/* Match using % and _ wildcards. */
-{
-return globMatch(wildCard, string, '_', '%');
 }

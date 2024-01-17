@@ -30,44 +30,14 @@ typedef struct dnaSeq aaSeq;	/* Preferred use if protein. */
 struct dnaSeq *newDnaSeq(DNA *dna, int size, char *name);
 /* Create a new DNA seq. */
 
-struct dnaSeq *cloneDnaSeq(struct dnaSeq *seq);
-/* Duplicate dna sequence in RAM. */
-
 void freeDnaSeq(struct dnaSeq **pSeq);
 /* Free up DNA seq.  */
 #define dnaSeqFree freeDnaSeq
-
-void freeDnaSeqList(struct dnaSeq **pSeqList);
-/* Free up list of DNA sequences. */
-#define dnaSeqFreeList freeDnaSeqList
 
 aaSeq *translateSeqN(struct dnaSeq *inSeq, unsigned offset, unsigned size, boolean stop);
 /* Return a translated sequence.  Offset is position of first base to
  * translate. If size is 0 then use length of inSeq. */
 
-aaSeq *translateSeq(struct dnaSeq *inSeq, unsigned offset, boolean stop);
-/* Return a translated sequence.  Offset is position of first base to
- * translate. If stop is TRUE then stop at first stop codon.  (Otherwise 
- * represent stop codons as 'Z'). */
-
-boolean seqIsDna(bioSeq *seq);
-/* Make educated guess whether sequence is DNA or protein. */
-
-boolean seqIsLower(bioSeq *seq);
-/* Return TRUE if sequence is all lower case. */
-
-bioSeq *whichSeqIn(bioSeq **seqs, int seqCount, char *letters);
-/* Figure out which if any sequence letters is in. */
-
-Bits *maskFromUpperCaseSeq(bioSeq *seq);
-/* Allocate a mask for sequence and fill it in based on
- * sequence case. */
-
-struct hash *dnaSeqHash(struct dnaSeq *seqList);
-/* Return hash of sequences keyed by name. */
-
-int dnaSeqCmpName(const void *va, const void *vb);
-/* Compare to sort based on sequence name. */
 
 #endif /* DNASEQ_H */
 

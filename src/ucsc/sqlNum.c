@@ -60,55 +60,6 @@ if (!(c == '\0' || c == ',') || (p == s))
 return res;
 }
 
-unsigned long sqlUnsignedLong(char *s)
-/* Convert series of digits to unsigned long about
- * twice as fast as atol (by not having to skip white 
- * space or stop except at the null byte.) */
-{
-unsigned long res = 0;
-char *p = s;
-char c;
-
-while (((c = *(p++)) >= '0') && (c <= '9'))
-    {
-    res *= 10;
-    res += c - '0';
-    }
---p;
-if ((c != '\0') || (p == s))
-    errAbort("invalid unsigned long: \"%s\"", s);
-return res;
-}
-
-unsigned long sqlUnsignedLongInList(char **pS)
-/* Convert series of digits to unsigned long about
- * twice as fast as atol (by not having to skip white 
- * space or stop except at the null byte.) 
- * All of string is number. Number may be delimited by a comma. 
- * Returns the position of the delimiter or the terminating 0. */
-{
-char *s = *pS;
-unsigned long res = 0;
-char *p = s;
-char c;
-
-while (((c = *(p++)) >= '0') && (c <= '9'))
-    {
-    res *= 10;
-    res += c - '0';
-    }
---p;
-if (!(c == '\0' || c == ',') || (p == s))
-    {
-    char *e = strchr(s, ',');
-    if (e)
-	*e = 0;
-    errAbort("invalid unsigned long: \"%s\"", s);
-    }
-*pS = p;
-return res;
-}
-
 int sqlSigned(char *s)
 /* Convert string to signed integer.  Unlike atol assumes 
  * all of string is number. */
@@ -223,22 +174,6 @@ if (*s == '-')
     return -res;
 else
     return res;
-}
-
-float sqlFloat(char *s)
-/* Convert string to a float.  Assumes all of string is number
- * and aborts on an error. */
-{
-char* end;
-/*	used to have an ifdef here to use strtof() but that doesn't
- *	actually exist on all systems and since strtod() does, may as
- *	well use it since it will do the job here.
- */
-float val = (float) strtod(s, &end);
-
-if ((end == s) || (*end != '\0'))
-    errAbort("invalid float: %s", s);
-return val;
 }
 
 float sqlFloatInList(char **pS)

@@ -20,7 +20,4 @@ size_t zUncompress(
 	size_t uncompBufSize);	/* Max size of uncompressed bits. */
 /* Uncompress data from memory to memory.  Returns size after decompression. */
 
-void zSelfTest(int count);
-/* Run an internal diagnostic. */
-
 #endif /* ZLIBFACE_H */

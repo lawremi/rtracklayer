@@ -7,7 +7,6 @@
 #include "common.h"
 #include "linefile.h"
 #include "hash.h"
-#include "options.h"
 #include "sig.h"
 #include "sqlNum.h"
 #include "obscure.h"
@@ -29,28 +28,6 @@ struct bbiFile *bigWigFileOpen(char *fileName)
 return bbiFileOpen(fileName, bigWigSig, "big wig");
 }
 
-boolean bigWigFileCheckSigs(char *fileName)
-/* check file signatures at beginning and end of file */
-{
-return bbiFileCheckSigs(fileName, bigWigSig, "big wig");
-}
-
-#ifdef OLD
-static void bwgSectionHeadRead(struct bbiFile *bwf, struct bwgSectionHead *head)
-/* Read section header. */
-{
-struct udcFile *udc = bwf->udc;
-boolean isSwapped = bwf->isSwapped;
-head->chromId = udcReadBits32(udc, isSwapped);
-head->start = udcReadBits32(udc, isSwapped);
-head->end = udcReadBits32(udc, isSwapped);
-head->itemStep = udcReadBits32(udc, isSwapped);
-head->itemSpan = udcReadBits32(udc, isSwapped);
-head->type = udcGetChar(udc);
-head->reserved = udcGetChar(udc);
-head->itemCount = udcReadBits16(udc, isSwapped);
-}
-#endif /* OLD */
 
 void bwgSectionHeadFromMem(char **pPt, struct bwgSectionHead *head, boolean isSwapped)
 /* Read section header. */
@@ -280,81 +257,6 @@ slReverse(&list);
 return list;
 }
 
-int bigWigIntervalDump(struct bbiFile *bwf, char *chrom, bits32 start, bits32 end, int maxCount,
-	FILE *out)
-/* Print out info on bigWig parts that intersect chrom:start-end.   Set maxCount to 0 if you 
- * don't care how many are printed.  Returns number printed. */
-{
-if (bwf->typeSig != bigWigSig)
-   errAbort("Trying to do bigWigIntervalDump on a non big-wig file.");
-bbiAttachUnzoomedCir(bwf);
-struct fileOffsetSize *blockList = bbiOverlappingBlocks(bwf, bwf->unzoomedCir, 
-	chrom, start, end, NULL);
-struct fileOffsetSize *block, *beforeGap, *afterGap;
-struct udcFile *udc = bwf->udc;
-int printCount = 0;
-
-/* Set up for uncompression optionally. */
-char *uncompressBuf = NULL;
-if (bwf->uncompressBufSize > 0)
-    uncompressBuf = needLargeMem(bwf->uncompressBufSize);
-
-/* This loop is a little complicated because we merge the read requests for efficiency, but we 
- * have to then go back through the data one unmerged block at a time. */
-for (block = blockList; block != NULL; )
-    {
-    /* Find contigious blocks and read them into mergedBuf. */
-    fileOffsetSizeFindGap(block, &beforeGap, &afterGap);
-    bits64 mergedOffset = block->offset;
-    bits64 mergedSize = beforeGap->offset + beforeGap->size - mergedOffset;
-    udcSeek(udc, mergedOffset);
-    char *mergedBuf = needLargeMem(mergedSize);
-    udcMustRead(udc, mergedBuf, mergedSize);
-    char *blockBuf = mergedBuf;
-
-    /* Loop through individual blocks within merged section. */
-    for (;block != afterGap; block = block->next)
-        {
-	/* Uncompress if necessary. */
-	char *blockPt, *blockEnd;
-	if (uncompressBuf)
-	    {
-	    blockPt = uncompressBuf;
-	    int uncSize = zUncompress(blockBuf, block->size, uncompressBuf, bwf->uncompressBufSize);
-	    blockEnd = blockPt + uncSize;
-	    }
-	else
-	    {
-	    blockPt = blockBuf;
-	    blockEnd = blockPt + block->size;
-	    }
-
-	/* Do the actual dump. */
-	int oneCount = bigWigBlockDumpIntersectingRange(bwf->isSwapped, blockPt, blockEnd, 
-		chrom, start, end, maxCount, out);
-
-	/* Keep track of how many dumped, not exceeding maximum. */
-	printCount += oneCount;
-	if (maxCount != 0)
-	    {
-	    if (oneCount >= maxCount)
-		{
-		block = NULL;	 // we want to drop out of the outer loop too
-		break;
-		}
-
-	    maxCount -= oneCount;
-	    }
-	blockBuf += block->size;
-	}
-    freeMem(mergedBuf);
-    }
-freeMem(uncompressBuf);
-
-slFreeList(&blockList);
-return printCount;
-}
-
 boolean bigWigSummaryArray(struct bbiFile *bwf, char *chrom, bits32 start, bits32 end,
 	enum bbiSummaryType summaryType, int summarySize, double *summaryValues)
 /* Fill in summaryValues with  data from indicated chromosome range in bigWig file.
@@ -367,36 +269,3 @@ boolean ret = bbiSummaryArray(bwf, chrom, start, end, bigWigIntervalQuery,
 	summaryType, summarySize, summaryValues);
 return ret;
 }
-
-boolean bigWigSummaryArrayExtended(struct bbiFile *bwf, char *chrom, bits32 start, bits32 end,
-	int summarySize, struct bbiSummaryElement *summary)
-/* Get extended summary information for summarySize evenely spaced elements into
- * the summary array. */
-{
-boolean ret = bbiSummaryArrayExtended(bwf, chrom, start, end, bigWigIntervalQuery,
-	summarySize, summary);
-return ret;
-}
-
-double bigWigSingleSummary(struct bbiFile *bwf, char *chrom, int start, int end,
-    enum bbiSummaryType summaryType, double defaultVal)
-/* Return the summarized single value for a range. */
-{
-double arrayOfOne = defaultVal;
-bigWigSummaryArray(bwf, chrom, start, end, summaryType, 1, &arrayOfOne);
-return arrayOfOne;
-}
-
-boolean isBigWig(char *fileName)
-/* Peak at a file to see if it's bigWig */
-{
-FILE *f = mustOpen(fileName, "rb");
-bits32 sig;
-mustReadOne(f, sig);
-fclose(f);
-if (sig == bigWigSig)
-    return TRUE;
-sig = byteSwap32(sig);
-return sig == bigWigSig;
-}
-

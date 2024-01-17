@@ -24,12 +24,6 @@ tkz->curLine = tkz->linePt = "";
 return tkz;
 }
 
-struct tokenizer *tokenizerNew(char *fileName)
-/* Return a new tokenizer. */
-{
-return tokenizerOnLineFile(lineFileOpen(fileName, TRUE));
-}
-
 void tokenizerFree(struct tokenizer **pTkz)
 /* Tear down a tokenizer. */
 {
@@ -40,13 +34,6 @@ if ((tkz = *pTkz) != NULL)
     lineFileClose(&tkz->lf);
     freez(pTkz);
     }
-}
-
-void tokenizerReuse(struct tokenizer *tkz)
-/* Reuse token. */
-{
-if (!tkz->eof)
-    tkz->reuse = TRUE;
 }
 
 int tokenizerLineCount(struct tokenizer *tkz)
@@ -186,13 +173,6 @@ va_start(args, format);
 vaWarn(format, args);
 errAbort("line %d of %s:\n%s", 
 	tokenizerLineCount(tkz), tokenizerFileName(tkz), tkz->curLine);
-}
-
-void tokenizerNotEnd(struct tokenizer *tkz)
-/* Squawk if at end. */
-{
-if (tkz->eof)
-    errAbort("Unexpected end of input line %d of %s", tkz->lf->lineIx, tkz->lf->fileName);
 }
 
 char *tokenizerMustHaveNext(struct tokenizer *tkz)

@@ -74,25 +74,6 @@ void lmCleanup(struct lm **pLm)
     *pLm = NULL;
 }
 
-size_t lmAvailable(struct lm *lm)
-// Returns currently available memory in pool
-{
-struct lmBlock *mb = lm->blocks;
-return (mb->end - mb->free);
-}
-
-size_t lmSize(struct lm *lm)
-// Returns current size of pool, even for memory already allocated
-{
-size_t fullSize = 0;
-
-struct lmBlock *mb = lm->blocks;
-for (;mb != NULL;mb = mb->next)
-    fullSize += (mb->end - (char *)(mb+1));
-
-return fullSize;
-}
-
 void *lmAlloc(struct lm *lm, size_t size)
 /* Allocate memory from local pool. */
 {
@@ -169,32 +150,3 @@ if (endFirstWord == NULL)
 else
     return lmCloneStringZ(lm, startFirstWord, endFirstWord - startFirstWord);
 }
-    
-char *lmCloneSomeWord(struct lm *lm, char *line, int wordIx)
-/* Return a clone of the given space-delimited word within line.  Returns NULL if
- * not that many words in line. */
-{
-if (wordIx < 0)
-    return NULL;
-int i;
-for (i=0; i<wordIx; ++i)
-    {
-    line = skipLeadingSpaces(line);
-    line = skipToSpaces(line);
-    if (line == NULL)
-        return NULL;
-    }
-return lmCloneFirstWord(lm, line);
-}
-
-
-struct slName *lmSlName(struct lm *lm, char *name)
-/* Return slName in memory. */
-{
-struct slName *n;
-int size = sizeof(*n) + strlen(name) + 1;
-n = lmAlloc(lm, size);
-strcpy(n->name, name);
-return n;
-}
-

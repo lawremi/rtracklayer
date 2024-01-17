@@ -100,9 +100,6 @@ struct pipeline *pipelineOpen(char ***cmds, unsigned opts,
  * otherwise it is redirected to this file.
  */
 
-void pipelineDumpCmds(char ***cmds);
-/* Dump out pipeline-formatted commands to stdout for debugging. */
-
 struct pipeline *pipelineOpenMem(char ***cmds, unsigned opts,
                                  void *otherEndBuf, size_t otherEndBufSize,
                                  int stderrFd);
@@ -128,16 +125,6 @@ char *pipelineDesc(struct pipeline *pl);
 
 int pipelineFd(struct pipeline *pl);
 /* Get the file descriptor for a pipeline */
-
-FILE *pipelineFile(struct pipeline *pl);
-/* Get a FILE object wrapped around the pipeline.  Do not close the FILE, is
- * owned by the pipeline object.  A FILE is created on first call to this
- * function.  Subsequent calls return the same FILE.*/
-
-struct lineFile *pipelineLineFile(struct pipeline *pl);
-/* Get a lineFile object wrapped around the pipeline.  Do not close the
- * lineFile, is owned by the pipeline object.  A lineFile is created on first
- * call to this function.  Subsequent calls return the same object.*/
 
 int pipelineWait(struct pipeline *pl);
 /* Wait for processes in a pipeline to complete; normally aborts if any
