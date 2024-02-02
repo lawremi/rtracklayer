@@ -58,15 +58,6 @@ char *netGetHugeString(int sd);
  * the result when done.  Print warning message and
  * return NULL if any problem. */
 
-void netCatchPipes();
-/* Set up to catch broken pipe signals. */
-
-boolean netPipeIsBroken();
-/* Return TRUE if pipe is broken */
-
-void  netClearPipeFlag();
-/* Clear broken pipe flag. */
-
 struct netParsedUrl
 /* A parsed URL. */
    {
