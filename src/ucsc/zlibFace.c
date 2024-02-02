@@ -73,22 +73,3 @@ if (err != 0)
     	(long long)compressedSize, zlibErrorMessage(err));
 return uncSize;
 }
-
-void zSelfTest(int count)
-/* Run an internal diagnostic. */
-{
-bits32 testData[count];
-int uncSize = count*sizeof(bits32);
-int i;
-for (i=0; i<count; ++i)
-    testData[i] = i;
-int compBufSize = zCompBufSize(uncSize);
-char compBuf[compBufSize];
-int compSize = zCompress(testData, uncSize, compBuf, compBufSize);
-char uncBuf[uncSize];
-zUncompress(compBuf, compSize, uncBuf, uncSize);
-if (memcmp(uncBuf, testData, uncSize) != 0)
-    errAbort("zSelfTest %d failed", count);
-else
-    verbose(2, "zSelfTest %d passed, compression ratio %3.1f\n", count, (double)compSize/uncSize);
-}

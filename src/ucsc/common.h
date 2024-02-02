@@ -197,18 +197,10 @@ void *needLargeZeroedMemResize(void* vp, size_t oldSize, size_t newSize);
 void *needHugeMem(size_t size);
 /* No checking on size.  Memory not initted to 0. */
 
-void *needHugeZeroedMem(size_t size);
-/* Request a large block of memory and zero it. */
-
 void *needHugeMemResize(void* vp, size_t size);
 /* Adjust memory size on a block, possibly relocating it.  If vp is NULL,
  * a new memory block is allocated.  No checking on size.  Memory not
  * initted. */
-
-void *needHugeZeroedMemResize(void* vp, size_t oldSize, size_t newSize);
-/* Adjust memory size on a block, possibly relocating it.  If vp is NULL, a
- * new memory block is allocated.  No checking on size.  If block is grown,
- * new memory is zeroed. */
 
 void *needMoreMem(void *old, size_t copySize, size_t newSize);
 /* Allocate a new buffer, copy old buffer to it, free old buffer. */
@@ -218,10 +210,6 @@ void *cloneMem(void *pt, size_t size);
 
 #define CloneVar(pt) cloneMem(pt, sizeof((pt)[0]))
 /* Allocate copy of a structure. */
-
-void *wantMem(size_t size);
-/* Want mem just calls malloc - no zeroing of memory, no
- * aborting if request fails. */
 
 void freeMem(void *pt);
 /* Free memory will check for null before freeing. */
@@ -279,13 +267,6 @@ __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
-void warnWithBackTrace(char *format, ...)
-/* Issue a warning message and append backtrace. */
-#if defined(__GNUC__)
-__attribute__((format(printf, 1, 2)))
-#endif
-;
-
 void verbose(int verbosity, char *format, ...)
 /* Write printf formatted message to log (which by
  * default is stdout) if global verbose variable
@@ -307,15 +288,9 @@ __attribute__((format(printf, 2, 3)))
 #endif
     ;
 
-void verboseDot();
-/* Write I'm alive dot (at verbosity level 1) */
-
 int verboseLevel();
 /* Get verbosity level. */
 
-void verboseSetLevel(int verbosity);
-/* Set verbosity level in log.  0 for no logging,
- * higher number for increasing verbosity. */
 
 INLINE void zeroBytes(void *vpt, int count)
 /* fill a specified area of memory with zeroes */
@@ -328,20 +303,6 @@ memset(vpt, '\0', count);
 void reverseBytes(char *bytes, long length);
 /* Reverse the order of the bytes. */
 
-void reverseInts(int *a, int length);
-/* Reverse the order of the integer array. */
-
-void reverseUnsigned(unsigned *a, int length);
-/* Reverse the order of the unsigned array. */
-
-void reverseDoubles(double *a, int length);
-/* Reverse the order of the double array. */
-
-void reverseStrings(char **a, int length);
-/* Reverse the order of the char* array. */
-
-void swapBytes(char *a, char *b, int length);
-/* Swap buffers a and b. */
 
 /******* Some things to manage simple lists - structures that begin ******
  ******* with a pointer to the next element in the list.            ******/
@@ -395,8 +356,6 @@ void slAddTail(void *listPt, void *node);
 void *slPopHead(void *listPt);
 /* Return head of list and remove it from list. (Fast) */
 
-void *slPopTail(void *listPt);
-/* Return tail of list and remove it from list. (Not so fast) */
 
 void *slCat(void *a, void *b);
 /* Return concatenation of lists a and b.
@@ -429,13 +388,6 @@ void slUniqify(void *pList, CmpFunction *compare, void (*free)());
  * pointers to pointers to elements.  Free should take a simple
  * pointer to dispose of duplicate element, and can be NULL. */
 
-void slSortMerge(void *pA, void *b, CmpFunction *compare);
-// Merges and sorts a pair of singly linked lists using slSort.
-
-void slSortMergeUniq(void *pA, void *b, CmpFunction *compare, void (*free)());
-// Merges and sorts a pair of singly linked lists leaving only unique
-// items via slUniqufy.  duplicate itens are defined by the compare routine
-// returning 0. If free is provided, items dropped from list can disposed of.
 
 boolean slRemoveEl(void *vpList, void *vToRemove);
 /* Remove element from singly linked list.  Usage:
@@ -461,14 +413,6 @@ struct slInt *slIntNew(int x);
 #define newSlInt slIntNew
 /* Return a new double. */
 
-int slIntCmp(const void *va, const void *vb);
-/* Compare two slInts. */
-
-int slIntCmpRev(const void *va, const void *vb);
-/* Compare two slInts in reverse direction. */
-
-struct slInt * slIntFind(struct slInt *list, int target);
-/* Find target in slInt list or return NULL */
 
 struct slUnsigned
 /* List of unsigned */
@@ -476,9 +420,6 @@ struct slUnsigned
     struct slUnsigned *next;  /* Next in list */
     unsigned val;	      /* Unsigned value */
     };
-
-struct slUnsigned *slUnsignedNew(unsigned x);
-/* Return a new slUnsigned. */
 
 /******* slDouble - a double on a list *******/
 
@@ -488,16 +429,6 @@ struct slDouble
     struct slDouble *next;	/* Next in list. */
     double val;			/* Double-precision value. */
     };
-
-struct slDouble *slDoubleNew(double x);
-#define newSlDouble slDoubleNew
-/* Return a new int. */
-
-int slDoubleCmp(const void *va, const void *vb);
-/* Compare two slDoubles. */
-
-double slDoubleMedian(struct slDouble *list);
-/* Return median value on list. */
 
 /******* slName - a zero terminated string on a list *******/
 
@@ -529,30 +460,9 @@ int slNameCmpCase(const void *va, const void *vb);
 int slNameCmp(const void *va, const void *vb);
 /* Compare two slNames. */
 
-int slNameCmpStringsWithEmbeddedNumbers(const void *va, const void *vb);
-/* Compare strings such as gene names that may have embedded numbers,
- * so that bmp4a comes before bmp14a */
-
-void slNameSortCase(struct slName **pList);
-/* Sort slName list, ignore case. */
 
 void slNameSort(struct slName **pList);
 /* Sort slName list. */
-
-boolean slNameInList(struct slName *list, char *string);
-/* Return true if string is in name list -- case insensitive. */
-
-boolean slNameInListUseCase(struct slName *list, char *string);
-/* Return true if string is in name list -- case sensitive. */
-
-void *slNameFind(void *list, char *string);
-/* Return first element of slName list (or any other list starting
- * with next/name fields) that matches string. */
-
-int slNameFindIx(struct slName *list, char *string);
-/* Return index of first element of slName list (or any other
- * list starting with next/name fields) that matches string.
- * ... Return -1 if not found. */
 
 char *slNameStore(struct slName **pList, char *string);
 /* Put string into list if it's not there already.
@@ -560,13 +470,6 @@ char *slNameStore(struct slName **pList, char *string);
 
 struct slName *slNameAddHead(struct slName **pList, char *name);
 /* Add name to start of list and return it. */
-
-struct slName *slNameAddTail(struct slName **pList, char *name);
-/* Add name to end of list (not efficient for long lists),
- * and return it. */
-
-struct slName *slNameCloneList(struct slName *list);
-/* Return clone of list. */
 
 struct slName *slNameListFromString(char *s, char delimiter);
 /* Return list of slNames gotten from parsing delimited string.
@@ -576,24 +479,6 @@ struct slName *slNameListFromString(char *s, char delimiter);
 #define slNameListFromComma(s) slNameListFromString(s, ',')
 /* Parse out comma-separated list. */
 
-struct slName *slNameListOfUniqueWords(char *text,boolean respectQuotes);
-// Return list of unique words found by parsing string delimited by whitespace.
-// If respectQuotes then ["Lucy and Ricky" 'Fred and Ethyl'] will yield 2 slNames no quotes
-
-struct slName *slNameListFromStringArray(char *stringArray[], int arraySize);
-/* Return list of slNames from an array of strings of length arraySize.
- * If a string in the array is NULL, the array will be treated as
- * NULL-terminated. */
-
-char *slNameListToString(struct slName *list, char delimiter);
-/* Return string created by joining all names with the delimiter. */
-
-struct slName *slNameLoadReal(char *fileName);
-/* load file lines that are not blank or start with a '#' into a slName
- * list */
-
-struct slName *slNameIntersection(struct slName *a, struct slName *b);
-/* return intersection of two slName lists.  */
 
 /******* slRef - a void pointer on a list *******/
 
@@ -613,14 +498,9 @@ struct slRef *refOnList(struct slRef *refList, void *val);
 void refAdd(struct slRef **pRefList, void *val);
 /* Add reference to list. */
 
-void refAddUnique(struct slRef **pRefList, void *val);
-/* Add reference to list if not already on list. */
-
 void slRefFreeListAndVals(struct slRef **pList);
 /* Free up (with simple freeMem()) each val on list, and the list itself as well. */
 
-struct slRef *refListFromSlList(void *list);
-/* Make a reference list that mirrors a singly-linked list. */
 
 /******* slPair - a name/value pair on list where value not always a string *******/
 
@@ -647,14 +527,8 @@ void slPairFreeList(struct slPair **pList);
 void slPairFreeVals(struct slPair *list);
 /* Free up all values on list. */
 
-void slPairFreeValsAndList(struct slPair **pList);
-/* Free up all values on list and list itself */
-
 struct slPair *slPairFind(struct slPair *list, char *name);
 /* Return list element of given name, or NULL if not found. */
-
-void *slPairFindVal(struct slPair *list, char *name);
-/* Return value associated with name in list, or NULL if not found. */
 
 struct slPair *slPairListFromString(char *str,boolean respectQuotes);
 // Return slPair list parsed from list in string like:  [name1=val1 name2=val2 ...]
@@ -663,22 +537,6 @@ struct slPair *slPairListFromString(char *str,boolean respectQuotes);
 // Returns NULL if parse error.  Free this up with slPairFreeValsAndList.
 #define slPairFromString(s) slPairListFromString(s,FALSE)
 
-char *slPairListToString(struct slPair *list,boolean quoteIfSpaces);
-// Returns an allocated string of pairs in form of [name1=val1 name2=val2 ...]
-// If requested, will wrap name or val in quotes if contain spaces: [name1="val 1" "name 2"=val2]
-
-char *slPairNameToString(struct slPair *list, char delimiter,boolean quoteIfSpaces);
-// Return string created by joining all names (ignoring vals) with the delimiter.
-// If requested, will wrap name in quotes if contain spaces: [name1,"name 2" ...]
-
-int slPairCmpCase(const void *va, const void *vb);
-/* Compare two slPairs, ignore case. */
-
-void slPairSortCase(struct slPair **pList);
-/* Sort slPair list, ignore case. */
-
-int slPairCmp(const void *va, const void *vb);
-/* Compare two slPairs. */
 
 int slPairValCmpCase(const void *va, const void *vb);
 /* Case insensitive compare two slPairs on their values (must be string). */
@@ -686,31 +544,16 @@ int slPairValCmpCase(const void *va, const void *vb);
 int slPairValCmp(const void *va, const void *vb);
 /* Compare two slPairs on their values (must be string). */
 
-void slPairValSortCase(struct slPair **pList);
-/* Sort slPair list on values (must be string), ignore case. */
-
-void slPairValSort(struct slPair **pList);
-/* Sort slPair list on values (must be string). */
-
 int slPairIntCmp(const void *va, const void *vb);
 // Compare two slPairs on their integer values.
 
-void slPairIntSort(struct slPair **pList);
-// Sort slPair list on integer values.
 
 int slPairAtoiCmp(const void *va, const void *vb);
 // Compare two slPairs on their strings interpreted as integer values.
 
-void slPairValAtoiSort(struct slPair **pList);
-// Sort slPair list on string values interpreted as integers.
-
-
 
 /******* Some old stuff maybe we could trim. *******/
 
-void gentleFree(void *pt);
-/* check pointer for NULL before freeing.
- * (Actually plain old freeMem does that these days.) */
 
 /******* Some math stuff *******/
 
@@ -725,13 +568,6 @@ void doubleBoxWhiskerCalc(int count, double *array, double *retMin,
 	double *retQ1, double *retMedian, double *retQ3, double *retMax);
 /* Calculate what you need to draw a box and whiskers plot from an array of doubles. */
 
-void slDoubleBoxWhiskerCalc(struct slDouble *list, double *retMin,
-	double *retQ1, double *retMedian, double *retQ3, double *retMax);
-/* Calculate what you need to draw a box and whiskers plot from a list of slDoubles. */
-
-int intMedian(int count, int *array);
-/* Return median value in array.  This will sort
- * the array as a side effect. */
 
 void intSort(int count, int *array);
 /* Sort an array of ints. */
@@ -745,11 +581,6 @@ char *cloneStringZ(const char *s, int size);
 char *cloneString(const char *s);
 /* Make copy of string in dynamic memory */
 
-char *cloneLongString(char *s);
-/* Make clone of long string. */
-
-char *catTwoStrings(char *a, char *b);
-/* Allocate new string that is a concatenation of two strings. */
 
 int differentWord(char *s1, char *s2);
 /* strcmp ignoring case - returns zero if strings are
@@ -787,9 +618,6 @@ int cmpStringsWithEmbeddedNumbers(const char *a, const char *b);
 /* Compare strings such as gene names that may have embedded numbers,
  * so that bmp4a comes before bmp14a */
 
-int cmpWordsWithEmbeddedNumbers(const char *a, const char *b);
-/* Case insensitive version of cmpStringsWithEmbeddedNumbers. */
-
 boolean startsWith(const char *start, const char *string);
 /* Returns TRUE if string begins with start. */
 
@@ -797,25 +625,10 @@ boolean startsWithWord(char *firstWord, char *line);
 /* Return TRUE if first white-space-delimited word in line
  * is same as firstWord.  Comparison is case sensitive. */
 
-boolean startsWithWordByDelimiter(char *firstWord,char delimit, char *line);
-/* Return TRUE if first word in line is same as firstWord as delimited by delimit.
-   Comparison is case sensitive. Delimit of ' ' uses isspace() */
-
 #define stringIn(needle, haystack) strstr(haystack, needle)
 /* Returns position of needle in haystack or NULL if it's not there. */
 /*        char *stringIn(char *needle, char *haystack);      */
 
-char *rStringIn(char *needle, char *haystack);
-/* Return last position of needle in haystack, or NULL if it's not there. */
-
-char *stringBetween(char *start, char *end, char *haystack);
-/* Return string between start and end strings, or NULL if
- * none found.  The first such instance is returned.
- * String must be freed by caller. */
-
-char * findWordByDelimiter(char *word,char delimit, char *line);
-/* Return pointer to first word in line matching 'word' and delimited
-   by 'delimit'. Comparison is case sensitive. Delimit of ' ' uses isspace() */
 
 boolean endsWith(char *string, char *end);
 /* Returns TRUE if string ends with end. */
@@ -823,11 +636,6 @@ boolean endsWith(char *string, char *end);
 char lastChar(char *s);
 /* Return last character in string. */
 
-void trimLastChar(char *s);
-/* Erase last character in string. */
-
-char *lastNonwhitespaceChar(char *s);
-// Return pointer to last character in string that is not whitespace.
 
 char *matchingCharBeforeInLimits(char *limit, char *s, char c);
 /* Look for character c sometime before s, but going no further than limit.
@@ -839,24 +647,12 @@ boolean wildMatch(const char *wildCard, const char *string);
  * ? matches any single character.
  * anything else etc must match the character exactly. */
 
-boolean sqlMatchLike(char *wildCard, char *string);
-/* Match using % and _ wildcards. */
-
-boolean anyWild(const char *string);
-/* Return TRUE if any wild card characters in string. */
-
-char *memMatch(char *needle, int nLen, char *haystack, int hLen);
-/* Returns first place where needle (of nLen chars) matches
- * haystack (of hLen chars) */
-
 void toUpperN(char *s, int n);
 /* Convert a section of memory to upper case. */
 
 void toLowerN(char *s, int n);
 /* Convert a section of memory to lower case. */
 
-void toggleCase(char *s, int size);
-/* toggle upper and lower case chars in string. */
 
 char *strUpper(char *s);
 #define touppers(s) (void)strUpper(s)
@@ -874,10 +670,6 @@ char *replaceChars(char *string, char *oldStr, char *newStr);
  Return value needs to be freeMem'd.
 */
 
-int strSwapStrs(char *string, int sz,char *oldStr, char *newStr);
-/* Swaps all occurrences of the oldStr with the newStr in string. Need not be same size
-   Swaps in place but restricted by sz.  Returns count of swaps or -1 for sz failure.*/
-
 char * memSwapChar(char *s, int len, char oldChar, char newChar);
 /* Substitute newChar for oldChar throughout memory of given length.
    old or new may be null */
@@ -888,26 +680,9 @@ char * memSwapChar(char *s, int len, char oldChar, char newChar);
 void stripChar(char *s, char c);
 /* Remove all occurences of c from s. */
 
-char *stripEnclosingChar(char *inout,char encloser);
-// Removes enclosing char if found at both beg and end, preserving pointer
-// Note: handles brackets '(','{' and '[' by complement at end
-#define stripEnclosingDoubleQuotes(inout) stripEnclosingChar((inout),'"')
-#define stripEnclosingSingleQuotes(inout) stripEnclosingChar((inout),'\'')
-
-void stripString(char *s, char *strip);
-/* Remove all occurences of strip from s. */
-
-int countCase(char *s,boolean upper);
-// Count letters with case (upper or lower)
 
 int countChars(char *s, char c);
 /* Return number of characters c in string s. */
-
-int countCharsN(char *s, char c, int size);
-/* Return number of characters c in string s of given size. */
-
-int countLeadingChars(char *s, char c);
-/* Count number of characters c at start of string. */
 
 int countLeadingDigits(const char *s);
 /* Return number of leading digits in s */
@@ -915,8 +690,6 @@ int countLeadingDigits(const char *s);
 int countLeadingNondigits(const char *s);
 /* Count number of leading non-digit characters in s. */
 
-int countSame(char *a, char *b);
-/* Count number of characters that from start in a,b that are same. */
 
 int countSeparatedItems(char *string, char separator);
 /* Count number of items in string you would parse out with given
@@ -941,14 +714,6 @@ int chopByWhite(char *in, char *outArray[], int outSize);
 #define chopLine(line, words) chopByWhite(line, words, ArraySize(words))
 /* Chop line by white space. */
 
-int chopByWhiteRespectDoubleQuotes(char *in, char *outArray[], int outSize);
-/* Like chopString, but specialized for white space separators.
- * Further, any doubleQuotes (") are respected.
- * If doubleQuote encloses whole string, then they are removed:
- *   "Fred and Ethyl" results in word [Fred and Ethyl]
- * If doubleQuotes exist inside string they are retained:
- *   Fred "and Ethyl" results in word [Fred "and Ethyl"]
- * Special note "" is a valid, though empty word. */
 
 int chopByChar(char *in, char chopper, char *outArray[], int outSize);
 /* Chop based on a single character. */
@@ -976,9 +741,6 @@ void eraseTrailingSpaces(char *s);
 void eraseWhiteSpace(char *s);
 /* Remove white space from a string */
 
-void eraseNonAlphaNum(char *s);
-/* Remove non-alphanumeric chars from string */
-
 char *trimSpaces(char *s);
 /* Remove leading and trailing white space. */
 
@@ -988,20 +750,9 @@ void repeatCharOut(FILE *f, char c, int count);
 void spaceOut(FILE *f, int count);
 /* Put out some spaces to file. */
 
-void starOut(FILE *f, int count);
-/* Put out some asterisks to file. */
-
 boolean hasWhiteSpace(char *s);
 /* Return TRUE if there is white space in string. */
 
-char *firstWordInLine(char *line);
-/* Returns first word in line if any (white space separated).
- * Puts 0 in place of white space after word. */
-
-char *lastWordInLine(char *line);
-/* Returns last word in line if any (white space separated).
- * Returns NULL if string is empty.  Removes any terminating white space
- * from line. */
 
 char *nextWord(char **pLine);
 /* Return next word in *pLine and advance *pLine to next
@@ -1010,11 +761,6 @@ char *nextWord(char **pLine);
 char *nextWordRespectingQuotes(char **pLine);
 // return next word but respects single or double quotes surrounding sets of words.
 
-char *cloneFirstWord(char *line);
-/* Clone first word in line */
-
-char *nextTabWord(char **pLine);
-/* Return next tab-separated word. */
 
 char *cloneFirstWordByDelimiter(char *line,char delimit);
 /* Returns a cloned first word, not harming the memory passed in
@@ -1023,27 +769,10 @@ char *cloneFirstWordByDelimiter(char *line,char delimit);
 #define cloneFirstWordByTab(line)  cloneFirstWordByDelimiter((line),'\t')
 /* Returns a cloned first word, not harming the memory passed in */
 
-char *cloneNextWordByDelimiter(char **line,char delimit);
-/* Returns a cloned first word, advancing the line pointer
-   but not harming memory passed in. Delimit ' ' uses isspace() */
-#define cloneNextWord(line)      cloneNextWordByDelimiter((line),' ')
-#define cloneNextWordByTab(line) cloneNextWordByDelimiter((line),'\t')
-
 char *nextStringInList(char **pStrings);
 /* returns pointer to the first string and advances pointer to next in
    list of strings dilimited by 1 null and terminated by 2 nulls. */
 
-int cntStringsInList(char *pStrings);
-/* returns count of strings in a
-   list of strings dilimited by 1 null and terminated by 2 nulls. */
-
-int stringArrayIx(char *string, char *array[], int arraySize);
-/* Return index of string in array or -1 if not there. */
-
-int ptArrayIx(void *pt, void *array, int arraySize);
-/* Return index of pt in array or -1 if not there. */
-
-#define stringIx(string, array) stringArrayIx( (string), (array), ArraySize(array))
 
 /* Some stuff that is left out of GNU .h files!? */
 #ifndef SEEK_SET
@@ -1074,15 +803,7 @@ char *addSuffix(char *head, char *suffix);
 void chopSuffix(char *s);
 /* Remove suffix (last . in string and beyond) if any. */
 
-void chopSuffixAt(char *s, char c);
-/* Remove end of string from last occurrence of char c.
- * chopSuffixAt(s, '.') is equivalent to regular chopSuffix. */
 
-char *chopPrefix(char *s);
-/* This will replace the first '.' in a string with
- * 0, and return the character after this.  If there
- * is no '.' in the string this will just return the
- * unchanged s passed in. */
 
 char *chopPrefixAt(char *s, char c);
 /* Like chopPrefix, but can chop on any character, not just '.' */
@@ -1148,19 +869,11 @@ char *readString(FILE *f);
  * memory.  freeMem the result when done. Returns
  * NULL at EOF. */
 
-char *mustReadString(FILE *f);
-/* Read a string.  Squawk and die at EOF or if any problem. */
-
 boolean fastReadString(FILE *f, char buf[256]);
 /* Read a string into buffer, which must be long enough
  * to hold it.  String is in 'writeString' format.
  * Returns FALSE at EOF. */
 
-void msbFirstWriteBits64(FILE *f, bits64 x);
-/* Write out 64 bit number in manner that is portable across architectures */
-
-bits64 msbFirstReadBits64(FILE *f);
-/* Write out 64 bit number in manner that is portable across architectures */
 
 void carefulClose(FILE **pFile);
 /* Close file if open and null out handle to it. */
@@ -1181,26 +894,13 @@ struct fileOffsetSize
    bits64	size;		/* Size of block. */
    };
 
-int fileOffsetSizeCmp(const void *va, const void *vb);
-/* Help sort fileOffsetSize by offset. */
-
-struct fileOffsetSize *fileOffsetSizeMerge(struct fileOffsetSize *inList);
-/* Returns a new list which is inList transformed to have adjacent blocks
- * merged.  Best to use this with a sorted list. */
 
 void fileOffsetSizeFindGap(struct fileOffsetSize *list,
 	struct fileOffsetSize **pBeforeGap, struct fileOffsetSize **pAfterGap);
 /* Starting at list, find all items that don't have a gap between them and the previous item.
  * Return at gap, or at end of list, returning pointers to the items before and after the gap. */
 
-void mustSystem(char *cmd);
-/* Execute cmd using "sh -c" or die.  (See man 3 system.) fail on errors */
 
-int roundingScale(int a, int p, int q);
-/* returns rounded a*p/q */
-
-int intAbs(int a);
-/* Return integer absolute value */
 
 #define logBase2(x)(log(x)/log(2))
 /* return log base two of number */
@@ -1255,15 +955,10 @@ memWriteOne(pPt, val);
 bits64 byteSwap64(bits64 a);
 /* Swap from intel to sparc order of a 64 bit quantity. */
 
-bits64 readBits64(FILE *f, boolean isSwapped);
-/* Read and optionally byte-swap 64 bit entity. */
 
 bits64 fdReadBits64(int fd, boolean isSwapped);
 /* Read and optionally byte-swap 64 bit entity. */
 
-bits64 memReadBits64(char **pPt, boolean isSwapped);
-/* Read and optionally byte-swap 64 bit entity from memory buffer pointed to by
- * *pPt, and advance *pPt past read area. */
 
 bits32 byteSwap32(bits32 a);
 /* Swap from intel to sparc order of a 32 bit quantity. */
@@ -1281,12 +976,6 @@ bits32 memReadBits32(char **pPt, boolean isSwapped);
 bits16 byteSwap16(bits16 a);
 /* Swap from intel to sparc order of a 16 bit quantity. */
 
-bits16 readBits16(FILE *f, boolean isSwapped);
-/* Read and optionally byte-swap 16 bit entity. */
-
-bits16 fdReadBits16(int fd, boolean isSwapped);
-/* Read and optionally byte-swap 16 bit entity. */
-
 bits16 memReadBits16(char **pPt, boolean isSwapped);
 /* Read and optionally byte-swap 32 bit entity from memory buffer pointed to by
  * *pPt, and advance *pPt past read area. */
@@ -1294,27 +983,14 @@ bits16 memReadBits16(char **pPt, boolean isSwapped);
 double byteSwapDouble(double a);
 /* Return byte-swapped version of a */
 
-double readDouble(FILE *f, boolean isSwapped);
-/* Read and optionally byte-swap double-precision floating point entity. */
-
-double memReadDouble(char **pPt, boolean isSwapped);
-/* Read and optionally byte-swap double-precision floating point entity
- * from memory buffer pointed to by *pPt, and advance *pPt past read area. */
 
 float byteSwapFloat(float a);
 /* Return byte-swapped version of a */
 
-float readFloat(FILE *f, boolean isSwapped);
-/* Read and optionally byte-swap single-precision floating point entity. */
 
 float memReadFloat(char **pPt, boolean isSwapped);
 /* Read and optionally byte-swap single-precision floating point entity
  * from memory buffer pointed to by *pPt, and advance *pPt past read area. */
-
-void removeReturns(char* dest, char* src);
-/* Removes the '\r' character from a string.
- * the source and destination strings can be the same,
- * if there are no threads */
 
 int intExp(char *text);
 /* Convert text to integer expression and evaluate.
@@ -1324,19 +1000,12 @@ double doubleExp(char *text);
 /* Convert text to floating point expression and
  * evaluate. */
 
-char* readLine(FILE* fh);
-/* Read a line of any size into dynamic memory, return null on EOF */
-
 off_t fileSize(char *fileName);
 /* The size of a file. */
 
 boolean fileExists(char *fileName);
 /* Does a file exist? */
 
-/*
- Friendly name for strstrNoCase
-*/
-char *containsStringNoCase(char *haystack, char *needle);
 
 char *strstrNoCase(char *haystack, char *needle);
 /* A case-insensitive strstr */
@@ -1363,48 +1032,14 @@ void safencpy(char *buf, size_t bufSize, const char *src, size_t n);
 void safecat(char *buf, size_t bufSize, const char *src);
 /* Append  a string to a buffer, with bounds checking.*/
 
-void safencat(char *buf, size_t bufSize, const char *src, size_t n);
-/* append n characters from a string to a buffer, with bounds checking. */
-
-char *naForNull(char *s);
-/* Return 'n/a' if s is NULL, otherwise s. */
-
-char *naForEmpty(char *s);
-/* Return n/a if s is "" or NULL, otherwise s. */
-
-char *emptyForNull(char *s);
-/* Return "" if s is NULL, otherwise s. */
-
-char *nullIfAllSpace(char *s);
-/* Return NULL if s is all spaces, otherwise s. */
-
-char *trueFalseString(boolean b);
-/* Return "true" or "false" */
-
-void uglyTime(char *label, ...);
-/* Print label and how long it's been since last call.  Call with
- * a NULL label to initialize. */
 
 /*	In case the development environment does not supply INFINITY	*/
 #if !defined(INFINITY)
 #define INFINITY (1.0/0.0)
 #endif
 
-void makeDirs(char* path);
-/* make a directory, including parent directories */
-
-char *skipNumeric(char *s);
-/* Return first char of s that's not a digit */
-
 char *skipToNumeric(char *s);
 /* skip up to where numeric digits appear */
-
-char *splitOffNonNumeric(char *s);
-/* Split off non-numeric part, e.g. mm of mm8. Result should be freed when done */
-
-char *splitOffNumber(char *db);
-/* Split off number part, e.g. 8 of mm8. Result should be freed when done */
-
 
 void childExecFailedExit(char *msg);
 /* Child exec failed, so quit without atexit cleanup */
@@ -1466,18 +1101,5 @@ time_t mktimeFromUtc (struct tm *t);
 
 time_t dateToSeconds(const char *date,const char*format);
 // Convert a string date to time_t
-
-boolean dateIsOld(const char *date,const char*format);
-// Is this string date older than now?
-
-boolean dateIsOlderBy(const char *date,const char*format, time_t seconds);
-// Is this string date older than now by this many seconds?
-
-char *dateAddTo(char *date,char *format,int addYears,int addMonths,int addDays);
-/* Add years,months,days to a formatted date and returns the new date as a cloned string
-*  format is a strptime/strftime format: %F = yyyy-mm-dd */
-
-boolean haplotype(const char *name);
-/* Is this name a haplotype name ?  _hap or _alt in the name */
 
 #endif /* COMMON_H */

@@ -65,21 +65,9 @@ return oldHandler;
 }
 
 
-void setDefaultMemHandler()
-/* Sets memHandler to the default. */
-{
-mhStack = &defaultMemHandler;
-}
-
 /* 128*8*1024*1024 == 1073741824 == 2^30 on 32 bit machines,size_t == 4 bytes*/
 /* on 64 bit machines, size_t = 8 bytes, 2^30 * 2 * 2 * 2 * 2 = 2^34 == 16 Gb */
 static size_t maxAlloc = (size_t)128*8*1024*1024*(sizeof(size_t)/4)*(sizeof(size_t)/4)*(sizeof(size_t)/4*(sizeof(size_t)/4));
-
-void setMaxAlloc(size_t s)
-/* Set large allocation limit. */
-{
-maxAlloc = s;
-}
 
 void *needLargeMem(size_t size)
 /* This calls abort if the memory allocation fails. The memory is
@@ -141,15 +129,6 @@ return pt;
 }
 
 
-void *needHugeZeroedMem(size_t size)
-/* Request a large block of memory and zero it. */
-{
-void *v;
-v = needHugeMem(size);
-memset(v, 0, size);
-return v;
-}
-
 void *needHugeMemResize(void* vp, size_t size)
 /* Adjust memory size on a block, possibly relocating it.  If vp is NULL,
  * a new memory block is allocated.  No checking on size.  Memory not
@@ -162,18 +141,6 @@ if ((pt = mhStack->realloc(vp, size)) == NULL)
 return pt;
 }
 
-
-void *needHugeZeroedMemResize(void* vp, size_t oldSize, size_t newSize)
-/* Adjust memory size on a block, possibly relocating it.  If vp is NULL, a
- * new memory block is allocated.  No checking on size.  If block is grown,
- * new memory is zeroed. */
-{
-void *v;
-v = needHugeMemResize(vp, newSize);
-if (newSize > oldSize)
-    memset(((char*)v)+oldSize, 0, newSize-oldSize);
-return v;
-}
 
 #define NEEDMEM_LIMIT 500000000
 
@@ -198,13 +165,6 @@ void *needMoreMem(void *old, size_t oldSize, size_t newSize)
  * new memory is zeroed. */
 {
 return needLargeZeroedMemResize(old, oldSize, newSize);
-}
-
-void *wantMem(size_t size)
-/* Want mem just calls malloc - no zeroing of memory, no
- * aborting if request fails. */
-{
-return mhStack->alloc(size);
 }
 
 void freeMem(void *pt)
@@ -351,71 +311,6 @@ if (vpt != NULL)
 return newBlk;
 }
 
-
-void carefulCheckHeap()
-/* Walk through allocated memory and make sure that all cookies are
- * in place. */
-{
-int maxPieces = 10000000;    /* Assume no more than this many pieces allocated. */
-struct carefulMemBlock *cmb;
-char *pEndCookie;
-size_t size;
-char errMsg[1024];
-boolean errFound = FALSE;
-
-if (carefulParent == NULL)
-    return;
-
-pthread_mutex_lock( &carefulMutex );
-for (cmb = (struct carefulMemBlock *)(cmbAllocedList->head); cmb->next != NULL; cmb = cmb->next)
-    {
-    size = cmb->size;
-    pEndCookie = (((char *)(cmb+1)) + size);
-    if (cmb->startCookie != cmbStartCookie)
-	{
-        safef(errMsg, sizeof errMsg, "Bad start cookie %x checking %llx\n", cmb->startCookie,
-                 ptrToLL(cmb+1));
-	errFound = TRUE;
-	break;
-	}
-    if (memcmp(pEndCookie, cmbEndCookie, sizeof(cmbEndCookie)) != 0)
-	{
-        safef(errMsg, sizeof errMsg, "Bad end cookie %x%x%x%x checking %llx\n", 
-                 pEndCookie[0], pEndCookie[1], pEndCookie[2], pEndCookie[3],
-                 ptrToLL(cmb+1));
-	errFound = TRUE;
-	break;
-	}
-    if (--maxPieces == 0)
-	{
-        safef(errMsg, sizeof errMsg, "Loop or more than 10000000 pieces in memory list");
-	errFound = TRUE;
-	break;
-	}
-    }
-pthread_mutex_unlock( &carefulMutex );
-if (errFound)
-    errAbort("%s", errMsg);
-}
-
-int carefulCountBlocksAllocated()
-/* How many memory items are allocated? */
-{
-pthread_mutex_lock( &carefulMutex );
-int result = dlCount(cmbAllocedList);
-pthread_mutex_unlock( &carefulMutex );
-return result;
-}
-
-size_t carefulTotalAllocated()
-/* Return total bases allocated */
-{
-pthread_mutex_lock( &carefulMutex );
-size_t result = carefulAlloced;
-pthread_mutex_unlock( &carefulMutex );
-return result;
-}
-
 static struct memHandler carefulMemHandler = 
 /* Default memory handler. */
     {
@@ -424,14 +319,6 @@ static struct memHandler carefulMemHandler =
     carefulFree,
     carefulRealloc,
     };
-
-void pushCarefulMemHandler(size_t maxAlloc)
-/* Push the careful (paranoid, conservative, checks everything)
- * memory handler  top of the memHandler stack and use it. */
-{
-carefulMemInit(maxAlloc);
-carefulParent = pushMemHandler(&carefulMemHandler);
-}
 
 struct memTracker
 /* A structure to keep track of memory. */
@@ -483,37 +370,4 @@ else
     dlAddTail(memTracker->list, node);
     return (void*)(node+1);
     }
-}
-
-void memTrackerStart()
-/* Push memory handler that will track blocks allocated so that
- * they can be automatically released with memTrackerEnd().  You
- * can have memTrackerStart one after the other, but memTrackerStart/End
- * need to nest. */
-{
-struct memTracker *mt;
-
-if (memTracker != NULL)
-     errAbort("multiple memTrackerStart calls");
-AllocVar(mt);
-AllocVar(mt->handler);
-mt->handler->alloc = memTrackerAlloc;
-mt->handler->free = memTrackerFree;
-mt->handler->realloc = memTrackerRealloc;
-mt->list = dlListNew();
-mt->parent = pushMemHandler(mt->handler);
-memTracker = mt;
-}
-
-void memTrackerEnd()
-/* Free any remaining blocks and pop tracker memory handler. */
-{
-struct memTracker *mt = memTracker;
-if (mt == NULL)
-    errAbort("memTrackerEnd without memTrackerStart");
-memTracker = NULL;
-popMemHandler();
-dlListFree(&mt->list);
-freeMem(mt->handler);
-freeMem(mt);
 }

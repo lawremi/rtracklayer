@@ -183,8 +183,6 @@ int netUrlFakeHeadByGet(char *url, struct hash *hash) {
     return status;
 }
 
-
-
 boolean netSkipHttpHeaderLinesHandlingRedirect(int sd, char *url, int *redirectedSd, char **redirectedUrl) {
     char *effectiveUrl;
     curl_socket_t nsd;
@@ -207,7 +205,6 @@ boolean netSkipHttpHeaderLinesHandlingRedirect(int sd, char *url, int *redirecte
     return TRUE;
 }
 
-
 // UCSC Existing Code
 
 boolean hasProtocol(char *urlOrPath) {
@@ -215,6 +212,7 @@ boolean hasProtocol(char *urlOrPath) {
 }
 
 static void parseByteRange(const char *url, ssize_t *rangeStart, ssize_t *rangeEnd, boolean terminateAtByteRange)
+
 /* parse the byte range information from url */
 {
 char *x;

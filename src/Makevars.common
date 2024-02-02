@@ -3,9 +3,9 @@ PKG_OBJECTS = \
   readGFF.o bbiHelper.o bigWig.o bigBedHelper.o bigBed.o chain_io.o twoBit.o handlers.o utils.o
   
 UCSC_OBJECTS = \
-  memgfx.o aliType.o binRange.o htmlColor.o sqlList.o tokenizer.o asParse.o \
+  memgfx.o binRange.o htmlColor.o sqlList.o tokenizer.o asParse.o \
   basicBed.o bigBed.o bPlusTree.o bbiRead.o bbiWrite.o bwgCreate.o bwgQuery.o \
   cirTree.o common.o dnaseq.o dnautil.o errAbort.o hash.o linefile.o localmem.o\
   sqlNum.o zlibFace.o dystring.o hmmstats.o obscure.o pipeline.o \
-  rangeTree.o rbTree.o memalloc.o dlist.o hex.o filePath.o htmlPage.o udc.o net.o bits.o twoBit.o \
+  rangeTree.o rbTree.o memalloc.o dlist.o filePath.o htmlPage.o udc.o net.o bits.o twoBit.o \
   _cheapcgi.o internet.o https.o base64.o verbose.o os.o wildcmp.o _portimpl.o

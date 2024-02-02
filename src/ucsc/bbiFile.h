@@ -164,9 +164,6 @@ struct bbiChromInfo *bbiChromList(struct bbiFile *bbi);
 void bbiChromInfoFreeList(struct bbiChromInfo **pList);
 /* Free a list of bbiChromInfo's */
 
-bits32 bbiChromSize(struct bbiFile *bbi, char *chrom);
-/* Returns size of given chromosome. */
-
 void bbiChromInfoKey(const void *va, char *keyBuf);
 /* Get key field out of bbiChromInfo. */
 
@@ -205,8 +202,6 @@ enum bbiSummaryType
 enum bbiSummaryType bbiSummaryTypeFromString(char *string);
 /* Return summary type given a descriptive string. */
 
-char *bbiSummaryTypeToString(enum bbiSummaryType type);
-/* Convert summary type from enum to string representation. */
 
 struct bbiSummary
 /* A summary type item. */
@@ -277,8 +272,6 @@ boolean bbiSummaryArray(struct bbiFile *bbi, char *chrom, bits32 start, bits32 e
  * be 0.0 or nan("") depending on the application.)  Returns FALSE if no data
  * at that position. */
 
-struct bbiSummaryElement bbiTotalSummary(struct bbiFile *bbi);
-/* Return summary of entire file! */
 
 /****** Write side of things - implemented in bbiWrite.c.  Few people need this. ********/
 
@@ -444,8 +437,6 @@ bits64 bbiWriteSummaryAndIndex(struct bbiSummary *summaryList,
 boolean bbiFileCheckSigs(char *fileName, bits32 sig, char *typeName);
 /* check file signatures at beginning and end of file */
 
-time_t bbiUpdateTime(struct bbiFile *bbi);
-/* return bbi->udc->updateTime */
 
 struct bbiSummary *bbiSummariesInRegion(struct bbiZoomLevel *zoom, struct bbiFile *bbi,
         int chromId, bits32 start, bits32 end);

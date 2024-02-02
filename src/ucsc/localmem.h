@@ -19,12 +19,6 @@ struct lm *lmInit(int blockSize);
 void lmCleanup(struct lm **pLm);
 /* Clean up a local memory pool. */
 
-size_t lmAvailable(struct lm *lm);
-// Returns currently available memory in pool
-
-size_t lmSize(struct lm *lm);
-// Returns current size of pool, even for memory already allocated
-
 void *lmAlloc(struct lm *lm, size_t size);
 /* Allocate memory from local pool. */
 
@@ -44,13 +38,6 @@ char *lmCloneString(struct lm *lm, char *string);
 
 char *lmCloneFirstWord(struct lm *lm, char *line);
 /* Clone first word in line */
-
-char *lmCloneSomeWord(struct lm *lm, char *line, int wordIx);
-/* Return a clone of the given space-delimited word within line.  Returns NULL if
- * not that many words in line. */
-
-struct slName *lmSlName(struct lm *lm, char *name);
-/* Return slName in memory. */
 
 #define lmAllocVar(lm, pt) (pt = lmAlloc(lm, sizeof(*pt)));
 /* Shortcut to allocating a single variable in local mem and

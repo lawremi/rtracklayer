@@ -65,14 +65,6 @@ long clock1()
 return clock()/CLOCKS_PER_SEC;
 }
 
-void uglyfBreak()
-/* Go into debugger. */
-{
-  /*
-    __asm { int 3 }
-  */
-}
-
 char *getCurrentDir()
 /* Return current directory. */
 {
@@ -88,52 +80,6 @@ void setCurrentDir(char *newDir)
 {
 if (_chdir(newDir) != 0)
     errnoAbort("can't to set current directory: %s", newDir);
-}
-
-boolean maybeSetCurrentDir(char *newDir)
-/* Change directory, return FALSE (and set errno) if fail. */
-{
-  return _chdir(newDir) == 0;
-}
-
-struct slName *listDir(char *dir, char *pattern)
-/* Return an alphabetized list of all files that match 
- * the wildcard pattern in directory. */
-{
-long hFile;
-struct _finddata_t fileInfo;
-struct slName *list = NULL, *name;
-boolean otherDir = FALSE;
-char *currentDir;
-
-if (dir == NULL || sameString(".", dir) || sameString("", dir))
-    dir = "";
-else
-    {
-    currentDir = getCurrentDir();
-    setCurrentDir(dir);
-    otherDir = TRUE;
-    }
-
-if (pattern == NULL)
-    pattern = "*";
-if( (hFile = _findfirst( pattern, &fileInfo)) == -1L )
-    return NULL;
-
-do
-    {
-    if (!sameString(".", fileInfo.name) && !sameString("..", fileInfo.name))
-        {
-        name = newSlName(fileInfo.name);
-        slAddHead(&list, name);
-        }
-    }
-while( _findnext( hFile, &fileInfo) == 0 );
-_findclose( hFile );
-if (otherDir)
-    setCurrentDir(currentDir);
-slNameSort(&list);
-return list;
 }
 
 boolean makeDir(char *dirName)

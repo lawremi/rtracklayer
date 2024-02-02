@@ -374,25 +374,6 @@ if (tree != &dummyTree)
 lmCleanup(&lm);
 }
 
-void cirTreeFileCreate(
-	void *itemArray, 	/* Sorted array of things to index. */
-	int itemSize, 		/* Size of each element in array. */
-	bits64 itemCount, 	/* Number of elements in array. */
-	bits32 blockSize,	/* R tree block size - # of children for each node. */
-	bits32 itemsPerSlot,	/* Number of items to put in each index slot at lowest level. */
-	void *context,		/* Context pointer for use by fetch call-back functions. */
-	struct cirTreeRange (*fetchKey)(const void *va, void *context),/* Given item, return key. */
-	bits64 (*fetchOffset)(const void *va, void *context), /* Given item, return file offset */
-	bits64 endFileOffset,				 /* Last position in file we index. */
-	char *fileName)                                  /* Name of output file. */
-/* Create a r tree index file from a sorted array. */
-{
-FILE *f = mustOpen(fileName, "wb");
-cirTreeFileBulkIndexToOpenFile(itemArray, itemSize, itemCount, blockSize, itemsPerSlot,
-	context, fetchKey, fetchOffset, endFileOffset, f);
-carefulClose(&f);
-}
-
 struct cirTreeFile *cirTreeFileAttach(char *fileName, struct udcFile *udc)
 /* Open up r-tree index file on previously open file, with cirTree
  * header at current file position. */
@@ -435,28 +416,10 @@ crt->rootOffset = udcTell(udc);
 return crt;
 }
 
-struct cirTreeFile *cirTreeFileOpen(char *fileName)
-/* Open up r-tree index file - reading header and verifying things. */
-{
-return cirTreeFileAttach(cloneString(fileName), udcFileOpen(fileName, udcDefaultDir()));
-}
-
 void cirTreeFileDetach(struct cirTreeFile **pCrt)
 /* Detatch and free up cirTree file opened with cirTreeFileAttach. */
 {
 freez(pCrt);
-}
-
-void cirTreeFileClose(struct cirTreeFile **pCrt)
-/* Close and free up cirTree file opened with cirTreeFileAttach. */
-{
-struct cirTreeFile *crt = *pCrt;
-if (crt != NULL)
-    {
-    freez(&crt->fileName);
-    udcFileClose(&crt->udc);
-    cirTreeFileDetach(pCrt);
-    }
 }
 
 INLINE int cmpTwoBits32(bits32 aHi, bits32 aLo, bits32 bHi, bits32 bLo)
@@ -621,15 +584,4 @@ else
 	rEnumerateBlocks(crt, level+1, offset[i], retList);
 	}
     }
-}
-
-struct fileOffsetSize *cirTreeEnumerateBlocks(struct cirTreeFile *crt)
-/* Return list of file blocks that between them contain all items that overlap
- * start/end on chromIx.  Also there will be likely some non-overlapping items
- * in these blocks too. When done, use slListFree to dispose of the result. */
-{
-struct fileOffsetSize *blockList = NULL;
-rEnumerateBlocks(crt, 0, crt->rootOffset, &blockList);
-slReverse(&blockList);
-return blockList;
 }

@@ -42,26 +42,10 @@
 #include "cheapcgi.h"
 #include "udc.h"
 #include "htmlPage.h"
-#include "hex.h"
 
 /* The stdio stream we'll use to output statistics on file i/o.  Off by default. */
 FILE *udcLogStream = NULL;
 static char *defaultDir = "/tmp/udcCache";
-
-void udcSetLog(FILE *fp)
-/* Turn on logging of file i/o.
- * For each UDC file two lines are written.  One line for the open, and one line for the close.
- * The Open line just has the URL being opened.
- * The Close line has the the URL plus a bunch of counts of the number of seeks, reads, and writes
- *   for the following four files: the udc bitmap, the udc sparse data, the incoming calls
- *   to the UDC layer, and the network connection to the (possibly) remote file.
- *   There are two additional counts: the number of socket connects, and the
- *   number of times a socket is reused instead of closed and reopened.
- */
-{
-    udcLogStream = fp;
-    fprintf(fp, "Begin\n");
-}
 
 struct ioStats
 /* Statistics concerning reads and seeks. */
@@ -677,8 +661,6 @@ if ((len = bLen)> 0)
 buf[len] = 0;
 return TRUE;
 }
-
-void msbFirstWriteBits64(FILE *f, bits64 x);
 
 static char *fileNameInCacheDir(struct udcFile *file, char *fileName)
 /* Return the name of a file in the cache dir, from the cache root directory on down.
@@ -1313,34 +1295,6 @@ while ((c = *r++) != '\0')
 *w = '\0';
 }
 
-char *udcPathToUrl(const char *path, char *buf, size_t size, char *cacheDir)
-/* Translate path into an URL, store in buf, return pointer to buf if successful
- * and NULL if not. */
-{
-if (cacheDir == NULL)
-    cacheDir = udcDefaultDir();
-int offset = 0;
-if (startsWith(cacheDir, (char *)path))
-    offset = strlen(cacheDir);
-if (path[offset] == '/')
-    offset++;
-char protocol[16];
-strncpy(protocol, path+offset, sizeof(protocol));
-protocol[ArraySize(protocol)-1] = '\0';
-char *p = strchr(protocol, '/');
-if (p == NULL)
-    {
-    errAbort("unable to parse protocol (first non-'%s' directory) out of path '%s'\n",
-	     cacheDir, path);
-    return NULL;
-    }
-*p++ = '\0';
-char afterProtocol[4096];
-qDecode(path+1+strlen(protocol)+1, afterProtocol, sizeof(afterProtocol));
-safef(buf, size, "%s://%s", protocol, afterProtocol);
-return buf;
-}
-
 long long int udcSizeFromCache(char *url, char *cacheDir)
 /* Look up the file size from the local cache bitmap file, or -1 if there
  * is no cache for url. */
@@ -1357,27 +1311,6 @@ for (sl = slList;  sl != NULL;  sl = sl->next)
 	}
 slNameFreeList(&slList);
 return ret;
-}
-
-time_t udcTimeFromCache(char *url, char *cacheDir)
-/* Look up the file datetime from the local cache bitmap file, or 0 if there
- * is no cache for url. */
-{
-time_t t = 0;
-long long int ret = -1;
-if (cacheDir == NULL)
-    cacheDir = udcDefaultDir();
-struct slName *sl, *slList = udcFileCacheFiles(url, cacheDir);
-for (sl = slList;  sl != NULL;  sl = sl->next)
-    if (endsWith(sl->name, bitmapName))
-	{
-	ret = udcSizeAndModTimeFromBitmap(sl->name, &t);
-	if (ret == -1)
-	    t = 0;
-	break;
-	}
-slNameFreeList(&slList);
-return t;
 }
 
 unsigned long udcCacheAge(char *url, char *cacheDir)
@@ -1426,31 +1359,6 @@ boolean allSet = (nextClearBit >= partBitEnd);
 return allSet;
 }
 
-// For tests/udcTest.c debugging: not declared in udc.h, but not static either:
-boolean udcCheckCacheBits(struct udcFile *file, int startBlock, int endBlock)
-/* Warn and return TRUE if any bit in (startBlock,endBlock] is not set. */
-{
-boolean gotUnset = FALSE;
-struct udcBitmap *bitmap = udcBitmapOpen(file->bitmapFileName);
-int partOffset;
-Bits *bits;
-readBitsIntoBuf(file, bitmap->fd, udcBitmapHeaderSize, startBlock, endBlock, &bits, &partOffset);
-
-int partBitStart = startBlock - partOffset;
-int partBitEnd = endBlock - partOffset;
-int nextClearBit = bitFindClear(bits, partBitStart, partBitEnd);
-while (nextClearBit < partBitEnd)
-    {
-    int clearBlock = nextClearBit + partOffset;
-    warn("... udcFile 0x%04lx: bit for block %d (%lld..%lld] is not set",
-	 (unsigned long)file, clearBlock,
-	 ((long long)clearBlock * udcBlockSize), (((long long)clearBlock+1) * udcBlockSize));
-    gotUnset = TRUE;
-    int nextSetBit = bitFindSet(bits, nextClearBit, partBitEnd);
-    nextClearBit = bitFindClear(bits, nextSetBit, partBitEnd);
-    }
-return gotUnset;
-}
 
 static void fetchMissingBlocks(struct udcFile *file, struct udcBitmap *bits, 
 	int startBlock, int blockCount, int blockSize)
@@ -1861,16 +1769,6 @@ if (retSize != NULL)
 return buf;
 }
 
-struct lineFile *udcWrapShortLineFile(char *url, char *cacheDir, size_t maxSize)
-/* Read in entire short (up to maxSize) url into memory and wrap a line file around it.
- * The cacheDir may be null in which case udcDefaultDir() will be used.  If maxSize
- * is zero then a default value (currently 64 meg) will be used. */
-{
-if (maxSize == 0) maxSize = 64 * 1024 * 1024;
-char *buf = udcFileReadAll(url, cacheDir, maxSize, NULL);
-return lineFileOnString(url, TRUE, buf);
-}
-
 void udcSeekCur(struct udcFile *file, bits64 offset)
 /* Seek to a particular position in file. */
 {
@@ -2002,13 +1900,6 @@ int udcCacheTimeout()
 return cacheTimeout;
 }
 
-void udcSetCacheTimeout(int timeout)
-/* Set cache timeout (if local cache files are newer than this many seconds,
- * we won't ping the remote server to check the file size and update time). */
-{
-cacheTimeout = timeout;
-}
-
 time_t udcUpdateTime(struct udcFile *udc)
 /* return udc->updateTime */
 {
@@ -2069,10 +1960,4 @@ udcParseUrl(url, &protocol, &afterProtocol, &colon);
 freez(&protocol);
 freez(&afterProtocol);
 return colon==NULL;
-}
-
-boolean udcExists(char *url)
-/* return true if a local or remote file exists */
-{
-return udcFileSize(url)!=-1;
 }

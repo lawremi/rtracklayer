@@ -223,15 +223,6 @@ slReverse(&context.list);
 return context.list;
 }
 
-bits32 bbiChromSize(struct bbiFile *bbi, char *chrom)
-/* Return chromosome size, or 0 if no such chromosome in file. */
-{
-struct bbiChromIdSize idSize;
-if (!bptFileFind(bbi->chromBpt, chrom, strlen(chrom), &idSize, sizeof(idSize)))
-    return 0;
-chromIdSizeHandleSwapped(bbi->isSwapped, &idSize);
-return idSize.chromSize;
-}
 
 void bbiChromInfoFree(struct bbiChromInfo **pInfo)
 /* Free up one chromInfo */
@@ -287,44 +278,6 @@ else
     }
 }
 
-char *bbiSummaryTypeToString(enum bbiSummaryType type)
-/* Convert summary type from enum to string representation. */
-{
-switch (type)
-    {
-    case bbiSumMean:
-        return "mean";
-    case bbiSumMax:
-        return "max";
-    case bbiSumMin:
-        return "min";
-    case bbiSumCoverage:
-        return "coverage";
-    case bbiSumStandardDeviation:
-        return "std";
-    default:
-	errAbort("Unknown bbiSummaryType %d", (int)type);
-	return NULL;
-    }
-}
-
-#ifdef UNUSED
-static void bbiSummaryOnDiskRead(struct bbiFile *bbi, struct bbiSummaryOnDisk *sum)
-/* Read in summary from file. */
-{
-struct udcFile *udc = bbi->udc;
-boolean isSwapped = bbi->isSwapped;
-sum->chromId = udcReadBits32(udc, isSwapped);
-sum->start = udcReadBits32(udc, isSwapped);
-sum->end = udcReadBits32(udc, isSwapped);
-sum->validCount = udcReadBits32(udc, isSwapped);
-// looks like a bug to me, these should call udcReadFloat() 
-udcMustReadOne(udc, sum->minVal);
-udcMustReadOne(udc, sum->maxVal);
-udcMustReadOne(udc, sum->sumData);
-udcMustReadOne(udc, sum->sumSquares);
-}
-#endif /* UNUSED */
 
 static void bbiSummaryHandleSwapped(struct bbiFile *bbi, struct bbiSummaryOnDisk *in)
 /* Swap integer fields in summary as needed. */
@@ -704,82 +657,6 @@ freeMem(elements);
 return ret;
 }
 
-struct bbiSummaryElement bbiTotalSummary(struct bbiFile *bbi)
-/* Return summary of entire file! */
-{
-struct udcFile *udc = bbi->udc;
-boolean isSwapped = bbi->isSwapped;
-struct bbiSummaryElement res;
-ZeroVar(&res);
-
-if (bbi->totalSummaryOffset != 0)
-    {
-    udcSeek(udc, bbi->totalSummaryOffset);
-    res.validCount = udcReadBits64(udc, isSwapped);
-    res.minVal = udcReadDouble(udc, isSwapped);
-    res.maxVal = udcReadDouble(udc, isSwapped);
-    res.sumData = udcReadDouble(udc, isSwapped);
-    res.sumSquares = udcReadDouble(udc, isSwapped);
-    }
-else if (bbi->version == 1)
-    /* Require version 1 so as not to have to deal with compression.  Should not happen
-     * to have NULL totalSummaryOffset for non-empty version 2+ file anyway. */
-    {
-    /* Find most extreme zoom. */
-    struct bbiZoomLevel *bestZoom = NULL, *zoom;
-    bits32 bestReduction = 0;
-    for (zoom = bbi->levelList; zoom != NULL; zoom = zoom->next)
-	{
-	if (zoom->reductionLevel > bestReduction)
-	    {
-	    bestReduction = zoom->reductionLevel;
-	    bestZoom = zoom;
-	    }
-	}
-
-    if (bestZoom != NULL)
-	{
-	udcSeek(udc, bestZoom->dataOffset);
-	bits32 zoomSectionCount = udcReadBits32(udc, isSwapped);
-	bits32 i;
-	for (i=0; i<zoomSectionCount; ++i)
-	    {
-	    /* Read, but ignore, position. */
-	    udcReadBits32(udc, isSwapped);
-	    udcReadBits32(udc, isSwapped);
-	    udcReadBits32(udc, isSwapped);
-
-	    /* First time through set values, rest of time add to them. */
-	    if (i == 0)
-		{
-		res.validCount = udcReadBits32(udc, isSwapped);
-		res.minVal = udcReadFloat(udc, isSwapped);
-		res.maxVal = udcReadFloat(udc, isSwapped);
-		res.sumData = udcReadFloat(udc, isSwapped);
-		res.sumSquares = udcReadFloat(udc, isSwapped);
-		}
-	    else
-		{
-		res.validCount += udcReadBits32(udc, isSwapped);
-		float minVal = udcReadFloat(udc, isSwapped);
-		if (minVal < res.minVal) res.minVal = minVal;
-		float maxVal = udcReadFloat(udc, isSwapped);
-		if (maxVal > res.maxVal) res.maxVal = maxVal;
-		res.sumData += udcReadFloat(udc, isSwapped);
-		res.sumSquares += udcReadFloat(udc, isSwapped);
-		}
-	    }
-	}
-    }
-return res;
-}
-
-time_t bbiUpdateTime(struct bbiFile *bbi)
-/* return bbi->udc->updateTime */
-{
-struct udcFile *udc = bbi->udc;
-return udcUpdateTime(udc);
-}
 
 char *bbiCachedChromLookup(struct bbiFile *bbi, int chromId, int lastChromId,
     char *chromBuf, int chromBufSize)

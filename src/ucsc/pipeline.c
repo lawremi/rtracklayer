@@ -611,43 +611,6 @@ int pipelineFd(struct pipeline *pl)
 return pl->pipeFd;
 }
 
-FILE *pipelineFile(struct pipeline *pl)
-/* Get a FILE object wrapped around the pipeline.  Do not close the FILE, is
- * owned by the pipeline object.  A FILE is created on first call to this
- * function.  Subsequent calls return the same FILE.*/
-{
-if (pl->pipeFh == NULL)
-    {
-    /* create FILE* on first access */
-    char *mode = (pl->options & pipelineRead) ? "r" : "w";
-    if (pl->pipeLf != NULL)
-        errAbort("can't call pipelineFile after having associated a lineFile with a pipeline");
-    pl->pipeFh = fdopen(pl->pipeFd, mode);
-    if (pl->pipeFh == NULL)
-        errnoAbort("fdopen failed for: %s", pl->procName);
-    pl->stdioBuf = needLargeMem(FILE_BUF_SIZE);
-    setvbuf(pl->pipeFh, pl->stdioBuf,  _IOFBF, FILE_BUF_SIZE);
-    }
-return pl->pipeFh;
-}
-
-struct lineFile *pipelineLineFile(struct pipeline *pl)
-/* Get a lineFile object wrapped around the pipeline.  Do not close the
- * lineFile, is owned by the pipeline object.  A lineFile is created on first
- * call to this function.  Subsequent calls return the same object.*/
-{
-if (pl->pipeLf == NULL)
-    {
-    /* create line on first acess */
-    if (pl->pipeFh != NULL)
-        errAbort("can't call pipelineLineFile after having associated a FILE with a pipeline");
-    if (pl->options & pipelineWrite)
-        errAbort("can't associated a lineFile with a write pipeline");
-    pl->pipeLf = lineFileAttach(pipelineDesc(pl), TRUE, pl->pipeFd);
-    }
-return pl->pipeLf;
-}
-
 static void closePipelineFile(struct pipeline *pl)
 /* close a pipeline with a FILE associated with it */
 {
@@ -688,31 +651,6 @@ int pipelineWait(struct pipeline *pl)
 /* must close before waiting to so processes get pipe EOF */
 closePipeline(pl);
 return groupLeaderWait(pl);
-}
-
-void pipelineSetNoAbort(struct pipeline *pl)
-/* Make it so pipeline won't abort on error - can be done after the fact.
- * (This is needed to close a pipelined lineFile early.) */
-{
-pl->options |= pipelineNoAbort;
-}
-
-void pipelineDumpCmds(char ***cmds)
-/* Dump out pipeline-formatted commands to stdout for debugging. */
-{
-char **cmd;
-boolean first = TRUE;
-while ((cmd = *cmds++) != NULL)
-   {
-   char *word;
-   if (first)
-      first = FALSE;
-   else
-      printf("| ");
-   while ((word = *cmd++) != NULL)
-       printf("%s ", word);
-   }
-printf("<BR>\n");
 }
 
 /*

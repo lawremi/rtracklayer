@@ -25,47 +25,6 @@
 #include "memgfx.h"
 #include "localmem.h"
 
-
-void bedStaticLoad(char **row, struct bed *ret)
-/* Load a row from bed table into ret.  The contents of ret will
- * be replaced at the next call to this function. */
-{
-ret->chrom = row[0];
-ret->chromStart = sqlUnsigned(row[1]);
-ret->chromEnd = sqlUnsigned(row[2]);
-ret->name = row[3];
-}
-
-struct bed *bedLoad(char **row)
-/* Load a bed from row fetched with select * from bed
- * from database.  Dispose of this with bedFree(). */
-{
-struct bed *ret;
-AllocVar(ret);
-ret->chrom = cloneString(row[0]);
-ret->chromStart = sqlUnsigned(row[1]);
-ret->chromEnd = sqlUnsigned(row[2]);
-ret->name = cloneString(row[3]);
-return ret;
-}
-
-struct bed *bedCommaIn(char **pS, struct bed *ret)
-/* Create a bed out of a comma separated string. 
- * This will fill in ret if non-null, otherwise will
- * return a new bed */
-{
-char *s = *pS;
-
-if (ret == NULL)
-    AllocVar(ret);
-ret->chrom = sqlStringComma(&s);
-ret->chromStart = sqlUnsignedComma(&s);
-ret->chromEnd = sqlUnsignedComma(&s);
-ret->name = sqlStringComma(&s);
-*pS = s;
-return ret;
-}
-
 void bedFree(struct bed **pEl)
 /* Free a single dynamically allocated bed such as created
  * with bedLoad(). */
@@ -82,124 +41,8 @@ freeMem(el->expScores);
 freez(pEl);
 }
 
-void bedFreeList(struct bed **pList)
-/* Free a list of dynamically allocated bed's */
-{
-struct bed *el, *next;
-
-for (el = *pList; el != NULL; el = next)
-    {
-    next = el->next;
-    bedFree(&el);
-    }
-*pList = NULL;
-}
-
-void bedOutput(struct bed *el, FILE *f, char sep, char lastSep) 
-/* Print out bed.  Separate fields with sep. Follow last field with lastSep. */
-{
-if (sep == ',') fputc('"',f);
-fprintf(f, "%s", el->chrom);
-if (sep == ',') fputc('"',f);
-fputc(sep,f);
-fprintf(f, "%u", el->chromStart);
-fputc(sep,f);
-fprintf(f, "%u", el->chromEnd);
-fputc(sep,f);
-if (sep == ',') fputc('"',f);
-fprintf(f, "%s", el->name);
-if (sep == ',') fputc('"',f);
-fputc(lastSep,f);
-}
-
 /* --------------- End of AutoSQL generated code. --------------- */
 
-int bedCmp(const void *va, const void *vb)
-/* Compare to sort based on chrom,chromStart. */
-{
-const struct bed *a = *((struct bed **)va);
-const struct bed *b = *((struct bed **)vb);
-int dif;
-dif = strcmp(a->chrom, b->chrom);
-if (dif == 0)
-    dif = a->chromStart - b->chromStart;
-return dif;
-}
-
-int bedCmpEnd(const void *va, const void *vb)
-/* Compare to sort based on chrom,chromEnd. */
-{
-const struct bed *a = *((struct bed **)va);
-const struct bed *b = *((struct bed **)vb);
-int dif;
-dif = strcmp(a->chrom, b->chrom);
-if (dif == 0)
-    dif = a->chromEnd - b->chromEnd;
-return dif;
-}
-
-int bedCmpScore(const void *va, const void *vb)
-/* Compare to sort based on score - lowest first. */
-{
-const struct bed *a = *((struct bed **)va);
-const struct bed *b = *((struct bed **)vb);
-return a->score - b->score;
-}
-
-int bedCmpPlusScore(const void *va, const void *vb)
-/* Compare to sort based on chrom,chromStart. */
-{
-const struct bed *a = *((struct bed **)va);
-const struct bed *b = *((struct bed **)vb);
-int dif;
-dif = strcmp(a->chrom, b->chrom);
-if (dif == 0)
-    {
-    dif = (a->chromStart - b->chromStart) * 1000 +(a->score - b->score);
-    }
-return dif;
-}
-
-int bedCmpSize(const void *va, const void *vb)
-/* Compare to sort based on size of element (end-start == size) */
-{
-const struct bed *a = *((struct bed **)va);
-const struct bed *b = *((struct bed **)vb);
-int a_size = a->chromEnd - a->chromStart;
-int b_size = b->chromEnd - b->chromStart;
-return (a_size - b_size);
-}
-
-int bedCmpChromStrandStartName(const void *va, const void *vb)
-/* Compare to sort based on chrom,strand,chromStart. */
-{
-const struct bed *a = *((struct bed **)va);
-const struct bed *b = *((struct bed **)vb);
-int dif;
-
-dif = strcmp(a->name, b->name);
-if (dif == 0)
-    dif = strcmp(a->chrom, b->chrom);
-if (dif == 0)
-    dif = strcmp(a->strand, b->strand);
-if (dif == 0)
-    dif = a->chromStart - b->chromStart;
-return dif;
-}
-
-int bedCmpChromStrandStart(const void *va, const void *vb)
-/* Compare to sort based on chrom,strand,chromStart. */
-{
-const struct bed *a = *((struct bed **)va);
-const struct bed *b = *((struct bed **)vb);
-int dif;
-dif = strcmp(a->chrom, b->chrom);
-if (dif == 0)
-    dif = strcmp(a->strand, b->strand);
-if (dif == 0)
-    dif = a->chromStart - b->chromStart;
-return dif;
-}
 
 struct bedLine *bedLineNew(char *line)
 /* Create a new bedLine based on tab-separated string s. */
@@ -239,20 +82,6 @@ if ((bl = *pBl) != NULL)
     }
 }
 
-void bedLineFreeList(struct bedLine **pList)
-/* Free a list of dynamically allocated bedLine's */
-{
-struct bedLine *el, *next;
-
-for (el = *pList; el != NULL; el = next)
-    {
-    next = el->next;
-    bedLineFree(&el);
-    }
-*pList = NULL;
-}
-
-
 int bedLineCmp(const void *va, const void *vb)
 /* Compare to sort based on query. */
 {
@@ -265,55 +94,6 @@ if (dif == 0)
 return dif;
 }
 
-
-void bedSortFile(char *inFile, char *outFile)
-/* Sort a bed file (in place, overwrites old file. */
-{
-struct lineFile *lf = NULL;
-FILE *f = NULL;
-struct bedLine *blList = NULL, *bl;
-char *line;
-int lineSize;
-
-verbose(2, "Reading %s\n", inFile);
-lf = lineFileOpen(inFile, TRUE);
-while (lineFileNext(lf, &line, &lineSize))
-    {
-    if (line[0] == '#')
-        continue;
-    bl = bedLineNew(line);
-    slAddHead(&blList, bl);
-    }
-lineFileClose(&lf);
-
-verbose(2, "Sorting\n");
-slSort(&blList, bedLineCmp);
-
-verbose(2, "Writing %s\n", outFile);
-f = mustOpen(outFile, "w");
-for (bl = blList; bl != NULL; bl = bl->next)
-    {
-    fprintf(f, "%s\t%s\n", bl->chrom, bl->line);
-    if (ferror(f))
-        {
-	perror("Writing error\n");
-	errAbort("%s is truncated, sorry.", outFile);
-	}
-    }
-fclose(f);
-}
-
-struct bed *bedLoad3(char **row)
-/* Load first three fields of bed. */
-{
-struct bed *ret;
-AllocVar(ret);
-ret->chrom = cloneString(row[0]);
-ret->chromStart = sqlUnsigned(row[1]);
-ret->chromEnd = sqlUnsigned(row[2]);
-return ret;
-}
-
 struct bed *bedLoad5(char **row)
 /* Load first five fields of bed. */
 {
@@ -324,14 +104,6 @@ ret->chromStart = sqlUnsigned(row[1]);
 ret->chromEnd = sqlUnsigned(row[2]);
 ret->name = cloneString(row[3]);
 ret->score = sqlSigned(row[4]);
-return ret;
-}
-
-struct bed *bedLoad6(char **row)
-/* Load first six fields of bed. */
-{
-struct bed *ret = bedLoad5(row);
-safef(ret->strand, sizeof(ret->strand), "%s", row[5]);
 return ret;
 }
 
@@ -357,31 +129,6 @@ if (comma)
 else
     itemRgb = sqlUnsigned(column9);
 return itemRgb;
-}
-
-struct bed *bedLoad12(char **row)
-/* Load a bed from row fetched with select * from bed
- * from database.  Dispose of this with bedFree(). */
-{
-struct bed *ret;
-int sizeOne;
-
-AllocVar(ret);
-ret->blockCount = sqlSigned(row[9]);
-ret->chrom = cloneString(row[0]);
-ret->chromStart = sqlUnsigned(row[1]);
-ret->chromEnd = sqlUnsigned(row[2]);
-ret->name = cloneString(row[3]);
-ret->score = sqlSigned(row[4]);
-strcpy(ret->strand, row[5]);
-ret->thickStart = sqlUnsigned(row[6]);
-ret->thickEnd = sqlUnsigned(row[7]);
-ret->itemRgb = itemRgbColumn(row[8]);
-sqlSignedDynamicArray(row[10], &ret->blockSizes, &sizeOne);
-assert(sizeOne == ret->blockCount);
-sqlSignedDynamicArray(row[11], &ret->chromStarts, &sizeOne);
-assert(sizeOne == ret->blockCount);
-return ret;
 }
 
 struct bed *bedLoadN(char *row[], int wordCount)
@@ -446,32 +193,6 @@ slReverse(&list);
 return list;
 }
 
-struct bed *bedLoadNAll(char *fileName, int numFields) 
-/* Load all bed from a tab-separated file.
- * Dispose of this with bedFreeList(). */
-{
-return bedLoadNAllChrom(fileName, numFields, NULL);
-}
-
-struct bed *bedLoadAll(char *fileName)
-/* Determines how many fields are in a bedFile and load all beds from
- * a tab-separated file.  Dispose of this with bedFreeList(). */
-{
-struct bed *list = NULL;
-struct lineFile *lf = lineFileOpen(fileName, TRUE);
-char *line, *row[bedKnownFields];
-
-while (lineFileNextReal(lf, &line))
-    {
-    int numFields = chopByWhite(line, row, ArraySize(row));
-    if (numFields < 4)
-	errAbort("file %s doesn't appear to be in bed format. At least 4 fields required, got %d", fileName, numFields);
-    slAddHead(&list, bedLoadN(row, numFields));
-    }
-lineFileClose(&lf);
-slReverse(&list);
-return list;
-}
 
 void bedLoadAllReturnFieldCountAndRgb(char *fileName, struct bed **retList, int *retFieldCount, 
     boolean *retRgb)
@@ -511,12 +232,6 @@ if (retRgb != NULL)
    *retRgb = isRgb;
 }
 
-void bedLoadAllReturnFieldCount(char *fileName, struct bed **retList, int *retFieldCount)
-/* Load bed of unknown size and return number of fields as well as list of bed items.
- * Ensures that all lines in bed file have same field count. */
-{
-bedLoadAllReturnFieldCountAndRgb(fileName, retList, retFieldCount, NULL);
-}
 
 void bedOutFlexible(struct bed *el, int wordCount, FILE *f,
 	char sep, char lastSep, boolean useItemRgb)
@@ -655,19 +370,6 @@ if (sep == ',') fputc('}',f);
 fputc(lastSep,f);
 }
 
-void bedOutputN(struct bed *el, int wordCount, FILE *f, char sep, char lastSep)
-/* Write a bed of wordCount fields. */
-{
-bedOutFlexible(el, wordCount, f, sep, lastSep, FALSE);
-}
-
-void bedOutputNitemRgb(struct bed *el, int wordCount, FILE *f,
-	char sep, char lastSep)
-/* Write a bed of wordCount fields, interpret column 9 as RGB. */
-{
-bedOutFlexible(el, wordCount, f, sep, lastSep, TRUE);
-}
-
 
 int bedTotalBlockSize(struct bed *bed)
 /* Return total size of all blocks. */
@@ -693,100 +395,6 @@ for (i=0; i<bed->blockCount; ++i)
     total += positiveRangeIntersection(start, end, rangeStart, rangeEnd);
     }
 return total;
-}
-
-int bedTotalThickBlockSize(struct bed *bed)
-/* Return total size of all thick blocks. */
-{
-return bedBlockSizeInRange(bed, bed->thickStart, bed->thickEnd);
-}
-
-int bedStartThinSize(struct bed *bed)
-/* Return total size of all blocks before thick part. */
-{
-return bedBlockSizeInRange(bed, bed->chromStart, bed->thickStart);
-}
-
-int bedEndThinSize(struct bed *bed)
-/* Return total size of all blocks after thick part. */
-{
-return bedBlockSizeInRange(bed, bed->thickEnd, bed->chromEnd);
-}
-
-void makeItBed12(struct bed *bedList, int numFields)
-/* If it's less than bed 12, make it bed 12. The numFields */
-/* param is for how many fields the bed *currently* has. */
-{
-int i = 1;
-struct bed *cur;
-for (cur = bedList; cur != NULL; cur = cur->next)
-    {
-    /* it better be bigger than bed 3. */
-    if (numFields < 4)
-	{
-	char name[50];
-	safef(name, ArraySize(name), "item.%d", i+1);
-	cur->name = cloneString(name);
-	}
-    if (numFields < 5)
-	cur->score = 1000;
-    if (numFields < 6)
-	{
-	cur->strand[0] = '?';
-	cur->strand[1] = '\0';
-	}
-    if (numFields < 8)
-	{
-	cur->thickStart = cur->chromStart;
-	cur->thickEnd = cur->chromEnd;
-	}
-    if (numFields < 9)
-	cur->itemRgb = 0;
-    if (numFields < 12)
-	{
-	cur->blockSizes = needMem(sizeof(int));
-	cur->chromStarts = needMem(sizeof(int));
-	cur->blockCount = 1;
-	cur->chromStarts[0] = 0;
-	cur->blockSizes[0] = cur->chromEnd - cur->chromStart;
-	}
-    i++;
-    }
-}
-
-struct bed *lmCloneBed(struct bed *bed, struct lm *lm)
-/* Make a copy of bed in local memory. */
-{
-struct bed *newBed;
-if (bed == NULL)
-    return NULL;
-lmAllocVar(lm, newBed);
-newBed->chrom = lmCloneString(lm, bed->chrom);
-newBed->chromStart = bed->chromStart;
-newBed->chromEnd = bed->chromEnd;
-newBed->name = lmCloneString(lm, bed->name);
-newBed->score = bed->score;
-strncpy(newBed->strand, bed->strand, sizeof(bed->strand));
-newBed->thickStart = bed->thickStart;
-newBed->thickEnd = bed->thickEnd;
-newBed->itemRgb = bed->itemRgb;
-newBed->blockCount = bed->blockCount;
-if (bed->blockCount > 0)
-    {
-    newBed->blockSizes = lmCloneMem(lm, bed->blockSizes, 
-    	sizeof(bed->blockSizes[0]) * bed->blockCount);
-    newBed->chromStarts = lmCloneMem(lm, bed->chromStarts, 
-    	sizeof(bed->chromStarts[0]) * bed->blockCount);
-    }
-newBed->expCount = bed->expCount;
-if (bed->expCount > 0)
-    {
-    newBed->expIds = lmCloneMem(lm, bed->expIds, 
-    	sizeof(bed->expIds[0]) * bed->expCount);
-    newBed->expScores = lmCloneMem(lm, bed->expScores, 
-    	sizeof(bed->expScores[0]) * bed->expCount);
-    }
-return(newBed);
 }
 
 
@@ -830,162 +438,6 @@ return(newBed);
 }
 
 
-struct bed *cloneBedList(struct bed *bedList)
-/* Make an all-newly-allocated list copied from bed. */
-{
-struct bed *bedListOut = NULL, *bed=NULL;
-
-for (bed=bedList;  bed != NULL;  bed=bed->next)
-    {
-    struct bed *newBed = cloneBed(bed);
-    slAddHead(&bedListOut, newBed);
-    }
-
-slReverse(&bedListOut);
-return bedListOut;
-}
-
-struct bed *bedListNextDifferentChrom(struct bed *bedList)
-/* Return next bed in list that is from a different chrom than the start of the list. */
-{
-char *firstChrom = bedList->chrom;
-struct bed *bed;
-for (bed = bedList->next; bed != NULL; bed = bed->next)
-    if (!sameString(firstChrom, bed->chrom))
-        break;
-return bed;
-}
-
-struct bed *bedCommaInN(char **pS, struct bed *ret, int fieldCount)
-/* Create a bed out of a comma separated string looking for fieldCount
- * fields. This will fill in ret if non-null, otherwise will return a
- * new bed */
-{
-char *s = *pS;
-int i;
-
-if (ret == NULL)
-    AllocVar(ret);
-ret->chrom = sqlStringComma(&s);
-ret->chromStart = sqlUnsignedComma(&s);
-ret->chromEnd = sqlUnsignedComma(&s);
-if (fieldCount > 3)
-    ret->name = sqlStringComma(&s);
-if (fieldCount > 4)
-    ret->score = sqlUnsignedComma(&s);
-if (fieldCount > 5)
-    sqlFixedStringComma(&s, ret->strand, sizeof(ret->strand));
-if (fieldCount > 6)
-    ret->thickStart = sqlUnsignedComma(&s);
-else
-    ret->thickStart = ret->chromStart;
-if (fieldCount > 7)
-    ret->thickEnd = sqlUnsignedComma(&s);
-else
-     ret->thickEnd = ret->chromEnd;
-if (fieldCount > 8)
-    ret->itemRgb = sqlUnsignedComma(&s);
-if (fieldCount > 9)
-    ret->blockCount = sqlUnsignedComma(&s);
-if (fieldCount > 10)
-    {
-    s = sqlEatChar(s, '{');
-    AllocArray(ret->blockSizes, ret->blockCount);
-    for (i=0; i<ret->blockCount; ++i)
-	{
-	ret->blockSizes[i] = sqlSignedComma(&s);
-	}
-    s = sqlEatChar(s, '}');
-    s = sqlEatChar(s, ',');
-    }
-if(fieldCount > 11)
-    {
-    s = sqlEatChar(s, '{');
-    AllocArray(ret->chromStarts, ret->blockCount);
-    for (i=0; i<ret->blockCount; ++i)
-	{
-	ret->chromStarts[i] = sqlSignedComma(&s);
-	}
-    s = sqlEatChar(s, '}');
-    s = sqlEatChar(s, ',');
-    }
-if (fieldCount > 12)
-    ret->expCount = sqlSignedComma(&s);
-if (fieldCount > 13)
-    {
-    s = sqlEatChar(s, '{');
-    AllocArray(ret->expIds, ret->expCount);
-    for (i=0; i<ret->expCount; ++i)
-	{
-	ret->expIds[i] = sqlSignedComma(&s);
-	}
-    s = sqlEatChar(s, '}');
-    s = sqlEatChar(s, ',');
-    }
-if (fieldCount > 14)
-    {
-    s = sqlEatChar(s, '{');
-    AllocArray(ret->expScores, ret->expCount);
-    for (i=0; i<ret->expCount; ++i)
-	{
-	ret->expScores[i] = sqlFloatComma(&s);
-	}
-    s = sqlEatChar(s, '}');
-    s = sqlEatChar(s, ',');
-    }
-*pS = s;
-return ret;
-}
-
-struct hash *readBedToBinKeeper(char *sizeFileName, char *bedFileName, int wordCount)
-/* Read a list of beds and return results in hash of binKeeper structure for fast query
- * See also bedsIntoKeeperHash, which takes the beds read into a list already, but
- * dispenses with the need for the sizeFile. */
-{
-struct binKeeper *bk; 
-struct bed *bed;
-struct lineFile *lf = lineFileOpen(sizeFileName, TRUE);
-struct lineFile *bf = lineFileOpen(bedFileName , TRUE);
-struct hash *hash = newHash(0);
-char *chromRow[2];
-char *row[3] ;
-
-assert (wordCount == 3);
-while (lineFileRow(lf, chromRow))
-    {
-    char *name = chromRow[0];
-    int size = lineFileNeedNum(lf, chromRow, 1);
-
-    if (hashLookup(hash, name) != NULL)
-        warn("Duplicate %s, ignoring all but first\n", name);
-    else
-        {
-        bk = binKeeperNew(0, size);
-        assert(size > 1);
-	hashAdd(hash, name, bk);
-        }
-    }
-while (lineFileNextRow(bf, row, ArraySize(row)))
-    {
-    bed = bedLoadN(row, wordCount);
-    bk = hashMustFindVal(hash, bed->chrom);
-    binKeeperAdd(bk, bed->chromStart, bed->chromEnd, bed);
-    }
-lineFileClose(&bf);
-lineFileClose(&lf);
-return hash;
-}
-
-void bedOutputRgb(FILE *f, unsigned int color)
-/*      Output a string: "r,g,b" for 24 bit number */
-{
-int colorIx = (int)color;
-struct rgbColor rgb = colorIxToRgb(colorIx);
-//fprintf(f, "%d,%d,%d", rgb.r, rgb.g, rgb.b);
-// FIXME: endian issue ??
-fprintf(f, "%d,%d,%d", rgb.b, rgb.g, rgb.r);
-}
-
 int bedParseRgb(char *itemRgb)
 /*      parse a string: "r,g,b" into three unsigned char values
         returned as 24 bit number, or -1 for failure */
@@ -1006,30 +458,6 @@ return ( ((atoi(row[0]) & 0xff) << 16) |
         (atoi(row[2]) & 0xff) );
 }
 
-int bedParseColor(char *colorSpec)
-/* Parse an HTML color string, a  string of 3 comma-sep unsigned color values 0-255, 
- * or a 6-digit hex string  preceded by #. 
- * O/w return unsigned integer value.  Return -1 on error */
-{
-if (strchr(colorSpec,','))
-    return bedParseRgb(colorSpec);
-unsigned rgb;
-if (htmlColorForCode(colorSpec, &rgb))
-    return rgb;
-if (htmlColorForName(colorSpec, &rgb))
-    return rgb;
-return sqlUnsigned(colorSpec);
-}
-
-long long bedTotalSize(struct bed *bedList)
-/* Add together sizes of all beds in list. */
-{
-long long total=0;
-struct bed *bed;
-for (bed = bedList; bed != NULL; bed = bed->next)
-    total += (bed->chromEnd - bed->chromStart);
-return total;
-}
 
 void bedIntoRangeTree(struct bed *bed, struct rbTree *rangeTree)
 /* Add all blocks in bed to range tree.  For beds without blocks,
@@ -1104,108 +532,6 @@ rangeTreeFree(&rangeTree);
 return overlap;
 }
 
-boolean bedExactMatch(struct bed *oldBed, struct bed *newBed)
-/* Return TRUE if it's an exact match. */
-{
-boolean oldCoding = (oldBed->thickStart != oldBed->thickEnd);
-boolean newCoding = (newBed->thickStart != newBed->thickEnd);
-
-if (oldCoding != newCoding)
-    return FALSE;
-/* non-coding bed's have different standards for what exactly
- * goes into these fields.  The standard just says they should
- * be equal */
-if (oldCoding && ((oldBed->thickStart != newBed->thickStart) ||
-    (oldBed->thickEnd != newBed->thickEnd)))
-    return FALSE;
-if (oldBed->blockCount != newBed->blockCount)
-    return FALSE;
-int oldSize = bedTotalBlockSize(oldBed);
-int newSize = bedTotalBlockSize(newBed);
-int overlap = bedSameStrandOverlap(oldBed, newBed);
-return  (oldSize == newSize && oldSize == overlap);
-}
-
-boolean bedCompatibleExtension(struct bed *oldBed, struct bed *newBed)
-/* Return TRUE if newBed is a compatible extension of oldBed, meaning
- * all internal exons and all introns of old bed are contained, in the 
- * same order in the new bed. */
-{
-/* New bed must have at least as many exons as old bed... */
-if (oldBed->blockCount > newBed->blockCount)
-    return FALSE;
-
-/* New bed must also must also encompass old bed. */
-if (newBed->chromStart > oldBed->chromStart)
-    return FALSE;
-if (newBed->chromEnd < oldBed->chromEnd)
-    return FALSE;
-
-/* Look for an exact match */
-int oldSize = bedTotalBlockSize(oldBed);
-int newSize = bedTotalBlockSize(newBed);
-int overlap = bedSameStrandOverlap(oldBed, newBed);
-if (oldSize == newSize && oldSize == overlap)
-    return TRUE;
-
-/* If overlap is smaller than old size then we can't be a superset. */
-if (overlap < oldSize)
-    return FALSE;
-
-/* If we're a single exon bed then we're done. */
-if (oldBed->blockCount <= 1)
-    return TRUE;
-
-/* Otherwise we look for first intron start in old bed, and then
- * flip through new bed until we find an intron that starts at the
- * same place. */
-int oldFirstIntronStart = oldBed->chromStart + oldBed->chromStarts[0] + oldBed->blockSizes[0];
-int newLastBlock = newBed->blockCount-1, oldLastBlock = oldBed->blockCount-1;
-int newIx, oldIx;
-for (newIx=0; newIx < newLastBlock; ++newIx)
-    {
-    int iStartNew = newBed->chromStart + newBed->chromStarts[newIx] + newBed->blockSizes[newIx];
-    if (iStartNew == oldFirstIntronStart)
-        break;
-    }
-if (newIx == newLastBlock)
-    return FALSE;
-
-/* Now we go through all introns in old bed, and make sure they match. */
-for (oldIx=0; oldIx < oldLastBlock; ++oldIx, ++newIx)
-    {
-    int iStartOld = oldBed->chromStart + oldBed->chromStarts[oldIx] + oldBed->blockSizes[oldIx];
-    int iEndOld = oldBed->chromStart + oldBed->chromStarts[oldIx+1];
-    int iStartNew = newBed->chromStart + newBed->chromStarts[newIx] + newBed->blockSizes[newIx];
-    int iEndNew = newBed->chromStart + newBed->chromStarts[newIx+1];
-    if (iStartOld != iStartNew || iEndOld != iEndNew)
-        return FALSE;
-    }
-
-/* Finally, make sure that the new bed doesn't contain any introns that overlap with the
- * last exon of the old bed */
-for(; newIx < newLastBlock; ++newIx)
-    {
-    int iStartNew = newBed->chromStart + newBed->chromStarts[newIx] + newBed->blockSizes[newIx];
-    if (iStartNew < oldBed->chromEnd)
-        return FALSE;
-    else if (iStartNew >= oldBed->chromEnd)
-        break;
-    }
-
-return TRUE;
-}
-
-struct bed3 *bed3New(char *chrom, int start, int end)
-/* Make new bed3. */
-{
-struct bed3 *bed;
-AllocVar(bed);
-bed->chrom = cloneString(chrom);
-bed->chromStart = start;
-bed->chromEnd = end;
-return bed;
-}
 
 struct bed *bedThickOnly(struct bed *in)
 /* Return a bed that only has the thick part. (Which is usually the CDS). */
@@ -1273,18 +599,6 @@ if (in->blockCount > 0)
 return out;
 }
 
-struct bed *bedThickOnlyList(struct bed *inList)
-/* Return a list of beds that only are the thick part of input. */
-{
-struct bed *outList = NULL, *out, *in;
-for (in = inList; in != NULL; in = in->next)
-    {
-    if ((out = bedThickOnly(in)) != NULL)
-        slAddHead(&outList, out);
-    }
-slReverse(&outList);
-return outList;
-}
 
 char *bedAsDef(int bedFieldCount, int totalFieldCount)
 /* Return an autoSql definition for a bed of given number of fields. 
@@ -1331,26 +645,6 @@ for (i=bedFieldCount+1; i<=totalFieldCount; ++i)
     dyStringPrintf(dy, "lstring field%d;	\"Undocumented field\"\n", i+1);
 dyStringAppend(dy, "   )\n");
 return dyStringCannibalize(&dy);
-}
-
-
-boolean asCompareObjAgainstStandardBed(struct asObject *asYours, int numColumnsToCheck, boolean abortOnDifference)
-/* Compare user's .as object asYours to the standard BED.
- * abortOnDifference specifies whether to warn or abort if they differ within the first numColumnsToCheck columns.
- * Returns TRUE if they match. */
-{
-boolean result = FALSE;
-struct asObject *asStandard = NULL;
-if (numColumnsToCheck > 15)
-    errAbort("There are only 15 standard BED columns defined and you have asked for %d.", numColumnsToCheck);
-if (numColumnsToCheck < 3)
-    errAbort("All BED files must have at least 3 columns. (Is it possible that you provided a chrom.sizes file instead of a BED file?)");
-char *asStandardText = bedAsDef(15,15);
-asStandard = asParseText(asStandardText);
-result = asCompareObjs("Yours", asYours, "BED Standard", asStandard, numColumnsToCheck, NULL, abortOnDifference);
-freeMem(asStandardText);
-asObjectFreeList(&asStandard);
-return result;
 }
 
 
@@ -1667,32 +961,6 @@ if (as)
 
 }
 
-void loadAndValidateBed(char *row[], int bedFieldCount, int fieldCount, struct lineFile *lf, struct bed * bed, struct asObject *as, boolean isCt)
-/* Convert a row of strings to a bed and validate the contents.  Abort with message if invalid data. Optionally validate bedPlus via asObject.
- * If a customTrack, then some errors are tolerated. */
-{
-loadAndValidateBedExt(row, bedFieldCount, fieldCount, lf, bed, as, isCt, FALSE);
-}
-
-
-struct bed3 *bed3LoadAll(char *fileName)
-/* Load three columns from file as bed3. */
-{
-struct lineFile *lf = lineFileOpen(fileName, TRUE);
-char *row[3];
-struct bed3 *list = NULL, *el;
-while (lineFileRow(lf, row))
-    {
-    AllocVar(el);
-    el->chrom = cloneString(row[0]);
-    el->chromStart = sqlUnsigned(row[1]);
-    el->chromEnd = sqlUnsigned(row[2]);
-    slAddHead(&list, el);
-    }
-lineFileClose(&lf);
-slReverse(&list);
-return list;
-}
 
 void bed3Free(struct bed3 **pBed)
 /* Free up bed3 */
@@ -1705,40 +973,6 @@ if (bed != NULL)
     }
 }
 
-void bed3FreeList(struct bed3 **pList)
-/* Free a list of dynamically allocated bed3's */
-{
-struct bed3 *el, *next;
-
-for (el = *pList; el != NULL; el = next)
-    {
-    next = el->next;
-    bed3Free(&el);
-    }
-*pList = NULL;
-}
-
-long long bed3TotalSize(struct bed3 *bedList)
-/* Return sum of chromEnd-chromStart. */
-{
-long long sum = 0;
-struct bed3 *bed;
-for (bed = bedList; bed != NULL; bed = bed->next)
-    sum += bed->chromEnd - bed->chromStart;
-return sum;
-}
-
-struct bed4 *bed4New(char *chrom, int start, int end, char *name)
-/* Make new bed4. */
-{
-struct bed4 *bed;
-AllocVar(bed);
-bed->chrom = cloneString(chrom);
-bed->chromStart = start;
-bed->chromEnd = end;
-bed->name = cloneString(name);
-return bed;
-}
 
 void bed4Free(struct bed4 **pBed)
 /* Free up bed4 */
@@ -1751,17 +985,3 @@ if (bed != NULL)
     freez(pBed);
     }
 }
-
-void bed4FreeList(struct bed4 **pList)
-/* Free a list of dynamically allocated bed4's */
-{
-struct bed4 *el, *next;
-
-for (el = *pList; el != NULL; el = next)
-    {
-    next = el->next;
-    bed4Free(&el);
-    }
-*pList = NULL;
-}
-

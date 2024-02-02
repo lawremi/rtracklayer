@@ -116,16 +116,6 @@ if (tree != NULL)
     }
 }
 
-void rbTreeFreeList(struct rbTree **pList)
-/* Free up a list of rbTrees. */
-{
-struct rbTree *tree, *next;
-for (tree = *pList; tree != NULL; tree = next)
-    {
-    next = tree->next;
-    rbTreeFree(&tree);
-    }
-}
 
 void *rbTreeAdd(struct rbTree *t, void *item)
 /* rbTreeAdd() - Inserts an item into the red-black tree pointed to by t,
@@ -597,19 +587,6 @@ rTreeDump(n->right);
 --dumpLevel;
 }
 
-void rbTreeDump(struct rbTree *tree, FILE *f, 
-	void (*dumpItem)(void *item, FILE *f))
-/* Dump out rb tree to file, mostly for debugging. */
-{
-dumpFile = f;
-dumpLevel = 0;
-dumpIt = dumpItem;
-fprintf(f, "rbTreeDump\n");
-rTreeDump(tree->root);
-}
-
-
-
 /* Variables to help recursively traverse tree. */
 static void (*doIt)(void *item);
 static void *minIt, *maxIt;
@@ -700,41 +677,9 @@ static void addRef(void *item)
 refAdd(&itList, item);
 }
 
-struct slRef *rbTreeItemsInRange(struct rbTree *tree, void *minItem, void *maxItem)
-/* Return a sorted list of references to items in tree between range.
- * slFreeList this list when done. */
-{
-itList = NULL;
-rbTreeTraverseRange(tree, minItem, maxItem, addRef);
-slReverse(&itList);
-return itList;
-}
-
 static void addRefWithContext(void *item, void *context)
 /* Add item it itList. */
 {
 struct slRef **pList = context;
 refAdd(pList, item);
-}
-
-
-struct slRef *rbTreeItems(struct rbTree *tree)
-/* Return sorted list of items.  slFreeList this when done.*/
-{
-struct slRef *list = NULL;
-rbTreeTraverseWithContext(tree, addRefWithContext, &list);
-slReverse(&list);
-return list;
-}
-
-int rbTreeCmpString(void *a, void *b)
-/* Set up rbTree so as to work on strings. */
-{
-return strcmp(a, b);
-}
-
-int rbTreeCmpWord(void *a, void *b)	
-/* Set up rbTree so as to work on case-insensitive strings. */
-{
-return differentWord(a,b);
 }

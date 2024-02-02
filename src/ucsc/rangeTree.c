@@ -74,25 +74,6 @@ struct range *rangeTreeAdd(struct rbTree *tree, int start, int end)
 }
 
 
-struct range *rangeTreeAddValCount(struct rbTree *tree, int start, int end)
-/* Add range to tree, merging with existing ranges if need be. 
- * Set range val to count of elements in the range. Counts are pointers to 
- * ints allocated in tree localmem */
-{
-    int *a = lmAlloc(tree->lm, sizeof(*a)); /* keep the count in localmem */
-    *a = 1;
-    return rangeTreeAddVal(tree, start, end, (void *)a, sumInt);
-}
-
-
-struct range *rangeTreeAddValList(struct rbTree *tree, int start, int end, void *val)
-/* Add range to tree, merging with existing ranges if need be. 
- * Add val to the list of values (if any) in each range.
- * val must be valid argument to slCat (ie, be a struct with a 'next' pointer as its first member) */
-{
-    return rangeTreeAddVal(tree, start, end, val, slCat);
-}
-
 void rangeTreeAddToCoverageDepth(struct rbTree *tree, int start, int end)
 /* Add area from start to end to a tree that is being built up to store the
  * depth of coverage.  Recover coverage back out by looking at ptToInt(range->val)
@@ -204,16 +185,6 @@ else
 
 }
 
-boolean rangeTreeOverlaps(struct rbTree *tree, int start, int end)
-/* Return TRUE if start-end overlaps anything in tree */
-{
-struct range tempR;
-tempR.start = start;
-tempR.end = end;
-tempR.val = NULL;
-return rbTreeFind(tree, &tempR) != NULL;
-}
-
 static struct range *rangeList;
 
 static void rangeListAdd(void *v)
@@ -233,22 +204,6 @@ slReverse(&rangeList);
 return rangeList;
 }
 
-struct range *rangeTreeFindEnclosing(struct rbTree *tree, int start, int end)
-/* Find item in range tree that encloses range between start and end 
- * if there is any such item. */
-{
-struct range tempR, *r;
-tempR.start = start;
-tempR.end = end;
-r = rbTreeFind(tree, &tempR);
-if (r != NULL && r->start <= start && r->end >= end)
-    {
-    r->next = NULL; /* this can be set by previous calls to the List functions */
-    return r;
-    }
-return NULL;
-}
-
 struct range *rangeTreeAllOverlapping(struct rbTree *tree, int start, int end)
 /* Return list of all items in range tree that overlap interval start-end.
  * Do not free this list, it is owned by tree.  However it is only good until
@@ -263,26 +218,6 @@ slReverse(&rangeList);
 return rangeList;
 }
 
-
-struct range *rangeTreeMaxOverlapping(struct rbTree *tree, int start, int end)
-/* Return item that overlaps most with start-end. Not thread safe.  Trashes list used
- * by rangeTreeAllOverlapping. */
-{
-struct range *range, *best = NULL;
-int bestOverlap = 0; 
-for (range  = rangeTreeAllOverlapping(tree, start, end); range != NULL; range = range->next)
-    {
-    int overlap = rangeIntersection(range->start, range->end, start, end);
-    if (overlap > bestOverlap)
-        {
-	bestOverlap = overlap;
-	best = range;
-	}
-    }
-if (best)
-    best->next = NULL; /* could be set by calls to List functions */
-return best;
-}
 
 /* A couple of variables used to calculate total overlap. */
 static int totalOverlap;
@@ -311,15 +246,6 @@ rbTreeTraverseRange(tree, &tempR, &tempR, addOverlap);
 return totalOverlap;
 }
 
-int rangeTreeOverlapTotalSize(struct rbTree *tree)
-/* Return the total size of all ranges in range tree.
- * Sadly not thread-safe. 
- * On 32 bit machines be careful not to overflow
- * range of start, end or total size return value. */
-{
-return rangeTreeOverlapSize(tree, INT_MIN, INT_MAX);
-}
-
 void rangeTreeSumRangeCallback(void *item, void *context)
 /* This is a callback for rbTreeTraverse with context.  It just adds up
  * end-start */
@@ -329,26 +255,9 @@ long long *pSum = context;
 *pSum += range->end - range->start;
 }
 
-long long rangeTreeSumRanges(struct rbTree *tree)
-/* Return sum of end-start of all items. */
-{
-long long sum = 0;
-rbTreeTraverseWithContext(tree, rangeTreeSumRangeCallback, &sum);
-return sum;
-}
-
 
 struct rbTree *rangeTreeNew()
 /* Create a new, empty, rangeTree. */
 {
 return rbTreeNew(rangeCmp);
 }
-
-struct rbTree *rangeTreeNewDetailed(struct lm *lm, struct rbTreeNode *stack[128])
-/* Allocate rangeTree on an existing local memory & stack.  This is for cases
- * where you want a lot of trees, and don't want the overhead for each one. 
- * Note, to clean these up, just do freez(&rbTree) rather than rbFreeTree(&rbTree). */
-{
-return rbTreeNewDetailed(rangeCmp, lm, stack);
-}
-

@@ -90,42 +90,8 @@ if (!checkedDotsEnabled)
 return dotsEnabled;
 }
 
-void verboseDot()
-/* Write I'm alive dot (at verbosity level 1) */
-{
-if (verboseDotsEnabled())
-    verbose(1, ".");
-}
-
-void verboseSetLevel(int verbosity)
-/* Set verbosity level in log.  0 for no logging,
- * higher number for increasing verbosity. */
-{
-logVerbosity = verbosity;
-checkedDotsEnabled = FALSE; /* force rechecking of dots enabled */
-}
-
 int verboseLevel(void)
 /* Get verbosity level. */
 {
 return logVerbosity;
-}
-
-void verboseSetLogFile(char *name)
-/* Set logFile for verbose messages overrides stderr. */
-{
-if (sameString(name, "stdout"))
-    logFile = stdout;
-else if (sameString(name, "stderr"))
-    logFile = stderr;
-else
-    logFile = mustOpen(name, "w");
-}
-
-FILE *verboseLogFile()
-/* Get the verbose log file. */
-{
-if (logFile == NULL)
-    logFile = stderr;
-return logFile;
 }
