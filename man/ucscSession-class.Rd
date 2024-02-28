@@ -23,7 +23,7 @@
   \code{\link{browserSession}("ucsc", url =
     "https://genome.ucsc.edu/cgi-bin", ...)}. The arguments in \code{...}
   correspond to libcurl options, see
-  \code{\link[RCurl]{getCurlHandle}}. Setting these options may be
+  \code{\link[httr]{httr_options}}. Setting these options may be
   useful e.g. for getting past a proxy.
 }
 \section{Slots}{

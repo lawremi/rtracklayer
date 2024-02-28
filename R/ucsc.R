@@ -14,18 +14,15 @@ setMethod("initialize", "UCSCSession",
             .Object@url <- url
             .Object@views <- new.env()
             gwURL <- ucscURL(.Object, "gateway", force=force)
-            gw <- httpGet(gwURL, cookiefile = tempfile(), header = TRUE,
-                          .parse=FALSE, ...)
-            if (grepl("redirectTd", gw)) {
-                url <- sub(".*?a href=\"http([^[:space:]]+cgi-bin/).*",
-                           "https\\1", gw)
-                return(initialize(.Object, url, user=user, session=session,
-                                  force=TRUE, ...))
-            }
-            cookie <- grep("Set-[Cc]ookie: hguid[^=]*=", gw)
-            if (!length(cookie))
+            config <- config(followlocation = 1, nobody = 1,
+                             cookiefile = tempfile(),
+                             useragent = "rtracklayer", ...)
+            ## nobody = 1 seems to be ignored and HEAD() doesn't work here
+            response <- GET(gwURL, config)
+            cookie <- response$headers[["set-cookie"]]
+            if (is.null(cookie))
               stop("Failed to obtain 'hguid' cookie")
-            hguid <- sub(".*Set-Cookie: (hguid[^=]*=[^;]*);.*", "\\1", gw)
+            hguid <- strsplit(cookie, split = ";", fixed = TRUE)[[1L]][[1L]]
             .Object@hguid <- hguid
             if (!is.null(user) && !is.null(session)) { ## bring in other session
               ucscGet(.Object, "tracks",
@@ -266,7 +263,7 @@ ucscTables <- function(genome, track) {
   if (!isSingleString(genome))
     stop("'genome' must be a single non-NA string")
   # check genome is valid or not
-  doc <- httpGet(url, c(db = genome))
+  doc <- rtracklayerGET(url, query = list(db=genome))
   genomes <- unlist(getNodeSet(doc, "//select[@name='db']/option/@value"))
   if (!(genome %in% unname(genomes)))
     stop("Invalid genome :'", genome, "'")
@@ -275,7 +272,7 @@ ucscTables <- function(genome, track) {
   track <- normArgTrack(track, trackids)
   # retrieve tables for a track
   form <- c(db = genome, hgta_group = "allTracks", hgta_track = track)
-  doc <- httpGet(url, form)
+  doc <- rtracklayerGET(url, query = form)
   tables <- unlist(getNodeSet(doc, "//select[@name='hgta_table']/option/@value"))
   unname(tables)
 }
@@ -358,7 +355,8 @@ setReplaceMethod("hubUrl", "UCSCTableQuery", function(x, value) {
 
 ## gets the track names available from the table browser
 ucscTableTracks <- function(genome) {
-  doc <- httpGet("https://genome.ucsc.edu/cgi-bin/hgTables", c(db = genome, hgta_group = "allTracks"))
+  url <- "https://genome.ucsc.edu/cgi-bin/hgTables"
+  doc <- rtracklayerGET(url, query = list(db=genome, hgta_group="allTracks"))
   label_path <- "//select[@name = 'hgta_track']/option/text()"
   labels <- sub("\n.*$", "", sapply(getNodeSet(doc, label_path), xmlValue))
   track_path <- "//select[@name = 'hgta_track']/option/@value"
@@ -1555,8 +1553,8 @@ setMethod("ucscForm", "UCSCView",
               list(hgsid = as.character(object@hgsid))
             else list()
           })
-setOldClass("FileUploadInfo")
-setMethod("ucscForm", "FileUploadInfo",
+setOldClass("form_file")
+setMethod("ucscForm", "form_file",
           function(object, genome = NA_character_, ...)
           {
             form <- list(Submit = "Submit", hgt.customFile = object)
@@ -1567,17 +1565,16 @@ setMethod("ucscForm", "FileUploadInfo",
 setMethod("ucscForm", "SimpleGRangesList",
           function(object, format, ...)
           {
-            lines <- export(object, format = "ucsc", subformat = format, ...)
-            text <- paste(paste(lines, collapse = "\n"), "\n", sep = "")
-            filename <- paste("track", format, sep = ".")
-            upload <- fileUpload(filename, text, "text/plain")
+            path <- tempfile()
+            export(object, path, format = "ucsc", subformat = format, ...)
+            upload <- upload_file(path, type = "text/plain")
             genome <- singleGenome(genome(object))
             ucscForm(upload, genome)
           })
 setMethod("ucscForm", "BiocFile",
           function(object, genome, ...)
           {
-            upload <- fileUpload(path(object), "text/plain")
+            upload <- upload_file(path(object), type = "text/plain")
             ucscForm(upload, genome)
           })
 
@@ -1614,7 +1611,11 @@ ucscURL <-
 # convenience wrappers for _initialized_ sessions
 ucscShow <- function(object, key, .form = list(), ...)
   httpShow(ucscURL(object, key), .form, ...)
-ucscPost <- function(object, key, .form = list(), ...)
-  httpPost(ucscURL(object, key), .form, ..., cookie = ucscCookie(object))
-ucscGet <- function(object, key, .form = list(), ...)
-  httpGet(ucscURL(object, key), .form, ..., cookie = ucscCookie(object))
+ucscPost <- function(object, key, .form = list()) {
+  cookies <- set_cookies(hguid=gsub("^hguid=", "", ucscCookie(object)))
+  rtracklayerPOST(ucscURL(object, key), cookies, body = .form)
+}
+ucscGet <- function(object, key, .form = list()) {
+  cookies <- set_cookies(hguid=gsub("^hguid=", "", ucscCookie(object)))
+  rtracklayerGET(ucscURL(object, key), cookies, query = .form)
+}

@@ -5,7 +5,7 @@ isNCBISpeciesURL <- function(url) {
 }
 
 metadataFromNCBI <- function(url) {
-    html <- httpGet(url)
+    html <- rtracklayerGET(url)
     list("Taxonomy ID"=parseTaxonomyIdFromNCBI(html),
          "Organism"=parseOrganismFromNCBI(html))
 }
@@ -16,7 +16,7 @@ parseTaxonomyIdFromNCBI <- function(html) {
 
 taxonomyIdFromNCBI <- function(species) {
     url <- paste0(NCBI_TAX_URL, "?name=", URLencode(species))
-    parseTaxonomyIdFromNCBI(httpGet(url))
+    parseTaxonomyIdFromNCBI(rtracklayerGET(url))
 }
 
 parseOrganismFromNCBI <- function(html) {
@@ -26,5 +26,5 @@ parseOrganismFromNCBI <- function(html) {
 
 speciesFromNCBI <- function(id) {
     url <- paste0(NCBI_TAX_URL, "?id=", URLencode(id))
-    parseOrganismFromNCBI(httpGet(url))
+    parseOrganismFromNCBI(rtracklayerGET(url))
 }

@@ -1002,20 +1002,16 @@ trimSlash <- function(x) {
     sub("/$", "", x)
 }
 
+### Note that prior to rtracklayer 1.63.1, isFileEmpty() was returning an
+### error on an empty remote file. Also it was always returning FALSE on a
+### local file, even on an empty one!
 isFileEmpty <- function(path) {
     url <- .parseURI(path)
     if (uriIsLocal(url)) {
         size <- file.size(url$path)
-        if (size == 1L || size == 0L)
-            TRUE
-        FALSE
+        size == 1L || size == 0L
     } else {
-        response <- getURL(path, nobody = T, header = T)
-        header <- strsplit(response, "\r\n")[[1]]
-        position <- grep("Content-Length:", header)
-        contentLength <- sub("Content-Length: ", "", header[position])
-        if (contentLength != "NA")
-            TRUE
-        FALSE
+        contentLength <- HEAD(path)$headers[["content-length"]]
+        is.null(contentLength) || contentLength == "0"
     }
 }
