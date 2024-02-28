@@ -28,7 +28,7 @@ importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse, xmlTreeParse,
            addChildren, removeChildren, readHTMLTable)
 importMethodsFrom("XML", saveXML)
 
-importFrom("httr", GET, HEAD, config, user_agent, set_cookies, content,
+importFrom("httr", GET, HEAD, POST, config, user_agent, set_cookies, content,
            upload_file)
 
 import(restfulr)
