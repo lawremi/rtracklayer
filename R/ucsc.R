@@ -1451,7 +1451,7 @@ setClass("ucscTracks",
 setGeneric("ucscTracks", function(object, ...) standardGeneric("ucscTracks"))
 
 setMethod("ucscTracks", "UCSCSession",
-          function(object, form = list())
+          function(object, form = list(pix=800))
           {
             tracks <- ucscGet(object, "tracks", form)
             nodes <- getNodeSet(tracks, "//select/option[@selected]/text()")
