@@ -9,27 +9,22 @@ htmlParse <- function(str)
   suppressWarnings(htmlTreeParse(str, asText = TRUE, useInternalNodes = TRUE,
                                  error = htmlErrorHandler))
 
-httpGet <- function(url, .form = list(), .parse = TRUE, ...) {
-  if (length(.form) == 0)
-      out <- getURL(url, useragent = "rtracklayer",
-                    verbose=getOption("rtracklayer.http.verbose", FALSE), ...)
-  else out <- getForm(url, .params = .form,
-                      .opts=list(..., useragent = "rtracklayer",
-                                 verbose=getOption("rtracklayer.http.verbose",
-                                                   FALSE)))
-  if (.parse)
-    htmlParse(out)
-  else out
+rtracklayerGET <- function(url, ..., query = list()) {
+  verbose <- getOption("rtracklayer.http.verbose", FALSE)
+  verbose <- as.integer(isTRUE(as.logical(verbose)))
+  response <- GET(url, user_agent("rtracklayer"), config(verbose = verbose),
+                       ...,
+                       query = as.list(query))
+  htmlParse(content(response, as="text"))
 }
 
-httpPost <- function(url, .form = list(), .parse = TRUE, ...) {
-  form <- postForm(url, .params = .form,
-                   .opts=list(..., useragent = "rtracklayer",
-                              verbose=getOption("rtracklayer.http.verbose",
-                                                FALSE)))
-  if (.parse)
-    htmlParse(form)
-  else form
+rtracklayerPOST <- function(url, ..., body = list()) {
+  verbose <- getOption("rtracklayer.http.verbose", FALSE)
+  verbose <- as.integer(isTRUE(as.logical(verbose)))
+  response <- POST(url, user_agent("rtracklayer"), config(verbose = verbose),
+                        ...,
+                        body = as.list(body))
+  htmlParse(content(response, as = "text"))
 }
 
 httpShow <- function(url, .form = list(), ...)
@@ -55,10 +50,9 @@ urlEncode <- function(str, chars = "-a-zA-Z0-9$_.+!*'(),", keep = TRUE)
   str
 }
 
-# differs from URLdecode (vectorized)
 urlDecode <- function(str, na.strings="NA")
 {
-  ans <- curlUnescape(str)
+  ans <- URLdecode(str)
   if (!identical(na.strings, "NA"))
       ans[is.na(str)] <- na.strings
   ans
@@ -71,19 +65,27 @@ expandPath <- function(x) {
 }
 
 expandURL <- function(uri) {
-    if(!url.exists(uri))
+    if(HEAD(uri)$status_code != 200L)
         return(uri)
     else {
-        opts <- list(
-            followlocation = TRUE,  # resolve redirects
-            ssl.verifyhost = FALSE, # suppress certain SSL errors
-            ssl.verifypeer = FALSE, 
-            nobody = TRUE, # perform HEAD request
-            verbose = FALSE
-            )
-        curlhandle <- getCurlHandle(.opts = opts)
-        getURL(uri, curl = curlhandle)
-        info <- getCurlInfo(curlhandle)
-        info$effective.url
+        #opts <- list(
+        #    followlocation = TRUE,  # resolve redirects
+        #    ssl.verifyhost = FALSE, # suppress certain SSL errors
+        #    ssl.verifypeer = FALSE,
+        #    nobody = TRUE, # perform HEAD request
+        #    verbose = FALSE
+        #    )
+        #curlhandle <- getCurlHandle(.opts = opts)
+        #getURL(uri, curl = curlhandle)
+        #info <- getCurlInfo(curlhandle)
+        #info$effective.url
+
+        config <- list(followlocation = 1,
+                       ssl_verifyhost = 0,
+                       ssl_verifypeer = 0,
+                       nobody = 1,
+                       verbose = 0)
+        ## nobody = 1 seems to be ignored and HEAD() doesn't work here
+        GET(uri, config)$url
     }
 }

@@ -86,8 +86,7 @@ uriExists <- function(x) {
   if (uriIsLocal(uri)) {
     exists <- file.exists(uri$path)
   } else {
-    txt <- getURL(x, header = TRUE)
-    exists <- grepl("^HTTP/\\d+\\.\\d+ 200 OK", txt)
+    exists <- HEAD(x)$status_code == 200L
   }
   exists
 }

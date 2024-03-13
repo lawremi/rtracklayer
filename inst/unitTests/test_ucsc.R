@@ -44,6 +44,7 @@ test_ucsc <- function(x) {
 
     ## TEST: ucscTableQuery with UCSCSession with NAMES selection
     session <- browserSession()
+    genome(session) <- "hg38"
     query <- ucscTableQuery(session, table = table_name, names = "ABBA01004242.1")
     checkIdentical(range(query), full_range)
     checkIdentical(getTable(query), selected_table)
