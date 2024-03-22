@@ -585,7 +585,7 @@ boolean result = FALSE;
 /* Protect from bad input. */
 if (start >= end)
     return result;
-bzero(summary, summarySize * sizeof(summary[0]));
+memset(summary, 0, summarySize * sizeof(summary[0]));
 
 /* Figure out what size of data we want.  We actually want to get 2 data points per summary
  * value if possible to minimize the effect of a data point being split between summary pixels. */
