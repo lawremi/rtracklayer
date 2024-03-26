@@ -68,8 +68,8 @@ GFFcolnames(GFF1=FALSE)
           \link[GenomicRanges]{GRanges} object from a data frame or
           \link[S4Vectors]{DataFrame} object.
 
-    \item \code{\link[GenomicFeatures]{makeTxDbFromGFF}} in the
-          \pkg{GenomicFeatures} package for importing a GFF file as a
+    \item \code{\link[txdbmaker]{makeTxDbFromGFF}} in the
+          \pkg{txdbmaker} package for importing a GFF file as a
           \link[GenomicFeatures]{TxDb} object.
 
     \item The \link[S4Vectors]{DataFrame} class in the \pkg{S4Vectors}
