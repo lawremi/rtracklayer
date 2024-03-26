@@ -52,7 +52,7 @@ urlEncode <- function(str, chars = "-a-zA-Z0-9$_.+!*'(),", keep = TRUE)
 
 urlDecode <- function(str, na.strings="NA")
 {
-  ans <- URLdecode(str)
+  ans <- curl_unescape(str)
   if (!identical(na.strings, "NA"))
       ans[is.na(str)] <- na.strings
   ans

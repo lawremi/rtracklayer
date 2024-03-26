@@ -912,8 +912,8 @@ copyResourceToTrackHub <- function(object, uri) {
         dest_file <- paste(object_uri$path, trackDbValue, filename, sep = "/")
         dest_file <- sub("^/", "", dest_file)
         if (paste(uri(object), filename, sep = "/") != uri)
-            ### FIXME: URLdecode() here because of R bug
-            download.file(URLdecode(uri), dest_file)
+            ### FIXME: curl_unescape() here because of R bug
+            download.file(curl_unescape(uri), dest_file)
     }
     else stop("TrackHub is not local; cannot copy track")
     filename

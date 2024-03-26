@@ -115,7 +115,7 @@ QuickloadGenome_annotFiles <- function(x) {
 
 setMethod("names", "QuickloadGenome", function(x) {
   x_mcols <- mcols(x)
-  structure(sapply(as.character(x_mcols$name), URLdecode),
+  structure(curl_unescape(as.character(x_mcols$name)),
             names = as.character(x_mcols$title))
 })
 
@@ -283,8 +283,8 @@ copyResourceToQuickload <- function(object, uri) {
   if (uriIsLocal(object_uri)) {
     dest_file <- file.path(object_uri$path, filename)
     if (paste(uri(object), filename, sep = "/") != uri)
-### FIXME: URLdecode() here because of R bug
-      download.file(URLdecode(uri), dest_file)
+### FIXME: curl_unescape() here because of R bug
+      download.file(curl_unescape(uri), dest_file)
   } else stop("Quickload is not local; cannot copy track")
   filename
 }

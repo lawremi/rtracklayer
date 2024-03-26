@@ -13,7 +13,7 @@ import(zlibbioc)
 ###
 
 importFrom("stats", offset, setNames)
-importFrom("utils", count.fields, URLdecode, URLencode, browseURL,
+importFrom("utils", count.fields, URLencode, browseURL,
            download.file, read.table, read.csv, type.convert, write.table,
            packageVersion, strcapture)
 importFrom("tools", file_path_as_absolute, file_ext, file_path_sans_ext)
@@ -27,6 +27,8 @@ importFrom("XML", getNodeSet, xmlValue, xmlAttrs, htmlTreeParse, xmlTreeParse,
            xmlInternalTreeParse, parseURI, newXMLNode, xmlChildren,
            addChildren, removeChildren, readHTMLTable)
 importMethodsFrom("XML", saveXML)
+
+importFrom("curl", curl_unescape)
 
 importFrom("httr", GET, HEAD, POST, config, user_agent, set_cookies, content,
            upload_file)
