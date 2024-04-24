@@ -1,11 +1,14 @@
+LIBPSL = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libpsl.a),-lpsl),)
+LIBBROTLI = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libbrotlidec.a),-lbrotlidec -lbrotlicommon),)
+
 ZLIB_CFLAGS+=$(shell echo 'zlibbioc::pkgconfig("PKG_CFLAGS")'|\
     "${R_HOME}/bin/R" --vanilla --slave)
 PKG_LIBS+=$(shell echo 'zlibbioc::pkgconfig("PKG_LIBS_shared")' |\
     "${R_HOME}/bin/R" --vanilla --slave)
 
-PKG_LIBS+=-lcurl -lssh2 -lssl -lz -lwldap32 -lbcrypt -lcrypto\
-    -lgcrypt -lcrypt32 -lgpg-error -lidn2 -lunistring -liconv\
-    -lzstd -lws2_32
+PKG_LIBS+=-lcurl $(LIBPSL) $(LIBBROTLI) -lssh2 -lssl -lwldap32\
+    -lbcrypt -lcrypto -lgcrypt -lcrypt32 -lgpg-error -lidn2\
+    -lunistring -liconv -lzstd -lws2_32 -lz
 include Makevars.common
 OBJECTS = $(PKG_OBJECTS) $(UCSC_OBJECTS:%=ucsc/%)
 
