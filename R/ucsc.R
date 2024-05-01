@@ -446,7 +446,7 @@ setMethod("show", "UCSCSchema", function(object) {
 setMethod("track", "UCSCSession",
           function(object, name, ...)
           {
-            .Defunct(msg = "track is meaningless now you only go by the table")
+              track(ucscTableQuery(object, table=name, ...))
           })
 
 ## download a trackSet by name
