@@ -122,4 +122,20 @@ test_ucsc <- function(x) {
     bView <- browserView(new("UCSCSession"), browse = FALSE)
     checkTrue(!is.null(bView@session@views$instances))
     checkTrue(is.character(bView@hgsid) && length(bView@hgsid) != 0L)
+
+    # TEST : range(UCSCSession)<-
+    session <- new("UCSCSession")
+    range <- GRanges("chr7:200000-250000")
+    range(session) <- range
+    returned <- range(session)
+    checkIdentical(as.character(seqnames(range)), as.character(seqnames(returned)))
+    checkIdentical(start(range), start(returned))
+    checkIdentical(end(range), end(returned))
+    checkIdentical(strand(range), strand(returned))
+    checkIdentical(elementMetadata(range), elementMetadata(returned))
+
+    # TEST : genome(UCSCSession)<-
+    session <- new("UCSCSession")
+    genome(session) <- "hg18"
+    checkIdentical(genome(session), "hg18")
 }
