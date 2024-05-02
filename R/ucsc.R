@@ -1375,33 +1375,6 @@ setMethod("import", "UCSCFile",
             GRangesList(tsets, compress=FALSE)
           })
 
-
-
-setMethod("login", "UCSCSession", function(x, username, password) {
-  ucscPost(x, "hgLogin", list(hgLogin.do.displayLogin = "Login",
-                              hgLogin_userName = username,
-                              hgLogin_password = password))
-  
-})
-
-setMethod("saveView", "UCSCView", function(x, name, username, password,
-                                           share = TRUE)
-          {
-            if (!missing(username))
-              login(browserSession(x), username, password)
-            ucscPost(x, "hgSession",
-                     list(hgS_newSessionName = name,
-                          hgS_newSessionShare = if (share) "on" else "off"))
-          })
-
-setMethod("restoreView", "UCSCSession",
-          function(x, name, username, password) {
-            if (!missing(username))
-              login(x, username, password)
-            ucscPost(x, "hgSession",
-                     setNames(list("use"), paste0("hgS_load_", name)))
-          })
-
 ############ INTERNAL API ############
 
 ## every cgi variable is stored in the 'cart'
