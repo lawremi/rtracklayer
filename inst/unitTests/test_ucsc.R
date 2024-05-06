@@ -91,4 +91,56 @@ test_ucsc <- function(x) {
     checkIdentical(range(query), trackhub_custom_range)
     checkIdentical(track(query), trackhub_track[1])
     checkIdentical(getTable(query), as.data.frame(trackhub_track)[1,])
+
+
+
+
+    # TEST: UCSCSession gets initialize
+    ucscsession <- new("UCSCSession")
+    checkTrue(is.character(ucscsession@hguid) && length(ucscsession@hguid) != 0L)
+
+    # TEST ucscCart returns details of the activeView
+    ucscCart <- rtracklayer:::ucscCart(new("UCSCSession"))
+    checkTrue(length(ucscCart) != 0L)
+
+    # TEST ucscTableTracks returns track and table details associated with a genome
+    tracksNames <- rtracklayer:::ucscTableTracks("hg18")
+    checkTrue(length(tracksNames) != 0L)
+
+    # TEST ucscTables returns tables associated with a track
+    tables <- ucscTables("hg18", "Assembly")
+    checkTrue(length(tables) != 0L)
+
+    # TEST ucscTracks retrieves the modes and ids
+    tracks <- rtracklayer:::ucscTracks(new("UCSCSession"))
+    checkIdentical(length(tracks@ids), length(tracks@modes))
+    checkTrue(length(tracks@ids) != 0L)
+
+    # TEST browserView with browse = F
+    # caveat:we have to test manually whether with `browse = T`
+    # UCSC sets the correct view onto the browser.
+    bView <- browserView(new("UCSCSession"), browse = FALSE)
+    checkTrue(!is.null(bView@session@views$instances))
+    checkTrue(is.character(bView@hgsid) && length(bView@hgsid) != 0L)
+
+    # TEST : range(UCSCSession)<-
+    session <- new("UCSCSession")
+    range <- GRanges("chr7:200000-250000")
+    range(session) <- range
+    returned <- range(session)
+    checkIdentical(as.character(seqnames(range)), as.character(seqnames(returned)))
+    checkIdentical(start(range), start(returned))
+    checkIdentical(end(range), end(returned))
+    checkIdentical(strand(range), strand(returned))
+    checkIdentical(elementMetadata(range), elementMetadata(returned))
+
+    # TEST : genome(UCSCSession)<-
+    session <- new("UCSCSession")
+    genome(session) <- "hg18"
+    checkIdentical(genome(session), "hg18")
+
+    # TEST : track(GRanges)<-
+    session <- new("UCSCSession")
+    track(session, "test_track") <- GRanges("chr7:1-50")
+    checkTrue("test_track" %in% names(trackNames(session)))
 }
