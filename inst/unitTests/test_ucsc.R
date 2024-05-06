@@ -138,4 +138,9 @@ test_ucsc <- function(x) {
     session <- new("UCSCSession")
     genome(session) <- "hg18"
     checkIdentical(genome(session), "hg18")
+
+    # TEST : track(GRanges)<-
+    session <- new("UCSCSession")
+    track(session, "test_track") <- GRanges("chr7:1-50")
+    checkTrue("test_track" %in% names(trackNames(session)))
 }
