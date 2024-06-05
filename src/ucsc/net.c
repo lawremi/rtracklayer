@@ -13,7 +13,7 @@
 
 time_t header_get_last_modified(CURL *curl) {
     curl_off_t last_modified;
-    CURLcode status = curl_easy_getinfo(curl, CURLINFO_FILETIME_T, &last_modified);
+    CURLcode status = curl_easy_getinfo(curl, CURLINFO_FILETIME, &last_modified);
 
     if ((CURLE_OK == status) && (last_modified >= 0)) {
         struct tm *utc_tm_info = gmtime(&last_modified);
