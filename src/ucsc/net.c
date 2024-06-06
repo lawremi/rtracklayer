@@ -13,7 +13,46 @@
 
 time_t header_get_last_modified(CURL *curl) {
     curl_off_t last_modified;
-    CURLcode status = curl_easy_getinfo(curl, CURLINFO_FILETIME_T, &last_modified);
+
+    #ifdef __linux__
+        FILE *file = fopen("/etc/lsb-release", "r");
+        if (file == NULL) {
+            /* fail to find lsb release file hence cannot determine distribution
+             * using default */
+            CURLcode status = curl_easy_getinfo(curl, CURLINFO_FILETIME_T, &last_modified);
+        } else {
+            #define MAX_LINE_LENGTH 256
+            char line[MAX_LINE_LENGTH], distrib_id[25] = {0};
+            double distrib_release = 0.0;
+
+            while (fgets(line, MAX_LINE_LENGTH, file) != NULL) {
+                sscanf(line, "DISTRIB_ID=%s", distrib_id);
+                sscanf(line, "DISTRIB_RELEASE=%lf", &distrib_release);
+            }
+
+            fclose(file);
+
+            if (distrib_id[0] == '\0') {
+                printf("Error parsing DISTRIB_ID.\n");
+                return 1;
+            }
+
+            if (distrib_release == 0.0) {
+                printf("Error parsing DISTRIB_RELEASE.\n");
+                return 1;
+            }
+
+            if (strncmp(distrib_id, "Ubuntu", strlen(distrib_id)) == 0 && distrib_release < 20.04) {
+                CURLcode status = curl_easy_getinfo(curl, CURLINFO_FILETIME, &last_modified);
+            } else {
+            /* handle for Ubuntu 20.04 and newer versions */
+                CURLcode status = curl_easy_getinfo(curl, CURLINFO_FILETIME_T, &last_modified);
+            }
+        }
+    #else
+        /* Other platforms */
+        CURLcode status = curl_easy_getinfo(curl, CURLINFO_FILETIME_T, &last_modified);
+    #endif
 
     if ((CURLE_OK == status) && (last_modified >= 0)) {
         struct tm *utc_tm_info = gmtime(&last_modified);
