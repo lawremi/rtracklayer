@@ -12,21 +12,15 @@
 #include "cheapcgi.h"
 
 time_t header_get_last_modified(CURL *curl) {
-    CURLcode status;
     curl_off_t last_modified;
 
-    curl_version_info_data *ver = curl_version_info(CURLVERSION_NOW);
-    unsigned int major = (ver->version_num >> 16) & 0xff;
-    unsigned int minor = (ver->version_num >> 8) & 0xff;
-    unsigned int patch = ver->version_num & 0xff;
+    #if LIBCURL_VERSION_NUM >= 0x073b00
+        #define FILETIME CURLINFO_FILETIME_T
+    #else
+        #define FILETIME CURLINFO_FILETIME
+    #endif
 
-    if (major > 7)
-        status = curl_easy_getinfo(curl, CURLINFO_FILETIME_T, &last_modified);
-    if (major == 7 && minor >= 59 && patch >= 0)
-        status = curl_easy_getinfo(curl, CURLINFO_FILETIME_T, &last_modified);
-    else
-        status = curl_easy_getinfo(curl, CURLINFO_FILETIME, &last_modified);
-
+    CURLcode status = curl_easy_getinfo(curl, FILETIME, &last_modified);
 
     if ((CURLE_OK == status) && (last_modified >= 0)) {
         struct tm *utc_tm_info = gmtime(&last_modified);
