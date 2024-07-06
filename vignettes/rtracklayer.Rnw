@@ -658,11 +658,11 @@ This simple example identifies repeat-masked regions in and around the transcrip
 of the human E2F3 gene, in hg19:
 <<rmsk.e2f3, eval=FALSE>>=
 library (rtracklayer)
-mySession = browserSession("UCSC")
+mySession <- browserSession("UCSC")
 genome(mySession) <- "hg19"
 e2f3.tss.grange <- GRanges("chr6", IRanges(20400587, 20403336))
 tbl.rmsk <- getTable(
-   ucscTableQuery(mySession, track="rmsk", 
+   ucscTableQuery(mySession, track="RepeatMasker", 
                    range=e2f3.tss.grange, table="rmsk"))
 @ 
 There are several important points to understand about this example:
