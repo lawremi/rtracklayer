@@ -2,6 +2,7 @@ Package: rtracklayer
 Title: R interface to genome annotation files and the UCSC genome browser
 Version: 1.65.0
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
+SystemRequirements: libcurl (>=7.55)
 Depends: R (>= 3.3), methods, GenomicRanges (>= 1.37.2)
 Imports: XML (>= 1.98-0), BiocGenerics (>= 0.35.3),
          S4Vectors (>= 0.23.18), IRanges (>= 2.13.13), XVector (>= 0.19.7),
