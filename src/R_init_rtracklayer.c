@@ -32,9 +32,6 @@ static const R_CallMethodDef callMethods[] = {
   CALLMETHOD_DEF(BBDFile_write, 6),
   /* twobit.c */
   CALLMETHOD_DEF(DNAString_to_twoBit, 3),
-  CALLMETHOD_DEF(TwoBits_write, 2),
-  CALLMETHOD_DEF(TwoBitFile_seqlengths, 1),
-  CALLMETHOD_DEF(TwoBitFile_read, 4),
   /* utils.c */
   CALLMETHOD_DEF(CharacterList_pasteCollapse, 2),
   {NULL, NULL, 0}

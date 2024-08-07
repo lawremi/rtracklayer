@@ -1,7 +1,14 @@
+PKG_LIBS=-lz -pthread @OPENSSL_LIBS@ -lcurl
+PKG_LIBS+=$(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript" -e \
+    'Rtwobitlib::pkgconfig("PKG_LIBS")')
+
+PKG_CPPFLAGS=@OPENSSL_CFLAGS@ @SSL_CPPFLAGS@
+PKG_CPPFLAGS+=$(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript" -e \
+    'Rtwobitlib::pkgconfig("PKG_CPPFLAGS")')
+
 include Makevars.common
 OBJECTS = $(PKG_OBJECTS) $(UCSC_OBJECTS:%=ucsc/%)
-PKG_LIBS=-lz -pthread @OPENSSL_LIBS@ -lcurl
-PKG_CPPFLAGS=@OPENSSL_CFLAGS@ @SSL_CPPFLAGS@ -D_FILE_OFFSET_BITS=64
+
 all: $(SHLIB)
 
 clean:

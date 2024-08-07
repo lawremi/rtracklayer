@@ -24,16 +24,12 @@ TwoBitFile <- function(path) {
 }
 `2BitFile` <- TwoBitFile
 
-.seqlengths_TwoBitFile <- function(x) {
-    .Call(TwoBitFile_seqlengths, path(x))
-}
-
 fastaSeqnames <- function(x) {
     sub(" .*", "", x)
 }
 
 setMethod("seqinfo", "TwoBitFile", function(x) {
-              seqlengths <- .seqlengths_TwoBitFile(x)
+              seqlengths <- Rtwobitlib::twobit_seqlengths(path(x))
               names(seqlengths) <- fastaSeqnames(names(seqlengths))
               Seqinfo(names(seqlengths), seqlengths)
           })
@@ -57,7 +53,7 @@ setMethod("export", c("ANY", "TwoBitFile"), function(object, con, format, ...) {
 setMethod("export", c("DNAStringSet", "TwoBitFile"),
           function(object, con, format) {
             if (!missing(format))
-              checkArgFormat(con, format)  
+              checkArgFormat(con, format)
             seqnames <- names(object)
             if (is.null(seqnames))
               seqnames <- as.character(seq(length(object)))
@@ -71,9 +67,10 @@ setMethod("export", c("DNAStringSet", "TwoBitFile"),
             if (any(width(object) == 0L)) {
               stop("Empty strings are not yet supported")
             }
-            invisible(.TwoBits_export(mapply(.DNAString_to_twoBit, object,
-                                             seqnames),
-                                      twoBitPath(path(con))))
+            Rtwobitlib::twobit_write(
+                x = as.character(object),
+                filepath = twoBitPath(path(con))
+            )
           })
 
 ## Hidden export of a list of twoBit pointers.
@@ -118,15 +115,16 @@ setMethod("import", "TwoBitFile",
                    ...)
           {
             lkup <- get_seqtype_conversion_lookup("B", "DNA")
-            sl <- .seqlengths_TwoBitFile(con)
+            sl <- Rtwobitlib::twobit_seqlengths(path(con))
             sn <- extractROWS(names(sl), match(seqnames(which), seqlevels(con)))
             if (any(is.na(sn))) {
                 stop("'seqnames' not in 2bit file: ",
                      paste0("'", unique(seqnames(which)[is.na(sn)]), "'",
                             collapse=", "))
             }
-            ans <- .Call(TwoBitFile_read, twoBitPath(path(con)),
-                         sn, as(ranges(which), "IRanges"), lkup)
+            read2b <- Rtwobitlib::twobit_read(twoBitPath(path(con)))
+            irs <- as(ranges(which), "IRanges")
+            ans <- DNAStringSet(read2b, start(irs), end(irs))
             names(ans) <- names(which)
             ans
           })
