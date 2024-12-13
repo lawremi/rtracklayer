@@ -6,7 +6,6 @@ useDynLib(rtracklayer, .registration = TRUE)
 
 import(methods)
 import(BiocGenerics)
-import(zlibbioc)
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### base packages
