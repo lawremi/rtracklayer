@@ -568,25 +568,6 @@ if(removeCol == rbTreeBlack)
 return returnItem;
 }
 
-/* Some variables to help recursively dump tree. */
-static int dumpLevel;	/* Indentation level. */
-static FILE *dumpFile;  /* Output file */
-static void (*dumpIt)(void *item, FILE *f);  /* Item dumper. */
-
-static void rTreeDump(struct rbTreeNode *n)
-/* Recursively dump. */
-{
-if (n == NULL)
-    return;
-spaceOut(dumpFile, ++dumpLevel * 3);
-fprintf(dumpFile, "%c ", (n->color ==  rbTreeRed ? 'r' : 'b'));
-dumpIt(n->item, dumpFile);
-fprintf(dumpFile, "\n");
-rTreeDump(n->left);
-rTreeDump(n->right);
---dumpLevel;
-}
-
 /* Variables to help recursively traverse tree. */
 static void (*doIt)(void *item);
 static void *minIt, *maxIt;
@@ -670,16 +651,3 @@ rTreeTraverseWithContext(tree->root, &ctx);
 }
 
 struct slRef *itList;  /* List of items that rbTreeItemsInRange returns. */
-
-static void addRef(void *item)
-/* Add item it itList. */
-{
-refAdd(&itList, item);
-}
-
-static void addRefWithContext(void *item, void *context)
-/* Add item it itList. */
-{
-struct slRef **pList = context;
-refAdd(pList, item);
-}

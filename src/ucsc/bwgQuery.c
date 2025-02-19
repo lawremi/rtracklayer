@@ -44,85 +44,6 @@ head->itemCount = memReadBits16(&pt, isSwapped);
 *pPt = pt;
 }
 
-static int bigWigBlockDumpIntersectingRange(boolean isSwapped, char *blockPt, char *blockEnd, 
-	char *chrom, bits32 rangeStart, bits32 rangeEnd, int maxCount, FILE *out)
-/* Print out info on parts of block that intersect start-end, block starting at current position. */
-{
-struct bwgSectionHead head;
-bwgSectionHeadFromMem(&blockPt, &head, isSwapped);
-bits16 i;
-float val;
-int outCount = 0;
-
-switch (head.type)
-    {
-    case bwgTypeBedGraph:
-	{
-	fprintf(out, "#bedGraph section %s:%u-%u\n",  chrom, head.start, head.end);
-	for (i=0; i<head.itemCount; ++i)
-	    {
-	    bits32 start = memReadBits32(&blockPt, isSwapped);
-	    bits32 end = memReadBits32(&blockPt, isSwapped);
-	    val = memReadFloat(&blockPt, isSwapped);
-	    if (rangeIntersection(rangeStart, rangeEnd, start, end) > 0)
-		{
-		fprintf(out, "%s\t%u\t%u\t%g\n", chrom, start, end, val);
-		++outCount;
-		if (maxCount != 0 && outCount >= maxCount)
-		    break;
-		}
-	    }
-	break;
-	}
-    case bwgTypeVariableStep:
-	{
-	fprintf(out, "variableStep chrom=%s span=%u\n", chrom, head.itemSpan);
-	for (i=0; i<head.itemCount; ++i)
-	    {
-	    bits32 start = memReadBits32(&blockPt, isSwapped);
-	    val = memReadFloat(&blockPt, isSwapped);
-	    if (rangeIntersection(rangeStart, rangeEnd, start, start+head.itemSpan) > 0)
-		{
-		fprintf(out, "%u\t%g\n", start+1, val);
-		++outCount;
-		if (maxCount != 0 && outCount >= maxCount)
-		    break;
-		}
-	    }
-	break;
-	}
-    case bwgTypeFixedStep:
-	{
-	boolean gotStart = FALSE;
-	bits32 start = head.start;
-	for (i=0; i<head.itemCount; ++i)
-	    {
-	    val = memReadFloat(&blockPt, isSwapped);
-	    if (rangeIntersection(rangeStart, rangeEnd, start, start+head.itemSpan) > 0)
-	        {
-		if (!gotStart)
-		    {
-		    fprintf(out, "fixedStep chrom=%s start=%u step=%u span=%u\n", 
-			    chrom, start+1, head.itemStep, head.itemSpan);
-		    gotStart = TRUE;
-		    }
-		fprintf(out, "%g\n", val);
-		++outCount;
-		if (maxCount != 0 && outCount >= maxCount)
-		    break;
-		}
-	    start += head.itemStep;
-	    }
-	break;
-	}
-    default:
-        internalErr();
-	break;
-    }
-assert( (maxCount != 0 && outCount >= maxCount) || (blockPt == blockEnd));
-return outCount;
-}
-
 struct bbiInterval *bigWigIntervalQuery(struct bbiFile *bwf, char *chrom, bits32 start, bits32 end,
 	struct lm *lm)
 /* Get data for interval.  Return list allocated out of lm. */
@@ -161,17 +82,15 @@ for (block = blockList; block != NULL; )
     for (;block != afterGap; block = block->next)
         {
 	/* Uncompress if necessary. */
-	char *blockPt, *blockEnd;
+	char *blockPt;
 	if (uncompressBuf)
 	    {
 	    blockPt = uncompressBuf;
-	    int uncSize = zUncompress(blockBuf, block->size, uncompressBuf, bwf->uncompressBufSize);
-	    blockEnd = blockPt + uncSize;
+	    zUncompress(blockBuf, block->size, uncompressBuf, bwf->uncompressBufSize);
 	    }
 	else
 	    {
 	    blockPt = blockBuf;
-	    blockEnd = blockPt + block->size;
 	    }
 
 	/* Deal with insides of block. */
@@ -246,7 +165,6 @@ for (block = blockList; block != NULL; )
 		internalErr();
 		break;
 	    }
-	assert(blockPt == blockEnd);
 	blockBuf += block->size;
 	}
     freeMem(mergedBuf);

@@ -473,7 +473,6 @@ for (i=0; i<itemCount; i += nodeSizePer)
     writeOne(f, shortCountOne);
 
     /* Write out the slots that are used one by one, and do sanity check. */
-    int slotsUsed = 0;
     long endIx = i + nodeSizePer;
     if (endIx > itemCount)
         endIx = itemCount;
@@ -485,9 +484,7 @@ for (i=0; i<itemCount; i += nodeSizePer)
 	mustWrite(f, keyBuf, keySize);
 	writeOne(f, nextChild);
 	nextChild += bytesInNextLevelBlock;
-	++slotsUsed;
 	}
-    assert(slotsUsed == shortCountOne);
 
     /* Write out empty slots as all zero. */
     int slotSize = keySize + sizeof(bits64);

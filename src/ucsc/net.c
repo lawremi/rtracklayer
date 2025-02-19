@@ -33,6 +33,8 @@ time_t header_get_last_modified(CURL *curl) {
         return 0;
 
     errAbort("curl_easy_getinfo() failed: %s\n", curl_easy_strerror(status));
+
+    return 0;
 }
 
 long long header_get_content_length(CURL *curl) {
@@ -54,6 +56,8 @@ long long header_get_content_length(CURL *curl) {
         return content_length;
 
     errAbort("curl_easy_getinfo() failed: %s\n", curl_easy_strerror(status));
+
+    return 0;
 }
 
 CURL *wrapped_curl_init() {
@@ -165,7 +169,7 @@ int netUrlOpenSockets(char *url, int *retCtrlSocket) {
             return sockfd;
         } else if (startsWith("ftp://", url)) {
             curl_socket_t ctrlSocket;
-            CURLcode status = wrapped_curl_request(curl, GET);
+            wrapped_curl_request(curl, GET);
 
             #if LIBCURL_VERSION_NUM >= 0x072d00
                 #define CI_SOCKET CURLINFO_ACTIVESOCKET
@@ -182,6 +186,7 @@ int netUrlOpenSockets(char *url, int *retCtrlSocket) {
             return ctrlSocket;
         } else {
             errAbort("Sorry, can only netUrlOpen http, https and ftp currently, not '%s'", url);
+	    return 0;
         }
     }
 }

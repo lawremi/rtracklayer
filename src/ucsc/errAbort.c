@@ -207,21 +207,6 @@ if (ptav->abortIx <= 0)
 --ptav->abortIx;
 }
 
-static void debugAbort()
-/* Call the debugger. */
-{
-fflush(stdout);
-assert(FALSE);
-defaultAbort();
-}
-
-static void warnAbortHandler(char *format, va_list args)
-/* warn handler that also aborts. */
-{
-defaultVaWarn(format, args);
-noWarnAbort();
-}
-
 void pushSilentWarnHandler()
 /* Set warning handler to be quiet.  Do a popWarnHandler to restore. */
 {

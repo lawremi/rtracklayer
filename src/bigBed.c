@@ -335,12 +335,16 @@ SEXP BBDFile_write(SEXP r_seqlengths, SEXP r_bedString, SEXP r_autosql,
 
   /* Write out extra index stuff if need be. */
   bits64 extraIndexListOffset = 0;
+#ifndef NDEBUG
   bits64 extraIndexListEndOffset = 0;
+#endif
   if (extraIndexList != NULL) {
     extraIndexListOffset = ftell(f);
     int extraIndexSize = 16 + 4*1;   /* Fixed record size 16, plus 1 times field size of 4 */
     repeatCharOut(f, 0, extraIndexSize*extraIndexCount);
+#ifndef NDEBUG
     extraIndexListEndOffset = ftell(f);
+#endif
   }
 
   /* Write out chromosome/size database. */

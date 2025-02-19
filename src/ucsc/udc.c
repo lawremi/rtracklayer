@@ -1067,7 +1067,7 @@ unsigned long djb2_hash(unsigned char *str) {
     unsigned long hash = 5381;
     int c;
 
-    while (c = *str++)
+    while ((c = *str++))
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
     return hash;
@@ -1080,7 +1080,7 @@ char* get_hashed_basename_path(char *afterProtocol) {
 
     /* calculate size of url without basename and total buffer size*/
     int url_size = strlen(afterProtocol) - strlen(name);
-    int total_size = url_size + floor(1.0 + log10((double) llabs(hash_id))) + 1;
+    int total_size = url_size + floor(1.0 + log10((double) hash_id)) + 1;
 
     /* substring afterProtocol to get url without basename*/
     char path[url_size + 1];
@@ -1268,31 +1268,6 @@ if (file != NULL)
     udcBitmapClose(&file->bits);
     }
 freez(pFile);
-}
-
-static void qDecode(const char *input, char *buf, size_t size)
-/* Reverse the qEncode performed on afterProcotol above into buf or abort. */
-{
-safecpy(buf, size, input);
-char c, *r = buf, *w = buf;
-while ((c = *r++) != '\0')
-    {
-    if (c == 'Q')
-	{
-	int q;
-	if (sscanf(r, "%02X", &q))
-	    {
-	    *w++ = (char)q;
-	    r += 2;
-	    }
-	else
-	    errAbort("qDecode: input \"%s\" does not appear to be properly formatted "
-		     "starting at \"%s\"", input, r);
-	}
-    else
-	*w++ = c;
-    }
-*w = '\0';
 }
 
 long long int udcSizeFromCache(char *url, char *cacheDir)

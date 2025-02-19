@@ -111,24 +111,6 @@ int dlCount(struct dlList *list)
 return slCount(list->head) - 1;
 }
 
-
-struct dlSorter 
-/* Helper structure for sorting dlNodes preserving order */
-    {
-    struct dlNode *node;
-    };
-
-static int (*compareFunc)(const void *elem1, const void *elem2);
-/* Node comparison pointer, just used by dlSortNodes and helpers. */
-
-static int dlNodeCmp(const void *elem1, const void *elem2)
-/* Compare two dlSorters indirectly, by calling compareFunc. */
-{
-struct dlSorter *a = (struct dlSorter *)elem1;
-struct dlSorter *b = (struct dlSorter *)elem2;
-return compareFunc(&a->node->val, &b->node->val);
-}
-    
 boolean dlEmpty(struct dlList *list)
 /* Return TRUE if list is empty. */
 {

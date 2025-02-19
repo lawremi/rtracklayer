@@ -32,17 +32,6 @@ else
     return 0;
 }
 
-
-static void *sumInt(void *a, void *b)
-/* Local function used by rangeTreeAddValCount, which sums two ints a and b, 
- * referenced by void pointers, returning the result in a */
-{
-int *i = a, *j = b;
-*i += *j;
-return a;
-}
-
-
 struct range *rangeTreeAddVal(struct rbTree *tree, int start, int end, void *val, void *(*mergeVals)(void *existingVal, void *newVal) )
 /* Add range to tree, merging with existing ranges if need be. 
  * If this is a new range, set the value to this val.

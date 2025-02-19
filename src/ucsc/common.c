@@ -1897,9 +1897,6 @@ if (blen+slen > bufSize-1)
 strcat(buf, src);
 }
 
-static char *naStr = "n/a";
-static char *emptyStr = "";
-
 
 
 char *skipToNumeric(char *s)
@@ -1944,67 +1941,6 @@ if (strptime(date,format,&storage)==NULL)
     return 0;
 else
     return mktime(&storage);
-}
-
-static int daysOfMonth(struct tm *tp)
-/* Returns the days of the month given the year */
-{
-int days=0;
-switch(tp->tm_mon)
-    {
-    case 3:
-    case 5:
-    case 8:
-    case 10:    days = 30;
-                break;
-    case 1:     days = 28;
-                if ( (tp->tm_year % 4) == 0
-                &&  ((tp->tm_year % 20) != 0 || (tp->tm_year % 100) == 0) )
-                    days = 29;
-                break;
-    default:    days = 31;
-                break;
-    }
-return days;
-}
-
-static void dateAdd(struct tm *tp,int addYears,int addMonths,int addDays)
-/* Add years,months,days to a date */
-{
-tp->tm_mday  += addDays;
-tp->tm_mon   += addMonths;
-tp->tm_year  += addYears;
-int dom=28;
-while ( (tp->tm_mon >11  || tp->tm_mon <0)
-    || (tp->tm_mday>dom || tp->tm_mday<1) )
-    {
-    if (tp->tm_mon>11)   // First month: tm.tm_mon is 0-11 range
-        {
-        tp->tm_year += (tp->tm_mon / 12);
-        tp->tm_mon  = (tp->tm_mon % 12);
-        }
-    else if (tp->tm_mon<0)
-        {
-        tp->tm_year += (tp->tm_mon / 12) - 1;
-        tp->tm_mon  =  (tp->tm_mon % 12) + 12;
-        }
-    else
-        {
-        dom = daysOfMonth(tp);
-        if (tp->tm_mday>dom)
-            {
-            tp->tm_mday -= dom;
-            tp->tm_mon  += 1;
-            dom = daysOfMonth(tp);
-            }
-        else if (tp->tm_mday < 1)
-            {
-            tp->tm_mon  -= 1;
-            dom = daysOfMonth(tp);
-            tp->tm_mday += dom;
-            }
-        }
-    }
 }
 
 #endif

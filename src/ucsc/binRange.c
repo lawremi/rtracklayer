@@ -20,55 +20,8 @@
 static int binOffsetsExtended[] =
 	{4096+512+64+8+1, 512+64+8+1, 64+8+1, 8+1, 1, 0};
 
-static int binOffsets[] = {512+64+8+1, 64+8+1, 8+1, 1, 0};
 #define _binFirstShift 17	/* How much to shift to get to finest bin. */
 #define _binNextShift 3		/* How much to shift to get to next larger bin. */
-
-
-static int binFromRangeStandard(int start, int end)
-/* Given start,end in chromosome coordinates assign it
- * a bin.   There's a bin for each 128k segment, for each
- * 1M segment, for each 8M segment, for each 64M segment,
- * and for each chromosome (which is assumed to be less than
- * 512M.)  A range goes into the smallest bin it will fit in. */
-{
-int startBin = start, endBin = end-1, i;
-startBin >>= _binFirstShift;
-endBin >>= _binFirstShift;
-for (i=0; i<ArraySize(binOffsets); ++i)
-    {
-    if (startBin == endBin)
-        return binOffsets[i] + startBin;
-    startBin >>= _binNextShift;
-    endBin >>= _binNextShift;
-    }
-errAbort("start %d, end %d out of range in findBin (max is 512M)", start, end);
-return 0;
-}
-
-static int binFromRangeExtended(int start, int end)
-/* Given start,end in chromosome coordinates assign it
- * a bin.   There's a bin for each 128k segment, for each
- * 1M segment, for each 8M segment, for each 64M segment,
- * for each 512M segment, and one top level bin for 4Gb.
- *	Note, since start and end are int's, the practical limit
- *	is up to 2Gb-1, and thus, only four result bins on the second
- *	level.
- * A range goes into the smallest bin it will fit in. */
-{
-int startBin = start, endBin = end-1, i;
-startBin >>= _binFirstShift;
-endBin >>= _binFirstShift;
-for (i=0; i<ArraySize(binOffsetsExtended); ++i)
-    {
-    if (startBin == endBin)
-	return _binOffsetOldToExtended + binOffsetsExtended[i] + startBin;
-    startBin >>= _binNextShift;
-    endBin >>= _binNextShift;
-    }
-errAbort("start %d, end %d out of range in findBin (max is 2Gb)", start, end);
-return 0;
-}
 
 static int binFromRangeBinKeeperExtended(int start, int end)
 /* This is just like binFromRangeExtended() above, but it doesn't limit

@@ -11,8 +11,6 @@
 #include "obscure.h"
 #include "linefile.h"
 
-static int _dotForUserMod = 100; /* How often does dotForUser() output a dot. */
-
 int digitsBaseTwo(unsigned long x)
 /* Return base two # of digits. */
 {
