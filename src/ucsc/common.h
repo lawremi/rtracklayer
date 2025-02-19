@@ -382,7 +382,7 @@ void slSort(void *pList, CmpFunction *compare);
  * The arguments to the compare function in real, non-void, life
  * are pointers to pointers. */
 
-void slUniqify(void *pList, CmpFunction *compare, void (*free)());
+void slUniqify(void *pList, CmpFunction *compare, void (*free)(void *));
 /* Return sorted list with duplicates removed.
  * Compare should be same type of function as slSort's compare (taking
  * pointers to pointers to elements.  Free should take a simple
