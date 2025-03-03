@@ -72,7 +72,7 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
               TrackHub, TrackHubGenome, Track, TrackContainer)
 
 ## File classes
-exportClasses(RTLFile, RTLFileList, GFFFile, UCSCFile, BEDFile,
+exportClasses(GFFFile, UCSCFile, BEDFile,
               WIGFile, ChainFile, FastaFile, GFF1File, GFF2File, GFF3File,
               BEDGraphFile, BED15File, GTFFile, GVFFile, BigWigFile,
               BigWigFileList, BigBedFile, TwoBitFile, BEDPEFile)

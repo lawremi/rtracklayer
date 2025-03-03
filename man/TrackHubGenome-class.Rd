@@ -23,7 +23,6 @@
 %% Data Access:
 \alias{track,TrackHubGenome-method}
 \alias{track<-,TrackHubGenome,ANY-method}
-\alias{track<-,TrackHubGenome,RTLFile-method}
 \alias{track<-,TrackHubGenome,RsamtoolsFile-method}
 \alias{track<-,TrackHubGenome,character-method}
 \alias{referenceSequence,TrackHubGenome-method}
