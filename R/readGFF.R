@@ -6,7 +6,7 @@
 .make_filexp_from_filepath <- function(filepath)
 {
     if (isSingleString(filepath))
-        return(XVector:::open_input_files(filepath)[[1L]])
+        return(open_input_files(filepath)[[1L]])
     if (!inherits(filepath, "connection"))
         stop(wmsg("'filepath' must be a single string or a connection"))
     if (!base::isSeekable(filepath))
