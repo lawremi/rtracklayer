@@ -15,7 +15,7 @@ setMethod("import", "TabixFile",
             m <- manager()
             buffer <- queryForResource(m, con, which, header = header)
             on.exit(release(m, buffer))
-            file <- try(FileForFormat(buffer, format), silent = TRUE)
+            file <- try(BiocIO::FileForFormat(buffer, format), silent = TRUE)
             if (is(file, "try-error")) {
               tabixHeader <- headerTabix(con)
               args <- list(...)

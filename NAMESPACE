@@ -129,7 +129,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        organism, releaseDate, mcols, TrackHub, trackhub, TrackHubGenome,
        Track, TrackContainer, wigToBigWig,
        SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path,
-       FileForFormat, cleanupBigWigCache, cleanupBigBedCache, viewURL)
+       cleanupBigWigCache, cleanupBigBedCache, viewURL)
 
 export(GFFFile, UCSCFile, BEDFile, WIGFile,
        ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,

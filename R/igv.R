@@ -13,7 +13,7 @@ handleCategory <- function(x) {
     categories <- lapply(getNodeSet(x, "Category"), handleCategory)
     children <- do.call(rbind, categories)
     children$parenet <- name
-    resources <- BiocFileList(lapply(paths, FileForFormat))
+    resources <- BiocFileList(lapply(paths, BiocIO::FileForFormat))
     df <- DataFrame(category=name, parent=NA, name=names(paths), resources)
     rbind(df, children)
 }

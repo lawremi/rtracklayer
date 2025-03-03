@@ -1288,7 +1288,8 @@ setMethod("export", c("UCSCData", "UCSCFile"),
                               args[!lineArgs], trackLine = trackLine))
             release(m, con)
             if (index)
-              indexTrack(FileForFormat(resource(file), subformat), skip = 1L)
+              indexTrack(BiocIO::FileForFormat(resource(file), subformat),
+                         skip = 1L)
             else invisible(file)
           })
 

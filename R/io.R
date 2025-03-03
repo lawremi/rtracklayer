@@ -43,11 +43,6 @@ setMethod("path", "RTLFile", function(object) {
     r
 })
 
-FileForFormat <- function(path, format = file_ext(path)) {
-    .Deprecated("FileForFormat", msg = "Use BiocIO::FileForFormat")
-    BiocIO::FileForFormat(path, format)
-}
-
 manager <- BiocIO:::manager
 
 connection <- BiocIO:::connection
