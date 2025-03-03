@@ -37,7 +37,7 @@ SeqinfoForBSGenome(genome)
 }
 \details{
   The genome ID is stored in the metadata of the ranges and is
-  retrievable via the \code{\link{genome}} function. The sequence
+  retrievable via the \code{\link[GenomeInfoDb]{genome}} function. The sequence
   lengths are also properly initialized for the genome. This mitigates
   the possibility of accidentally storing intervals for the wrong
   genome.

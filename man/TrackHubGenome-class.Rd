@@ -42,8 +42,8 @@
 
 \section{Constructor}{
   \describe{
-    \item{}{
-      \code{TrackHubGenome(trackhub, genome, create = FALSE}: Constructs a
+    \item{\code{TrackHubGenome(trackhub, genome, create = FALSE}}{
+        Constructs a
         new \code{TrackHubGenome} object, representing \code{genome} in
         the repository \code{trackhub} (a URI string or a
         \code{\linkS4class{TrackHub}} object).
@@ -64,38 +64,38 @@
   In the code snippets below, \code{x} represent a \code{TrackHubGenome} object.
 
   \describe{
-    \item{}{
-      \code{uri(x)}: Get the uri pointing to the genome directory in the
+    \item{\code{uri(x)}}{
+      Get the uri pointing to the genome directory in the
       TrackHub repository.
     }
-    \item{}{
-      \code{genome(x)}: Get the name of the genome, e.g.
+    \item{\code{genome(x)}}{
+      Get the name of the genome, e.g.
       \dQuote{hg19}.
     }
-    \item{}{
-      \code{length(x)}: number of tracks
+    \item{\code{length(x)}}{
+      number of tracks
     }
-    \item{}{
-      \code{names(x), trackNames(x)}: names of the tracks
+    \item{\code{names(x), trackNames(x)}}{
+      names of the tracks
     }
-    \item{}{
-      \code{getTracks(x)}: Get the \code{List} of \code{Track} from the tracks
+    \item{\code{getTracks(x)}}{
+      Get the \code{List} of \code{Track} from the tracks
     }
-    \item{}{
-      \code{trackhub(x)}: Get the TrackHub object that contains this
+    \item{\code{trackhub(x)}}{
+      Get the TrackHub object that contains this
       genome.
     }
-    \item{}{
-      \code{organism(x)}: Get the organism name for this genome,
+    \item{\code{organism(x)}}{
+      Get the organism name for this genome,
       e.g., \dQuote{H sapiens}.
     }
-    \item{}{
-      \code{trackField(x, name, field)}: Get the \code{value} of \code{field} for \code{name} track.
+    \item{\code{trackField(x, name, field)}}{
+      Get the \code{value} of \code{field} for \code{name} track.
     }
-    \item{}{
-      \code{trackField(x, name, field) <- value}: Store the \code{field} and \code{value} for \code{name} track.
+    \item{\code{trackField(x, name, field) <- value}}{
+      Store the \code{field} and \code{value} for \code{name} track.
     }
-    \item{}{\code{writeTrackHub(x)}:
+    \item{\code{writeTrackHub(x)}}{
       Write tracks from memory representation to the trackDb file.
     }
   }
@@ -103,12 +103,12 @@
 
 \section{Data Access}{
   \describe{
-    \item{}{
-      \code{track(x, name), x$name}: get the track called \code{name}
+    \item{\code{track(x, name), x$name}}{
+      get the track called \code{name}
     }
-    \item{}{
-      \code{track(x, name, format = bestFileFormat(value)) <-
-        value, x$name <- value}: store the track \code{value} under
+    \item{\code{track(x, name, format = bestFileFormat(value)) <-
+        value, x$name <- value}}{
+        store the track \code{value} under
         \code{name}. Note that track storing is only supported
         for local repositories, i.e., those with a \code{file://} URI
         scheme.
@@ -116,7 +116,7 @@
         Currently, supported \code{value} types include a
         \code{GenomicRanges}, \code{GRangesList}, or a file resource
         (copied to the repository).  The file resource may be
-        represented as a path, URL, \code{\linkS4class{BiocFile}} or
+        represented as a path, URL, \code{\linkS4class[BiocIO]{BiocFile}} or
         \code{\link[Rsamtools:RsamtoolsFile-class]{RsamtoolsFile}}. If
         not a file name, \code{value} is written in \code{format}. For
         generic interval data, this means a BigWig file (if there is a
@@ -126,12 +126,12 @@
         type of track line. For \code{RsamtoolsFile} objects, the file
         and its index are copied.
     }
-    \item{}{
-      \code{referenceSequence(x)}: Get the reference sequence, as a
+    \item{\code{referenceSequence(x)}}{
+      Get the reference sequence, as a
       \code{DNAStringSet}.
     }
-    \item{}{
-      \code{referenceSequence(x) <- value}: Set the reference sequence, as a
+    \item{\code{referenceSequence(x) <- value}}{
+      Set the reference sequence, as a
       \code{DNAStringSet}. It is written as a 2bit file. This only works
       on local repositories.
     }

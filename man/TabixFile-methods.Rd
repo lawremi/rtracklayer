@@ -13,7 +13,7 @@
 
 \description{
   These methods support the import and export of
-  \code{Rsamtools:TabixFile}{TabixFile} objects. These are generally
+  \link[Rsamtools:TabixFile]{TabixFile} objects. These are generally
   useful when working with tabix-indexed files that have a non-standard
   format (i.e., not BED nor GFF), as well as exporting an object with
   arbitrary columns (like a GRanges) to an indexed, tab-separated

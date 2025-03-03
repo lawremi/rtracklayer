@@ -15,7 +15,7 @@ track(object, ...) <- value
     track is loaded.}
   \item{value}{The track(s) to load.}
   \item{\dots}{Arguments to pass on to methods. Can be:
-    \itemize{
+    \describe{
       \item{name}{The name(s) of the track(s) being loaded.}
       \item{view}{Whether to create a view of the track after loading it.}
     }

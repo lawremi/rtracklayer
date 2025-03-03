@@ -73,7 +73,7 @@
       \code{x}. A shortcut to \code{track}.}
     \item{\emph{virtual} \code{\link{trackNames}(object, ...)}}{
       Gets the names of the tracks stored in this session. }
-    \item{\emph{virtual} \code{\link{genome}(x)},
+    \item{\emph{virtual} \code{\link[GenomeInfoDb]{genome}(x)},
       \code{genome(x) <- value}}{
       Gets or sets the genome identifier (e.g. \dQuote{hg18}) for the session.}
     \item{\emph{virtual} \code{\link{close}(con, ...)}}{ Close this session. }

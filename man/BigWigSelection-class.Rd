@@ -18,10 +18,10 @@
 
 \section{Constructor}{
   \describe{
-    \item{}{\code{BigWigSelection(ranges = GRanges(), colnames =
-        "score")}: Constructs a \code{BigWigSelection} with the given
+    \item{\code{BigWigSelection(ranges = GRanges(), colnames =
+        "score")}}{Constructs a \code{BigWigSelection} with the given
         \code{ranges} and \code{colnames}. \code{ranges} can be either
-        something coercible to a \code{\linkS4class{IntegerRangesList}},
+        something coercible to a \code{\linkS4class[IRanges]{IntegerRangesList}},
         a \code{character} identifying a genome (see
         \code{\link{GenomicSelection}}), or a
         \code{\linkS4class{BigWigFile}}, in which case the ranges are
@@ -32,7 +32,7 @@
 
 \section{Coercion}{
   \describe{
-    \item{}{\code{as(from, "BigWigSelection")}: Coerces \code{from} to a
+    \item{\code{as(from, "BigWigSelection")}}{Coerces \code{from} to a
       \code{BigWigSelection} object. Typically, \code{from} is a
       \code{\link[GenomicRanges]{GRanges}} or
       a \code{\link[IRanges]{IntegerRangesList}}, the ranges of
