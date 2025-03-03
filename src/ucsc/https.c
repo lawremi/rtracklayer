@@ -73,7 +73,9 @@ if (!done)
     {
     SSL_library_init();
     ERR_load_crypto_strings();
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
     ERR_load_SSL_strings();
+#endif
     OpenSSL_add_all_algorithms();
     openssl_pthread_setup();
     done = TRUE;
