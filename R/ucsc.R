@@ -197,18 +197,6 @@ setReplaceMethod("range", "UCSCTableQuery",
                    x
                  })
 
-setGeneric("trackName", function(x, ...) standardGeneric("trackName"))
-setMethod("trackName", "UCSCTableQuery", function(x) {
-  .Defunct("tableName", msg = "track is meaningless now you only go by the table")
-})
-
-setGeneric("trackName<-",
-           function(x, ..., value) standardGeneric("trackName<-"))
-setReplaceMethod("trackName", "UCSCTableQuery", function(x, value)
-                 {
-                   .Defunct("tableName<-", msg = "track is meaningless now you only go by the table")
-                 })
-
 setGeneric("tableName", function(x, ...) standardGeneric("tableName"))
 setMethod("tableName", "UCSCTableQuery", function(x) x@table)
 
