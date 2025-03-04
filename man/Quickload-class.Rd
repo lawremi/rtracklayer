@@ -12,6 +12,8 @@
 \alias{$,Quickload-method}
 \alias{[[,Quickload,ANY,ANY-method}
 \alias{genome,Quickload-method}
+\alias{names,Quickload-method}
+\alias{uri,Quickload-method}
 \alias{length,Quickload-method}
 
 %% Coercion:
@@ -58,7 +60,7 @@
     \item{\code{uri(x)}}{
       Get the URI pointing to the Quickload repository.
     }
-    \item{\code{genome(x)}}{
+    \item{\code{genome(x)}, \code{names(x)}}{
       Get the identifiers of the genomes present in the repository.
     }
   }

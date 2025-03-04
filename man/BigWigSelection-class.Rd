@@ -21,7 +21,7 @@
     \item{\code{BigWigSelection(ranges = GRanges(), colnames =
         "score")}}{Constructs a \code{BigWigSelection} with the given
         \code{ranges} and \code{colnames}. \code{ranges} can be either
-        something coercible to a \code{\linkS4class[IRanges]{IntegerRangesList}},
+        something coercible to a \code{\link[IRanges:IntegerRangesList-class]{IntegerRangesList}},
         a \code{character} identifying a genome (see
         \code{\link{GenomicSelection}}), or a
         \code{\linkS4class{BigWigFile}}, in which case the ranges are

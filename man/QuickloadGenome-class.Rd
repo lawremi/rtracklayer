@@ -20,6 +20,7 @@
 \alias{releaseDate,QuickloadGenome-method}
 \alias{organism,QuickloadGenome-method}
 \alias{uri,QuickloadGenome-method}
+\alias{trackNames,QuickloadGenome-method}
 
 %% Data Access:
 \alias{track,QuickloadGenome-method}
@@ -103,6 +104,9 @@
     \item{\code{organism(object)}}{
       Get the organism portion of the genome name,
       e.g., \dQuote{H sapiens}.
+    }
+    \item{\code{trackNames(object)}}{
+      Get the names of the tracks present in the Quickload repository
     }
   }
 }

@@ -16,7 +16,7 @@
 %% Export:
 \alias{export,ANY,WIGFile,ANY-method}
 \alias{export,GenomicRanges,WIGFile,ANY-method}
-\alias{export,GenomicRangesList,WIGFile,ANY-method}
+\alias{export,SimpleGRangesList,WIGFile,ANY-method}
 \alias{export,UCSCData,WIGFile,ANY-method}
 \alias{export.wig}
 \alias{export.wig,ANY-method}

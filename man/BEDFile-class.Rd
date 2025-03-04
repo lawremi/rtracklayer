@@ -45,6 +45,8 @@
 \alias{export,ANY,BEDFile,ANY-method}
 \alias{export,GenomicRanges,BEDFile,ANY-method}
 \alias{export,GRangesList,BEDFile,ANY-method}
+\alias{export,SimpleGRangesList,BEDFile,ANY-method}
+\alias{export,CompressedGRangesList,BEDFile,ANY-method}
 \alias{export,GenomicRangesList,BEDFile,ANY-method}
 \alias{export,UCSCData,BEDFile,ANY-method}
 \alias{export,GenomicRanges,BED15File,ANY-method}

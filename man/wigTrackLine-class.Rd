@@ -5,6 +5,7 @@
 \alias{coerce,GraphTrackLine,character-method}
 \alias{coerce,GraphTrackLine,BasicTrackLine-method}
 \alias{coerce,BasicTrackLine,GraphTrackLine-method}
+\alias{fileFormat,GraphTrackLine-method}
 
 \title{Class "GraphTrackLine"}
 \description{ A \acronym{UCSC} track line for graphical tracks. }
@@ -66,6 +67,8 @@
     \item{as(object, \code{"\linkS4class{BasicTrackLine}"})}{Convert this
       line to a basic UCSC track line, using defaults for slots not held
       in common.}
+    \item{\code{fileFormat(x)}}{Returns the value of \code{@type},
+    either \dQuote{wig} or \dQuote{bedGraph}}
   }
 }
 \references{ Official documentation:

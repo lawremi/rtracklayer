@@ -3,6 +3,7 @@
 \alias{Bed15TrackLine-class}
 \alias{coerce,character,Bed15TrackLine-method}
 \alias{coerce,Bed15TrackLine,character-method}
+\alias{fileFormat,Bed15TrackLine-method}
 
 \title{Class "Bed15TrackLine"}
 \description{ A \acronym{UCSC} track line for graphical tracks. }
@@ -41,6 +42,7 @@
   \describe{
     \item{as(object, "character")}{Export line to its string
       representation.}
+    \item{fileFormat(x)}{Returns \dQuote{bed15}}
   }
 }
 \references{ Official documentation:

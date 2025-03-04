@@ -7,6 +7,7 @@
 \alias{genome,UCSCSchema-method}
 \alias{nrow,UCSCSchema-method}
 \alias{ucscSchema,UCSCSchemaDescription-method}
+\alias{show,UCSCSchema-method}
 
 % Accessors:
 

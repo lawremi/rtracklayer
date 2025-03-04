@@ -3,7 +3,7 @@
 \alias{UCSCSession-class}
 \alias{initialize,UCSCSession-method}
 \alias{track,UCSCSession-method}
-\alias{track<-,UCSCSession,GenomicRangesList-method}
+\alias{track<-,UCSCSession,SimpleGRangesList-method}
 \alias{range<-}
 \alias{range<-,UCSCSession-method}
 \alias{track<-,UCSCSession,BiocFile-method}

@@ -19,7 +19,7 @@ wigToBigWig(x, seqinfo,
     Path or URL to the WIG file. Connections are not supported.
   }
   \item{seqinfo}{
-    \code{\linkS4class[GenomeInfoDb]{Seqinfo}} object, describing the genome of the
+    \code{\link[GenomeInfoDb:Seqinfo-class]{Seqinfo}} object, describing the genome of the
     data. All BigWig files must have this defined.
   }
   \item{dest}{

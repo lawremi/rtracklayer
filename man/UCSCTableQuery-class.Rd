@@ -19,6 +19,8 @@
 \alias{names<-,UCSCTableQuery-method}
 \alias{ucscSchema}
 \alias{ucscSchema,UCSCTableQuery-method}
+\alias{browserSession,UCSCTableQuery-method}
+\alias{browserSession<-,UCSCTableQuery-method}
 \alias{ucscTables}
 
 % Query execution
@@ -158,6 +160,9 @@
     \item{}{\code{ucscTables(genome, track)}: Get the list of tables for the 
       specified track(e.g. \dQuote{Assembly}) and genome identifier (e.g. \dQuote{hg19}).
       Here \code{genome} and \code{track} must be a single non-NA string.
+    }
+    \item{\code{browserSession(x)}, \code{browserSession(x) <- value}}{Gets or sets
+    the \code{\linkS4class{BrowserSession}} of the object.
     }
   }
 }
