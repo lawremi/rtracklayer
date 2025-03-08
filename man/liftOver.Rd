@@ -2,6 +2,7 @@
 
 \alias{liftOver}
 \alias{liftOver,GenomicRanges,Chain-method}
+\alias{liftOver,GRangesList,Chain-method}
 \alias{liftOver,Pairs,Chain-method}
 \alias{liftOver,ANY,ANY-method}
 

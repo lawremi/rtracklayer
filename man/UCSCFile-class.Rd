@@ -18,6 +18,7 @@
 \alias{export,ANY,UCSCFile,ANY-method}
 \alias{export,GenomicRanges,UCSCFile,ANY-method}
 \alias{export,GenomicRangesList,UCSCFile,ANY-method}
+\alias{export,GRangesList,UCSCFile,ANY-method}
 \alias{export,UCSCData,UCSCFile,ANY-method}
 \alias{export.ucsc}
 \alias{export.ucsc,ANY,ANY-method}

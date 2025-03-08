@@ -72,7 +72,7 @@ exportClasses(BrowserSession, BrowserView, BrowserViewList,
               TrackHub, TrackHubGenome, Track, TrackContainer)
 
 ## File classes
-exportClasses(RTLFile, RTLFileList, GFFFile, UCSCFile, BEDFile,
+exportClasses(GFFFile, UCSCFile, BEDFile,
               WIGFile, ChainFile, FastaFile, GFF1File, GFF2File, GFF3File,
               BEDGraphFile, BED15File, GTFFile, GVFFile, BigWigFile,
               BigWigFileList, BigBedFile, TwoBitFile, BEDPEFile)
@@ -91,7 +91,7 @@ exportMethods(activeView, "activeView<-", blocks, browseGenome,
               exportToTabix,
               "track<-",
               track, trackNames, "trackNames<-", getTable, hubUrl, "hubUrl<-",
-              tableNames, trackName, "trackName<-",
+              tableNames,
               tableName, "tableName<-",
               ucscTrackModes, "ucscTrackModes<-",
               ucscSchema,
@@ -129,7 +129,7 @@ export(genomeBrowsers, start, end, strand, "start<-", "end<-", width, "width<-",
        organism, releaseDate, mcols, TrackHub, trackhub, TrackHubGenome,
        Track, TrackContainer, wigToBigWig,
        SeqinfoForBSGenome, SeqinfoForUCSCGenome, resource, path,
-       FileForFormat, cleanupBigWigCache, cleanupBigBedCache, viewURL)
+       cleanupBigWigCache, cleanupBigBedCache, viewURL)
 
 export(GFFFile, UCSCFile, BEDFile, WIGFile,
        ChainFile, FastaFile, GFF1File, GFF2File, GFF3File, BEDGraphFile,

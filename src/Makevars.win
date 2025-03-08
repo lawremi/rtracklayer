@@ -1,7 +1,8 @@
+LIBNGHTTP2 = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libnghttp2.a),-lnghttp2),)
 LIBPSL = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libpsl.a),-lpsl),)
 LIBBROTLI = $(or $(and $(wildcard $(R_TOOLS_SOFT)/lib/libbrotlidec.a),-lbrotlidec -lbrotlicommon),)
 
-PKG_LIBS+=-lcurl $(LIBPSL) $(LIBBROTLI) -lssh2 -lssl -lwldap32\
+PKG_LIBS+=-lcurl $(LIBNGHTTP2) $(LIBPSL) $(LIBBROTLI) -lssh2 -lssl -lwldap32\
     -lbcrypt -lcrypto -lgcrypt -lcrypt32 -lgpg-error -lidn2\
     -lunistring -liconv -lzstd -lws2_32 -lz
 include Makevars.common

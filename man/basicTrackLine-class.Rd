@@ -3,6 +3,7 @@
 \alias{BasicTrackLine-class}
 \alias{coerce,character,BasicTrackLine-method}
 \alias{coerce,BasicTrackLine,character-method}
+\alias{fileFormat,TrackLine-method}
 
 \title{Class "BasicTrackLine"}
 \description{The type of \acronym{UCSC} track line used to annotate most
@@ -56,6 +57,7 @@ Class \code{"\linkS4class{TrackLine}"}, directly.
     \item{as(object, \code{"\linkS4class{GraphTrackLine}"})}{Convert this
       line to a graph track line, using defaults for slots not held
       in common.}
+    \item{\code{fileFormat(x)}}{Returns \dQuote{bed}}
   }
 }
 \references{

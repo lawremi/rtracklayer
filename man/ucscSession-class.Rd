@@ -3,7 +3,7 @@
 \alias{UCSCSession-class}
 \alias{initialize,UCSCSession-method}
 \alias{track,UCSCSession-method}
-\alias{track<-,UCSCSession,GenomicRangesList-method}
+\alias{track<-,UCSCSession,SimpleGRangesList-method}
 \alias{range<-}
 \alias{range<-,UCSCSession-method}
 \alias{track<-,UCSCSession,BiocFile-method}
@@ -90,16 +90,16 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
     }
     \item{\code{\link{track}(object, name, range = range(object),
         table = NULL)}}{
-      Retrieves a \code{\link{GRanges}} with features in 
+      Retrieves a \code{\link[GenomicRanges]{GRanges}} with features in 
       \code{range} from track named \code{name}. Some built-in tracks
       have multiple series, each stored in a separate database
       table. A specific table may be retrieved by passing its name in
       the \code{table} parameter. See \code{\link{tableNames}} for a way
       to list the available tables.
     }
-    \item{}{
-      \code{getTable(object, name, range = base::range(object), table =
-      NULL)}: Retrieves the table indicated by the track \code{name} and
+    \item{\code{getTable(object, name, range = base::range(object), table =
+      NULL)}}{
+      Retrieves the table indicated by the track \code{name} and
       \code{table} name, over \code{range}, as a \code{data.frame}. See
       \code{\link{getTable}}.
     }

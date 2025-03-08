@@ -197,18 +197,6 @@ setReplaceMethod("range", "UCSCTableQuery",
                    x
                  })
 
-setGeneric("trackName", function(x, ...) standardGeneric("trackName"))
-setMethod("trackName", "UCSCTableQuery", function(x) {
-  .Defunct("tableName", msg = "track is meaningless now you only go by the table")
-})
-
-setGeneric("trackName<-",
-           function(x, ..., value) standardGeneric("trackName<-"))
-setReplaceMethod("trackName", "UCSCTableQuery", function(x, value)
-                 {
-                   .Defunct("tableName<-", msg = "track is meaningless now you only go by the table")
-                 })
-
 setGeneric("tableName", function(x, ...) standardGeneric("tableName"))
 setMethod("tableName", "UCSCTableQuery", function(x) x@table)
 
@@ -364,12 +352,6 @@ ucscTableTracks <- function(genome) {
   names(tracks) <- labels
   tracks
 }
-
-setMethod("trackNames", "UCSCTableQuery",
-          function(object) {
-            # .Defunct("tableNames", msg = "track is meaningless now you only go by the table")
-            ucscTableTracks(object@genome)
-          })
 
 ## returns a character vector of table names for a given track name + range
 setGeneric("tableNames", function(object, ...)
@@ -1288,7 +1270,8 @@ setMethod("export", c("UCSCData", "UCSCFile"),
                               args[!lineArgs], trackLine = trackLine))
             release(m, con)
             if (index)
-              indexTrack(FileForFormat(resource(file), subformat), skip = 1L)
+              indexTrack(BiocIO::FileForFormat(resource(file), subformat),
+                         skip = 1L)
             else invisible(file)
           })
 

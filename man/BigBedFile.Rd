@@ -84,7 +84,7 @@ export.bb(object, con, ...)
 
 \section{\code{BigBedFile} objects}{
   A \code{BigWigFile} object, an extension of
-  \code{\linkS4class{BiocFile}} is a reference to a BigBed file. To cast
+  \code{\link[BiocIO:BiocFile-class]{BiocFile}} is a reference to a BigBed file. To cast
   a path, URL or connection to a \code{BigBedFile}, pass it to the
   \code{BigBedFile} constructor.
 
@@ -93,8 +93,7 @@ export.bb(object, con, ...)
   information:
 
   \describe{
-    \item{}{
-      \code{seqinfo(x)}:
+    \item{\code{seqinfo(x)}}{
       Gets the \code{\link[GenomeInfoDb]{Seqinfo}} object
       indicating the lengths of the sequences for the intervals in the
       file. No circularity or genome information is available.

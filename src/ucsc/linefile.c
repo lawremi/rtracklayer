@@ -11,7 +11,6 @@
 #include "dystring.h"
 #include "errAbort.h"
 #include "linefile.h"
-#include "pipeline.h"
 #include "localmem.h"
 #include "cheapcgi.h"
 #include "udc.h"
@@ -30,36 +29,6 @@ if (ext==NULL)
     return NULL;
 safef(buf, sizeof(buf), LF_BOGUS_FILE_PREFIX "%s", ext);
 return cloneString(buf);
-}
-
-static char **getDecompressor(char *fileName)
-/* if a file is compressed, return the command to decompress the
- * approriate format, otherwise return NULL */
-{
-static char *GZ_READ[] = {"gzip", "-dc", NULL};
-static char *Z_READ[] = {"gzip", "-dc", NULL};
-static char *BZ2_READ[] = {"bzip2", "-dc", NULL};
-static char *ZIP_READ[] = {"gzip", "-dc", NULL};
-
-char **result = NULL;
-char *fileNameDecoded = cloneString(fileName);
-if (startsWith("http://" , fileName)
- || startsWith("https://", fileName)
- || startsWith("ftp://",   fileName))
-    cgiDecode(fileName, fileNameDecoded, strlen(fileName));
-
-if      (endsWith(fileNameDecoded, ".gz"))
-    result = GZ_READ;
-else if (endsWith(fileNameDecoded, ".Z"))
-    result = Z_READ;
-else if (endsWith(fileNameDecoded, ".bz2"))
-    result = BZ2_READ;
-else if (endsWith(fileNameDecoded, ".zip"))
-    result = ZIP_READ;
-
-freeMem(fileNameDecoded);
-return result;
-
 }
 
 static void metaDataAdd(struct lineFile *lf, char *line)
@@ -88,61 +57,6 @@ static void metaDataFree(struct lineFile *lf)
 if (lf->isMetaUnique && lf->metaLines)
     freeHash(&lf->metaLines);
 }
-
-static char * headerBytes(char *fileName, int numbytes)
-/* Return specified number of header bytes from file
- * if file exists as a string which should be freed. */
-{
-int fd,bytesread=0;
-char *result = NULL;
-if ((fd = open(fileName, O_RDONLY)) >= 0)
-    {
-    result=needMem(numbytes+1);
-    if ((bytesread=read(fd,result,numbytes)) < numbytes)
-	freez(&result);  /* file too short? can read numbytes */
-    else
-	result[numbytes]=0;
-    close(fd);
-    }
-return result;
-}
-
-#ifndef WIN32
-struct lineFile *lineFileDecompress(char *fileName, bool zTerm)
-/* open a linefile with decompression */
-{
-struct pipeline *pl;
-struct lineFile *lf;
-char *testName = NULL;
-char *testbytes = NULL;    /* the header signatures for .gz, .bz2, .Z,
-			    * .zip are all 2-4 bytes only */
-if (fileName==NULL)
-  return NULL;
-testbytes=headerBytes(fileName,4);
-if (!testbytes)
-    return NULL;  /* avoid error from pipeline */
-testName=getFileNameFromHdrSig(testbytes);
-freez(&testbytes);
-if (!testName)
-    return NULL;  /* avoid error from pipeline */
-pl = pipelineOpen1(getDecompressor(fileName), pipelineRead|pipelineSigpipe, fileName, NULL);
-lf = lineFileAttach(fileName, zTerm, pipelineFd(pl));
-lf->pl = pl;
-return lf;
-}
-
-struct lineFile *lineFileDecompressFd(char *name, bool zTerm, int fd)
-/* open a linefile with decompression from a file or socket descriptor */
-{
-struct pipeline *pl;
-struct lineFile *lf;
-pl = pipelineOpenFd1(getDecompressor(name), pipelineRead|pipelineSigpipe, fd, STDERR_FILENO);
-lf = lineFileAttach(name, zTerm, pipelineFd(pl));
-lf->pl = pl;
-return lf;
-}
-
-#endif
 
 struct lineFile *lineFileAttach(char *fileName, bool zTerm, int fd)
 /* Wrap a line file around an open'd file. */
@@ -199,10 +113,6 @@ struct lineFile *lineFileMayOpen(char *fileName, bool zTerm)
 {
 if (sameString(fileName, "stdin"))
     return lineFileStdin(zTerm);
- #ifndef WIN32
-else if (getDecompressor(fileName) != NULL)
-    return lineFileDecompress(fileName, zTerm);
- #endif
 else
     {
     int fd = open(fileName, O_RDONLY);
@@ -539,15 +449,6 @@ void lineFileClose(struct lineFile **pLf)
 struct lineFile *lf;
 if ((lf = *pLf) != NULL)
     {
-    #ifndef WIN32
-    struct pipeline *pl = lf->pl;
-    if (pl != NULL)
-        {
-        pipelineWait(pl);
-        pipelineFree(&lf->pl);
-        }
-    else
-    #endif
     if (lf->fd > 0 && lf->fd != fileno(stdin))
 	{
 	close(lf->fd);

@@ -60,7 +60,7 @@ GFFcolnames(GFF1=FALSE)
 
 \seealso{
   \itemize{
-    \item \code{\link{import}} for importing a GFF file as a
+    \item \code{\link[BiocIO]{import}} for importing a GFF file as a
           \link[GenomicRanges]{GRanges} object.
 
     \item \code{\link[GenomicRanges]{makeGRangesFromDataFrame}} in the

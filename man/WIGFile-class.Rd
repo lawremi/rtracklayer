@@ -16,7 +16,7 @@
 %% Export:
 \alias{export,ANY,WIGFile,ANY-method}
 \alias{export,GenomicRanges,WIGFile,ANY-method}
-\alias{export,GenomicRangesList,WIGFile,ANY-method}
+\alias{export,SimpleGRangesList,WIGFile,ANY-method}
 \alias{export,UCSCData,WIGFile,ANY-method}
 \alias{export.wig}
 \alias{export.wig,ANY-method}
@@ -37,7 +37,7 @@ import.wig(con, ...)
 \S4method{export}{GenomicRanges,WIGFile,ANY}(object, con, format,
                    dataFormat = c("auto", "variableStep", "fixedStep"),
                    writer = .wigWriter, append = FALSE, ...)
-\S4method{export}{GenomicRangesList,WIGFile,ANY}(object, con, format, ...)
+\S4method{export}{SimpleGRangesList,WIGFile,ANY}(object, con, format, ...)
 \S4method{export}{UCSCData,WIGFile,ANY}(object, con, format,
                    trackLine = TRUE, ...)
 export.wig(object, con, ...)

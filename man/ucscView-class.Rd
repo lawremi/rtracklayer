@@ -26,9 +26,10 @@
 }
 \section{Slots}{
   \describe{
-    \item{\code{hgsid}:}{Object of class \code{"numeric"}, which
+    \item{\code{form}}{Form parameters representing the client state}
+    \item{\code{hgsid}}{Object of class \code{"numeric"}, which
       identifies this view to \acronym{UCSC}.}
-    \item{\code{session}:}{Object of class \code{"BrowserSession"} to
+    \item{\code{session}}{Object of class \code{"BrowserSession"} to
       which this view belongs.}
   }
 }

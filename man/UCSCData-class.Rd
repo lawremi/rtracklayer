@@ -56,7 +56,7 @@
 }
 \author{ Michael Lawrence }
 \seealso{
-  \code{\link{import}} and \code{\link{export}} for reading and writing
+  \code{\link[BiocIO]{import}} and \code{\link[BiocIO]{export}} for reading and writing
   tracks to and from connections (files), respectively.
 }
 \keyword{classes}

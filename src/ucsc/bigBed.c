@@ -134,8 +134,8 @@ int bigBedIntervalToRow(struct bigBedInterval *interval, char *chrom, char *star
  */
 {
 int fieldCount = 3;
-sprintf(startBuf, "%u", interval->start);
-sprintf(endBuf, "%u", interval->end);
+snprintf(startBuf, 10, "%u", interval->start);
+snprintf(endBuf, 10, "%u", interval->end);
 row[0] = chrom;
 row[1] = startBuf;
 row[2] = endBuf;

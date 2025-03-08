@@ -38,7 +38,8 @@
 \alias{export,ANY,GFFFile,ANY-method}
 \alias{export,GenomicRanges,GFFFile,ANY-method}
 \alias{export,GenomicRangesList,GFFFile,ANY-method}
-\alias{export,GRangesList,GFFFile,ANY-method}
+\alias{export,SimpleGRangesList,GFFFile,ANY-method}
+\alias{export,CompressedGRangesList,GFFFile,ANY-method}
 \alias{export,GRangesList,GTFFile,ANY-method}
 \alias{export.gff}
 \alias{export.gff,ANY-method}
@@ -245,7 +246,7 @@ export.gff3(object, con, ...)
 
   It has the following utility methods:
   \describe{
-    \item{}{\code{genome}: Gets the genome identifier from
+    \item{\code{genome}}{Gets the genome identifier from
       the \dQuote{genome-build} header directive.
     }
   }
