@@ -47,17 +47,6 @@ struct perThreadAbortVars
 
 static struct perThreadAbortVars *getThreadVars();  // forward declaration
 
-static void defaultVaWarn(char *format, va_list args)
-/* Default error message handler. */
-{
-if (format != NULL) {
-    fflush(stdout);
-    vfprintf(stderr, format, args);
-    fprintf(stderr, "\n");
-    fflush(stderr);
-    }
-}
-
 static void silentVaWarn(char *format, va_list args)
 /* Warning handler that just hides it.  Useful sometimes when high level code
  * expects low level code may fail (as in finding a file on the net) but doesn't
@@ -88,7 +77,7 @@ void errnoWarn(char *format, ...)
 char fbuf[512];
 va_list args;
 va_start(args, format);
-sprintf(fbuf, "%s\n%s", strerror(errno), format);
+snprintf(fbuf, sizeof(fbuf), "%s\n%s", strerror(errno), format);
 vaWarn(fbuf, args);
 va_end(args);
 }
@@ -124,14 +113,6 @@ if (ptav->warnIx <= 0)
 --ptav->warnIx;
 }
 
-static void defaultAbort()
-/* Default error handler exits program. */
-{
-if ((getenv("ERRASSERT") != NULL) || (getenv("ERRABORT") != NULL))
-    abort();
-else
-    exit(-1);
-}
 
 
 void noWarnAbort()
@@ -139,8 +120,7 @@ void noWarnAbort()
 {
 struct perThreadAbortVars *ptav = getThreadVars();
 ptav->abortArray[ptav->abortIx]();
-exit(-1);               /* This is just to make compiler happy.
-                         * We have already exited or longjmped by now. */
+__builtin_unreachable();
 }
 
 void vaErrAbort(char *format, va_list args)
@@ -172,7 +152,7 @@ void errnoAbort(char *format, ...)
 char fbuf[512];
 va_list args;
 va_start(args, format);
-sprintf(fbuf, "%s\n%s", strerror(errno), format);
+snprintf(fbuf, sizeof(fbuf), "%s\n%s", strerror(errno), format);
 vaErrAbort(fbuf, args);
 va_end(args);
 }
@@ -221,41 +201,11 @@ pthread_t pid = pthread_self(); //  pthread_t can be a pointer or a number, impl
 // Test for out-of-memory condition causing re-entrancy into this function that would block
 // on its own main mutex ptavMutex.  Do this by looking for its own pid.
 // Some care must be exercised in testing and comparing the threads pid against one in-use.
-// We need yet another mutex and a boolean to tell us when the pidInUse value may be safely compared to pid.
-
-// Use a boolean since there is no known unused value for pthread_t variable. NULL and -1 are not portable.
-static boolean pidInUseValid = FALSE;  // tells when pidInUse contains a valid pid that can be compared.
-static pthread_t pidInUse; // there is no "unused" value to which we can initialize this.
-static pthread_mutex_t pidInUseMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_lock( &pidInUseMutex );
-// If this pid equals pidInUse, then this function has been re-entered due to severe out-of-memory error.
-// But we only compare them when pidInUseValid is TRUE.
-if (pidInUseValid && pthread_equal(pid, pidInUse)) 
-    {
-    // Avoid deadlock on self by exiting immediately.
-    // Use pthread_equal because directly comparing two pthread_t vars is not allowed.
-    // This re-entrancy only happens when it has aborted already due to out of memory
-    // which should be a rare occurrence.
-    char *errMsg = "errAbort re-entered due to out-of-memory condition. Exiting.\n";
-    (void) write(STDERR_FILENO, errMsg, strlen(errMsg)); 
-    exit(1);   // out of memory is a serious problem, exit immediately, but allow atexit cleanup.
-    }
-pthread_mutex_unlock( &pidInUseMutex );
 
 // This is the main mutex we really care about.
 // It controls access to the hash where thread-specific data is stored.
 static pthread_mutex_t ptavMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_lock( &ptavMutex );
-
-// safely tell threads that pidInUse
-// is valid and correctly set and may be compared to pid
-pthread_mutex_lock( &pidInUseMutex );
-pidInUse = pthread_self();  // setting it directly to pid is not allowed.
-pidInUseValid = TRUE;
-pthread_mutex_unlock( &pidInUseMutex );
-
-// This means that if we crash due to out-of-memory below,
-// it will be able to detect the re-entrancy and handle it above.
 
 static struct hash *perThreadVars = NULL;
 if (perThreadVars == NULL)
@@ -272,17 +222,9 @@ if (hel == NULL)
     ptav->debugPushPopErr = FALSE;
     ptav->errAbortInProgress = FALSE;
     ptav->warnIx = 0;
-    ptav->warnArray[0] = defaultVaWarn;
     ptav->abortIx = 0;
-    ptav->abortArray[0] = defaultAbort;
     hel = hashAdd(perThreadVars, pidStr, ptav);
     }
-
-// safely tell other threads that pidInUse
-// is no longer valid and may not be compared to pid
-pthread_mutex_lock( &pidInUseMutex );
-pidInUseValid = FALSE;
-pthread_mutex_unlock( &pidInUseMutex );
 
 // unlock our mutex controlling the hash of thread-specific data
 pthread_mutex_unlock( &ptavMutex );

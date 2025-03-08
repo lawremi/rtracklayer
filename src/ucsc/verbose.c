@@ -10,21 +10,18 @@
 
 
 static int logVerbosity = 1;	/* The level of log verbosity.  0 is silent. */
-static FILE *logFile;	/* File to log to. */
+/* static FILE *logFile; */	/* File to log to. */
 
-static boolean checkedDotsEnabled = FALSE;  /* have we check for dot output
+/* static boolean checkedDotsEnabled = FALSE; */  /* have we check for dot output
                                              * being enabled? */
-static boolean dotsEnabled = FALSE;         /* is dot output enabled? */
+/* static boolean dotsEnabled = FALSE;  */        /* is dot output enabled? */
 
 void verboseVa(int verbosity, char *format, va_list args)
 /* Log with at given verbosity vprintf formatted args. */
 {
 if (verbosity <= logVerbosity)
     {
-    if (logFile == NULL)
-        logFile = stderr;
-    vfprintf(logFile, format, args);
-    fflush(logFile);
+	/* noop to avoid R CMD check warnings, no code should get here */
     }
 }
 
@@ -70,24 +67,7 @@ boolean verboseDotsEnabled()
  * verbosity is > 0, stderr is a tty and we don't appear to be running an
  * emacs shell. */
 {
-if (!checkedDotsEnabled)
-    {
-    if (logFile == NULL)
-        logFile = stderr;
-    dotsEnabled = (logVerbosity > 0) && isatty(fileno(logFile));
-    if (dotsEnabled)
-        {
-        /* check for an possible emacs shell */
-        char *emacs = getenv("emacs");
-        char *term = getenv("TERM");
-        if ((emacs != NULL) && (emacs[0] == 't'))
-            dotsEnabled = FALSE;
-        else if ((term != NULL) && sameString(term, "dumb"))
-            dotsEnabled = FALSE;
-        }
-    checkedDotsEnabled = TRUE;
-    }
-return dotsEnabled;
+    return FALSE;
 }
 
 int verboseLevel(void)

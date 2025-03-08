@@ -260,6 +260,8 @@ __attribute__((format(printf, 1, 2)))
 #define internalErr()  errAbort("Internal error %s %d", __FILE__, __LINE__)
 /* Generic internal error message */
 
+void vaWarn(char *format, va_list args);
+
 void warn(char *format, ...)
 /* Issue a warning message. */
 #if defined(__GNUC__)
@@ -563,11 +565,6 @@ void doubleSort(int count, double *array);
 double doubleMedian(int count, double *array);
 /* Return median value in array.  This will sort
  * the array as a side effect. */
-
-void doubleBoxWhiskerCalc(int count, double *array, double *retMin,
-	double *retQ1, double *retMedian, double *retQ3, double *retMax);
-/* Calculate what you need to draw a box and whiskers plot from an array of doubles. */
-
 
 void intSort(int count, int *array);
 /* Sort an array of ints. */

@@ -933,7 +933,7 @@ while ((c = *s++) != 0)
     {
     if (qEscaped(c))
         {
-	sprintf(d, "Q%02X", (unsigned)c);
+	snprintf(d, 3, "Q%02X", (unsigned)c);
 	d += 3;
 	}
     else

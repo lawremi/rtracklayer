@@ -18,13 +18,17 @@
 
 
 static pthread_mutex_t *mutexes = NULL;
- 
+
+static unsigned long openssl_id_callback(void) __attribute__((used));
+
 static unsigned long openssl_id_callback(void)
 {
 return ((unsigned long)pthread_self());
 }
- 
-static void openssl_locking_callback(int mode, int n, const char * file, int line)
+
+static void openssl_locking_callback(int mode, int n, const char * file, int line) __attribute__((used));
+
+static void openssl_locking_callback(int mode, int n, const char * file, int line) 
 {
 if (mode & CRYPTO_LOCK)
     pthread_mutex_lock(&mutexes[n]);
@@ -55,12 +59,22 @@ int sv[2]; /* the pair of socket descriptors */
 
 static void xerrno(char *msg)
 {
-fprintf(stderr, "%s : %s\n", strerror(errno), msg); fflush(stderr);
+    warn("%s : %s\n", strerror(errno), msg);
 }
 
 static void xerr(char *msg)
 {
-fprintf(stderr, "%s\n", msg); fflush(stderr);
+    warn("%s\n", msg);
+}
+
+static void warn_openssl_errors() {
+    unsigned long err_code;
+    char err_buf[256];
+
+    while ((err_code = ERR_get_error()) != 0) {
+        ERR_error_string_n(err_code, err_buf, sizeof(err_buf));
+        warn("%s", err_buf);
+    }
 }
 
 void openSslInit()
@@ -284,7 +298,7 @@ while (1)
 		{
 		if (!BIO_should_write(sbio))
 		    {
-		    ERR_print_errors_fp(stderr);
+		    warn_openssl_errors();
 		    xerr("Error writing SSL connection");
 		    goto cleanup;
 		    }
@@ -315,7 +329,7 @@ while (1)
 		else
 		    {
 		    if (brd == 0) break;
-		    ERR_print_errors_fp(stderr);
+		    warn_openssl_errors();
 		    xerr("Error reading SSL connection");
 		    goto cleanup;
 		    }
@@ -350,10 +364,6 @@ return NULL;
 int netConnectHttps(char *hostName, int port)
 /* Return socket for https connection with server or -1 if error. */
 {
-
-fflush(stdin);
-fflush(stdout);
-fflush(stderr);
 
 struct netConnectHttpsParams *params;
 AllocVar(params);

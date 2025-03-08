@@ -323,22 +323,9 @@ return cloneString(newPath);
 }
 
 void childExecFailedExit(char *msg)
-/* Child exec failed, so quit without atexit cleanup */
+/* Child exec failed, so error */
 {
-fprintf(stderr, "child exec failed: %s\n", msg);
-fflush(stderr);
-_exit(1);  // Let the parent know that the child failed by returning 1.
-
-/* Explanation:
-_exit() is not the normal exit().  
-_exit() avoids the usual atexit() cleanup.
-The MySQL library that we link to uses atexit() cleanup to close any open MySql connections.
-However, because the child's mysql connections are shared by the parent,
-this causes the parent MySQL connections to become invalid,
-and causes the puzzling "MySQL has gone away" error in the parent
-when it tries to use its now invalid MySQL connections.
-*/
-
+    errAbort("child exec failed: %s\n", msg);
 }
 
 static void execPStack(pid_t ppid)
@@ -371,31 +358,28 @@ if (inDumpStack)
     return;
 inDumpStack = TRUE;
 
-fflush(stdout);  // clear buffer before forking
-vfprintf(stderr, format, args);
-fputc('\n', stderr);
-fflush(stderr);
+vaWarn(format, args);
 pid_t ppid = getpid();
 pid_t pid = fork();
 if (pid < 0)
     {
-    perror("can't fork pstack");
+    warn("can't fork pstack");
     return;
     }
 if (pid == 0)
     execPStack(ppid);
 int wstat;
 if (waitpid(pid, &wstat, 0) < 0)
-    perror("waitpid on pstack failed");
+    warn("waitpid on pstack failed");
 else
     {
     if (WIFEXITED(wstat))
         {
         if (WEXITSTATUS(wstat) != 0)
-            fprintf(stderr, "pstack failed\n");
+            warn("pstack failed\n");
         }
     else if (WIFSIGNALED(wstat))
-        fprintf(stderr, "pstack signaled %d\n", WTERMSIG(wstat));
+        warn("pstack signaled %d\n", WTERMSIG(wstat));
     }
 inDumpStack = FALSE;
 }

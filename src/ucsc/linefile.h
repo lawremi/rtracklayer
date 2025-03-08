@@ -72,9 +72,6 @@ char *getFileNameFromHdrSig(char *m);
 /* Check if header has signature of supported compression stream,
    and return a phoney filename for it, or NULL if no sig found. */
 
-struct lineFile *lineFileDecompressFd(char *name, bool zTerm, int fd);
-/* open a linefile with decompression from a file or socket descriptor */
-
 struct lineFile *lineFileMayOpen(char *fileName, bool zTerm);
 /* Try and open up a lineFile. If fileName ends in .gz, .Z, or .bz2,
  * it will be read from a decompress pipeline. */
