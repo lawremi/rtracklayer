@@ -353,6 +353,12 @@ ucscTableTracks <- function(genome) {
   tracks
 }
 
+setMethod("trackNames", "UCSCTableQuery",
+          function(object) {
+            # .Defunct("tableNames", msg = "track is meaningless now you only go by the table")
+            ucscTableTracks(object@genome)
+          })
+
 ## returns a character vector of table names for a given track name + range
 setGeneric("tableNames", function(object, ...)
            standardGeneric("tableNames"))
