@@ -8,13 +8,7 @@
 #include "portable.h"
 #include "verbose.h"
 
-
 static int logVerbosity = 1;	/* The level of log verbosity.  0 is silent. */
-/* static FILE *logFile; */	/* File to log to. */
-
-/* static boolean checkedDotsEnabled = FALSE; */  /* have we check for dot output
-                                             * being enabled? */
-/* static boolean dotsEnabled = FALSE;  */        /* is dot output enabled? */
 
 void verboseVa(int verbosity, char *format, va_list args)
 /* Log with at given verbosity vprintf formatted args. */

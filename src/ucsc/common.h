@@ -1038,25 +1038,6 @@ void safecat(char *buf, size_t bufSize, const char *src);
 char *skipToNumeric(char *s);
 /* skip up to where numeric digits appear */
 
-void childExecFailedExit(char *msg);
-/* Child exec failed, so quit without atexit cleanup */
-
-void vaDumpStack(char *format, va_list args);
-/* debugging function to run the pstack program on the current process. In
- * prints a message, following by a new line, and then the stack track.  Just
- * prints errors to stderr rather than aborts. For debugging purposes
- * only.  */
-
-void dumpStack(char *format, ...)
-/* debugging function to run the pstack program on the current process. In
- * prints a message, following by a new line, and then the stack track.  Just
- * prints errors to stderr rather than aborts. For debugging purposes
- * only.  */
-#if defined(__GNUC__)
-__attribute__((format(printf, 1, 2)))
-#endif
-;
-
 // SETTING_ON set of macros are frequently used comparisons of string values for boolean questions.
 // Notice the subtle difference between NOT_ON and IS_OFF.
 //        NOT_ON could be NULL but IS_OFF must be explicitly set
