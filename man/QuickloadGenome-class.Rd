@@ -59,7 +59,7 @@
         \code{BSgenome} package. It can also be any instance of a class
         which has methods for \code{organism} and \code{releaseDate}. A
         good example is \code{\link[BSgenome]{BSgenome}} or any other
-        derivative of \code{\link[GenomeInfoDb]{GenomeDescription}}.
+        derivative of \code{\link[Seqinfo]{GenomeDescription}}.
         Those items are necessary for constructing the canonical
         Quickload genome string (G_Species_Month_Year).
 
@@ -81,7 +81,7 @@
   \describe{
     \item{\code{seqinfo(x)}, \code{seqinfo(x) <- value}}{
       Gets or sets the
-      \code{\link[GenomeInfoDb]{Seqinfo}} object indicating the lengths
+      \code{\link[Seqinfo]{Seqinfo}} object indicating the lengths
       of the sequences in the genome. No circularity information or genome
       identifier is stored.
     }

@@ -201,11 +201,13 @@ test_gff <- function() {
   checkIdentical(which_target, test)
 
   ## TEST: SimpleGRangesList
-  ucsc_data1 <- new("UCSCData", keepSeqlevels(correct_gff3, "chr10",
-                                              pruning.mode="coarse"),
+  ucsc_data1 <- new("UCSCData",
+                    GenomeInfoDb::keepSeqlevels(correct_gff3, "chr10",
+                                                pruning.mode="coarse"),
                     trackLine = new("BasicTrackLine", name = "chr10"))
-  ucsc_data2 <- new("UCSCData", keepSeqlevels(correct_gff3, "chr12",
-                                              pruning.mode="coarse"),
+  ucsc_data2 <- new("UCSCData",
+                    GenomeInfoDb::keepSeqlevels(correct_gff3, "chr12",
+                                                pruning.mode="coarse"),
                     trackLine = new("BasicTrackLine", name = "chr12"))
   correct_grl <- GRangesList(ucsc_data1, ucsc_data2, compress=FALSE)
   mcols(correct_grl[[2]])$genome <- NULL
