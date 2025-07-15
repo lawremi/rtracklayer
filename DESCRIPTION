@@ -21,7 +21,7 @@ Description: Extensible framework for interacting with multiple genome
   WIG, BigWig and 2bit built-in). The user may export/import tracks to/from the
   supported browsers, as well as query and modify the browser state, such as the
   current viewport.
-Maintainer: Michael Lawrence <michafla@gene.com>
+Maintainer: Michael Lawrence <lawremi@gmail.com>
 License: Artistic-2.0 + file LICENSE
 Collate: io.R web.R ranges.R trackDb.R browser.R ucsc.R readGFF.R gff.R bed.R
          wig.R utils.R bigWig.R bigBed.R chain.R quickload.R trackhub.R twobit.R fasta.R tabix.R
