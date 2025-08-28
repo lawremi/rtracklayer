@@ -26,34 +26,30 @@ SEXP BBDFile_fieldnames(SEXP r_filename)
 {
   pushRHandlers();
   struct bbiFile *file = bigBedFileOpen((char *)CHAR(asChar(r_filename)));
-  char *asText = bigBedAutoSqlText(file);
-  struct asObject *as = asParseText(asText);
-  freeMem(asText);
+  struct asObject *as = bigBedAsOrDefault(file);
+  struct asColumn *asCol = as->columnList;
+
   int fieldCount = file->fieldCount;
   int definedFieldCount = getDefinedFieldCount(as);
   bigBedFileClose(&file);
-  char *names[] = {"name", "score", "thick", "itemRgb", "blocks"};
-  struct asColumn *asCol = as->columnList;
+
   SEXP defaultFields = PROTECT(allocVector(STRSXP, definedFieldCount));
   SEXP extraFields = PROTECT(allocVector(STRSXP, fieldCount - definedFieldCount));
+
+  int extraIndex = 0;
   for (int i = 0; i < fieldCount; ++i) {
-    if (i >= definedFieldCount)
-      SET_STRING_ELT(extraFields, i - definedFieldCount, mkChar(asCol->name));
-    else if (i == 3)
-      SET_STRING_ELT(defaultFields, i, mkChar(names[0]));
-    else if (i == 4)
-      SET_STRING_ELT(defaultFields, i, mkChar(names[1]));
-    else if (i == 7)
-      SET_STRING_ELT(defaultFields, i, mkChar(names[2]));
-    else if (i == 8)
-      SET_STRING_ELT(defaultFields, i, mkChar(names[3]));
-    else if (i == 11)
-      SET_STRING_ELT(defaultFields, i, mkChar(names[4]));
+    if (i < definedFieldCount)
+      SET_STRING_ELT(defaultFields, i, mkChar(asCol->name));
+    else
+      SET_STRING_ELT(extraFields, extraIndex++, mkChar(asCol->name));
+
     asCol = asCol->next;
   }
+
   SEXP list = PROTECT(allocVector(VECSXP, 2));
   SET_VECTOR_ELT(list, 0, defaultFields);
   SET_VECTOR_ELT(list, 1, extraFields);
+
   asObjectFree(&as);
   popRHandlers();
   UNPROTECT(3);
@@ -93,9 +89,7 @@ SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
   }
 
   /* need these before closing file */
-  char *asText = bigBedAutoSqlText(file);
-  struct asObject *as = asParseText(asText);
-  freeMem(asText);
+  struct asObject *as = bigBedAsOrDefault(file);
   int fieldCount = file->fieldCount;
   int definedFieldCount = getDefinedFieldCount(as);
   int extraFieldCount = fieldCount - definedFieldCount;
