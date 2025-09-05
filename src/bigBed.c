@@ -56,217 +56,200 @@ SEXP BBDFile_fieldnames(SEXP r_filename)
   return list;
 }
 
+static struct bigBedInterval *queryIntervals(struct bbiFile *file,
+                                             SEXP r_seqnames,
+                                             int *start, int *width,
+                                             int n_ranges,
+                                             SEXP n_qhits,
+                                             struct lm *lm) {
+    struct bigBedInterval *hits = NULL, *tail = NULL;
+    for (int i = 0; i < n_ranges; ++i) {
+        struct bigBedInterval *queryHits =
+            bigBedIntervalQuery(file, (char *)CHAR(STRING_ELT(r_seqnames, i)),
+                                start[i] - 1, start[i] - 1 + width[i], 0, lm);
+        if (!hits) {
+            hits = queryHits;
+        } else {
+            tail->next = queryHits;
+        }
+        if (queryHits)
+            tail = slLastEl(queryHits);
+        INTEGER(n_qhits)[i] = slCount(queryHits);
+    }
+    return hits;
+}
+
+static SEXPTYPE mapAsTypeToRType(enum asTypes ftype) {
+    if (asTypesIsFloating(ftype))
+        return REALSXP;
+
+    switch (ftype) {
+        case t_int:
+        case t_short:
+        case t_ushort:
+        case t_byte:
+        case t_ubyte:
+        case t_uint:
+        /* Assumes values fit in signed 32-bit range (typical genomic coords) */
+            return INTSXP;
+
+        /* 64-bit integer stored as double (no native 64-bit int in base R) */
+        case t_off:
+            return REALSXP;
+
+        case t_char:
+        case t_string:
+        case t_lstring:
+            return STRSXP;
+
+        default:
+            return STRSXP;
+    }
+}
+
+static SEXP prepareFieldContainers(struct asObject *as,
+                                   int fieldCount, int definedFieldCount,
+                                   int n_hits, SEXP r_colnames,
+                                   SEXPTYPE *fieldTypes,
+                                   int *unprotectCount) {
+    struct asColumn *asCol = as->columnList;
+    SEXP fieldList = PROTECT(allocVector(VECSXP, fieldCount));
+    SEXP fieldNames = PROTECT(allocVector(STRSXP, fieldCount));
+    *unprotectCount += 2;
+
+    struct hash *colHash = hashNew(0);
+    int n_colnames = LENGTH(r_colnames);
+    for (int k = 0; k < n_colnames; ++k) {
+        hashAdd(colHash, (char *)CHAR(STRING_ELT(r_colnames, k)), NULL);
+    }
+
+    for (int j = 0; j < fieldCount; ++j, asCol = asCol->next) {
+        char *colName = asCol->name;
+
+        if (colName)
+            SET_STRING_ELT(fieldNames, j, mkChar(colName));
+        else
+            SET_VECTOR_ELT(fieldNames, j, R_NilValue);
+
+        bool selected = (colName && hashLookup(colHash, colName) != NULL);
+
+        if (!selected) {
+            SET_VECTOR_ELT(fieldList, j, R_NilValue);
+            continue;
+        }
+
+        fieldTypes[j] = mapAsTypeToRType(asCol->lowType->type);
+        SET_VECTOR_ELT(fieldList, j, allocVector(fieldTypes[j], n_hits));
+        PROTECT(VECTOR_ELT(fieldList, j));
+        ++(*unprotectCount);
+    }
+    setAttrib(fieldList, R_NamesSymbol, fieldNames);
+    hashFree(&colHash);
+    return fieldList;
+}
+
+static void fillResults(struct bigBedInterval *hits,
+                        SEXP n_qhits, int n_ranges, int fieldCount,
+                        int definedFieldCount, SEXPTYPE *fieldTypes,
+                        SEXP fieldList, SEXP r_seqnames) {
+    char startBuf[16], endBuf[16], *row[fieldCount];
+    int i = 0, rangeIndex = 0, count = 0;
+
+    for (struct bigBedInterval *bb = hits; bb; bb = bb->next, ++i, ++count) {
+        if (rangeIndex < n_ranges && count == INTEGER(n_qhits)[rangeIndex]) {
+            ++rangeIndex;
+            count = 0;
+        }
+
+        bigBedIntervalToRow(bb, (char *)CHAR(STRING_ELT(r_seqnames, rangeIndex)),
+                            startBuf, endBuf, row, fieldCount);
+
+        for (int j = 0; j < fieldCount; ++j) {
+            if (VECTOR_ELT(fieldList, j) == R_NilValue)
+                continue;
+
+            switch (fieldTypes[j]) {
+                case REALSXP:
+                    REAL(VECTOR_ELT(fieldList, j))[i] = sqlDouble(row[j]);
+                    break;
+                case INTSXP:
+                    INTEGER(VECTOR_ELT(fieldList, j))[i] = sqlSigned(row[j]);
+                    break;
+                case STRSXP:
+                    SET_STRING_ELT(VECTOR_ELT(fieldList, j), i, mkChar(row[j]));
+                    break;
+            }
+        }
+    }
+}
+
+static SEXP wrapResults(SEXP n_qhits, SEXP fieldList, int fieldCount,
+                        int *unprotectCount) {
+    int listSize = 2 + fieldCount;  // (n_qhits, fields)
+    SEXP ans = PROTECT(allocVector(VECSXP, listSize));
+    ++(*unprotectCount);
+
+    int idx = 0;
+    SET_VECTOR_ELT(ans, idx++, n_qhits);
+    for (int j = 0; j < fieldCount; ++j) {
+        SET_VECTOR_ELT(ans, idx++, VECTOR_ELT(fieldList, j));
+    }
+
+    SEXP ansNames = PROTECT(allocVector(STRSXP, listSize));
+    ++(*unprotectCount);
+    SET_STRING_ELT(ansNames, 0, mkChar("n_qhits"));
+
+    SEXP fieldNames = getAttrib(fieldList, R_NamesSymbol);
+    for (int j = 0; j < fieldCount; ++j) {
+        SET_STRING_ELT(ansNames, j + 1, STRING_ELT(fieldNames, j));
+    }
+
+    setAttrib(ans, R_NamesSymbol, ansNames);
+    return ans;
+}
+
 /* --- .Call ENTRY POINT --- */
 SEXP BBDFile_query(SEXP r_filename, SEXP r_seqnames, SEXP r_ranges,
-                   SEXP r_defaultindex, SEXP r_extraindex)
-{
-  pushRHandlers();
-  struct bbiFile *file = bigBedFileOpen((char *)CHAR(asChar(r_filename)));
-  struct lm *lm = lmInit(0);
-  int n_ranges = get_IRanges_length(r_ranges);
-  int *start = INTEGER(get_IRanges_start(r_ranges));
-  int *width = INTEGER(get_IRanges_width(r_ranges));
+                   SEXP r_colnames) {
+    pushRHandlers();
 
-  SEXP ans, n_qhits, ranges, chromStart, chromWidth, name, score,
-    strand = R_NilValue, thickStart, thickWidth, itemRgb, blocks,
-    extraFields = R_NilValue, lengthIndex;
+    int unprotectCount = 0;
+    const char *fname = CHAR(asChar(r_filename));
+    struct bbiFile *file = bigBedFileOpen((char *)fname);
+    struct lm *lm = lmInit(0);
 
-  n_qhits = PROTECT(allocVector(INTSXP, n_ranges));
-  struct bigBedInterval *hits = NULL, *tail = NULL;
-  /* querying records in range */
-  for (int i = 0; i < n_ranges; ++i) {
-    struct bigBedInterval *queryHits =
-      bigBedIntervalQuery(file, (char *)CHAR(STRING_ELT(r_seqnames, i)),
-                          start[i] - 1, start[i] - 1 + width[i], 0, lm);
-    if (!hits) {
-      hits = queryHits;
-      tail = slLastEl(hits);
-    } else {
-      tail->next = queryHits;
-      tail = slLastEl(tail);
-    }
-    INTEGER(n_qhits)[i] = slCount(queryHits);
-  }
+    int n_ranges = get_IRanges_length(r_ranges);
+    int *start   = INTEGER(get_IRanges_start(r_ranges));
+    int *width   = INTEGER(get_IRanges_width(r_ranges));
 
-  /* need these before closing file */
-  struct asObject *as = bigBedAsOrDefault(file);
-  int fieldCount = file->fieldCount;
-  int definedFieldCount = getDefinedFieldCount(as);
-  int extraFieldCount = fieldCount - definedFieldCount;
-  int n_hits = slCount(hits);
-  bigBedFileClose(&file);
-
-  int presentFieldCount = 0, unprotectCount = 0;
-  /* mandatory default field */
-  chromStart = PROTECT(allocVector(INTSXP, n_hits));
-  chromWidth = PROTECT(allocVector(INTSXP, n_hits));
-  /* if any of the default field is present and selected, allocate memory for it */
-  if (isPresent(definedFieldCount, i_name) && isSelected(r_defaultindex, 1)) {
-    name = PROTECT(allocVector(STRSXP, n_hits));
-    ++presentFieldCount;
+    SEXP n_qhits = PROTECT(allocVector(INTSXP, n_ranges));
     ++unprotectCount;
-  }
-  if (isPresent(definedFieldCount, i_score) && isSelected(r_defaultindex, 2)) {
-    score = PROTECT(allocVector(INTSXP, n_hits));
-    ++presentFieldCount;
-    ++unprotectCount;
-  }
-  if (isPresent(definedFieldCount, i_strand)) {
-    strand = PROTECT(allocVector(STRSXP, n_hits));
-    ++unprotectCount;
-  }
-  if (isPresent(definedFieldCount, i_thick) && isSelected(r_defaultindex, 3)) {
-    thickStart = PROTECT(allocVector(INTSXP, n_hits));
-    thickWidth = PROTECT(allocVector(INTSXP, n_hits));
-    ++presentFieldCount;
-    unprotectCount += 2;
-  }
-  if (isPresent(definedFieldCount, i_itemRgb) && isSelected(r_defaultindex, 4)) {
-    itemRgb = PROTECT(allocVector(STRSXP, n_hits));
-    ++presentFieldCount;
-    ++unprotectCount;
-  }
-  if (isPresent(definedFieldCount, i_blocks) && isSelected(r_defaultindex, 5)) {
-      blocks = PROTECT(allocVector(VECSXP, n_hits));
-      ++presentFieldCount;
-      ++unprotectCount;
-  }
 
-  SEXPTYPE *typeId;
-  /* if extra fields are present and selected
-   * identify the type information and allocate memory */
-  if (extraFieldCount > 0) {
-    int k = 0;
-    enum asTypes fieldType;
-    struct asColumn *asCol = as->columnList;
-    extraFields = PROTECT(allocVector(VECSXP, extraFieldCount));
-    typeId = (SEXPTYPE*)R_alloc(extraFieldCount, sizeof(SEXPTYPE));
-    for (int j = 0; j < fieldCount; ++j) {
-      fieldType = asCol->lowType->type;
-      if (j >= definedFieldCount) {
-        if (asTypesIsFloating(fieldType) || fieldType == t_uint ||
-            fieldType == t_off) {
-          typeId[k] = REALSXP;
-        } else if (fieldType == t_int || fieldType == t_short ||
-                   fieldType == t_ushort || fieldType == t_byte) {
-          typeId[k] = INTSXP;
-        } else if (fieldType == t_char || fieldType == t_string ||
-                   fieldType == t_lstring) {
-          typeId[k] = STRSXP;
-        } else if (fieldType == t_ubyte) {
-          typeId[k] = RAWSXP;
-        }
-        if (isSelected(r_extraindex, (j - definedFieldCount + 1))) {
-          SEXP temp = PROTECT(allocVector(typeId[k], n_hits));
-          SET_VECTOR_ELT(extraFields, k, temp);
-          ++unprotectCount;
-          ++k;
-        }
-      }
-      asCol = asCol->next;
-    }
-    lengthIndex = PROTECT(allocVector(INTSXP, extraFieldCount));
-    memset(INTEGER(lengthIndex), 0, sizeof(int) * extraFieldCount);
-    unprotectCount += 2;
-  }
-  asObjectFree(&as);
+    struct bigBedInterval *hits = queryIntervals(file, r_seqnames, start, width,
+                                                 n_ranges, n_qhits, lm);
 
-  int count = 0, k = 0;
-  char startBuf[16], endBuf[16], *row[fieldCount], rgbBuf[8];
-  for (int i = 0; i < n_hits; ++i, hits = hits->next, ++count) {
-    if (INTEGER(n_qhits)[k] == count && k < n_ranges) {
-      ++k;
-      count = 0;
-    }
-    bigBedIntervalToRow(hits, (char *)CHAR(STRING_ELT(r_seqnames, k)),
-                        startBuf, endBuf, row, fieldCount);
-    struct bed *bed = bedLoadN(row, definedFieldCount);
-    /* mandatory default field */
-    INTEGER(chromStart)[i] = bed->chromStart;
-    INTEGER(chromWidth)[i] = bed->chromEnd - bed->chromStart + 1;
-    /* if any of the default field is present and selected, store its value */
-    if (isPresent(definedFieldCount, i_name) && isSelected(r_defaultindex, 1)) {
-      SET_STRING_ELT(name, i, mkChar(bed->name));
-    }
-    if (isPresent(definedFieldCount, i_score) && isSelected(r_defaultindex, 2)) {
-      INTEGER(score)[i] = bed->score;
-    }
-    if (isPresent(definedFieldCount, i_strand)) {
-      SET_STRING_ELT(strand, i, mkChar(bed->strand));
-    }
-    if (isPresent(definedFieldCount, i_thick) && isSelected(r_defaultindex, 3)) {
-      INTEGER(thickWidth)[i] = bed->thickEnd - bed->thickStart + 1;
-      INTEGER(thickStart)[i] = bed->thickStart;
-    }
-    if (isPresent(definedFieldCount, i_itemRgb) && isSelected(r_defaultindex, 4)) {
-      snprintf(rgbBuf, 8, "#%06x", bed->itemRgb);
-      SET_STRING_ELT(itemRgb, i, mkChar(rgbBuf));
-    }
-    if (isPresent(definedFieldCount, i_blocks) && isSelected(r_defaultindex, 5)) {
-      SEXP bstart = PROTECT(allocVector(INTSXP, bed->blockCount));
-      SEXP bwidth = PROTECT(allocVector(INTSXP, bed->blockCount));
-      for (int j = 0; j< bed->blockCount; ++j) {
-        INTEGER(bwidth)[j] = bed->blockSizes[j];
-        INTEGER(bstart)[j] = bed->chromStarts[j];
-      }
-      SET_VECTOR_ELT(blocks, i, new_IRanges("IRanges", bstart, bwidth, R_NilValue));
-      UNPROTECT(2);
-    }
-    bedFree(&bed);
+    struct asObject *as   = bigBedAsOrDefault(file);
+    int fieldCount        = file->fieldCount;
+    int definedFieldCount = getDefinedFieldCount(as);
+    int n_hits            = slCount(hits);
 
-    /* if extra fields are present and selected store their values */
-    for (int j = definedFieldCount, efIndex = 0 ; j < fieldCount; ++j) {
-      if (isSelected(r_extraindex, (j - definedFieldCount + 1))) {
-        switch(typeId[efIndex]) {
-          case REALSXP:
-            REAL(VECTOR_ELT(extraFields, efIndex))[i] = sqlDouble(row[j]);
-            break;
-          case INTSXP:
-            INTEGER(VECTOR_ELT(extraFields, efIndex))[i] = sqlSigned(row[j]);
-            break;
-          case STRSXP: {
-            int index = INTEGER(lengthIndex)[efIndex];
-            SET_STRING_ELT(VECTOR_ELT(extraFields, efIndex), index, mkChar(row[j]));
-            INTEGER(lengthIndex)[efIndex] = index + 1;
-            break;
-          }
-          case RAWSXP:
-            RAW(extraFields)[i] = sqlUnsigned(row[j]);
-            break;
-        }
-        ++efIndex;
-      }
-    }
-    freeMem(row[3]);
-  }
+    bigBedFileClose(&file);
 
-  ranges = PROTECT(new_IRanges("IRanges", chromStart, chromWidth, R_NilValue));
-  ans = PROTECT(allocVector(VECSXP, presentFieldCount + 4));
-  int index = 0;
-  SET_VECTOR_ELT(ans, index++, n_qhits);
-  SET_VECTOR_ELT(ans, index++, extraFields);
-  SET_VECTOR_ELT(ans, index++, ranges);
-  SET_VECTOR_ELT(ans, index++, strand);
-  if (isPresent(definedFieldCount, i_name) && isSelected(r_defaultindex, 1)) {
-    SET_VECTOR_ELT(ans, index++, name);
-  }
-  if (isPresent(definedFieldCount, i_score) && isSelected(r_defaultindex, 2)) {
-    SET_VECTOR_ELT(ans, index++, score);
-  }
-  if (isPresent(definedFieldCount, i_thick) && isSelected(r_defaultindex, 3)) {
-    SET_VECTOR_ELT(ans, index++, new_IRanges("IRanges", thickStart,
-                                             thickWidth, R_NilValue));
-  }
-  if (isPresent(definedFieldCount, i_itemRgb) && isSelected(r_defaultindex, 4)) {
-    SET_VECTOR_ELT(ans, index++, itemRgb);
-  }
-  if (isPresent(definedFieldCount, i_blocks) && isSelected(r_defaultindex, 5)) {
-    SET_VECTOR_ELT(ans, index++, blocks);
-  }
-  UNPROTECT(5 + unprotectCount);
-  lmCleanup(&lm);
-  popRHandlers();
-  return ans;
+    SEXPTYPE *fieldTypes = (SEXPTYPE*)R_alloc(fieldCount, sizeof(SEXPTYPE));
+    SEXP fieldList = prepareFieldContainers(as, fieldCount, definedFieldCount,
+                                            n_hits, r_colnames, fieldTypes,
+                                            &unprotectCount);
+
+    fillResults(hits, n_qhits, n_ranges, fieldCount, definedFieldCount,
+                fieldTypes, fieldList, r_seqnames);
+    SEXP ans = wrapResults(n_qhits, fieldList, fieldCount, &unprotectCount);
+
+    asObjectFree(&as);
+    lmCleanup(&lm);
+    UNPROTECT(unprotectCount);
+    popRHandlers();
+
+    return ans;
 }
 
 static struct hash *createIntHash(SEXP v) {

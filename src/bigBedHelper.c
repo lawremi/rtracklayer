@@ -21,20 +21,6 @@ int getDefinedFieldCount(struct asObject *as) {
   return definedFieldCount;
 }
 
-bool isPresent(int definedFieldCount, int index) {
-  return (definedFieldCount - index >= 0) ? TRUE : FALSE;
-}
-
-bool isSelected(SEXP r_selectedindex, int position) {
-  if (length(r_selectedindex) == 0)
-    return TRUE;
-  for (int i = 0; i < length(r_selectedindex); ++i) {
-    if(INTEGER(r_selectedindex)[i] == position)
-      return TRUE;
-  }
-  return FALSE;
-}
-
 /* following functions are taken from the kent library */
 
 struct rbTree *rangeTreeForBedChrom(struct lineFile *lf, char *chrom)
