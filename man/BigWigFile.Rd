@@ -135,7 +135,7 @@ export.bw(object, con, ...)
 
   \describe{
     \item{\code{seqinfo(x)}}{
-      Gets the \code{\link[GenomeInfoDb]{Seqinfo}} object
+      Gets the \code{\link[Seqinfo]{Seqinfo}} object
       indicating the lengths of the sequences for the intervals in the
       file. No circularity or genome information is available.
     }

@@ -59,7 +59,7 @@ Class \code{"\linkS4class{BrowserSession}"}, directly.
     \item{\code{genome(x)}}{Gets the genome identifier of the session,
       i.e. \code{genome(range(x))}.}
     \item{\code{seqinfo}}{ Gets
-      the \code{\link[GenomeInfoDb]{Seqinfo}} object with the
+      the \code{\link[Seqinfo]{Seqinfo}} object with the
       lengths of the chromosomes in the currenet genome. No
       circularity information is available.
     }

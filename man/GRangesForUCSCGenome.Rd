@@ -9,7 +9,7 @@
 }
 \description{
   These functions assist in the creation of
-  \code{\link[GenomeInfoDb]{Seqinfo}} or
+  \code{\link[Seqinfo]{Seqinfo}} or
   \code{\link[GenomicRanges:GRanges-class]{GRanges}} for a genome.
 }
 \usage{
@@ -37,7 +37,7 @@ SeqinfoForBSGenome(genome)
 }
 \details{
   The genome ID is stored in the metadata of the ranges and is
-  retrievable via the \code{\link[GenomeInfoDb]{genome}} function. The sequence
+  retrievable via the \code{\link[Seqinfo]{genome}} function. The sequence
   lengths are also properly initialized for the genome. This mitigates
   the possibility of accidentally storing intervals for the wrong
   genome.
@@ -51,7 +51,7 @@ SeqinfoForBSGenome(genome)
 }
 \value{
   For the \code{GRangesFor*} functions, a \code{GRanges} object, with the
-  appropriate \code{\link[GenomeInfoDb]{seqlengths}} and
+  appropriate \code{\link[Seqinfo]{seqlengths}} and
   \code{\link{genome}} ID.
 
   The \code{SeqinfoFor*} functions return a \code{Seqinfo} for the

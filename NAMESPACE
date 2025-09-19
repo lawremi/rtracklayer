@@ -40,7 +40,7 @@ import(restfulr)
 
 import(S4Vectors)
 import(XVector)
-import(GenomeInfoDb)
+import(Seqinfo)
 import(IRanges)
 import(GenomicRanges)
 import(BiocIO)
