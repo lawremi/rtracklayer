@@ -219,7 +219,14 @@ boolean netSkipHttpHeaderLinesHandlingRedirect(int sd, char *url, int *redirecte
     wrapped_curl_request(curl, GET);
 
     curl_easy_getinfo(curl, CURLINFO_EFFECTIVE_URL, &effectiveUrl);
-    curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &nsd);
+    
+    #if LIBCURL_VERSION_NUM >= 0x072d00
+        #define CI_SOCKET CURLINFO_ACTIVESOCKET
+    #else
+        #define CI_SOCKET CURLINFO_LASTSOCKET
+    #endif
+
+    curl_easy_getinfo(curl, CI_SOCKET, &nsd);
     if (sd != nsd) {
         close(sd);
         *redirectedSd = nsd;
