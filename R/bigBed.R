@@ -120,8 +120,7 @@ setMethod("import", "BigBedFile",
             chromEnd <- C_ans[["chromEnd"]]
             # to 1 based
             chromStart <- chromStart + 1L
-            chromWidth <- chromEnd - chromStart
-            result_ranges <- IRanges(start = chromStart, width = chromWidth)
+            result_ranges <- IRanges(start = chromStart, chromEnd)
             gr <- GRanges(result_seqnames, result_ranges, seqinfo = si)
 
             if ("strand" %in% names(C_ans) && !is.null(C_ans[["strand"]])) {
@@ -252,7 +251,7 @@ bedString <- function(x) {
   thickStart <- NULL
   thickEnd <- NULL
   if (!is.null(thick)) {
-    thickStart <- start(ranges(thick))
+    thickStart <- start(ranges(thick)) - 1L
     thickEnd <- end(ranges(thick))
     elementMetadata$thick <- NULL
   }
@@ -267,11 +266,11 @@ bedString <- function(x) {
     length <- length(blocks)
     blockCount <- lengths(blocks)
     blockSizes <- lapply(width(blocks), function(x) paste(x, collapse=","))
-    blockStarts <- lapply(start(blocks), function(x) paste(x, collapse=","))
+    blockStarts <- lapply(start(blocks) - 1L, function(x) paste(x, collapse=","))
     elementMetadata$blocks <- NULL
   }
   extraColumnsString <- do.call(paste, as.list(elementMetadata))
-  paste(as.character(seqnames(x)), start(ranges(x)), end(ranges(x)), name, score,
+  paste(as.character(seqnames(x)), start(ranges(x)) - 1L, end(ranges(x)), name, score,
                      strand, thickStart, thickEnd, itemRgb, blockCount, blockSizes,
                      blockStarts, extraColumnsString, collapse = "\n")
 }
