@@ -11,12 +11,20 @@
 \title{Selection of ranges and columns}
 
 \description{A \code{BigBedSelection} represents a query against a
-  BigBed file, see \code{\link{import.bb}}. It is simply
-  a \link[IRanges]{RangedSelection} with \code{colnames}
-  parameter.\code{colnames} should be a character vector of column names.
-  Default columns are \code{"name", "score", "thick", "itemRgb"}
-  and \code{"blocks"}, if non-empty, as that is the only column supported
-  by BigBed.}
+  BigBed file, see \code{\link{import.bb}}. It extends
+  \link[IRanges]{RangedSelection} by including a \code{colnames} parameter.
+  The \code{colnames} should be a character vector of column names
+  corresponding to BigBed fields.
+
+  By default, \code{colnames} correspond to the standard BED12 format fields
+  that cover core interval data, strand, display attributes, and block (exon)
+  structure information.
+
+  If no custom \code{colnames} are provided, \pkg{rtracklayer} attempts to use
+  the field names present in the BigBed file itself. Since BigBed files can
+  contain non standard or additional custom fields beyond the standard ones,
+  this allows flexible access to such extended fields in the query results.
+}
 
 \section{Constructor}{
   \describe{

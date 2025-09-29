@@ -80,5 +80,8 @@ int bigBedIntervalToRow(struct bigBedInterval *interval, char *chrom, char *star
 char *bigBedAutoSqlText(struct bbiFile *bbi);
 /* Get autoSql text if any associated with file.  Do a freeMem of this when done. */
 
+
+struct asObject *bigBedAsOrDefault(struct bbiFile *bbi);
+
 #endif /* BIGBED_H */
 

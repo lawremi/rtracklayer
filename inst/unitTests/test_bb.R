@@ -6,7 +6,8 @@ test_bb <- function() {
   test_bb <- file.path(test_path, "test.bb")
   start <- c(237640, 521500 ,565725, 565900, 566760,
              119905, 122525, 173925, 179865, 180185)
-  ir <- IRanges(start, width = 151)
+  start <- start + 1L
+  ir <- IRanges(start, width = 150)
   space <- factor(c(rep("chr1", 5), rep("chr10", 5)))
   name <- rep(".", 10)
   score <- seq.int(70L, 700L, length = 10)
@@ -39,7 +40,6 @@ test_bb <- function() {
                  selection = BigBedSelection(which, colnames = character()))
   correct_subset <- subsetByOverlaps(correct_fixed, which)
   correct_which <- correct_subset[, character()]
-  correct_which@elementMetadata <- DataFrame()
   checkIdentical(test, correct_which)
 
   ## TEST: BigBedSelection (GRanges, 1 default field)
