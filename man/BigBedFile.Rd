@@ -118,12 +118,12 @@ if (.Platform$OS.type != "windows") {
   gr
 
   ## Retuns ranges only for 'chr10'
-  ## between 180185-180185 with all fields
-  which <- GRanges(c("chr10"), IRanges(c(180185, 180185)))
+  ## between 170000-180000 with all fields
+  which <- GRanges(c("chr10"), IRanges(c(170000, 180000)))
   import(test_bb, which = which)
 
   ## Retuns ranges only for 'chr10' 
-  ## between 180185-180185 with name and peak fields
+  ## between 170000-180000 with name and peak fields
   selection <- BigBedSelection(which, colnames = c("name", "peak"))
   import(test_bb, selection = selection)
 
