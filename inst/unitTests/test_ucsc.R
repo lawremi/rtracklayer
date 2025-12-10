@@ -104,14 +104,6 @@ test_ucsc <- function(x) {
     ucscCart <- rtracklayer:::ucscCart(new("UCSCSession"))
     checkTrue(length(ucscCart) != 0L)
 
-    # TEST ucscTableTracks returns track and table details associated with a genome
-    tracksNames <- rtracklayer:::ucscTableTracks("hg18")
-    checkTrue(length(tracksNames) != 0L)
-
-    # TEST ucscTables returns tables associated with a track
-    tables <- ucscTables("hg18", "Assembly")
-    checkTrue(length(tables) != 0L)
-
     # TEST ucscTracks retrieves the modes and ids
     tracks <- rtracklayer:::ucscTracks(new("UCSCSession"))
     checkIdentical(length(tracks@ids), length(tracks@modes))

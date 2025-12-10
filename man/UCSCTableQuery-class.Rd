@@ -158,10 +158,10 @@
     }
     \item{\code{ucscSchema(x)}}{ Get
       the \code{\linkS4class{UCSCSchema}} object describing the selected table.}
-    \item{\code{ucscTables(genome, track)}}{Get the list of tables for the 
-      specified track(e.g. \dQuote{Assembly}) and genome identifier (e.g. \dQuote{hg19}).
-      Here \code{genome} and \code{track} must be a single non-NA string.
-    }
+    \item{\code{ucscTables(genome, track)}}{Defunct. Typically, one
+      would use \code{tableNames} to retrieve the names of available
+      tables. To get the name of a UCSC table for a track, use the table
+      browser interactively.}
     \item{\code{browserSession(x)}, \code{browserSession(x) <- value}}{Gets or sets
     the \code{\linkS4class{BrowserSession}} of the object.
     }
