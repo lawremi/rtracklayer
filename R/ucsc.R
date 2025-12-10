@@ -180,14 +180,14 @@ setReplaceMethod("genome", "UCSCTableQuery", function(x, value) {
 })
 
 setMethod("browserSession", "UCSCTableQuery", function(object) {
-  .Defunct("browserSession is no longer supported, instead use genome identifier")
+    .Defunct(msg = "UCSCTableQuery is no longer associated with a UCSCSession")
 })
 
 setGeneric("browserSession<-",
            function(object, ..., value) standardGeneric("browserSession<-"))
 setReplaceMethod("browserSession", "UCSCTableQuery",
                  function(object, value) {
-                   .Defunct("browserSession is no longer supported, instead use genome identifier")
+                   .Defunct(msg = "UCSCTableQuery is no longer associated with a UCSCSession")
                  })
 
 setMethod("range", "UCSCTableQuery", function(x, ..., na.rm) x@range)
@@ -247,22 +247,9 @@ normTableQueryRange <- function(range, genome, max.length = 1000L) {
 }
 
 ucscTables <- function(genome, track) {
-  url <- "https://genome.ucsc.edu/cgi-bin/hgTables"
-  if (!isSingleString(genome))
-    stop("'genome' must be a single non-NA string")
-  # check genome is valid or not
-  doc <- rtracklayerGET(url, query = list(db=genome))
-  genomes <- unlist(getNodeSet(doc, "//select[@name='db']/option/@value"))
-  if (!(genome %in% unname(genomes)))
-    stop("Invalid genome :'", genome, "'")
-  # retrieve track for a genome
-  trackids <- ucscTableTracks(genome)
-  track <- normArgTrack(track, trackids)
-  # retrieve tables for a track
-  form <- c(db = genome, hgta_group = "allTracks", hgta_track = track)
-  doc <- rtracklayerGET(url, query = form)
-  tables <- unlist(getNodeSet(doc, "//select[@name='hgta_table']/option/@value"))
-  unname(tables)
+    .Defunct("tableNames",
+             msg = paste("Query UCSC data using the table identifier,",
+                         "found by using the UCSC table browser interactively."))
 }
 
 setGeneric("ucscTableQuery", function(x, ...) standardGeneric("ucscTableQuery"))
@@ -296,8 +283,7 @@ setMethod("ucscTableQuery", "character",
               } else genome <- x
               # if the table is provied then it will not try to identify the table from the track
               if (!is.null(track) && is.null(table)) {
-                warning("'track' parameter is deprecated now you go by the 'table' instead
-                Use ucscTables(genome, track) to retrieve the list of tables for a track")
+                .Defunct(msg = "'track' argument is defunct; use 'table' instead")
                 tables <- ucscTables(genome, track)
                 table <- tables[1]
               }
@@ -341,22 +327,10 @@ setReplaceMethod("hubUrl", "UCSCTableQuery", function(x, value) {
   x
 })
 
-## gets the track names available from the table browser
-ucscTableTracks <- function(genome) {
-  url <- "https://genome.ucsc.edu/cgi-bin/hgTables"
-  doc <- rtracklayerGET(url, query = list(db=genome, hgta_group="allTracks"))
-  label_path <- "//select[@name = 'hgta_track']/option/text()"
-  labels <- sub("\n.*$", "", sapply(getNodeSet(doc, label_path), xmlValue))
-  track_path <- "//select[@name = 'hgta_track']/option/@value"
-  tracks <- unlist(getNodeSet(doc, track_path))
-  names(tracks) <- labels
-  tracks
-}
-
 setMethod("trackNames", "UCSCTableQuery",
           function(object) {
-            # .Defunct("tableNames", msg = "track is meaningless now you only go by the table")
-            ucscTableTracks(object@genome)
+              .Defunct("tableNames",
+                       msg = "querying UCSC is now based on the table identifier")
           })
 
 ## returns a character vector of table names for a given track name + range
