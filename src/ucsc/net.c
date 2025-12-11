@@ -77,11 +77,13 @@ void wrapped_curl_cleanup(CURL *curl) {
     curl_global_cleanup();
 }
 
-CURLcode wrapped_curl_perform(CURL *curl) {
+long wrapped_curl_perform(CURL *curl) {
+    long http_code = 0;
     CURLcode status = curl_easy_perform(curl);
-    if (CURLE_OK != status)
+    if (status != CURLE_OK)
         errAbort("curl_easy_perform() failed: %s\n", curl_easy_strerror(status));
-    return status;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+    return http_code;
 }
 
 size_t write_callback(void *buffer, size_t size, size_t nitems, void *userdata) {
