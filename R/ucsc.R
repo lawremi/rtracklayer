@@ -394,8 +394,8 @@ setMethod("ucscSchema", "UCSCTableQuery", function(object) {
   })
   schemaDf <- do.call(rbind, listOfDf)
   names(schemaDf) <- c("field", "SQL.type", "JSON.type", "description")
-  schema <- new("UCSCSchema", schemaDf, genome = genome, tableName = tableName,
-                rowCount = rowCount)
+  new("UCSCSchema", schemaDf, genome = genome, tableName = tableName,
+      rowCount = rowCount)
 })
 
 setMethod("show", "UCSCSchema", function(object) {
