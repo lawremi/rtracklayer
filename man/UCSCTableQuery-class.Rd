@@ -178,28 +178,27 @@ genome(session) <- "mm9"
 ## choose the phastCons30way table for a portion of mm9 chr1
 query <- ucscTableQuery(session, table = "phastCons30way",
                         range = GRangesForUCSCGenome("mm9", "chr12",
-                                             IRanges(57795963, 57815592)))
+                                                     IRanges(57795963, 57815592)))
 ## list the table names
 tableNames(query)
 ## retrieve the track data
 track(query)  # a GRanges object
-## get the multiz30waySummary track
-tableName(query) <- "multiz30waySummary"
-## get a data.frame summarizing the multiple alignment
+## get the multiz30way table
+tableName(query) <- "multiz30way"
+## get a data.frame
 getTable(query)
 
 # query using `genome identifier` provider
-query <- ucscTableQuery("hg18", table = "snp129",
-                        names = c("rs10003974", "rs10087355", "rs10075230"))
+query <- ucscTableQuery("hg38", table = "snp141Common",
+                        range = GRangesForUCSCGenome("hg38", "chr12",
+                                                     IRanges(57795963, 57815592)))
 ucscSchema(query)
 getTable(query)
 
 # query using `TrackHub URI` provider
-query <- ucscTableQuery("https://ftp.ncbi.nlm.nih.gov/snp/population_frequency/TrackHub/20200227123210/",
-                        genome = "hg19", table = "ALFA_GLB")
-getTable(query)
-# get the list of tables for 'Assembly' track and 'hg19' genome identifier
-ucscTables("hg19", "Assembly")
+query <- ucscTableQuery("https://hgdownload.soe.ucsc.edu/hubs/gtexAnalysis",
+                        genome = "hg38", table = "gtexAwgAseLung")
+track(query)
 }
 }
 
