@@ -8,14 +8,17 @@
 #include "portable.h"
 #include "verbose.h"
 
-static int logVerbosity = 1;	/* The level of log verbosity.  0 is silent. */
+#define logVerbosity 0	/* The level of log verbosity.  0 is silent. */
 
 void verboseVa(int verbosity, char *format, va_list args)
 /* Log with at given verbosity vprintf formatted args. */
 {
 if (verbosity <= logVerbosity)
     {
-	/* noop to avoid R CMD check warnings, no code should get here */
+#if logVerbosity > 0 // to avoid R CMD check warnings
+	vfprintf(stderr, format, args);
+        fflush(stderr);
+#endif
     }
 }
 
