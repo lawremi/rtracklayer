@@ -137,8 +137,8 @@ size_t header_callback(void *buffer, size_t size, size_t nitems, void *userdata)
     if (line != NULL) {
         char *colon = memchr(line, ':', strlen(line));
         if (colon != NULL) {
-            *colon = '\0';
-            hashAdd(*header, strUpper(line), cloneString(colon+1));
+            *(colon + 1) = '\0';
+            hashAdd(*header, strUpper(line), cloneString(colon + 2));
         }
     }
     return realsize;
