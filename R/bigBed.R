@@ -154,14 +154,10 @@ setMethod("import", "BigBedFile",
 
             if ("itemRgb" %in% names(C_ans) && !is.null(C_ans[["itemRgb"]])) {
                 color <- C_ans[["itemRgb"]]
-                spec <- color != "0"
-                cols <- unlist(strsplit(color[spec], ",", fixed=TRUE),
-                               use.names=FALSE)
-                cols <- matrix(as.integer(cols), 3)
-                color <- rep(NA, length(gr))
-                color[spec] <- rgb(cols[1,], cols[2,], cols[3,],
-                                   maxColorValue = 255L)
-                mcols(gr)$itemRgb <- color
+                spec <- color != 0L
+                ans <- rep(NA_character_, length(color))
+                ans[spec] <- sprintf("#%06X", bitwAnd(color[spec], 0xFFFFFF))
+                mcols(gr)$itemRgb <- ans
             }
 
             processed_fields <- c("n_qhits", "chrom", "chromStart", "chromEnd",
