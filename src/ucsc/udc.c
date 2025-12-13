@@ -43,10 +43,6 @@
 #include "udc.h"
 #include "htmlPage.h"
 
-/* The stdio stream we'll use to output statistics on file i/o.  Off by default. */
-FILE *udcLogStream = NULL;
-static char *defaultDir = "/tmp/udcCache";
-
 struct ioStats
 /* Statistics concerning reads and seeks. */
 {
@@ -68,22 +64,6 @@ struct ios
     bits64 numReuse;            /* The number of socket reuses. */
 };
 
-
-#define udcBlockSize (8*1024)
-/* All fetch requests are rounded up to block size. */
-
-#define udcMaxBytesPerRemoteFetch (udcBlockSize * 32)
-/* Very large remote reads are broken down into chunks this size. */
-
-struct connInfo
-/* Socket descriptor and associated info, for keeping net connections open. */
-    {
-    int socket;                 /* Socket descriptor for data connection (or 0). */
-    bits64 offset;		/* Current file offset of socket. */
-    int ctrlSocket;             /* (FTP only) Control socket descriptor or 0. */
-    char *redirUrl;             /* (HTTP(S) only) use redirected url */
-    };
-
 typedef int (*UdcDataCallback)(char *url, bits64 offset, int size, void *buffer,
 			       struct udcFile *file);
 /* Type for callback function that fetches file data. */
@@ -93,7 +73,7 @@ struct udcRemoteFileInfo
     {
     bits64 updateTime;	/* Last update in seconds since 1970 */
     bits64 size;	/* Remote file size */
-    struct connInfo ci; /* Connection info for open net connection */
+    char *redirUrl;     /* If redirected, the new URL */
     };
 
 typedef boolean (*UdcInfoCallback)(char *url, struct udcRemoteFileInfo *retInfo);
@@ -130,9 +110,22 @@ struct udcFile
     bits64 startData;		/* Start of area in file we know to have data. */
     bits64 endData;		/* End of area in file we know to have data. */
     bits32 bitmapVersion;	/* Version of associated bitmap we were opened with. */
-    struct connInfo connInfo;   /* Connection info for open net connection. */
+    char *redirUrl;             /* If redirected, the new URL */
     struct ios ios;             /* Statistics on file access. */
     };
+
+/* The stdio stream we'll use to output statistics on file i/o.  Off by default. */
+FILE *udcLogStream = NULL;
+static char *defaultDir = "/tmp/udcCache";
+
+
+#define udcBlockSize (8*1024)
+/* All fetch requests are rounded up to block size. */
+
+#define udcMaxBytesPerRemoteFetch (udcBlockSize * 32)
+/* Very large remote reads are broken down into chunks this size. */
+
+
 
 struct udcBitmap
 /* The control structure including the bitmap of blocks that are cached. */
@@ -191,112 +184,6 @@ ioStats->numReads++;
 ioStats->bytesRead += size * nmemb;
 return fread(buf, size, nmemb, stream);
 }
-
-static void udcReadAndIgnore(struct ioStats *ioStats, int sd, bits64 size)
-/* Read size bytes from sd and return. */
-{
-static char *buf = NULL;
-if (buf == NULL)
-    buf = needMem(udcBlockSize);
-bits64 remaining = size, total = 0;
-while (remaining > 0)
-    {
-    bits64 chunkSize = min(remaining, udcBlockSize);
-    ssize_t rd = ourRead(ioStats, sd, buf, chunkSize);
-    if (rd < 0)
-	errnoAbort("udcReadAndIgnore: error reading socket after %lld bytes", total);
-    remaining -= rd;
-    total += rd;
-    }
-if (total < size)
-    errAbort("udcReadAndIgnore: got EOF at %lld bytes (wanted %lld)", total, size);
-}
-
-#ifndef WIN32
-
-static int connInfoGetSocket(struct udcFile *file, char *url, bits64 offset, int size)
-/* If ci has an open socket and the given offset matches ci's current offset,
- * reuse ci->socket.  Otherwise close the socket, open a new one, and update ci,
- * or return -1 if there is an error opening a new one. */
-{
-/* NOTE: This doesn't use HTTP 1.1 keep alive to do multiple request on the
- * same socket.  The only way subsequent random requests on the same socket
- * work is because previous request are open-ended and this can continue
- * reading where it left off.  The HTTP requests are issued as 1.0, even
- * through range requests are a 1.1 feature.
- *
- * For FTP, the serial read approach is essential.  FTP only supports resuming
- * from an offset, but doesn't not support limiting the number of bytes
- * transferred.  All that can be done to stop the transfer is to abort the
- * operation, when then requires reconnecting.
- */
-
-struct connInfo *ci = &file->connInfo;
-if (ci != NULL && ci->socket > 0 && ci->offset != offset)
-    {
-    bits64 skipSize = (offset - ci->offset);
-    if (skipSize > 0 && skipSize <= MAX_SKIP_TO_SAVE_RECONNECT)
-	{
-	verbose(4, "skipping %lld bytes @%lld to avoid reconnect\n", skipSize, ci->offset);
-	udcReadAndIgnore(&file->ios.net, ci->socket, skipSize);
-	ci->offset = offset;
-        file->ios.numReuse++;
-	}
-    else
-	{
-	verbose(4, "Offset mismatch (ci %lld != new %lld), reopening.\n", ci->offset, offset);
-	mustCloseFd(&(ci->socket));
-	if (ci->ctrlSocket > 0)
-	    mustCloseFd(&(ci->ctrlSocket));
-	ZeroVar(ci);
-	}
-    }
-int sd;
-if (ci == NULL || ci->socket <= 0)
-    {
-    file->ios.numConnects++;
-    if (ci->redirUrl)
-	{
-	url = transferParamsToRedirectedUrl(url, ci->redirUrl);
-	}
-    // IMPORTANT NOTE: byterange is not a real URL parameter, this is a hack to pass
-    // the range to the net.c functions, which then parse it.
-    char rangeUrl[2048];
-    if (ci == NULL)
-	{
-	safef(rangeUrl, sizeof(rangeUrl), "%s;byterange=%lld-%lld",
-	      url, offset, (offset + size - 1));
-	sd = netUrlOpen(rangeUrl);
-	}
-    else
-	{
-	safef(rangeUrl, sizeof(rangeUrl), "%s;byterange=%lld-", url, offset);
-	sd = ci->socket = netUrlOpenSockets(rangeUrl, &(ci->ctrlSocket));
-	ci->offset = offset;
-	}
-    if (sd < 0)
-	return -1;
-    if (startsWith("http", url))
-	{
-	char *newUrl = NULL;
-	int newSd = 0;
-	if (!netSkipHttpHeaderLinesHandlingRedirect(sd, rangeUrl, &newSd, &newUrl))
-	    return -1;
-	if (newUrl)
-	    {
-	    freeMem(newUrl); 
-	    sd = newSd;
-	    if (ci != NULL)
-		ci->socket = newSd;
-	    }
-	}
-    }
-else
-    sd = ci->socket;
-return sd;
-}
-
-#endif
 
 /********* Section for local file protocol **********/
 
@@ -437,182 +324,101 @@ int udcDataViaHttpOrFtp( char *url, bits64 offset, int size, void *buffer, struc
  * Does an errAbort on error.
  * Typically will be called with size in the 8k-64k range. */
 {
-if (startsWith("http://",url) || startsWith("https://",url) || startsWith("ftp://",url))
-    verbose(4, "reading http/https/ftp data - %d bytes at %lld - on %s\n", size, offset, url);
-else
-    errAbort("Invalid protocol in url [%s] in udcDataViaFtp, only http, https, or ftp supported",
-	     url); 
-int sd = connInfoGetSocket(file, url, offset, size);
-if (sd < 0)
-    errAbort("Can't get data socket for %s", url);
-int rd = 0, total = 0, remaining = size;
-char *buf = (char *)buffer;
-while ((remaining > 0) && ((rd = ourRead(&file->ios.net, sd, buf, remaining)) > 0))
-    {
-    total += rd;
-    buf += rd;
-    remaining -= rd;
-    }
-if (rd == -1)
-    errnoAbort("udcDataViaHttpOrFtp: error reading socket");
-struct connInfo *ci = &file->connInfo;
-if (ci == NULL)
-    mustCloseFd(&sd);
-else
-    ci->offset += total;
-return total;
+    if (startsWith("http://",url) || startsWith("https://",url) || startsWith("ftp://",url))
+        verbose(4, "reading http/https/ftp data - %d bytes at %lld - on %s\n", size, offset, url);
+    else
+        errAbort("Invalid protocol in url [%s] in udcDataViaHttpOrFtp, only http, https, or ftp supported", url);
+    
+    file->ios.numConnects++;
+
+    char *fetchUrl = url;
+    if (file->redirUrl)
+        fetchUrl = file->redirUrl;
+    
+    int bytesRead = netUrlRead(fetchUrl, offset, size, buffer);
+    
+    if (bytesRead < 0)
+        errAbort("udcDataViaHttpOrFtp: error reading from url %s", url);
+        
+    file->ios.net.bytesRead += bytesRead;
+    file->ios.net.numReads++;
+    
+    return bytesRead;
 }
 
 boolean udcInfoViaHttp(char *url, struct udcRemoteFileInfo *retInfo)
-/* Gets size and last modified time of URL
- * and returns status of HEAD or GET byterange 0-0. */
+/* Gets size and last modified time of URL and returns status. */
 {
-verbose(4, "checking http remote info on %s\n", url);
-// URLs passed into here should not have byterange clause.
-int redirectCount = 0;
-struct hash *hash;
-int status;
-char *sizeString = NULL;
-/*
- For caching, sites should support byte-range and last-modified.
- However, several groups including ENCODE have made sites that use CGIs to
- dynamically generate hub text files such as hub.txt, genome.txt, trackDb.txt.
- Byte-range and last-modified are difficult to support for this case,
- so they do without them, effectively defeat caching. Every 5 minutes (udcTimeout),
- they get re-downloaded, even when the data has not changed.
-*/
-while (TRUE)
-    {
-    hash = newHash(0);
-    status = netUrlHead(url, hash);
-    sizeString = hashFindValUpperCase(hash, "Content-Length:");
-    if (status == 200 && sizeString)
-	break;
-    /*
-    Using HEAD with HIPPAA-compliant signed AmazonS3 URLs generates 403.
-    The signed URL generated for GET cannot be used with HEAD.
-    Instead call GET with byterange=0-0 in netUrlFakeHeadByGet().
-    This supplies both size via Content-Range response header,
-    as well as Last-Modified header which is important for caching.
-    There are also sites which support byte-ranges
-    but they do not return Content-Length with HEAD.
-    */
-    if (status == 403 || (status==200 && !sizeString))
-	{
-	hashFree(&hash);
-	hash = newHash(0);
-	status = netUrlFakeHeadByGet(url, hash);
-	if (status == 206)
-	    break;
-	if (status == 200)  // helps get more info to user
-	    break;
-	}
-    if (status != 301 && status != 302 && status != 307 && status != 308)
-	return FALSE;
-    ++redirectCount;
-    if (redirectCount > 5)
-	{
-	warn("code %d redirects: exceeded limit of 5 redirects, %s", status, url);
-	return FALSE;
-	}
-    char *newUrl = hashFindValUpperCase(hash, "Location:");
-     if (!newUrl)
-	{
-	warn("code %d redirects: redirect location missing, %s", status, url);
-	return FALSE;
-	}
+    verbose(4, "checking http remote info on %s\n", url);
+    struct hash *hash = newHash(0);
+    int status = netUrlHead(url, hash, &retInfo->redirUrl);
 
-    // path may be relative
-    if (hasProtocol(newUrl))
-	{
-        newUrl = cloneString(newUrl);
-	}
+    if (status != 200 && status != 206)
+    {
+        hashFree(&hash);
+        return FALSE;
+    }
+
+    char *sizeString = hashFindVal(hash, "content-length");
+    if (sizeString == NULL)
+    {
+        sizeString = hashFindVal(hash, "content-range");
+        if (sizeString != NULL)
+        {
+            char *slash = strrchr(sizeString, '/');
+            if (slash != NULL)
+                sizeString = slash + 1;
+        }
+    }
+    
+    if (sizeString == NULL)
+    {
+        warn("No Content-Length or Content-Range in HTTP header for %s", url);
+        retInfo->size = 0;
+    }
     else
-	{
-	newUrl = expandUrlOnBase(url, newUrl);
-	}
-
-    retInfo->ci.redirUrl = newUrl;
-    url = transferParamsToRedirectedUrl(url, newUrl);
-    hashFree(&hash);
+    {
+        retInfo->size = atoll(sizeString);
     }
 
-char *sizeHeader = NULL;
-if (status == 200)
-    {
-    sizeHeader = "Content-Length:";
-    // input pattern: Content-Length: 2738262
-    }
-if (status == 206)
-    {
-    sizeHeader = "Content-Range:";
-    // input pattern: Content-Range: bytes 0-99/2738262
-    }
-
-sizeString = hashFindValUpperCase(hash, sizeHeader);
-if (sizeString)
-    {
-    char *parseString = sizeString;
-    if (status == 206)
-	{
-	parseString = strchr(sizeString, '/');
-	if (!parseString)
-	    {
-	    warn("Header value %s is missing '/' in %s in response for url %s",
-		sizeString, sizeHeader, url);
-	    return FALSE;
-	    }
-	++parseString; // skip past slash
-	}
-    if (parseString)
-	{
-	retInfo->size = atoll(parseString);
-	}
-    else
-	{
-	warn("Header value %s is missing or invalid in %s in response for url %s",
-	    sizeString, sizeHeader, url);
-	return FALSE;
-	}
-    }
-else
-    {
-    warn("Response is missing required header %s for url %s", sizeHeader, url);
-    return FALSE;
-    }
-
-char *lastModString = hashFindValUpperCase(hash, "Last-Modified:");
-if (lastModString == NULL)
-    {
-    // Date is a poor substitute!  It will always appear that the cache is stale.
-    // But at least we can read files from dropbox.com.
-    lastModString = hashFindValUpperCase(hash, "Date:");
+    char *lastModString = hashFindVal(hash, "last-modified");
     if (lastModString == NULL)
-	{
-	hashFree(&hash);
-	errAbort("No Last-Modified: or Date: returned in header for %s, can't proceed, sorry", url);
-	}
+    {
+        lastModString = hashFindVal(hash, "date");
+        if (lastModString == NULL)
+        {
+            warn("No Last-Modified or Date in header for %s", url);
+            retInfo->updateTime = 0;
+        }
     }
 
-struct tm tm;
-time_t t;
-// Last-Modified: Wed, 15 Nov 1995 04:58:08 GMT
-// This will always be GMT
-if (strptime(lastModString, "%a, %d %b %Y %H:%M:%S %Z", &tm) == NULL)
-    { /* Handle error */;
-    hashFree(&hash);
-    errAbort("unable to parse last-modified string [%s]", lastModString);
+    if (lastModString != NULL)
+    {
+        struct tm tm;
+        time_t t;
+        // Last-Modified: Wed, 15 Nov 1995 04:58:08 GMT. Always GMT.
+        if (strptime(lastModString, "%a, %d %b %Y %H:%M:%S %Z", &tm) == NULL)
+        {
+            warn("could not parse time string: %s", lastModString);
+            retInfo->updateTime = 0;
+        }
+        else
+        {
+            t = mktimeFromUtc(&tm);
+            if (t == -1)
+            {
+                warn("mktimeFromUtc failed for %s", lastModString);
+                retInfo->updateTime = 0;
+            }
+            else
+            {
+                retInfo->updateTime = t;
+            }
+        }
     }
-t = mktimeFromUtc(&tm);
-if (t == -1)
-    { /* Handle error */;
+    
     hashFree(&hash);
-    errAbort("mktimeFromUtc failed while converting last-modified string [%s] from UTC time", lastModString);
-    }
-retInfo->updateTime = t;
-
-hashFree(&hash);
-return status;
+    return TRUE;
 }
 
 
@@ -623,25 +429,16 @@ return status;
 boolean udcInfoViaFtp(char *url, struct udcRemoteFileInfo *retInfo)
 /* Gets size and last modified time of FTP URL */
 {
-verbose(4, "checking ftp remote info on %s\n", url);
-long long size = 0;
-time_t t, tUtc;
-struct tm *tm = NULL;
-// TODO: would be nice to add int *retCtrlSocket to netGetFtpInfo so we can stash 
-// in retInfo->connInfo and keep socket open.
-boolean ok = netGetFtpInfo(url, &size, &tUtc);
-if (!ok)
-    return FALSE;
-// Convert UTC to localtime
-tm = localtime(&tUtc);
-t = mktimeFromUtc(tm);
-if (t == -1)
-    { /* Handle error */;
-    errAbort("mktimeFromUtc failed while converting FTP UTC last-modified time %ld to local time", (long) tUtc);
-    }
-retInfo->size = size;
-retInfo->updateTime = t;
-return TRUE;
+    verbose(4, "checking ftp remote info on %s\n", url);
+    long long size = 0;
+    time_t t = 0;
+
+    if (!netGetFtpInfo(url, &size, &t))
+        return FALSE;
+    
+    retInfo->size = size;
+    retInfo->updateTime = t;
+    return TRUE;
 }
 
 #endif
@@ -1024,44 +821,7 @@ udcBitmapClose(&bits);
 return ret;
 }
 
-static void udcTestAndSetRedirect(struct udcFile *file, char *protocol, boolean useCacheInfo)
-/* update redirect info */
-{
-if (startsWith("http", protocol))
-    {
-    char *newUrl = NULL;
-    // read redir from cache if it exists
-    if (fileExists(file->redirFileName))
-	{
-	readInGulp(file->redirFileName, &newUrl, NULL);
-	}
-    if (useCacheInfo)
-	{
-	file->connInfo.redirUrl = cloneString(newUrl);
-	}
-    else
-	{
-	if (file->connInfo.redirUrl)
-	    {
-	    if (!sameOk(file->connInfo.redirUrl, newUrl))
-		{
-		// write redir to cache
-		char *temp = addSuffix(file->redirFileName, ".temp");
-		writeGulp(temp, file->connInfo.redirUrl, strlen(file->connInfo.redirUrl));
-		rename(temp, file->redirFileName);
-		freeMem(temp);
-		}
-	    }
-	else
-	    {
-	    // delete redir from cache (if it exists)
-	    if (newUrl)
-		remove(file->redirFileName);
-	    }
-	}
-    freeMem(newUrl);
-    }
-}
+
 
 unsigned long djb2_hash(unsigned char *str) {
     unsigned long hash = 5381;
@@ -1169,32 +929,50 @@ else
     char *full_path = get_hashed_basename_path(afterProtocol);
     udcPathAndFileNames(file, cacheDir, protocol, full_path);
     if (!useCacheInfo)
-	{
-	file->updateTime = info.updateTime;
-	file->size = info.size;
-	memcpy(&(file->connInfo), &(info.ci), sizeof(struct connInfo));
-	// update cache file mod times, so if we're caching we won't do this again
-	// until the timeout has expired again:
+    {
+        file->updateTime = info.updateTime;
+        file->size = info.size;
+        file->redirUrl = info.redirUrl; // this is an already-cloned string or NULL
+        // update cache file mod times, so if we're caching we won't do this again
+        // until the timeout has expired again:
 #ifndef WIN32
-if (udcCacheTimeout() > 0 && udcCacheEnabled() && fileExists(file->bitmapFileName))
-	    (void)maybeTouchFile(file->bitmapFileName);
+        if (udcCacheTimeout() > 0 && udcCacheEnabled() && fileExists(file->bitmapFileName))
+            (void)maybeTouchFile(file->bitmapFileName);
 #endif
-    freeMem(full_path);
-	}
+        freeMem(full_path);
+    }
 
     if (udcCacheEnabled())
-        {
+    {
         /* Make directory. */
         makeDirsOnPath(file->cacheDir);
+        
+        if (useCacheInfo)
+        {
+            if (fileExists(file->redirFileName))
+                readInGulp(file->redirFileName, &file->redirUrl, NULL);
+        }
+        else
+        {
+            if (file->redirUrl)
+            {
+                char *temp = addSuffix(file->redirFileName, ".temp");
+                writeGulp(temp, file->redirUrl, strlen(file->redirUrl));
+                rename(temp, file->redirFileName);
+                freeMem(temp);
+            }
+            else
+            {
+                if (fileExists(file->redirFileName))
+                    remove(file->redirFileName);
+            }
+        }
 
         /* Figure out a little bit about the extent of the good cached data if any. Open bits bitmap. */
         setInitialCachedDataBounds(file, useCacheInfo);
 
         file->fdSparse = mustOpenFd(file->sparseFileName, O_RDWR);
-
-        // update redir with latest redirect status
-        udcTestAndSetRedirect(file, protocol, useCacheInfo);
-        }
+    }
     }
 freeMem(afterProtocol);
 return file;
@@ -1252,17 +1030,15 @@ if (file != NULL)
            file->ios.udc.numSeeks, file->ios.udc.numReads, file->ios.udc.bytesRead, file->ios.udc.numWrites,  file->ios.udc.bytesWritten,
            file->ios.net.numSeeks, file->ios.net.numReads, file->ios.net.bytesRead, file->ios.net.numWrites,  file->ios.net.bytesWritten);
         }
-    if (file->connInfo.socket != 0)
-	mustCloseFd(&(file->connInfo.socket));
-    if (file->connInfo.ctrlSocket != 0)
-	mustCloseFd(&(file->connInfo.ctrlSocket));
     freeMem(file->url);
     freeMem(file->protocol);
     udcProtocolFree(&file->prot);
     freeMem(file->cacheDir);
     freeMem(file->bitmapFileName);
     freeMem(file->sparseFileName);
+    freeMem(file->redirFileName);
     freeMem(file->sparseReadAheadBuf);
+    freeMem(file->redirUrl);
     if (file->fdSparse != 0)
         mustCloseFd(&(file->fdSparse));
     udcBitmapClose(&file->bits);
