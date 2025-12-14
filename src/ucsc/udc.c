@@ -1,6 +1,3 @@
-/*** rtracklayer has #ifndef WIN32'd the http/ftp stuff here, as well as
-     the entire net.c and internet.c files. ***/
-
 /* udc - url data cache - a caching system that keeps blocks of data fetched from URLs in
  * sparse local files for quick use the next time the data is needed. 
  *
@@ -317,8 +314,6 @@ static bool udcCacheEnabled()
 return (defaultDir != NULL);
 }
 
-#ifndef WIN32
-
 /********* Section for http protocol **********/
 
 int udcDataViaHttpOrFtp( char *url, bits64 offset, int size, void *buffer, struct udcFile *file)
@@ -398,14 +393,14 @@ boolean udcInfoViaHttp(char *url, struct udcRemoteFileInfo *retInfo)
     if (lastModString != NULL)
     {
         time_t t = curl_getdate(lastModString, NULL);
-            if (t == -1)
-            {
+        if (t == -1)
+        {
             warn("curl_getdate failed for %s", lastModString);
-                retInfo->updateTime = 0;
-            }
-            else
-            {
-                retInfo->updateTime = t;
+            retInfo->updateTime = 0;
+        }
+        else
+        {
+            retInfo->updateTime = t;
         }
     }
     
@@ -432,8 +427,6 @@ boolean udcInfoViaFtp(char *url, struct udcRemoteFileInfo *retInfo)
     retInfo->updateTime = t;
     return TRUE;
 }
-
-#endif
 
 /********* Non-protocol-specific bits **********/
 
@@ -590,7 +583,6 @@ else if (sameString(upToColon, "slow"))
     prot->fetchInfo = udcInfoViaSlow;
     prot->type = "slow";
     }
- #ifndef WIN32
 else if (sameString(upToColon, "http") || sameString(upToColon, "https"))
     {
     prot->fetchData = udcDataViaHttpOrFtp;
@@ -603,7 +595,6 @@ else if (sameString(upToColon, "ftp"))
     prot->fetchInfo = udcInfoViaFtp;
     prot->type = "ftp";
     }
- #endif
 else if (sameString(upToColon, "transparent"))
     {
     prot->fetchData = udcDataViaTransparent;
@@ -861,9 +852,7 @@ if (udcLogStream)
 char *protocol = NULL, *afterProtocol = NULL, *colon;
 boolean isTransparent = FALSE;
 udcParseUrl(url, &protocol, &afterProtocol, &colon);
-#ifndef WIN32 /* force WIN32 to use transparent (local file) loading */
 if (!colon)
-#endif
     {
     freeMem(protocol);
     protocol = cloneString("transparent");
@@ -1667,9 +1656,6 @@ if (udcIsLocal(url))
 
 off_t ret = -1;
 
-#ifdef WIN32
- errAbort("udc/udcFileSize: invalid protocol for url %s, only file:// URLs are supported on Windows", url);
-#else
 // don't go to the network if we can avoid it
 off_t cacheSize = udcSizeFromCache(url, NULL);
 if (cacheSize!=-1)
@@ -1689,7 +1675,6 @@ else if (startsWith("ftp://",url))
     }
 else
     errAbort("udc/udcFileSize: invalid protocol for url %s, can only do http/https/ftp", url);
-#endif
   
 return ret;
 }
