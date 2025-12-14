@@ -7,6 +7,7 @@
 #include "common.h"
 #include <io.h>
 #include <direct.h>
+#include <sys/utime.h>
 #include "portable.h"
 #include "_portimpl.h"          /* for cmpFileInfo */
 
@@ -147,4 +148,29 @@ struct fileInfo *listDirX(char *dir, char *pattern, boolean fullPath)
     setCurrentDir(currentDir);
   slSort(&list, cmpFileInfo);
   return list;
+}
+
+boolean maybeTouchFile(char *fileName)
+/* If file exists, set its access and mod times to now.  If it doesn't exist, create it.
+ * Return FALSE if we have a problem doing so. */
+{
+if (fileExists(fileName))
+    {
+    struct _utimbuf ut;
+    ut.actime = ut.modtime = time(NULL);
+    if (_utime(fileName, &ut) != 0)
+	{
+	warn("_utime(%s) failed", fileName);
+	return FALSE;
+	}
+    }
+else
+    {
+    FILE *f = fopen(fileName, "w");
+    if (f == NULL)
+	return FALSE;
+    else
+	carefulClose(&f);
+    }
+return TRUE;
 }
