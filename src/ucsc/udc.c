@@ -43,6 +43,9 @@
 #include "udc.h"
 #include "htmlPage.h"
 
+#define CURL_STATICLIB
+#include <curl/curl.h>
+
 struct ioStats
 /* Statistics concerning reads and seeks. */
 {
@@ -394,26 +397,15 @@ boolean udcInfoViaHttp(char *url, struct udcRemoteFileInfo *retInfo)
 
     if (lastModString != NULL)
     {
-        struct tm tm;
-        time_t t;
-        // Last-Modified: Wed, 15 Nov 1995 04:58:08 GMT. Always GMT.
-        if (strptime(lastModString, "%a, %d %b %Y %H:%M:%S %Z", &tm) == NULL)
-        {
-            warn("could not parse time string: %s", lastModString);
-            retInfo->updateTime = 0;
-        }
-        else
-        {
-            t = mktimeFromUtc(&tm);
+        time_t t = curl_getdate(lastModString, NULL);
             if (t == -1)
             {
-                warn("mktimeFromUtc failed for %s", lastModString);
+            warn("curl_getdate failed for %s", lastModString);
                 retInfo->updateTime = 0;
             }
             else
             {
                 retInfo->updateTime = t;
-            }
         }
     }
     

@@ -1076,8 +1076,4 @@ time_t mktimeFromUtc (struct tm *t);
  * last-modified HTTP response header
  * which is always GMT. Returns -1 on failure of mktime */
 
-
-time_t dateToSeconds(const char *date,const char*format);
-// Convert a string date to time_t
-
 #endif /* COMMON_H */
