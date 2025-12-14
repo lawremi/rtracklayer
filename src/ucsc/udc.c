@@ -916,10 +916,8 @@ else
         file->redirUrl = info.redirUrl; // this is an already-cloned string or NULL
         // update cache file mod times, so if we're caching we won't do this again
         // until the timeout has expired again:
-#ifndef WIN32
         if (udcCacheTimeout() > 0 && udcCacheEnabled() && fileExists(file->bitmapFileName))
             (void)maybeTouchFile(file->bitmapFileName);
-#endif
         freeMem(full_path);
     }
 
