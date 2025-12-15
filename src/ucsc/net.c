@@ -255,3 +255,10 @@ boolean hasProtocol(char *urlOrPath)
 {
     return stringIn("://", urlOrPath) != NULL;
 }
+
+time_t netParseDate(char *dateString)
+/* Parse a date string (like from an HTTP header) into a time_t.
+ * Returns -1 on error. */
+{
+    return curl_getdate(dateString, NULL);
+}

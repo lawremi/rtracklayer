@@ -40,9 +40,6 @@
 #include "udc.h"
 #include "htmlPage.h"
 
-#define CURL_STATICLIB
-#include <curl/curl.h>
-
 struct ioStats
 /* Statistics concerning reads and seeks. */
 {
@@ -392,10 +389,10 @@ boolean udcInfoViaHttp(char *url, struct udcRemoteFileInfo *retInfo)
 
     if (lastModString != NULL)
     {
-        time_t t = curl_getdate(lastModString, NULL);
+        time_t t = netParseDate(lastModString);
         if (t == -1)
         {
-            warn("curl_getdate failed for %s", lastModString);
+            warn("netParseDate failed for %s", lastModString);
             retInfo->updateTime = 0;
         }
         else

@@ -30,5 +30,8 @@ boolean netGetFtpInfo(char *url, long long *retSize, time_t *retTime);
 
 boolean hasProtocol(char *urlOrPath);
 /* Return TRUE if it looks like it has http://, ftp:// etc. */
-#endif /* NET_H */
 
+time_t netParseDate(char *dateString);
+/* Parse a date string (like from an HTTP header) into a time_t.
+ * Returns -1 on error. */
+#endif /* NET_H */
