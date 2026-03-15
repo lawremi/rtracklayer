@@ -204,7 +204,7 @@ normArgTable <- function(name, query) {
   if (!is.null(name)) {
     if (!isSingleString(name))
       stop("table name must be a single string or NULL")
-    if (!name %in% tableNames(query))
+    if (!tableExists(query, name))
       stop("Table '", name, "' is unavailable")
   }
   name
@@ -307,6 +307,18 @@ isTrackHub <- function(x) {
     else stop(paste("TrackHub", x@hubUrl, "does not exists"))
   }
   status
+}
+
+tableExists <- function(query, name) {
+  if (isTrackHub(query))
+    return(name %in% tableNames(query))
+
+  url <- RestUri(paste0(query@url, "hubApi"))
+  response <- tryCatch(
+    read(url$list$schema, genome = query@genome, track = name),
+    error = function(...) NULL
+  )
+  !is.null(response$columnTypes)
 }
 
 dropCookie <- function(object) {
