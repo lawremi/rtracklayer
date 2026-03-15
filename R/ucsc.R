@@ -401,6 +401,8 @@ setMethod("ucscSchema", "UCSCTableQuery", function(object) {
   url <- RestUri(paste0(object@url, "hubApi"))
   response <- read(url$list$schema, genome = genome, track = tableName)
   rowCount <- as.integer(response[["itemCount"]])
+  if (length(rowCount) == 0L)
+    rowCount <- NA_integer_
   listOfDf <- lapply(response[["columnTypes"]], function(x) {
     DataFrame(x$name, x$sqlType, x$jsonType, x$description)
   })
