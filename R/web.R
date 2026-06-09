@@ -9,6 +9,10 @@ htmlParse <- function(str)
   suppressWarnings(htmlTreeParse(str, asText = TRUE, useInternalNodes = TRUE,
                                  error = htmlErrorHandler))
 
+rtracklayerRestUri <- function(base.uri, ...) {
+    RestUri(base.uri, user.agent = "rtracklayer", ...)
+}
+
 rtracklayerGET <- function(url, ..., query = list()) {
   verbose <- getOption("rtracklayer.http.verbose", FALSE)
   verbose <- as.integer(isTRUE(as.logical(verbose)))

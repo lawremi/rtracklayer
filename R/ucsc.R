@@ -313,7 +313,7 @@ tableExists <- function(query, name) {
   if (isTrackHub(query))
     return(name %in% tableNames(query))
 
-  url <- RestUri(paste0(query@url, "hubApi"))
+  url <- rtracklayerRestUri(paste0(query@url, "hubApi"))
   response <- tryCatch(
     read(url$list$schema, genome = query@genome, track = name),
     error = function(...) NULL
@@ -361,7 +361,7 @@ setMethod("tableNames", "UCSCTableQuery",
               th <- TrackHub(object@hubUrl)
               names(th[[genome]])
             } else {
-              url <- RestUri(paste0(object@url, "hubApi"))
+              url <- rtracklayerRestUri(paste0(object@url, "hubApi"))
               response <- read(url$list$tracks, genome = genome, trackLeavesOnly = 1)
               names <- names(response[[genome]])
               tables <- mapply(function(name, response) {
@@ -398,7 +398,7 @@ setMethod("ucscSchema", "UCSCTableQuery", function(object) {
   genome <- object@genome
   tableName <- tableName(object)
   stopifnot(isSingleString(tableName))
-  url <- RestUri(paste0(object@url, "hubApi"))
+  url <- rtracklayerRestUri(paste0(object@url, "hubApi"))
   response <- read(url$list$schema, genome = genome, track = tableName)
   rowCount <- as.integer(response[["itemCount"]])
   if (length(rowCount) == 0L)
@@ -537,7 +537,7 @@ setMethod("getTable", "UCSCTableQuery",
                } else track <- track(thg, tableName)
                as.data.frame(track)
             } else {
-              url <- RestUri(paste0(object@url, "hubApi"))
+              url <- rtracklayerRestUri(paste0(object@url, "hubApi"))
               response <- read(url$getData$track, query)
               seqnames <- as.character(seqnames(object@range))
               output <- parseResponse(response, tableName, seqnames)
@@ -1431,7 +1431,7 @@ setMethod("ucscTrackModes", "ucscTracks",
 ucscGenomes <- function(organism=FALSE) {
   stopifnot(isTRUEorFALSE(organism))
   names <- c("db", "species", "date", "name", "organism")
-  url <- RestUri("https://api.genome.ucsc.edu/")
+  url <- rtracklayerRestUri("https://api.genome.ucsc.edu/")
   response <- read(url$list$ucscGenomes)
   genomes <- response[[5]]
   genomeNames <- names(genomes)
