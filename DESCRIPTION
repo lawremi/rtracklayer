@@ -3,7 +3,7 @@ Title: R interface to genome annotation files and the UCSC genome browser
 Version: 1.73.0
 Author: Michael Lawrence, Vince Carey, Robert Gentleman
 Depends: R (>= 3.5), methods, GenomicRanges (>= 1.37.2)
-Imports: XML (>= 1.98-0), BiocGenerics (>= 0.35.3),
+Imports: S7, XML (>= 1.98-0), BiocGenerics (>= 0.35.3),
          S4Vectors (>= 0.23.18), IRanges (>= 2.13.13), XVector (>= 0.19.7),
          Seqinfo,
          Biostrings (>= 2.77.2), curl, httr,
@@ -24,7 +24,8 @@ Description: Extensible framework for interacting with multiple genome
 Maintainer: Michael Lawrence <lawremi@gmail.com>
 License: Artistic-2.0 + file LICENSE
 Collate: io.R web.R ranges.R trackDb.R browser.R ucsc.R readGFF.R gff.R bed.R
-         wig.R utils.R bigWig.R bigBed.R chain.R quickload.R trackhub.R twobit.R fasta.R tabix.R
+         wig.R utils.R bigWig.R bigBed.R chain.R quickload.R trackhub-utils.R
+         trackhub-classes.R trackhub-methods.R twobit.R fasta.R tabix.R
          bam.R trackTable.R index.R test_rtracklayer_package.R
          ncbi.R igv.R zzz.R
 biocViews: Annotation,Visualization,DataImport

@@ -8,7 +8,10 @@ setUserUdcDir <- function() {
     .Call(R_setUserUdcDir, dir)
 }
 
-.onLoad <- function(libname, pkgname) 
+.onLoad <- function(libname, pkgname)
 {
     setUserUdcDir()
+    S7::methods_register()
+    ## S7/issues/540
+    rm(list = c("[[", "[[<-", "names"), envir = getNamespace("rtracklayer"))
 }
