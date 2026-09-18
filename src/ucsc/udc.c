@@ -727,6 +727,14 @@ void udcParseUrlFull(char *url, char **retProtocol, char **retAfterProtocol, cha
 {
 char *protocol, *afterProtocol;
 char *colon = strchr(url, ':');
+#ifdef WIN32
+/* A Windows drive letter is not a URL protocol.  In particular, R commonly
+ * supplies paths such as C:/path/to/file, which otherwise look like a URL
+ * with the one-letter protocol "C". */
+if (colon == url + 1 && isalpha((unsigned char)url[0]) &&
+    (url[2] == '/' || url[2] == '\\'))
+    colon = NULL;
+#endif
 if (!colon)
     {
     *retColon = NULL;
